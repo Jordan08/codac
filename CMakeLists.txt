@@ -69,6 +69,10 @@
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
   #endif()
 
+  if(MSVC)
+    add_definitions(-D_ENABLE_EXTENDED_ALIGNED_STORAGE) # Due to a known issue in older versions of Visual Studio 2017...
+  endif()
+
 
 ################################################################################
 # Optional binary tree activation for all tubes (for tests purposes mainly)
