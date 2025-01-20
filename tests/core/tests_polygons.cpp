@@ -29,10 +29,10 @@ TEST_CASE("Polygons")
     ConvexPolygon p(iv);
     CHECK(p.nb_vertices() == 4);
     CHECK(p.box() == iv);
-    CHECK(p[0] == Vector({-1.,10.}));
-    CHECK(p[1] == Vector({5.,10.}));
-    CHECK(p[2] == Vector({5.,11.}));
-    CHECK(p[3] == Vector({-1.,11.}));
+    CHECK(p[0] == codac::Vector({-1.,10.}));
+    CHECK(p[1] == codac::Vector({5.,10.}));
+    CHECK(p[2] == codac::Vector({5.,11.}));
+    CHECK(p[3] == codac::Vector({-1.,11.}));
   }
 
   SECTION("Polygon from IntervalVector (unbounded case)")
@@ -919,49 +919,49 @@ TEST_CASE("Polygons (Graham scan)")
 
   SECTION("Polygons, Graham scan")
   {
-    vector<Vector> v_pts;
-    v_pts.push_back(Vector({0.,3.}));
-    v_pts.push_back(Vector({1.,1.}));
-    v_pts.push_back(Vector({2.,2.}));
-    v_pts.push_back(Vector({4.,4.}));
-    v_pts.push_back(Vector({0.,0.}));
-    v_pts.push_back(Vector({1.,2.}));
-    v_pts.push_back(Vector({3.,1.}));
-    v_pts.push_back(Vector({3.,3.}));
+    vector<codac::Vector> v_pts;
+    v_pts.push_back(codac::Vector({0.,3.}));
+    v_pts.push_back(codac::Vector({1.,1.}));
+    v_pts.push_back(codac::Vector({2.,2.}));
+    v_pts.push_back(codac::Vector({4.,4.}));
+    v_pts.push_back(codac::Vector({0.,0.}));
+    v_pts.push_back(codac::Vector({1.,2.}));
+    v_pts.push_back(codac::Vector({3.,1.}));
+    v_pts.push_back(codac::Vector({3.,3.}));
     ConvexPolygon hull = GrahamScan::convex_hull(v_pts);
 
-    CHECK(hull.vertices()[0] == Vector({0.,0.}));
-    CHECK(hull.vertices()[1] == Vector({3.,1.}));
-    CHECK(hull.vertices()[2] == Vector({4.,4.}));
-    CHECK(hull.vertices()[3] == Vector({0.,3.}));
+    CHECK(hull.vertices()[0] == codac::Vector({0.,0.}));
+    CHECK(hull.vertices()[1] == codac::Vector({3.,1.}));
+    CHECK(hull.vertices()[2] == codac::Vector({4.,4.}));
+    CHECK(hull.vertices()[3] == codac::Vector({0.,3.}));
 
     v_pts.clear();
-    v_pts.push_back(Vector({1.,3.}));
-    v_pts.push_back(Vector({1.,4.}));
-    v_pts.push_back(Vector({1.5,2.}));
-    v_pts.push_back(Vector({2.,1.}));
-    v_pts.push_back(Vector({2.,2.}));
-    v_pts.push_back(Vector({3.,0.}));
-    v_pts.push_back(Vector({3.,3.}));
-    v_pts.push_back(Vector({3.,4.5}));
-    v_pts.push_back(Vector({4.,2.5}));
-    v_pts.push_back(Vector({4.,4.}));
-    v_pts.push_back(Vector({5.,1.}));
-    v_pts.push_back(Vector({5.,2.}));
-    v_pts.push_back(Vector({4.,0.}));
-    v_pts.push_back(Vector({5.,0.}));
-    v_pts.push_back(Vector({5.,5.}));
-    v_pts.push_back(Vector({6.,0.}));
-    v_pts.push_back(Vector({7.,2.}));
+    v_pts.push_back(codac::Vector({1.,3.}));
+    v_pts.push_back(codac::Vector({1.,4.}));
+    v_pts.push_back(codac::Vector({1.5,2.}));
+    v_pts.push_back(codac::Vector({2.,1.}));
+    v_pts.push_back(codac::Vector({2.,2.}));
+    v_pts.push_back(codac::Vector({3.,0.}));
+    v_pts.push_back(codac::Vector({3.,3.}));
+    v_pts.push_back(codac::Vector({3.,4.5}));
+    v_pts.push_back(codac::Vector({4.,2.5}));
+    v_pts.push_back(codac::Vector({4.,4.}));
+    v_pts.push_back(codac::Vector({5.,1.}));
+    v_pts.push_back(codac::Vector({5.,2.}));
+    v_pts.push_back(codac::Vector({4.,0.}));
+    v_pts.push_back(codac::Vector({5.,0.}));
+    v_pts.push_back(codac::Vector({5.,5.}));
+    v_pts.push_back(codac::Vector({6.,0.}));
+    v_pts.push_back(codac::Vector({7.,2.}));
     hull = GrahamScan::convex_hull(v_pts);
 
-    CHECK(hull.vertices()[0] == Vector({3.,0.}));
-    CHECK(hull.vertices()[1] == Vector({6.,0.}));
-    CHECK(hull.vertices()[2] == Vector({7.,2.}));
-    CHECK(hull.vertices()[3] == Vector({5.,5.}));
-    CHECK(hull.vertices()[4] == Vector({3.,4.5}));
-    CHECK(hull.vertices()[5] == Vector({1.,4.}));
-    CHECK(hull.vertices()[6] == Vector({1.,3.}));
+    CHECK(hull.vertices()[0] == codac::Vector({3.,0.}));
+    CHECK(hull.vertices()[1] == codac::Vector({6.,0.}));
+    CHECK(hull.vertices()[2] == codac::Vector({7.,2.}));
+    CHECK(hull.vertices()[3] == codac::Vector({5.,5.}));
+    CHECK(hull.vertices()[4] == codac::Vector({3.,4.5}));
+    CHECK(hull.vertices()[5] == codac::Vector({1.,4.}));
+    CHECK(hull.vertices()[6] == codac::Vector({1.,3.}));
 
     //vibes::beginDrawing();
     //VIBesFig fig("poly");
@@ -1021,7 +1021,7 @@ TEST_CASE("Polygons (Graham scan)")
     //  vibes::endDrawing();
     //#endif
 
-    vector<Vector> v_pts = p.vertices();
+    vector<codac::Vector> v_pts = p.vertices();
 
     bool contains = true;
     for(const auto& pt : v_pts)
@@ -1040,7 +1040,7 @@ TEST_CASE("Polygons (operations)")
    v_pts.push_back(ThickPoint(2.,4.));
    
    ConvexPolygon p(v_pts);
-   p.rotate(-M_PI/2., Vector({3.,1.}));
+   p.rotate(-M_PI/2., codac::Vector({3.,1.}));
    
    // Rotated polygon truth
    vector<ThickPoint> v_pts_rot_truth;
@@ -1103,22 +1103,22 @@ TEST_CASE("Polygons (Graham scan, again)")
 {
   SECTION("Polygons, Graham scan, step by step")
   {
-    vector<Vector> v_pts;
-    v_pts.push_back(Vector({0.,0.}));
-    v_pts.push_back(Vector({8.,8.}));
-    v_pts.push_back(Vector({10.,1.}));
-    v_pts.push_back(Vector({4.,4.}));
-    v_pts.push_back(Vector({-10.,1.}));
-    v_pts.push_back(Vector({2.,2.}));
-    v_pts.push_back(Vector({6.,3.}));
-    v_pts.push_back(Vector({6.,1.}));
-    v_pts.push_back(Vector({10.,4.}));
+    vector<codac::Vector> v_pts;
+    v_pts.push_back(codac::Vector({0.,0.}));
+    v_pts.push_back(codac::Vector({8.,8.}));
+    v_pts.push_back(codac::Vector({10.,1.}));
+    v_pts.push_back(codac::Vector({4.,4.}));
+    v_pts.push_back(codac::Vector({-10.,1.}));
+    v_pts.push_back(codac::Vector({2.,2.}));
+    v_pts.push_back(codac::Vector({6.,3.}));
+    v_pts.push_back(codac::Vector({6.,1.}));
+    v_pts.push_back(codac::Vector({10.,4.}));
 
-    CHECK(GrahamScan::orientation(Vector({0.,0.}), Vector({2.,2.}), Vector({2.,2.})) == OrientationInterval::UNDEFINED);
-    CHECK(GrahamScan::orientation(Vector({0.,0.}), Vector({2.,2.}), Vector({4.,4.})) == OrientationInterval::UNDEFINED);
-    CHECK(GrahamScan::orientation(Vector({0.,0.}), Vector({8.,8.}), Vector({4.,4.})) == OrientationInterval::UNDEFINED);
-    CHECK(GrahamScan::orientation(Vector({0.,0.}), Vector({10.,1.}), Vector({4.,4.})) == OrientationInterval::COUNTERCLOCKWISE);
-    CHECK(GrahamScan::orientation(Vector({0.,0.}), Vector({2.,2.}), Vector({10.,1.})) == OrientationInterval::CLOCKWISE);
+    CHECK(GrahamScan::orientation(codac::Vector({0.,0.}), codac::Vector({2.,2.}), codac::Vector({2.,2.})) == OrientationInterval::UNDEFINED);
+    CHECK(GrahamScan::orientation(codac::Vector({0.,0.}), codac::Vector({2.,2.}), codac::Vector({4.,4.})) == OrientationInterval::UNDEFINED);
+    CHECK(GrahamScan::orientation(codac::Vector({0.,0.}), codac::Vector({8.,8.}), codac::Vector({4.,4.})) == OrientationInterval::UNDEFINED);
+    CHECK(GrahamScan::orientation(codac::Vector({0.,0.}), codac::Vector({10.,1.}), codac::Vector({4.,4.})) == OrientationInterval::COUNTERCLOCKWISE);
+    CHECK(GrahamScan::orientation(codac::Vector({0.,0.}), codac::Vector({2.,2.}), codac::Vector({10.,1.})) == OrientationInterval::CLOCKWISE);
 
     // Sort n-1 points with respect to the first point.
 
@@ -1126,19 +1126,19 @@ TEST_CASE("Polygons (Graham scan, again)")
       // has larger polar angle (in counterclockwise
       // direction) than p1
 
-    Vector p0 = v_pts[0];
+    codac::Vector p0 = v_pts[0];
     sort(v_pts.begin(), v_pts.end(), ThickPointsSorter(p0));
 
     CHECK(v_pts.size() == 9);
-    CHECK(v_pts[0] == Vector({0.,0.}));
-    CHECK(v_pts[1] == Vector({10.,1.}));
-    CHECK(v_pts[2] == Vector({6.,1.}));
-    CHECK(v_pts[3] == Vector({10.,4.}));
-    CHECK(v_pts[4] == Vector({6.,3.}));
-    CHECK(v_pts[5] == Vector({2.,2.}));
-    CHECK(v_pts[6] == Vector({4.,4.}));
-    CHECK(v_pts[7] == Vector({8.,8.}));
-    CHECK(v_pts[8] == Vector({-10.,1.}));
+    CHECK(v_pts[0] == codac::Vector({0.,0.}));
+    CHECK(v_pts[1] == codac::Vector({10.,1.}));
+    CHECK(v_pts[2] == codac::Vector({6.,1.}));
+    CHECK(v_pts[3] == codac::Vector({10.,4.}));
+    CHECK(v_pts[4] == codac::Vector({6.,3.}));
+    CHECK(v_pts[5] == codac::Vector({2.,2.}));
+    CHECK(v_pts[6] == codac::Vector({4.,4.}));
+    CHECK(v_pts[7] == codac::Vector({8.,8.}));
+    CHECK(v_pts[8] == codac::Vector({-10.,1.}));
 
     // If two or more points make same angle with p0,
     // remove all but the one that is farthest from p0
@@ -1158,19 +1158,19 @@ TEST_CASE("Polygons (Graham scan, again)")
       }
 
     CHECK(m == 7);
-    CHECK(v_pts[0] == Vector({0.,0.}));
-    CHECK(v_pts[1] == Vector({10.,1.}));
-    CHECK(v_pts[2] == Vector({6.,1.}));
-    CHECK(v_pts[3] == Vector({10.,4.}));
-    CHECK(v_pts[4] == Vector({6.,3.}));
-    CHECK(v_pts[5] == Vector({8.,8.}));
-    CHECK(v_pts[6] == Vector({-10.,1.}));
+    CHECK(v_pts[0] == codac::Vector({0.,0.}));
+    CHECK(v_pts[1] == codac::Vector({10.,1.}));
+    CHECK(v_pts[2] == codac::Vector({6.,1.}));
+    CHECK(v_pts[3] == codac::Vector({10.,4.}));
+    CHECK(v_pts[4] == codac::Vector({6.,3.}));
+    CHECK(v_pts[5] == codac::Vector({8.,8.}));
+    CHECK(v_pts[6] == codac::Vector({-10.,1.}));
 
     // Create an empty stack and push first three points to it.
 
-      vector<Vector> v_hull;
+      vector<codac::Vector> v_hull;
 
-      stack<Vector> s;
+      stack<codac::Vector> s;
       s.push(v_pts[0]);
       s.push(v_pts[1]);
       s.push(v_pts[2]);
@@ -1202,11 +1202,11 @@ TEST_CASE("Polygons (Graham scan, again)")
 
   SECTION("Polygons, Graham scan, other example")
   {
-    vector<Vector> v_pts;
+    vector<codac::Vector> v_pts;
 
-    Vector p1({-4041.935273669676917052129283547401428223,-5492.667604696881426207255572080612182617});
-    Vector p2({9206.843580880462468485347926616668701172,6551.674997467660432448610663414001464844});
-    Vector p3({-4041.935273669676917052129283547401428223,-5492.667604696874150249641388654708862305});
+    codac::Vector p1({-4041.935273669676917052129283547401428223,-5492.667604696881426207255572080612182617});
+    codac::Vector p2({9206.843580880462468485347926616668701172,6551.674997467660432448610663414001464844});
+    codac::Vector p3({-4041.935273669676917052129283547401428223,-5492.667604696874150249641388654708862305});
 
     CHECK(p1[0] == p3[0]);
     CHECK(ThickPoint::aligned(ThickPoint(p1), ThickPoint(p2), ThickPoint(p3)) == NO);
@@ -1214,25 +1214,25 @@ TEST_CASE("Polygons (Graham scan, again)")
     // 0
     v_pts.push_back(p1);
     // 1
-    v_pts.push_back(Vector({-2103.177277725693329557543620467185974121,-5492.667604696881426207255572080612182617}));
+    v_pts.push_back(codac::Vector({-2103.177277725693329557543620467185974121,-5492.667604696881426207255572080612182617}));
     // 2
-    v_pts.push_back(Vector({5720.923292917194885376375168561935424805,-975.4210340695084369144751690328121185303}));
+    v_pts.push_back(codac::Vector({5720.923292917194885376375168561935424805,-975.4210340695084369144751690328121185303}));
     // 3
-    v_pts.push_back(Vector({9206.843580880462468485347926616668701172,5062.370015818080901226494461297988891602}));
+    v_pts.push_back(codac::Vector({9206.843580880462468485347926616668701172,5062.370015818080901226494461297988891602}));
     // 4
-    v_pts.push_back(Vector({52.79381299725321952109879930503666400909,5062.370015818080901226494461297988891602}));
+    v_pts.push_back(codac::Vector({52.79381299725321952109879930503666400909,5062.370015818080901226494461297988891602}));
     // 5
     v_pts.push_back(p3);
     // 6
     v_pts.push_back(p2);
     // 7
-    v_pts.push_back(Vector({52.79381299725321952109879930503666400909,6551.674997467660432448610663414001464844}));
+    v_pts.push_back(codac::Vector({52.79381299725321952109879930503666400909,6551.674997467660432448610663414001464844}));
     // 8
-    v_pts.push_back(Vector({-4041.935273669676917052129283547401428223,-540.603823869623056452837772667407989502}));
+    v_pts.push_back(codac::Vector({-4041.935273669676917052129283547401428223,-540.603823869623056452837772667407989502}));
 
-    vector<Vector> v_save(v_pts);
+    vector<codac::Vector> v_save(v_pts);
 
-    vector<Vector> v_pts_bis;
+    vector<codac::Vector> v_pts_bis;
     v_pts_bis.push_back(v_pts[4]);
     v_pts_bis.push_back(v_pts[6]);
     v_pts_bis.push_back(v_pts[3]);
@@ -1300,13 +1300,13 @@ TEST_CASE("Polygons (simplification)")
 {
   SECTION("Polygons, simplification, test1")
   {
-    vector<Vector> v_pts;
-    v_pts.push_back(Vector({2.,0.}));
-    v_pts.push_back(Vector({6.,4.}));
-    v_pts.push_back(Vector({6.,5.}));
-    v_pts.push_back(Vector({5.,6.}));
-    v_pts.push_back(Vector({4.,6.}));
-    v_pts.push_back(Vector({2.,3.}));
+    vector<codac::Vector> v_pts;
+    v_pts.push_back(codac::Vector({2.,0.}));
+    v_pts.push_back(codac::Vector({6.,4.}));
+    v_pts.push_back(codac::Vector({6.,5.}));
+    v_pts.push_back(codac::Vector({5.,6.}));
+    v_pts.push_back(codac::Vector({4.,6.}));
+    v_pts.push_back(codac::Vector({2.,3.}));
 
     ConvexPolygon p(v_pts);
     ConvexPolygon simple_p5(p), simple_p4(p), simple_p3(p);
@@ -1394,13 +1394,13 @@ TEST_CASE("Polygons (simplification)")
 
     srand(time(nullptr));
 
-    vector<Vector> v_pts;
+    vector<codac::Vector> v_pts;
     for(int i = 0 ; i < 500 ; i++)
     {
-      Vector pt(2);
+      codac::Vector pt(2);
       pt[0] = (rand()/double(RAND_MAX))*box[0].diam()/2.;
       pt[1] = (rand()/double(RAND_MAX))*2.*M_PI;
-      v_pts.push_back(Vector({box[0].mid()+pt[0]*cos(pt[1]),box[1].mid()+pt[0]*sin(pt[1])}));
+      v_pts.push_back(codac::Vector({box[0].mid()+pt[0]*cos(pt[1]),box[1].mid()+pt[0]*sin(pt[1])}));
     }
 
     ConvexPolygon p(v_pts);
