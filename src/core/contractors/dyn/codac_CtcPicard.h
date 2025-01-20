@@ -36,10 +36,11 @@ namespace codac
 
       int picard_iterations() const;
 
+      void guess_kth_slices_envelope(TubeVector& x, int k, TimePropag t_propa);
+
     protected:
 
       void contract_kth_slices(TubeVector& x, int k, TimePropag t_propa);
-      void guess_kth_slices_envelope(TubeVector& x, int k, TimePropag t_propa);
 
       const TFunction* m_f_ptr = nullptr;
       const TFnc& m_f;

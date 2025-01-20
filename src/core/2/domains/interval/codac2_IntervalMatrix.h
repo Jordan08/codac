@@ -383,9 +383,9 @@ namespace codac2
         {
           if((this->data()+i)->is_unbounded()) return POS_INFINITY;
           if((this->data()+i)->is_degenerated()) return 0.;
-          v += log((this->data()+i)->diam());
+          v += std::log((this->data()+i)->diam());
         }
-        return exp(v);
+        return std::exp(v);
       }
 
       Matrix_<R,C> lb() const
