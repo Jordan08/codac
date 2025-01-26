@@ -65,7 +65,7 @@ jobs:
     - run: |
         docker run ${{ matrix.cfg.docker_flags }} -i -v "${PWD}/..:${PWD}/.." ${{ matrix.cfg.img }} /bin/bash -c "uname -a ; cat /etc/os-release ; lsb_release -a ; cd ${PWD} && pwd && \
         git config --global --add safe.directory ${PWD} && \
-        if [ ${{ matrix.cfg.deb }} = true ]; then \
+        if [ \"${{ matrix.cfg.deb }}\" = \"true\" ]; then \
         #sudo sh -c 'echo \"deb [trusted=yes] https://packages.ensta-bretagne.fr/\$(if [ -z \"\$(. /etc/os-release && echo \$UBUNTU_CODENAME)\" ]; then echo debian/\$(. /etc/os-release && echo \$VERSION_CODENAME); else echo ubuntu/\$(. /etc/os-release && echo \$UBUNTU_CODENAME); fi) ./\" > /etc/apt/sources.list.d/ensta-bretagne.list' && \\
         sudo apt-get -q update ; sudo apt-get -y install libeigen3-dev dpkg-dev || true && \
         wget https://github.com/lebarsfa/ibex-lib/releases/download/ibex-2.8.9.20241117/libibex-dev-2.8.9.20241117-0${{ matrix.cfg.runtime }}0_\$(dpkg --print-architecture).deb --no-check-certificate -nv && \
@@ -83,7 +83,7 @@ jobs:
         cd .. && \
         zip -q -r codac_${{ matrix.cfg.arch }}_${{ matrix.cfg.runtime }}.zip codac && \
         mkdir -p codac_standalone/example ; cd codac_standalone && \
-        if [ ${{ matrix.cfg.deb }} = true ]; then mkdir -p ibex/include ; mkdir -p ibex/lib ; mkdir -p ibex/share ; mkdir -p ibex/bin ; cp -Rf /usr/include/ibex* ibex/include/ ; cp -Rf /usr/lib/*ibex* ibex/lib/ ; cp -Rf /usr/share/*ibex* ibex/share/ ; cp -Rf /usr/share/pkgconfig ibex/share/ ; cp -Rf /usr/bin/ibex* ibex/bin/ ; \
+        if [ \"${{ matrix.cfg.deb }}\" = \"true\" ]; then mkdir -p ibex/include ; mkdir -p ibex/lib ; mkdir -p ibex/share ; mkdir -p ibex/bin ; cp -Rf /usr/include/ibex* ibex/include/ ; cp -Rf /usr/lib/*ibex* ibex/lib/ ; cp -Rf /usr/share/*ibex* ibex/share/ ; cp -Rf /usr/share/pkgconfig ibex/share/ ; cp -Rf /usr/bin/ibex* ibex/bin/ ; \
         else cp -Rf ../ibex . ; \
         fi && \
         cp -Rf ../codac . ; cp -Rf ../tests/test_codac/* ./example/ ; cd .. ; zip -q -r codac_standalone_${{ matrix.cfg.arch }}_${{ matrix.cfg.runtime }}.zip codac_standalone && \
@@ -93,7 +93,7 @@ jobs:
         file ./${{ matrix.cfg.test_config }}my_project && \
         ./${{ matrix.cfg.test_config }}my_project && \
         cd ../.. && \
-        if [ ${{ matrix.cfg.deb }} = true ]; then \
+        if [ \"${{ matrix.cfg.deb }}\" = \"true\" ]; then \
         cd packages && \
         chmod +x ./genlibcodac-dev.sh && \
         ./genlibcodac-dev.sh \$(if [ -z \"\$(. /etc/os-release && echo \$UBUNTU_CODENAME)\" ]; then echo debian; else echo ubuntu; fi) ${{ matrix.cfg.runtime }} \$(dpkg --print-architecture) $SOFTWARE_VERSION $DEBIAN_PACKAGE_REV $PACKAGE_REV && \
