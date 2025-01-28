@@ -2,7 +2,7 @@
 #  Codac - cmake configuration file
 # ==================================================================
 
-  cmake_minimum_required(VERSION 3.0.2)
+  cmake_minimum_required(VERSION 3.8)
 
   list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/scripts/CMakeModules/)
   include(version_from_git)
@@ -38,7 +38,6 @@
     endif()
   endif()
 
-  
 ################################################################################
 # Options for directories
 ################################################################################
@@ -65,15 +64,14 @@
 #    message(FATAL_ERROR "Codac needs a compiler with C++17 support")
 #  endif()
 
-#  if(WIN32)
-#    # We need this for strdup under Windows (see issue #287 of ibex-lib repo)
-#    add_definitions(-U__STRICT_ANSI__)
-#  endif()
-
   #if(NOT CMAKE_CXX_STANDARD)
     set(CMAKE_CXX_STANDARD 17)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
   #endif()
+
+  if(MSVC)
+    add_definitions(-D_ENABLE_EXTENDED_ALIGNED_STORAGE) # Due to a known issue in older versions of Visual Studio 2017...
+  endif()
 
 
 ################################################################################
@@ -105,7 +103,7 @@
 ################################################################################
 
   find_package(Eigen3 REQUIRED NO_MODULE)
-  message(STATUS "Found Eigen3 version ${EIGEN3_VERSION}")
+  message(STATUS "Found Eigen3 version ${Eigen3_VERSION}")
   add_definitions(${EIGEN3_DEFINITIONS})
   include_directories(${EIGEN3_INCLUDE_DIRS})
 

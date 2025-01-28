@@ -60,7 +60,7 @@ In a nutshell, Codac is a **constraint programming framework** providing tools t
 
 .. **Mobile robotics** has been the initial motivation of this project: the mathematical tools provided in Codac come together with robotic applications.
 
-.. Computations stands on the `IBEX library <http://www.ibex-lib.org/>`_ that provides reliable tools for static systems.
+.. Computations stands on the `IBEX library <https://github.com/ibex-team/ibex-lib>`_ that provides reliable tools for static systems.
 
 
 Getting started: 2 minutes to Codac
@@ -227,7 +227,7 @@ The distance function :math:`g(\mathbf{x},\mathbf{b})` between the robot and a l
 .. figure:: img/rangeonly-nox0.png
 
 | *You just solved a non-linear state-estimation without knowledge about initial condition.*
-| See the full example on Github: `in C++ <https://github.com/codac-team/codac/blob/master/examples/tuto/01_getting_started/01_getting_started.cpp>`_ or `in Python <https://github.com/codac-team/codac/blob/master/examples/tuto/01_getting_started/01_getting_started.py>`_.
+| See the full example on Github: `in C++ <https://github.com/codac-team/codac/blob/master/examples/tuto/01_getting_started/01_getting_started.cpp>`_, `in Python <https://github.com/codac-team/codac/blob/master/examples/tuto/01_getting_started/01_getting_started.py>`__ or `in MATLAB <https://github.com/codac-team/codac/blob/master/examples/tuto/01_getting_started/a01_getting_started.m>`_.
 
 In the tutorial and in the examples folder of this library, you will find more advanced problems such as Simultaneous Localization And Mapping (SLAM), data association problems or delayed systems.
 
@@ -254,8 +254,8 @@ Then you have two options: read the details about the features of Codac (domains
   .. Figure:: img/logo_ibex.jpg
     :align: center
 
-  | Note that Codac stands on the `IBEX library <http://www.ibex-lib.org/>`_ for interval analysis computations and static contractors on boxes.
-  | `Read the IBEX documentation. <http://www.ibex-lib.org/doc/>`_
+  | Note that Codac stands on the `IBEX library <https://github.com/ibex-team/ibex-lib>`_ for interval analysis computations and static contractors on boxes.
+  | `Read the IBEX documentation. <http://ibex-team.github.io/ibex-lib/>`_
 
 ..  .. rubric:: pyIbex
 ..
@@ -359,7 +359,7 @@ Contributors
   * `Peter Franek <http://www.cs.cas.cz/~franek/>`_
   * `Gilles Trombettoni <https://www.lirmm.fr/~trombetton/>`_
   * Verlein Radwan
-  * `Mohamed Saad Ibn Seddik <https://msis.github.io/>`_
+  * Joris Tillet
 
 
 Main related publications
@@ -432,7 +432,7 @@ Main related publications
 .. |desrochers-phd-year| replace:: 2018
 
 .. |damers-phd-title| replace:: Lie Groups applied to localisation of mobile robots
-.. _damers-phd-title: https://julien-damers.fr/phd/complete.pdf
+.. _damers-phd-title: https://julien-damers.fr/phd/Lie_Groups_applied_to_localisation_of_mobile_robots.pdf
 .. |damers-phd-authors| replace:: Damers
 .. |damers-phd-journal| replace:: PhD thesis
 .. |damers-phd-year| replace:: 2022
@@ -463,9 +463,16 @@ We suggest the following BibTeX template to cite Codac in scientific discourse:
 
 .. code-block:: none
 
- @misc{codac,
-    author = {Rohou, Simon and Desrochers, Benoit and others},
-    year = {2022},
-    note = {http://codac.io},
-    title = {The {Codac} library -- {C}onstraint-programming for robotics}
- }
+  @article{codac_lib,
+    title={The {C}odac Library},
+    url={https://cyber.bibl.u-szeged.hu/index.php/actcybern/article/view/4388},
+    DOI={10.14232/actacyb.302772},
+    journal={Acta Cybernetica},
+    volume={26},
+    number={4},
+    series = {Special Issue of {SWIM} 2022},
+    author={Rohou, Simon and Desrochers, Benoit and {Le Bars}, Fabrice},
+    year={2024},
+    month={Mar.},
+    pages={871-887}
+  }

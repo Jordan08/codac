@@ -32,7 +32,9 @@ void export_IntervalVar(py::module& m);
 void export_IntervalVectorVar(py::module& m);
 
 py::class_<Ctc,pyCtc> export_Ctc(py::module& m);
+void export_Ctc3BCid(py::module& m, py::class_<Ctc, pyCtc>& ctc);
 void export_CtcBox(py::module& m, py::class_<Ctc, pyCtc>& ctc);
+void export_CtcCN(py::module& m, py::class_<Ctc, pyCtc>& ctc);
 void export_CtcCartProd(py::module& m, py::class_<Ctc, pyCtc>& ctc);
 void export_CtcDist(py::module& m, py::class_<Ctc, pyCtc>& ctc);
 void export_CtcFunction(py::module& m, py::class_<Ctc, pyCtc>& ctc);
@@ -79,11 +81,14 @@ void export_VIBesFigPaving(py::module& m);
 
 void export_geometry(py::module& m, py::class_<Ctc, pyCtc>& ctc, py::class_<ibex::Sep, pySep>& sep);
 
-void export_Paving(py::module& m);
 void export_Set(py::module& m);
+void export_Paving(py::module& m);
+void export_SIVIAPaving(py::module& m);
+void export_ConnectedSubset(py::module& m);
 
 void export_DataLoader(py::module& m);
 void export_TPlane(py::module& m);
+void export_Wall(py::module& m);
 
 void export_sivia(py::module& m, py::class_<Ctc,pyCtc>& ctc, py::class_<ibex::Sep,pySep>& sep);
 
@@ -98,7 +103,9 @@ PYBIND11_MODULE(core, m)
   export_IntervalVectorVar(m);
 
   py::class_<Ctc, pyCtc> ctc = export_Ctc(m);
+  export_Ctc3BCid(m, ctc);
   export_CtcBox(m, ctc);
+  export_CtcCN(m, ctc);
   export_CtcCartProd(m, ctc);
   export_CtcDist(m, ctc);
   export_CtcFunction(m, ctc);
@@ -145,10 +152,13 @@ PYBIND11_MODULE(core, m)
   export_geometry(m, ctc, sep);
 
   export_Paving(m);
+  export_SIVIAPaving(m);
   export_Set(m);
+  export_ConnectedSubset(m);
 
   export_DataLoader(m);
   export_TPlane(m);
+  export_Wall(m);
 
   export_sivia(m, ctc, sep);
 

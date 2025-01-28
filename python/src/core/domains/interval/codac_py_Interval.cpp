@@ -87,7 +87,7 @@ void export_Interval(py::module& m)
     .def(py::init<Interval>(), "build a copy of an interval", "x"_a.noconvert())
     .def(py::init<double, double>(), "build the interval [lb,ub]", "lb"_a, "ub"_a)
     .def(py::init<double>(), "build singleton [x,x]", "x"_a)
-    //.def(py::init(&build_from_list))
+    .def(py::init(&build_from_list))
     //.def(py::init([](array<double, 2>& bounds) {return new Interval(bounds[0], bounds[1]);}))
     //.def(py::init([](array<int, 2>& bounds)    {return new Interval(bounds[0], bounds[1]);}))
     //.def(py::init([](pair<int, double>& bounds) {return new Interval(bounds.first, bounds.second);}))
@@ -111,6 +111,20 @@ void export_Interval(py::module& m)
         else return NAN;
       },
       py::return_value_policy::reference_internal)
+
+    .def("getitem", [](Interval& s, size_t index) -> double
+      {
+        if(index < 0 || index > 1)
+          throw py::index_error();
+
+        cout << "Warning: indexing on intervals is deprecated." << endl
+             << "         Use .lb(), .ub() methods instead of []." << endl;
+
+        if(index == 0) return s.lb();
+        else if(index == 1) return s.ub();
+        else return NAN;
+      },
+      py::return_value_policy::reference_internal)
   
   // Arithmetic
 
@@ -120,7 +134,15 @@ void export_Interval(py::module& m)
     .def(py::self * py::self)
     .def(py::self / py::self)
     .def(py::self & py::self)
+    // For MATLAB compatibility.
+    //.def_static("inter", [](const Interval& x, const Interval& y) { return x&y; })
+    // For MATLAB compatibility.
+    .def("inter", [](const Interval& s, const Interval& y) { return s&y; })
     .def(py::self | py::self)
+    // For MATLAB compatibility.
+    //.def_static("union", [](const Interval& x, const Interval& y) { return x|y; })
+    // For MATLAB compatibility.
+    .def("union", [](const Interval& s, const Interval& y) { return s|y; })
 
     .def("__iadd__", [](Interval& x, Interval& o) { return x += o; })
     .def("__isub__", [](Interval& x, Interval& o) { return x -= o; })
@@ -129,7 +151,11 @@ void export_Interval(py::module& m)
     .def("__ifloordiv__", [](Interval& x, Interval& o) { return x /= o; })
 
     .def(py::self &= py::self)
+    // For MATLAB compatibility.
+    .def("inter_self", [](Interval& s, const Interval& a) { return s&=a; })
     .def(py::self |= py::self)
+    // For MATLAB compatibility.
+    .def("union_self", [](Interval& s, const Interval& a) { return s|=a; })
 
     .def(py::self + double())
     .def(py::self += double())
@@ -146,9 +172,25 @@ void export_Interval(py::module& m)
     .def(-py::self)
 
     .def("__abs__", [](const Interval& a) { return ibex::abs(a); })
+    // For MATLAB compatibility.
+    //.def_static("abs", [](const Interval& a) { return ibex::abs(a); })
+    // For MATLAB compatibility.
+    .def("abs", [](const Interval& s) { return ibex::abs(s); })
     .def("__pow__", [](const Interval& x, int n) { return ibex::pow(x, n); })
+    // For MATLAB compatibility.
+    //.def_static("pow", [](const Interval& x, int n) { return ibex::pow(x, n); })
+    // For MATLAB compatibility.
+    .def("pow", [](const Interval& s, int n) { return ibex::pow(s, n); })
     .def("__pow__", [](const Interval& x, double d) { return ibex::pow(x, d); })
-    .def("__pow__", [](const Interval &x, const Interval &y) { return ibex::pow(x, y); })
+    // For MATLAB compatibility.
+    //.def_static("pow", [](const Interval& x, double d) { return ibex::pow(x, d); })
+    // For MATLAB compatibility.
+    .def("pow", [](const Interval& s, double d) { return ibex::pow(s, d); })
+    .def("__pow__", [](const Interval& x, const Interval& y) { return ibex::pow(x, y); })
+    // For MATLAB compatibility.
+    //.def_static("pow", [](const Interval& x, const Interval& y) { return ibex::pow(x, y); })
+    // For MATLAB compatibility.
+    .def("pow", [](const Interval& s, const Interval& y) { return ibex::pow(s, y); })
 
     .def("lb", &Interval::lb, "return the upper bound")
     .def("ub", &Interval::ub, "return the lower bound")
@@ -198,8 +240,12 @@ void export_Interval(py::module& m)
 
     .def("bisect", &Interval::bisect, DOCS_INTERVAL_BISECT, py::arg("ratio")=0.5)
     .def("__get_item__", get_item, "x[0] returns the lb and x[1] returns ub")
+    // For MATLAB compatibility.
+    .def_static("get_item", [](Interval& x, size_t i) { return get_item(x, i); })
     .def("copy", &interval_copy, "return a new object which is the copy of x")
     .def("__hash__", [](const Interval& s1) { return reinterpret_cast<std::uintptr_t>(&s1); })
+    // For MATLAB compatibility.
+    .def("hash", [](const Interval& s1) { return reinterpret_cast<std::uintptr_t>(&s1); })
     //.def( "__pow__", pow__)
 
   // Constants
@@ -293,4 +339,7 @@ void export_Interval(py::module& m)
   // sbool (*bwd_pow_2)(const Interval&, int , Interval&) = &ibex::bwd_pow;
 
   m.attr("oo") = POS_INFINITY;
+
+  // Automatic cast from lists to IntervalVectors (used for instance in SIVIA calls)
+  py::implicitly_convertible<py::list, Interval>();
 };

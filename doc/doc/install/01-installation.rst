@@ -4,7 +4,7 @@
 Installing the Codac library
 ############################
 
-Codac is available in both C++17 and Python3. Note that you can also :ref:`use Codac online in Python <sec-py-project-online>`, without having to install the library on your machine.
+Codac is available in both C++17 and Python3 (:ref:`as well as MATLAB through its Python interface <sec-start-matlab-project>`). Note that you can also :ref:`use Codac online in Python <sec-py-project-online>`, without having to install the library on your machine.
 
 .. role:: gbg
 
@@ -37,26 +37,30 @@ Codac is available in both C++17 and Python3. Note that you can also :ref:`use C
 
 The :gbg:`✓` configurations are officially supported at the moment:
 
-+---------------+----------------+-----------------+-----------------+----------------+----------------+
-|Language       |Linux (amd64)   |Windows (x64)    |Windows (x86)    |macOS (x86_64)  |Online          |
-+===============+================+=================+=================+================+================+
-|C++17          ||linux-cpp|_    ||win-cpp|_       ||win-cpp|_       ||macos-cpp|_    |                |
-+---------------+----------------+-----------------+-----------------+----------------+----------------+
-|Python 3.6     ||linux-py|_     ||win-py|_        ||win-py|_        ||macos-py|_     ||online-py|_    |
-+---------------+----------------+-----------------+-----------------+----------------+                +
-|Python 3.7     ||linux-py|_     ||win-py|_        ||win-py|_        ||macos-py|_     |                |
-+---------------+----------------+-----------------+-----------------+----------------+                +
-|Python 3.8     ||linux-py|_     ||win-py|_        ||win-py|_        ||macos-py|_     |                |
-+---------------+----------------+-----------------+-----------------+----------------+                +
-|Python 3.9     ||linux-py|_     ||win-py|_        ||win-py|_        ||macos-py|_     |                |
-+---------------+----------------+-----------------+-----------------+----------------+                +
-|Python 3.10    ||linux-py|_     ||win-py|_        ||win-py|_        ||macos-py|_     |                |
-+---------------+----------------+-----------------+-----------------+----------------+----------------+
++---------------+----------------+----------------+-----------------+-----------------+----------------+----------------+----------------+
+|Language       |Linux (amd64)   |Linux (arm64)   |Windows (x64)    |Windows (x86)    |macOS (arm64)   |macOS (x86_64)  |Online          |
++===============+================+================+=================+=================+================+================+================+
+|C++17          ||linux-cpp|_    ||linux-cpp|_    ||win-cpp|_       ||win-cpp|_       ||macos-cpp|_    ||macos-cpp|_    |                |
++---------------+----------------+----------------+-----------------+-----------------+----------------+----------------+----------------+
+|Python 3.6     ||linux-py|_     ||linux-py|_     ||win-py|_        ||win-py|_        ||macos-py|_     ||macos-py|_     ||online-py|_    |
++---------------+----------------+----------------+-----------------+-----------------+----------------+----------------+                +
+|Python 3.7     ||linux-py|_     ||linux-py|_     ||win-py|_        ||win-py|_        ||macos-py|_     ||macos-py|_     |                |
++---------------+----------------+----------------+-----------------+-----------------+----------------+----------------+                +
+|Python 3.8     ||linux-py|_     ||linux-py|_     ||win-py|_        ||win-py|_        ||macos-py|_     ||macos-py|_     |                |
++---------------+----------------+----------------+-----------------+-----------------+----------------+----------------+                +
+|Python 3.9     ||linux-py|_     ||linux-py|_     ||win-py|_        ||win-py|_        ||macos-py|_     ||macos-py|_     |                |
++---------------+----------------+----------------+-----------------+-----------------+----------------+----------------+                +
+|Python 3.10    ||linux-py|_     ||linux-py|_     ||win-py|_        ||win-py|_        ||macos-py|_     ||macos-py|_     |                |
++---------------+----------------+----------------+-----------------+-----------------+----------------+----------------+                +
+|Python 3.11    ||linux-py|_     ||linux-py|_     ||win-py|_        ||win-py|_        ||macos-py|_     ||macos-py|_     |                |
++---------------+----------------+----------------+-----------------+-----------------+----------------+----------------+----------------+
+|Python 3.12    ||linux-py|_     ||linux-py|_     ||win-py|_        ||win-py|_        ||macos-py|_     ||macos-py|_     |                |
++---------------+----------------+----------------+-----------------+-----------------+----------------+----------------+----------------+
 
 | **Click on the links in the table to access the related installation procedures.**
 | If a configuration in this table does not work, please `contact us <https://github.com/codac-team/codac/issues>`_.
 
-Note that if you want to contribute to Codac, you have to make the full C++ installation.
+Note that if you want to contribute to Codac, you have to make the full C++ installation from sources.
 
 
 

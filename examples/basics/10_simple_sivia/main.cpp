@@ -36,25 +36,25 @@ int main(int argc, char** argv)
   figname = "Sep regular";
   newFigure(figname); cout << figname << endl;
   SIVIA(X0, sep, 0.1, true, true, figname, false, custom_colormap);
-  setFigureProperties(vibesParams("x",100, "y",100, "width",500, "height",500));
+  setFigureProperties(vibesParams("x",10, "y",10, "width",500, "height",500));
   axisAuto();
 
   figname = "Sep diff";
   newFigure(figname); cout << figname << endl;
   SIVIA(X0, sep, 0.1, false, true, figname, false, custom_colormap);
-  setFigureProperties(vibesParams("x",150, "y",150, "width",500, "height",500));
+  setFigureProperties(vibesParams("x",510, "y",10, "width",500, "height",500));
   axisAuto();
 
   figname = "Ctc regular";
   newFigure(figname); cout << figname << endl;
   SIVIA(X0, ctc, 0.1, true, true, figname, false, custom_colormap);
-  setFigureProperties(vibesParams("x",200, "y",200, "width",500, "height",500));
+  setFigureProperties(vibesParams("x",10, "y",510, "width",500, "height",500));
   axisAuto();
 
   figname = "Ctc diff";
   newFigure(figname); cout << figname << endl;
   SIVIA(X0, ctc, 0.1, false, true, figname, false, custom_colormap);
-  setFigureProperties(vibesParams("x",250, "y",250, "width",500, "height",500));
+  setFigureProperties(vibesParams("x",510, "y",510, "width",500, "height",500));
   axisAuto();
 
   endDrawing();

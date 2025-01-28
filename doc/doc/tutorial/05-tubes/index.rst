@@ -245,7 +245,7 @@ Tubes can also be built from trajectories. In this example, we could have define
 
   Is the actual trajectory :math:`\mathbf{x}^*(\cdot)` enclosed in :math:`[\mathbf{x}](\cdot)` at any time?
 
-  **E.9.** Create a tube :math:`[y](\cdot)` for enclosing the trajectory of distances between the robot and the landmark.
+  **E.9.** Create a tube :math:`[y](\cdot)` for enclosing the actual trajectory :math:`y^{*}(\cdot)` of distances between the robot and the landmark. For now, we will not consider uncertainties on :math:`y^{*}(\cdot)`. Therefore, the tube :math:`[y](\cdot)` should enclose :math:`y^{*}(\cdot)` in a minimal way according to the discretization step ``dt``.
   Note that all the tubes of this lesson have to share the same ``tdomain`` and ``dt`` parameters.
 
 
@@ -299,7 +299,7 @@ For instance, one can contract three tubes :math:`[a](\cdot)`, :math:`[b](\cdot)
     \mathbf{y}(t)=\mathbf{g}\big(\mathbf{x}(t)\big) &  & \textrm{(observation equation)}
     \end{array}\right.
 
-  **E.10.** We first focus on the observation equation :math:`\mathbf{y}(t)=\mathbf{g}\big(\mathbf{x}(t)\big)`. Build a contractor network and contract the tube :math:`[\mathbf{x}](\cdot)` with the distance contractor, that expresses :math:`\mathbf{g}`. Note that this contractor is already defined in the library. You developed your own version as an exercise in :ref:`sec-tuto-01`, but you can also use:
+  **E.10.** We first focus on the observation equation :math:`\mathbf{y}(t)=\mathbf{g}\big(\mathbf{x}(t)\big)`. Build a contractor network and contract the tube :math:`[\mathbf{x}](\cdot)` with the distance contractor, that expresses :math:`\mathbf{g}`. Note that this contractor is already defined in the library. You developed your own version as an exercise in :ref:`Lesson A <sec-tuto-01>`, but you can also use:
 
   .. tabs::
 

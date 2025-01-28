@@ -696,7 +696,7 @@ TEST_CASE("Arithmetic on trajs")
     Interval domain(0.,10.);
     TrajectoryVector trajx(3), trajy(3), trajz(3);
 
-    Vector vx(3), vy(3);
+    codac::Vector vx(3), vy(3);
     vx[0] = 1.; vx[1] = 2.; vx[2] = 3.;
     vy[0] = 10.; vy[1] = 20.; vy[2] = 30.;
 
@@ -752,11 +752,11 @@ TEST_CASE("Arithmetic on trajs")
     
     //const Trajectory& operator+=(double x);
     trajz = trajx; trajz += vy[1];
-    CHECK(ApproxIntvVector(trajz.codomain()) == IntervalVector(vx+Vector(3,vy[1])));
+    CHECK(ApproxIntvVector(trajz.codomain()) == IntervalVector(vx+codac::Vector(3,vy[1])));
     
     //const Trajectory& operator+=(const Trajectory& x);
     trajz = trajx; trajz += trajy[1];
-    CHECK(ApproxIntvVector(trajz.codomain()) == IntervalVector(vx+Vector(3,vy[1])));
+    CHECK(ApproxIntvVector(trajz.codomain()) == IntervalVector(vx+codac::Vector(3,vy[1])));
 
     //const TrajectoryVector& operator+=(const Vector& x);
     trajz = trajx; trajz += vy;
@@ -768,11 +768,11 @@ TEST_CASE("Arithmetic on trajs")
     
     //const Trajectory& operator-=(double x);
     trajz = trajx; trajz -= vy[1];
-    CHECK(ApproxIntvVector(trajz.codomain()) == IntervalVector(vx-Vector(3,vy[1])));
+    CHECK(ApproxIntvVector(trajz.codomain()) == IntervalVector(vx-codac::Vector(3,vy[1])));
     
     //const Trajectory& operator-=(const Trajectory& x);
     trajz = trajx; trajz -= trajy[1];
-    CHECK(ApproxIntvVector(trajz.codomain()) == IntervalVector(vx-Vector(3,vy[1])));
+    CHECK(ApproxIntvVector(trajz.codomain()) == IntervalVector(vx-codac::Vector(3,vy[1])));
 
     //const TrajectoryVector& operator-=(const Vector& x);
     trajz = trajx; trajz -= vy;

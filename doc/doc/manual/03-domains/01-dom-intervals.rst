@@ -14,7 +14,7 @@ The vectors :math:`\mathbf{x}` and matrices :math:`\mathbf{X}`, presented :ref:`
   .. Figure:: ../../img/logo_ibex.jpg
     :align: right
   
-  These interval variables come from the `IBEX library <http://www.ibex-lib.org>`_. They are briefly presented here for the sake of consistency. For more information, please refer to the `IBEX documentation <http://www.ibex-lib.org/doc/interval.html#intervals-vectors-and-matrices>`_ for C++ use.
+  These interval variables come from the `IBEX library <https://github.com/ibex-team/ibex-lib>`_. They are briefly presented here for the sake of consistency. For more information, please refer to the `IBEX documentation <https://ibex-team.github.io/ibex-lib/interval.html#intervals-vectors-and-matrices>`_ for C++ use.
 
 
 .. _sec-manual-intervals-domains:
@@ -169,7 +169,7 @@ Intervals, boxes and interval matrices
 .. _sec-manual-intervals-matrices:
 
 * | ``IntervalMatrix`` is also available.
-  | One can refer to the `documentation of IBEX <http://www.ibex-lib.org/doc/interval.html#matrices-and-array-of-matrices>`_ for more information.
+  | One can refer to the `documentation of IBEX <https://ibex-team.github.io/ibex-lib/interval.html#matrices-and-array-of-matrices>`_ for more information.
 
 
   .. note::
@@ -227,7 +227,7 @@ For boxes (interval vectors), we have to specify their dimension even in case of
 Set operations
 --------------
 
-Set operations are available for ``Interval``, ``IntervalVector`` and ``IntervalMatrix`` objects (see the `official reference <http://www.ibex-lib.org/doc/interval.html#set-membership-operations>`_). In the following table, if :math:`[x]` is an interval object, :math:`d` is a real value.
+Set operations are available for ``Interval``, ``IntervalVector`` and ``IntervalMatrix`` objects (see the `official reference <https://ibex-team.github.io/ibex-lib/interval.html#set-membership-operations>`_). In the following table, if :math:`[x]` is an interval object, :math:`d` is a real value.
 
 ====================================  =======================================================
 Code                                  Meaning

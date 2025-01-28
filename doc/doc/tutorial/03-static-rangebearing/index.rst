@@ -78,7 +78,7 @@ Problems involving complex equations can be broken down into a set of **primitiv
 
 where :math:`a,b,\dots,e` are intermediate variables used for the decomposition. This constitutes a network made of the :math:`\mathcal{L}_{-}`, :math:`\mathcal{L}_{+}`, :math:`\mathcal{L}_{(\cdot)^2}`, and :math:`\mathcal{L}_{\sqrt{\cdot}}` elementary constraints.
 
-| The library (more precisely: `the IBEX library <http://www.ibex-lib.org/doc/contractor.html>`_) provides a way to automatically make this decomposition, select already existing **elementary contractors** such as :math:`\mathcal{C}_{+}`, :math:`\mathcal{C}_{(\cdot)^2}`, :math:`\mathcal{C}_{\sqrt{\cdot}}` and build the complex contractor modeling the constraint :math:`\mathcal{L}_{\textrm{dist}}`.
+| The library (more precisely: `the IBEX library <https://ibex-team.github.io/ibex-lib/contractor.html>`_) provides a way to automatically make this decomposition, select already existing **elementary contractors** such as :math:`\mathcal{C}_{+}`, :math:`\mathcal{C}_{(\cdot)^2}`, :math:`\mathcal{C}_{\sqrt{\cdot}}` and build the complex contractor modeling the constraint :math:`\mathcal{L}_{\textrm{dist}}`.
 | This was implicitly done in the previous :ref:`Lesson A <sec-tuto-01>` with:
 
 .. tabs::

@@ -8,8 +8,7 @@ Start a Python project
    | You are using C++?
    | :ref:`sec-start-cpp-project`
 
-| Codac is ready to be used on your computer.
-| You can now import the ``codac`` package and start using it:
+| Assuming :ref:`Codac Python package is installed <sec-installation-py>`, you can import the ``codac`` package and start using it:
 
 .. code-block:: py
   
@@ -30,11 +29,7 @@ Start a Python project
 
   python3 myscript.py
 
-In order to visualize the tube, you need to launch the VIBes viewer independently. On Linux, you can for instance execute:
-
-.. code-block:: bash
-
-  VIBes-viewer
+In order to visualize the tube, you need to launch before the :ref:`VIBes viewer <sec-installation-graphics>` independently.
 
 If everything is well installed on your computer, you should see the following window appear:
 

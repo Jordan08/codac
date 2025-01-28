@@ -53,7 +53,7 @@ Definition
   .. Figure:: ../../img/logo_ibex.jpg
     :align: right
   
-  This contractor originates from the `IBEX library <http://www.ibex-lib.org>`_. It is briefly presented here for the sake of consistency. For more information, please refer to the `IBEX documentation <http://www.ibex-lib.org/doc/contractor.html>`_ for C++.
+  This contractor originates from the `IBEX library <https://github.com/ibex-team/ibex-lib>`_. It is briefly presented here for the sake of consistency. For more information, please refer to the `IBEX documentation <https://ibex-team.github.io/ibex-lib/contractor.html>`_ for C++.
 
 
 .. rubric:: Optimality
@@ -221,7 +221,7 @@ The above illustration reveals several contracted boxes with the new ``ctc_f`` c
 Going further
 -------------
 
-This ``CtcFunction`` class is a generic shortcut to deal with :math:`\mathbf{f}(\mathbf{x})=\mathbf{0}` or :math:`\mathbf{f}(\mathbf{x})\in[\mathbf{y}]`. However, several algorithms exist to optimally deal with different classes of problems. A list of static contractors is provided in the IBEX library: `see more <http://www.ibex-lib.org/doc/contractor.html>`_.
+This ``CtcFunction`` class is a generic shortcut to deal with :math:`\mathbf{f}(\mathbf{x})=\mathbf{0}` or :math:`\mathbf{f}(\mathbf{x})\in[\mathbf{y}]`. However, several algorithms exist to optimally deal with different classes of problems. A list of static contractors is provided in the IBEX library: `see more <https://ibex-team.github.io/ibex-lib/contractor.html>`_.
 The user is invited to use an appropriate tool to deal with the constraint at stake.
 
 The IBEX contractor behind ``CtcFunction`` is a ``CtcFwdBwd`` coupled with a ``Ctc3BCid``.

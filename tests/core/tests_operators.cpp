@@ -74,7 +74,7 @@ TEST_CASE("Operators")
     tube1.set(IntervalVector(2, Interval(-1.,1.)));
     tube1 += TrajectoryVector(domain, TFunction("(2.;2.)"));
     TrajectoryVector traj(domain, TFunction("(2.;2.)"));
-    CHECK(traj(0.) == Vector(2, 2.));
+    CHECK(traj(0.) == codac::Vector(2, 2.));
     CHECK(tube1.codomain() == IntervalVector(2, Interval(1.,3.)));
     CHECK(tube1(0.) == IntervalVector(2, Interval(1.,3.)));
     
@@ -274,13 +274,13 @@ TEST_CASE("Operators")
     tube1.set(IntervalVector(2, Interval(-1.,1.)));
     result = tube1 + TrajectoryVector(domain, TFunction("(2.;2.)"));
     TrajectoryVector traj(domain, TFunction("(2.;2.)"));
-    CHECK(traj(0.) == Vector(2, 2.));
+    CHECK(traj(0.) == codac::Vector(2, 2.));
     CHECK(result.codomain() == IntervalVector(2, Interval(1.,3.)));
     CHECK(result(0.) == IntervalVector(2, Interval(1.,3.)));
 
     tube1.set(IntervalVector(2, Interval(-1.,1.)));
     result = TrajectoryVector(domain, TFunction("(2.;2.)")) + tube1;
-    CHECK(traj(0.) == Vector(2, 2.));
+    CHECK(traj(0.) == codac::Vector(2, 2.));
     CHECK(result.codomain() == IntervalVector(2, Interval(1.,3.)));
     CHECK(result(0.) == IntervalVector(2, Interval(1.,3.)));
     

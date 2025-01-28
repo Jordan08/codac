@@ -25,7 +25,7 @@ R"_docs(Generic bisector
     \link ibex::Bsc::prec precision \endlink parameter of this class.
 
     The docs string is taken from ibex_Bsc.h source file
-    For more information read doc from http://www.ibex-lib.org/
+    For more information read doc from https://github.com/ibex-team/ibex-lib/
 
 )_docs";
 

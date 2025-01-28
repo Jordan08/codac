@@ -14,7 +14,7 @@ const char* DOCS_INTERVAL_TYPE =
 R"doc_itv(An Interval represents a closed sub set of R
 
 The docs string is taken from ibex_Interval.h source file
-For more information read doc from http://www.ibex-lib.org/
+For more information read doc from https://github.com/ibex-team/ibex-lib/
 
 Examples:
     >>> a = Interval(1,2)

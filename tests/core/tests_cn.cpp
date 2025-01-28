@@ -206,7 +206,7 @@ TEST_CASE("CN simple")
     {
       Interval x(0,1), y(-2,3), a(1,20);
       IntervalVector vx(2,x), vy(2,y), va(2,a);
-      Vector vec(4,0.5);
+      codac::Vector vec(4,0.5);
     
       ContractorNetwork cn;
       cn.add(ctc_add, {vx,vy,va});
@@ -295,7 +295,7 @@ TEST_CASE("CN simple")
 
     {
       Interval x(0,1), a(1,20);
-      Vector vector_y(2, 1.);
+      codac::Vector vector_y(2, 1.);
       IntervalVector ivx(2,x), iva(2,a);
     
       ContractorNetwork cn;
@@ -306,7 +306,7 @@ TEST_CASE("CN simple")
       cn.contract();
 
       CHECK(ivx == IntervalVector(2,Interval(0,1)));
-      CHECK(vector_y == Vector(2,1.));
+      CHECK(vector_y == codac::Vector(2,1.));
       CHECK(iva == IntervalVector(2,Interval(1,2)));
       // todo: reactivate this test: CHECK(cn.nb_dom() == 3*3);
       CHECK(cn.nb_ctc() == 3+2);

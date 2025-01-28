@@ -41,7 +41,7 @@ What about the IBEX library?
 .. Figure:: ../../img/logo_ibex.jpg
   :align: left
 
-The `IBEX library <http://www.ibex-lib.org>`_ is a C++ software for constraint processing over real numbers.
+The `IBEX library <https://github.com/ibex-team/ibex-lib>`_ is a C++ software for constraint processing over real numbers.
 As for Codac, it stands on Constraint Programming but focuses on static contexts, providing reliable algorithms for handling non-linear constraints.
 
 It also proposes various tools such as the *IbexSolve* and *IbexOpt* plugins that are dedicated to system solving and optimization, and come both with a default black-box solver and global optimizer for immediate usage.

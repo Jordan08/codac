@@ -8,8 +8,7 @@ Start a C++ project
    | You are using Python?
    | :ref:`sec-start-py-project`
 
-| Codac is ready to be used on your computer.
-| You can now copy-paste the following example code in a file named :file:`main.cpp`:
+| Assuming :ref:`Codac library is installed <sec-installation>`, you can copy-paste the following example code in a file named :file:`main.cpp`:
 
 .. code-block:: c++
 
@@ -56,7 +55,7 @@ For the compilation of your project, you can use CMake with the following file :
     # set(CMAKE_PREFIX_PATH "~/eigen/build_install")
 
     find_package(Eigen3 REQUIRED NO_MODULE)
-    message(STATUS "Found Eigen3 version ${EIGEN3_VERSION}")
+    message(STATUS "Found Eigen3 version ${Eigen3_VERSION}")
 
   # Adding Codac
 
@@ -113,11 +112,7 @@ Lastly, the project can be run with:
   ./build/my_project
 
 | This script will create a simple tube and display it.
-| In order to visualize the tube, you need to launch the VIBes viewer independently. On Linux, you can for instance execute:
-
-.. code-block:: bash
-
-  VIBes-viewer
+| In order to visualize the tube, you need to launch before the :ref:`VIBes viewer <sec-installation-graphics>` independently.
 
 If everything is well installed on your computer, you should see the following window appear:
 

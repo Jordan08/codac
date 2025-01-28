@@ -2,9 +2,9 @@
 
 .. _sec-installation-py:
 
-###############################
-Installing Codac for Python use
-###############################
+##################################
+Installing Codac v1 for Python use
+##################################
 
 .. note::
 
@@ -19,7 +19,8 @@ In case you want to use Codac only with Python, then the installation procedure 
   
   # You may have to upgrade pip (19.0.0 required at least)
   pip3 install --upgrade pip 
-  pip3 install codac
+  pip3 install codac==1.6
+  # latest release of Codac v1 is 1.6
 
 
 .. role:: gbg
@@ -35,36 +36,50 @@ In case you want to use Codac only with Python, then the installation procedure 
 
 The :gbg:`✓` configurations are officially supported at the moment:
 
-+---------------+----------------+-----------------+-----------------+----------------+----------------+
-|Language       |Linux (amd64)   |Windows (x64)    |Windows (x86)    |macOS (x86_64)  |Online          |
-+===============+================+=================+=================+================+================+
-|Python 3.6     |:gbg:`✓`        |:gbg:`✓`         |:gbg:`✓`         |:gbg:`✓`        ||online-py|_    |
-+---------------+----------------+-----------------+-----------------+----------------+                +
-|Python 3.7     |:gbg:`✓`        |:gbg:`✓`         |:gbg:`✓`         |:gbg:`✓`        |                |
-+---------------+----------------+-----------------+-----------------+----------------+                +
-|Python 3.8     |:gbg:`✓`        |:gbg:`✓`         |:gbg:`✓`         |:gbg:`✓`        |                |
-+---------------+----------------+-----------------+-----------------+----------------+                +
-|Python 3.9     |:gbg:`✓`        |:gbg:`✓`         |:gbg:`✓`         |:gbg:`✓`        |                |
-+---------------+----------------+-----------------+-----------------+----------------+                +
-|Python 3.10    |:gbg:`✓`        |:gbg:`✓`         |:gbg:`✓`         |:gbg:`✓`        |                |
-+---------------+----------------+-----------------+-----------------+----------------+----------------+
++---------------+----------------+----------------+-----------------+-----------------+----------------+----------------+----------------+
+|Language       |Linux (amd64)   |Linux (arm64)   |Windows (x64)    |Windows (x86)    |macOS (arm64)   |macOS (x86_64)  |Online          |
++===============+================+================+=================+=================+================+================+================+
+|Python 3.6     |:gbg:`✓`        |:gbg:`✓`        |:gbg:`✓`         |:gbg:`✓`         |:gbg:`✓`        |:gbg:`✓`        ||online-py|_    |
++---------------+----------------+----------------+-----------------+-----------------+----------------+----------------+                +
+|Python 3.7     |:gbg:`✓`        |:gbg:`✓`        |:gbg:`✓`         |:gbg:`✓`         |:gbg:`✓`        |:gbg:`✓`        |                |
++---------------+----------------+----------------+-----------------+-----------------+----------------+----------------+                +
+|Python 3.8     |:gbg:`✓`        |:gbg:`✓`        |:gbg:`✓`         |:gbg:`✓`         |:gbg:`✓`        |:gbg:`✓`        |                |
++---------------+----------------+----------------+-----------------+-----------------+----------------+----------------+                +
+|Python 3.9     |:gbg:`✓`        |:gbg:`✓`        |:gbg:`✓`         |:gbg:`✓`         |:gbg:`✓`        |:gbg:`✓`        |                |
++---------------+----------------+----------------+-----------------+-----------------+----------------+----------------+                +
+|Python 3.10    |:gbg:`✓`        |:gbg:`✓`        |:gbg:`✓`         |:gbg:`✓`         |:gbg:`✓`        |:gbg:`✓`        |                |
++---------------+----------------+----------------+-----------------+-----------------+----------------+----------------+                +
+|Python 3.11    |:gbg:`✓`        |:gbg:`✓`        |:gbg:`✓`         |:gbg:`✓`         |:gbg:`✓`        |:gbg:`✓`        |                |
++---------------+----------------+----------------+-----------------+-----------------+----------------+----------------+----------------+
+|Python 3.12    |:gbg:`✓`        |:gbg:`✓`        |:gbg:`✓`         |:gbg:`✓`         |:gbg:`✓`        |:gbg:`✓`        |                |
++---------------+----------------+----------------+-----------------+-----------------+----------------+----------------+----------------+
 
 If a configuration in this table does not work, please `contact us <https://github.com/codac-team/codac/issues>`_.
 
 .. warning::
 
-  | **macOS Big Sur and Monterey (amd64):**
-  | `Python wheels provided for Catalina may still be installed <https://stackoverflow.com/questions/64847996/force-usage-of-10-x-wheel-in-macos-big-sur>`_, try something similar to: 
+  | **Debian Bookworm and possibly other configurations:**
+  | ``pip install ...`` or ``pip3 install ...`` commands may only work inside `virtual environments <https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/>`_ or with ``--break-system-packages`` parameter, e.g.:
 
   .. code-block:: bash
 
-    sudo pip3 install --platform macosx_10_15_x86_64 --only-binary=:all: --target=/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.8/lib/python3.8/site-packages codac
+    pip3 install --break-system-packages codac
 
-  Depending on the way Python was installed, the path to specify after ``--target`` may differ, *e.g.* if Python was installed from https://www.python.org/ftp/python/3.10.4/python-3.10.4-macos11.pkg, it may be ``/Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/site-packages``. Otherwise, run ``python3 -m site`` to check the ``site-packages`` full path in ``sys.path list``. 
+.. warning::
+
+  | **macOS Big Sur and later (x86_64):**
+  | `Python wheels provided for Catalina or earlier may need to be installed with something similar to <https://stackoverflow.com/questions/64847996/force-usage-of-10-x-wheel-in-macos-big-sur>`_: 
+
+  .. code-block:: bash
+
+    sudo pip3 install --upgrade vibes # Add here any other non-binary wheels dependencies...
+    sudo pip3 install --upgrade --nodeps --platform macosx_10_9_x86_64 --only-binary=:all: --target=/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.8/lib/python3.8/site-packages codac
+
+  Depending on the way Python was installed, the path to specify after ``--target`` may differ, *e.g.* if Python was installed from https://www.python.org/ftp/python/3.10.4/python-3.10.4-macos11.pkg, it may be ``/Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/site-packages``. Otherwise, run ``python3 -m site`` to check the ``site-packages`` full path in ``sys.path list``. Also, the value ``10_9`` may need to be changed to ``10_14`` (or possibly another value) for some Python versions.
 
 .. note::
 
-  ARM-based computers can still probably follow `Installing local Python binding <../dev/info_dev.html>`_ (not tested).
+  Unsupported computers can still probably follow :ref:`Installing local Python binding <sec-manual-dev>`.
 
 
 Update your Codac Python package

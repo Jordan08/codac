@@ -39,7 +39,7 @@ IntervalVector* create_from_pylist(const vector<py::list>& lst)
   {
     if(lst[i].size() != 2)
     {
-      delete tmp;
+      delete[] tmp;
       throw invalid_argument("sub list must contain only two elements");
     }
 
@@ -183,7 +183,22 @@ void export_IntervalVector(py::module& m)
       },
       py::return_value_policy::reference_internal)
 
+    .def("getitem", [](IntervalVector& s, size_t index) -> Interval&
+      {
+        if(index < 0 || index >= static_cast<size_t>(s.size()))
+          throw py::index_error();
+        return s[static_cast<int>(index)];
+      },
+      py::return_value_policy::reference_internal)
+
     .def("__setitem__", [](IntervalVector& s, size_t index, Interval& t)
+      {
+        if(index < 0 || index >= static_cast<size_t>(s.size()))
+          throw py::index_error();
+        s[static_cast<int>(index)] = t;
+      })
+
+    .def("setitem", [](IntervalVector& s, size_t index, Interval& t)
       {
         if(index < 0 || index >= static_cast<size_t>(s.size()))
           throw py::index_error();
@@ -228,7 +243,15 @@ void export_IntervalVector(py::module& m)
     .def(py::self - py::self)
     .def(py::self * py::self)
     .def(py::self & py::self)
+    // For MATLAB compatibility.
+    //.def_static("inter", [](const IntervalVector& x, const IntervalVector& y) { return x&y; })
+    // For MATLAB compatibility.
+    .def("inter", [](const IntervalVector& s, const IntervalVector& y) { return s&y; })
     .def(py::self | py::self)
+    // For MATLAB compatibility.
+    //.def_static("union", [](const IntervalVector& x, const IntervalVector& y) { return x|y; })
+    // For MATLAB compatibility.
+    .def("union", [](const IntervalVector& s, const IntervalVector& y) { return s|y; })
     .def(-py::self)
 
     .def(py::self += py::self)
@@ -242,10 +265,14 @@ void export_IntervalVector(py::module& m)
     .def("__rmul__", [](IntervalVector& a, const Interval& x) { return x*a; })
 
     .def(py::self &= py::self)
+    // For MATLAB compatibility.
+    .def("inter_self", [](IntervalVector& s, const IntervalVector& a) { return s&=a; })
     .def(py::self |= py::self)
+    // For MATLAB compatibility.
+    .def("union_self", [](IntervalVector& s, const IntervalVector& a) { return s|=a; })
 
     .def("__add__",  [](IntervalVector& a, const Vector& x) { return a+x; })
-    .def("__iadd__", [](IntervalVector& a, const Vector& x) { return a+x; })
+    .def("__iadd__", [](IntervalVector& a, const Vector& x) { return a+=x; })
     .def("__radd__", [](IntervalVector& a, const Vector& x) { return a+x; })
 
     .def("__sub__",  [](IntervalVector& a, const Vector& x) { return a-x; })
@@ -336,4 +363,7 @@ void export_IntervalVector(py::module& m)
   m.def("bwd_mul", (bool (*) (const Interval&, IntervalVector&, IntervalVector&)) &ibex::bwd_mul);
 
   m.def("max", (IntervalVector(*) (const IntervalVector&, const IntervalVector&)) &max_IntevalVector);
+
+  // Automatic cast from lists to IntervalVectors (used for instance in SIVIA calls)
+  py::implicitly_convertible<py::list, IntervalVector>();
 };

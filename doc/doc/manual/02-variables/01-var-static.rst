@@ -16,7 +16,7 @@ Note also that they are not involved during the process of constraint propagatio
   .. Figure:: ../../img/logo_ibex.jpg
     :align: right
   
-  These static variables come from the `IBEX library <http://www.ibex-lib.org>`_. They are briefly presented here for the sake of consistency. For more information, please refer to the `IBEX documentation <http://www.ibex-lib.org/doc/interval.html#intervals-vectors-and-matrices>`_ for C++ use.
+  These static variables come from the `IBEX library <https://github.com/ibex-team/ibex-lib>`_. They are briefly presented here for the sake of consistency. For more information, please refer to the `IBEX documentation <https://ibex-team.github.io/ibex-lib/interval.html#intervals-vectors-and-matrices>`_ for C++ use.
 
 
 .. _sec-manual-varstatic-vectors:

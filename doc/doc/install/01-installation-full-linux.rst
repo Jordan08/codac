@@ -2,27 +2,43 @@
 
 .. _sec-installation-full-linux:
 
-#####################################
-Installing Codac on Linux for C++ use
-#####################################
+########################################
+Installing Codac v1 on Linux for C++ use
+########################################
 
 
-Install from package (latest release, for Ubuntu amd64)
----------------------------------------------------------
+Install from package (latest release, for Ubuntu (amd64, arm64), Debian (arm64, armhf) and possibly others)
+-----------------------------------------------------------------------------------------------------------
 
-A Debian package is available for the last release |version| of the library:
+A Debian package is available for the last release 1.6 of the library:
 
 .. code-block:: bash
 
-  sudo sh -c 'echo "deb [trusted=yes] https://www.ensta-bretagne.fr/packages/`lsb_release --id -s | tr [:upper:] [:lower:]`/`lsb_release -cs` ./" > /etc/apt/sources.list.d/ensta-bretagne.list'
+  sudo sh -c 'echo "deb [trusted=yes] https://packages.ensta-bretagne.fr/$(if [ -z "$(. /etc/os-release && echo $UBUNTU_CODENAME)" ]; then echo debian/$(. /etc/os-release && echo $VERSION_CODENAME); else echo ubuntu/$(. /etc/os-release && echo $UBUNTU_CODENAME); fi) ./" > /etc/apt/sources.list.d/ensta-bretagne.list'
   sudo apt update
   sudo apt install libcodac-dev
 
-Then, check your installation `with the instructions of this page <03-start-cpp-project.html>`_.
+Then, check your installation :ref:`with the instructions of this page <sec-start-cpp-project>`.
+
+.. warning::
+
+  | **URL changed**: Please uninstall before.
 
 .. note::
 
-  For a Raspberry Pi running Raspbian Buster, download and extract ``codac_standalone_armv6hf_buster.zip`` from `<https://github.com/codac-team/codac/releases/latest/>`_, then in the ``example`` folder run:
+  To uninstall Codac, you might want to do the following:
+
+  .. code-block:: bash
+
+    sudo apt remove libcodac-dev libibex-dev
+    sudo rm -f /etc/apt/sources.list.d/ensta-bretagne.list
+    sudo apt update
+
+  Note also that ``libeigen3-dev`` might have been installed as a dependency of Codac but might be also used by other software. You might want to keep it.
+
+.. note::
+
+  Standalone archives exist also for all the supported configurations, e.g. for a Raspberry Pi running Raspberry Pi OS Bookworm 32 bit, download and extract ``codac_standalone_armhf_bookworm.zip`` from `<https://github.com/codac-team/codac/releases/latest/>`_, then in the ``example`` folder run:
 
   .. code-block:: bash
 
@@ -31,15 +47,15 @@ Then, check your installation `with the instructions of this page <03-start-cpp-
   and check that "My first tube:Tube [0, 10]" appears.
 
 
-Install from sources (latest development)
------------------------------------------
+Install from sources (latest development of v1)
+-----------------------------------------------
 
 In case you prefer the latest development version, Codac can be installed by compiling the sources.
 
 Requirements
 ^^^^^^^^^^^^
 
-Codac uses several features of the `IBEX library <http://www.ibex-lib.org/doc/install.html>`_ that you have to install first. The last version of IBEX is maintained on `this unofficial development repository <https://github.com/lebarsfa/ibex-lib/tree/actions>`_:
+Codac uses several features of the `IBEX library <https://ibex-team.github.io/ibex-lib/install.html>`_ that you have to install first. The last version of IBEX is maintained on `this unofficial development repository <https://github.com/lebarsfa/ibex-lib/tree/master>`_:
 
 .. code-block:: bash
 
@@ -47,7 +63,7 @@ Codac uses several features of the `IBEX library <http://www.ibex-lib.org/doc/in
   sudo apt-get install -y g++ gcc flex bison cmake git libeigen3-dev
   
   # Download IBEX sources from GitHub
-  git clone -b actions https://github.com/lebarsfa/ibex-lib.git
+  git clone -b master https://github.com/lebarsfa/ibex-lib.git
   
   # Configure IBEX before installation
   cd ibex-lib
@@ -60,6 +76,10 @@ Codac uses several features of the `IBEX library <http://www.ibex-lib.org/doc/in
   cd ../..
 
 For further CMake options, please refer to the IBEX documentation. 
+
+.. warning::
+
+  GAOL prerequisite: On some platforms, you might need to install manually `MathLib <https://github.com/lebarsfa/mathlib>`_ and `GAOL <https://github.com/lebarsfa/GAOL>`_ with CMake and `specify where they are <https://ibex-team.github.io/ibex-lib/install-cmake.html#configuration-options>`_ to build IBEX successfully and have accurate computations.
 
 .. admonition:: Debug/development mode
   
@@ -80,6 +100,7 @@ The last sources are available on `the official Codac development repository <ht
   # The codac directory can be placed in your home, same level as IBEX
   git clone https://github.com/codac-team/codac   # download the sources from GitHub
   cd codac                                        # move to the Codac directory
+  git checkout codac1                             # will use latest version of Codac1
   git submodule init ; git submodule update       # get pybind11 submodule
   mkdir build ; cd build ; cmake .. ; make        # build the sources
   sudo make install                               # install the library
@@ -98,7 +119,7 @@ For instance:
   mkdir build -p ; cd build ; cmake .. ; make     # cmake compilation
   ./codac_basics_01                               # running example
 
-Do not forget to launch the VIBes viewer before running your program.
+Do not forget to launch the :ref:`VIBes viewer <sec-installation-graphics>` before running your program.
 
 
 (for experts) Additional installation options
@@ -159,4 +180,4 @@ Do not forget to launch the VIBes viewer before running your program.
     export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$HOME/ibex-lib/build_install
     export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$HOME/codac/build_install
 
-See also `Information for developers <info_dev.html>`_.
+See also :ref:`Information for developers <sec-manual-dev>`.

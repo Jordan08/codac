@@ -13,7 +13,7 @@
 const char* DOCS_INTERVALVECTOR_TYPE =
 R"doc_itv(An IntervalVector is a cartesian product of Intervals
 The docs string is taken from ibex_IntervalVector.h source file
-For more information read doc from http://www.ibex-lib.org/
+For more information read doc from https://github.com/ibex-team/ibex-lib/
 
 An IntervalVector can be initialized with:
 

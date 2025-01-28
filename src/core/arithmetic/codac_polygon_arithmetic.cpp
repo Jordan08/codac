@@ -67,7 +67,7 @@ namespace codac
     return ConvexPolygon(v_result_thick_pts);
   }
   
-  const ConvexPolygon operator&(const ConvexPolygon& p1, const ConvexPolygon& p2)
+  vector<ThickPoint> inter_thickpoints(const ConvexPolygon& p1, const ConvexPolygon& p2)
   {
     vector<ThickPoint> v_pts;
 
@@ -75,7 +75,7 @@ namespace codac
     for(const auto& pt_ : p1.vertices())
     {
       ThickPoint pt(pt_);
-      if(p2.encloses(pt) != NO)
+      if(p2.contains(pt) != NO)
         v_pts.push_back(pt);
     }
 
@@ -83,7 +83,7 @@ namespace codac
     for(const auto& pt_ : p2.vertices())
     {
       ThickPoint pt(pt_);
-      if(p1.encloses(pt) != NO)
+      if(p1.contains(pt) != NO)
         v_pts.push_back(pt);
     }
 
@@ -116,7 +116,12 @@ namespace codac
         }
       }
 
-    return ConvexPolygon(v_pts);
+    return v_pts;
+  }
+
+  const ConvexPolygon operator&(const ConvexPolygon& p1, const ConvexPolygon& p2)
+  {
+    return ConvexPolygon(inter_thickpoints(p1,p2));
   }
 
   const ConvexPolygon operator&(const IntervalVector& p1, const ConvexPolygon& p2)
@@ -129,5 +134,27 @@ namespace codac
   {
     assert(p2.size() == 2 && "other dimensions not supported");
     return operator&(p1, ConvexPolygon(p2));
+  }
+  
+  const ConvexPolygon operator|(const ConvexPolygon& p1, const ConvexPolygon& p2)
+  {
+    vector<ThickPoint> v_pts;
+    for(const auto& pt_ : p1.vertices())
+      v_pts.push_back(ThickPoint(pt_));
+    for(const auto& pt_ : p2.vertices())
+      v_pts.push_back(ThickPoint(pt_));
+    return ConvexPolygon(v_pts);
+  }
+
+  const ConvexPolygon operator|(const IntervalVector& p1, const ConvexPolygon& p2)
+  {
+    assert(p1.size() == 2 && "other dimensions not supported");
+    return operator|(p2, ConvexPolygon(p1));
+  }
+
+  const ConvexPolygon operator|(const ConvexPolygon& p1, const IntervalVector& p2)
+  {
+    assert(p2.size() == 2 && "other dimensions not supported");
+    return operator|(p1, ConvexPolygon(p2));
   }
 }

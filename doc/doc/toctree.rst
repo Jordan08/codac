@@ -13,6 +13,7 @@ Codac: constraint-programming for robotics
   /install/01-installation
   /install/02-start-py-project
   /install/03-start-cpp-project
+  /install/04-start-matlab-project
 
 
 .. toctree::
@@ -36,14 +37,21 @@ Codac: constraint-programming for robotics
 
 
 .. toctree::
-  :caption: Use cases
+  :caption: Set4MOST
   :maxdepth: 2
   :titlesonly:
 
-  Lie symmetries for guaranteed integ. </use-cases/lie-symmetries/index>
+  Examples </tutorial-set4most/01-examples/index>
 
-..  /use-cases/set-inversion/index
-..  /use-cases/loops/index
+
+.. toctree::
+  :caption: Tutorial JNRR23
+  :maxdepth: 2
+  :titlesonly:
+
+  JNRR-1. Intervals and contractors </tutorial-jnrr23/01-basics/index>
+  JNRR-2. Static range-only localization </tutorial-jnrr23/02-static-rangeonly/index>
+  JNRR-3. Towards SLAM </tutorial-jnrr23/03-towards-slam/index>
 
 
 .. toctree::
@@ -65,6 +73,18 @@ Codac: constraint-programming for robotics
 
   G. Localization with data association </tutorial/07-data-association/index>
   H. Range-only SLAM </tutorial/08-rangeonly-slam/index>
+
+
+.. toctree::
+  :caption: Use cases
+  :maxdepth: 2
+  :titlesonly:
+
+  Lie symmetries for guaranteed integ. </use-cases/lie-symmetries/index>
+  Pose estimation with range-only obs. </use-cases/brunovsky/index>
+
+..  /use-cases/set-inversion/index
+..  /use-cases/loops/index
 
 
 .. toctree::

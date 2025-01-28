@@ -69,6 +69,16 @@ string to_string(const IntervalMatrix& x)
   return ss.str();
 }
 
+// Inspired by Numpy documentation
+// See: https://pybind11.readthedocs.io/en/stable/advanced/pycpp/numpy.html
+
+  #include "codac2_IntervalMatrix.h"
+  /* Bind MatrixXd (or some other Eigen type) to Python */
+  typedef Eigen::MatrixXd Matrix;
+
+  //typedef Eigen::Matrix::Scalar Scalar;
+  constexpr bool rowMajor = !true;//Eigen::Matrix::Flags & Eigen::RowMajorBit;
+
 void export_IntervalMatrix(py::module& m)
 {
   py::class_<IntervalMatrix> interval_matrix(m, "IntervalMatrix");
@@ -79,23 +89,45 @@ void export_IntervalMatrix(py::module& m)
   .def(py::init<const IntervalMatrix&>())
   .def(py::init(&create_from_list))
 
-  .def(py::init([](py::buffer b) // create for instance an IntervalMatrix from a NumPy matrix
+  .def(py::init([](py::buffer b)
   {
+    // Inspired by Numpy documentation
+    // See: https://pybind11.readthedocs.io/en/stable/advanced/pycpp/numpy.html
+
+    // Note: use raw data does not work because of strides,
+    // see for instance transpose operations on numpy matrices
+
+    typedef Eigen::Stride<Eigen::Dynamic, Eigen::Dynamic> Strides;
+
     // Request a buffer descriptor from Python
     py::buffer_info info = b.request();
 
-    // Some sanity checks...
+    // Some basic validation checks...
     if(info.format != py::format_descriptor<double>::format())
-      throw std::runtime_error("Incompatible format: expected a double array");
+      throw std::runtime_error("Incompatible format: expected a double array!");
 
     if(info.ndim != 2)
-      throw std::runtime_error("Incompatible buffer dimension");
+      throw std::runtime_error("Incompatible buffer dimension!");
 
-    ibex::Matrix m((int)info.shape[0], (int)info.shape[1], static_cast<double*>(info.ptr));
-    return IntervalMatrix(m);
+    auto strides = Strides(
+      info.strides[rowMajor ? 0 : 1] / (py::ssize_t)sizeof(double),
+      info.strides[rowMajor ? 1 : 0] / (py::ssize_t)sizeof(double));
+
+    auto map = Eigen::Map<Eigen::MatrixXd, 0, Strides>(
+      static_cast<double*>(info.ptr), info.shape[0], info.shape[1], strides);
+
+    return codac2::to_codac1(codac2::Matrix(map));
   }))
 
   .def("__getitem__", [](IntervalMatrix& s, size_t index) -> IntervalVector&
+    {
+      if(index < 0 || index >= static_cast<size_t>(s.nb_rows()))
+        throw py::index_error();
+      return s[static_cast<int>(index)];
+    },
+    py::return_value_policy::reference_internal)
+
+  .def("getitem", [](IntervalMatrix& s, size_t index) -> IntervalVector&
     {
       if(index < 0 || index >= static_cast<size_t>(s.nb_rows()))
         throw py::index_error();
@@ -110,6 +142,13 @@ void export_IntervalMatrix(py::module& m)
       s[static_cast<int>(index)] = t;
     })
 
+  .def("setitem", [](IntervalMatrix& s, size_t index, IntervalVector& t)
+    {
+      if(index < 0 || index >= static_cast<size_t>(s.nb_rows()))
+        throw py::index_error();
+      s[static_cast<int>(index)] = t;
+    })
+
   .def("assign", &assign_IntervalMatrix)
   .def(py::self == py::self)
   .def(py::self != py::self)
@@ -117,6 +156,8 @@ void export_IntervalMatrix(py::module& m)
   .def(py::self - py::self)
   .def(py::self * py::self)
   .def(py::self &= py::self)
+  // For MATLAB compatibility.
+  .def("inter_self", [](IntervalMatrix& s, const IntervalMatrix& a) { return s&=a; })
   .def(-py::self)
   .def(py::self += py::self)
   // todo: .def(py::self += other<Matrix>())

@@ -239,7 +239,7 @@ typedef struct ImpactStatus_{
  * The separator algorythm is inspired from the ibexlib ones 
  * but performs the inner and outer contraction concurently.
  * 
- * See Ibexlib (CtcForAll and CtcExist)[http://www.ibex-lib.org/doc/contractor.html#exists-and-forall] 
+ * See Ibexlib (CtcForAll and CtcExist)[https://ibex-team.github.io/ibex-lib/contractor.html#exists-and-forall] 
  * documentation for more details.
  */
 class SepProj : public Sep {

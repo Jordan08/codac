@@ -5,6 +5,9 @@
   cmake_minimum_required(VERSION 3.0.2)
   project(codac_linobs LANGUAGES CXX)
 
+  set(CMAKE_CXX_STANDARD 17)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 # Compilation options
 
   set(CMAKE_CXX_STANDARD 17)
@@ -32,7 +35,7 @@
   # set(CMAKE_PREFIX_PATH "~/eigen/build_install")
 
   find_package(Eigen3 REQUIRED NO_MODULE)
-  message(STATUS "Found Eigen3 version ${EIGEN3_VERSION}")
+  message(STATUS "Found Eigen3 version ${Eigen3_VERSION}")
 
 # Adding Codac
 

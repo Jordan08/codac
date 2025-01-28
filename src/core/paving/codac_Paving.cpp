@@ -21,9 +21,21 @@ namespace codac
   // Basics
   
   Paving::Paving(const IntervalVector& box, SetValue value)
-    : Set(box, value), m_root(this)
+    : Set(box, value), m_flag(false), m_root(this), m_first_subpaving(nullptr), m_second_subpaving(nullptr)
   {
 
+  }
+  
+  Paving::Paving(const Paving& p)
+    : Set(p), m_flag(p.m_flag), m_root(p.m_root), m_first_subpaving(nullptr), m_second_subpaving(nullptr)
+  {
+    if(p.m_first_subpaving)
+    {
+      m_first_subpaving = new Paving(p.m_first_subpaving->m_box, p.m_first_subpaving->m_value);
+      *m_first_subpaving = *p.m_first_subpaving;
+      m_second_subpaving = new Paving(p.m_second_subpaving->m_box, p.m_second_subpaving->m_value);
+      *m_second_subpaving = *p.m_second_subpaving;
+    }
   }
 
   Paving::~Paving()
@@ -33,6 +45,23 @@ namespace codac
       delete m_first_subpaving;
       delete m_second_subpaving;
     }
+  }
+  
+  Paving& Paving::operator=(const Paving& p)
+  {
+    Set::operator = (p);      
+    m_flag = p.m_flag; 
+    m_root = p.m_root;
+    m_first_subpaving = nullptr;
+    m_second_subpaving = nullptr;
+    if(p.m_first_subpaving)
+    {
+      m_first_subpaving = new Paving(p.m_first_subpaving->m_box, p.m_first_subpaving->m_value);
+      *m_first_subpaving = *p.m_first_subpaving;
+      m_second_subpaving = new Paving(p.m_second_subpaving->m_box, p.m_second_subpaving->m_value);
+      *m_second_subpaving = *p.m_second_subpaving;
+    }
+    return *this;
   }
 
   // Binary tree structure
@@ -128,10 +157,49 @@ namespace codac
     if(m_second_subpaving) m_second_subpaving->reset_flags();
   }
 
+  void Paving::reset_paving(SetValue value)
+  {
+    m_value = value;
+    if(m_first_subpaving)
+    {
+      delete m_first_subpaving; m_first_subpaving = nullptr;
+      delete m_second_subpaving; m_second_subpaving = nullptr;
+    }
+  }
+
   // Extract methods
+  
+  void Paving::get_boxes(list<IntervalVector>& l_subpavings, SetValue val, SetValue neg_val) const
+  {
+    assert(!(val & neg_val) && "val and neg_val intersect");
+
+    if(neg_val != SetValue::DEFAULT && (m_value & neg_val) && !(m_value & val))
+    {
+      // The current node and its leaves do not contain solutions
+      // So we stop here
+    }
+
+    else
+    {
+      if(is_leaf())
+      {
+        if(m_value & val)
+          l_subpavings.push_back(box());
+      }
+
+      else
+      {
+        m_first_subpaving->get_boxes(l_subpavings, val, neg_val);
+        m_second_subpaving->get_boxes(l_subpavings, val, neg_val);
+      }
+    }
+  }
 
   void Paving::get_pavings_intersecting(SetValue val, const IntervalVector& box_to_intersect, vector<const Paving*>& v_subpavings, bool no_degenerated_intersection) const
   {
+    // todo: use the negation of val for a faster reading of the tree?
+    // See Paving::get_boxes
+
     assert(box_to_intersect.size() == 2);
     IntervalVector inter = box_to_intersect & m_box;
 
@@ -169,12 +237,11 @@ namespace codac
   // todo:   return x1->get_items().size() > x2->get_items().size();
   // todo: }
 
-  vector<ConnectedSubset> Paving::get_connected_subsets(bool sort_by_size) const
+  vector<ConnectedSubset> Paving::get_connected_subsets(bool sort_by_size, SetValue val) const
   {
     reset_flags();
 
     const Paving *p;
-    SetValue val = SetValue::UNKNOWN | SetValue::IN;
     vector<ConnectedSubset> v_connected_subsets;
 
     while((p = get_first_leaf(val, true)))

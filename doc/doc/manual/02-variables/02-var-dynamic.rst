@@ -35,7 +35,7 @@ A simple temporal function [#f1]_ can be defined and used for building a traject
     Interval tdomain(0.,10.);                            // temporal domain: [t_0,t_f]
     Trajectory x(tdomain, TFunction("cos(t)+sin(2*t)")); // defining x(·) as: t ↦ cos(t)+sin(2t)
 
-Usual functions such as :math:`\cos`, :math:`\log`, *etc.* can be used to define a ``TFunction`` object. The convention used for these definitions is the one of IBEX (`read more <http://www.ibex-lib.org/doc/function.html>`_). Note that the system variable :math:`t` is a predefined variable of ``TFunction`` objects, that does not appear in IBEX's objects.
+Usual functions such as :math:`\cos`, :math:`\log`, *etc.* can be used to define a ``TFunction`` object. The convention used for these definitions is the one of IBEX (`read more <https://ibex-team.github.io/ibex-lib/function.html>`_). Note that the system variable :math:`t` is a predefined variable of ``TFunction`` objects, that does not appear in IBEX's objects.
 
 The evaluation of a trajectory at some time :math:`t`, for instance :math:`z=x(t)`, is performed with parentheses:
 
@@ -472,7 +472,7 @@ Next pages will present several methods to use *tubes* that are envelopes of tra
 
 
 .. rubric:: Footnotes
-.. [#f1] In Codac, a ``codac::TFunction`` is the extension of IBEX's ``Function`` objects, for the dynamical case (see more `about IBEX's functions <http://www.ibex-lib.org/doc/function.html>`_).
+.. [#f1] In Codac, a ``codac::TFunction`` is the extension of IBEX's ``Function`` objects, for the dynamical case (see more `about IBEX's functions <https://ibex-team.github.io/ibex-lib/function.html>`_).
 
 
 .. admonition:: Technical documentation
