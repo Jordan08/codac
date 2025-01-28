@@ -68,7 +68,7 @@ TEST_CASE("serialization/deserialization of Tube")
     tube1.serialize(filename);
 
     Trajectory *traj;
-    CHECK_THROWS(Tube tube2(filename, traj););
+    CHECK_THROWS([&]() { Tube tube2(filename, traj); }());
 
     Tube tube4(filename);
     remove(filename.c_str());
@@ -131,7 +131,7 @@ TEST_CASE("serialization/deserialization of Tube")
     tube1.serialize(filename);
 
     TrajectoryVector *traj;
-    CHECK_THROWS(TubeVector tube2(filename, traj););
+    CHECK_THROWS([&]() {TubeVector tube2(filename, traj);}());
     TubeVector tube4(filename);
     remove(filename.c_str());
     CHECK(tube1 == tube4);

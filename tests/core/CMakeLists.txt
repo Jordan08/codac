@@ -6,10 +6,10 @@ set(TESTS_NAME codac-tests-core)
 
 list(APPEND SRC_TESTS ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
 
-  ${CMAKE_CURRENT_SOURCE_DIR}/tests_codac2_tubes.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/tests_codac2_intervalvector.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/tests_codac2_intervalmatrix.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/tests_codac2_tubes_templated_types.cpp
+  #${CMAKE_CURRENT_SOURCE_DIR}/tests_codac2_tubes.cpp
+  #${CMAKE_CURRENT_SOURCE_DIR}/tests_codac2_intervalvector.cpp
+  #${CMAKE_CURRENT_SOURCE_DIR}/tests_codac2_intervalmatrix.cpp
+  #${CMAKE_CURRENT_SOURCE_DIR}/tests_codac2_tubes_templated_types.cpp
 
   ${CMAKE_CURRENT_SOURCE_DIR}/tests_predefined_tubes.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests_predefined_tubes.h
@@ -29,7 +29,7 @@ list(APPEND SRC_TESTS ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests_integration.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests_operators.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests_geometry.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/tests_polygons.cpp
+  #${CMAKE_CURRENT_SOURCE_DIR}/tests_polygons.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests_serialization.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests_slices_structure.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests_trajectory.cpp

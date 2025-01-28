@@ -150,14 +150,14 @@ TEST_CASE("Trajectory base")
   SECTION("Trajectory vector")
   {
     // Defined by maps of values
-    map<double,Vector> map_values;
+    map<double,codac::Vector> map_values;
     for(double t = 0. ; t <= 10. ; t++)
-      map_values.insert(make_pair(t, Vector(4,t)));
+      map_values.insert(make_pair(t, codac::Vector(4,t)));
     TrajectoryVector test(map_values);
 
     CHECK(test.codomain() == IntervalVector(4,Interval(0.,10.)));
-    CHECK(test.first_value() == Vector(4,0.));
-    CHECK(test.last_value() == Vector(4,10.));
+    CHECK(test.first_value() == codac::Vector(4,0.));
+    CHECK(test.last_value() == codac::Vector(4,10.));
     CHECK(test.size() == 4);
   }
 
@@ -165,9 +165,9 @@ TEST_CASE("Trajectory base")
   {
     // Defined by maps of values
 
-    map<double,Vector> vector_map_values;
+    map<double,codac::Vector> vector_map_values;
     for(double t = 0. ; t <= 10. ; t++)
-      vector_map_values.insert(make_pair(t, Vector(4,t)));
+      vector_map_values.insert(make_pair(t, codac::Vector(4,t)));
     TrajectoryVector test1(vector_map_values);
     
     map<double,double> scalar_map_values;

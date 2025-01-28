@@ -300,7 +300,7 @@ TEST_CASE("Tests from IBEX IntervalVector")
   SECTION("mid01")
   {
     IntervalVector x(3,_x);
-    Vector m=x.mid();
+    codac2::Vector m=x.mid();
     CHECK(m[0]==0.5);
     CHECK(m[1]==2.5);
     CHECK(m[2]==4.5);
