@@ -10,7 +10,7 @@ Installing Codac v1 on Linux for C++ use
 Install from package (latest release, for Ubuntu (amd64, arm64), Debian (arm64, armhf) and possibly others)
 -----------------------------------------------------------------------------------------------------------
 
-A Debian package is available for the last release 1.5.6 of the library:
+A Debian package is available for the last release 1.6 of the library:
 
 .. code-block:: bash
 

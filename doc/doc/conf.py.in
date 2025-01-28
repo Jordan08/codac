@@ -65,7 +65,7 @@ rst_prolog = """
   :class: right-aligned-note
 
 .. seealso::
-  This manual refers to Codac v1, but a new v2 implementation is currently in progress... an update of this manual will be available soon. `See more <https://github.com/codac-team/codac/tree/codac2>`_.
+  This manual refers to Codac v1, but a new v2 implementation is currently in progress... an update of this manual will be available soon. `See more <https://codac.io/v2>`_.
 """
 
 # GitHub repo
