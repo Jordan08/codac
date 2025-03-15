@@ -242,8 +242,8 @@ In the :file:`codac` directory, test the x86_64 Linux configuration locally usin
 .. code-block:: bash
 
   chmod a+x scripts/docker/build_pybinding.sh
-  docker pull lebarsfa/manylinux2014_x86_64-for-codac
-  docker run --rm -v `pwd`:/io lebarsfa/manylinux2014_x86_64-for-codac /io/scripts/docker/build_pybinding.sh
+  docker pull lebarsfa/manylinux_2_28_x86_64-for-codac
+  docker run --rm -v `pwd`:/io lebarsfa/manylinux_2_28_x86_64-for-codac /io/scripts/docker/build_pybinding.sh
   
 The same can be done for the ARM Linux configurations (preferably from a powerful ARM computer, such as a Mac with Apple Silicon).
 
