@@ -13,8 +13,6 @@
 #include "codac2_peibos_tools.h"
 #include "codac2_OctaSym_operator.h"
 
-#include <omp.h>
-
 using namespace codac2;
 
 namespace codac2
