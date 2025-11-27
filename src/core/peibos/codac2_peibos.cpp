@@ -13,6 +13,8 @@
 #include "codac2_peibos_tools.h"
 #include "codac2_OctaSym_operator.h"
 
+#include <omp.h>
+
 using namespace codac2;
 
 namespace codac2
@@ -50,20 +52,36 @@ namespace codac2
     assert_release (m < psi_0.output_size());
     assert_release (Sigma.size() > 0 && (int) Sigma[0].size() == psi_0.output_size() && "no generator given or wrong dimension of generator (must match output size of psi_0)");
 
-    clock_t t_start = clock();
+    double t_start = omp_get_wtime();
 
     std::vector<Parallelepiped> output;
 
     std::vector<IntervalVector> boxes;
     double true_eps = split(IntervalVector::constant(m,{-1,1}), epsilon, boxes);
 
-    for (const auto& sigma : Sigma)
+    
+    // #pragma omp parallel
     {
+      std::vector<Parallelepiped> local_output;
       VectorVar x(m);
-      AnalyticFunction g_i ({x}, f(sigma(psi_0(x))+offset));
 
-      for (const auto& X : boxes)        
-        output.push_back(g_i.parallelepiped_eval(X));
+      // #pragma omp for collapse(2) nowait
+      for (size_t i = 0; i < Sigma.size(); ++i)
+      {
+        for (size_t j = 0; j < boxes.size(); ++j)
+        {
+          const auto& sigma = Sigma[i];
+          const auto& X     = boxes[j];
+
+          AnalyticFunction g_i ({x}, f(sigma(psi_0(x))+offset));
+          local_output.push_back(g_i.parallelepiped_eval(X));
+        }
+      }
+      #pragma omp critical
+      {
+        for (auto& elem : local_output)
+          output.emplace_back(std::move(elem));
+      }
     }
 
     if (verbose)
@@ -71,9 +89,15 @@ namespace codac2
       printf("\nPEIBOS statistics:\n");
       printf("------------------\n");
       printf("Real epsilon: %.4f\n", true_eps);
-      printf("Computation time: %.4fs\n\n", (double)(clock()-t_start)/CLOCKS_PER_SEC);
+      printf("Computation time: %.4fs\n\n", omp_get_wtime() - t_start);
     }
 
     return output;
   }
 }
+
+// output.insert(
+//         output.end(),
+//         std::make_move_iterator(local_output.begin()),
+//         std::make_move_iterator(local_output.end())
+//     );
