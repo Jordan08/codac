@@ -52,7 +52,7 @@ namespace codac2
     assert_release (m < psi_0.output_size());
     assert_release (Sigma.size() > 0 && (int) Sigma[0].size() == psi_0.output_size() && "no generator given or wrong dimension of generator (must match output size of psi_0)");
 
-    double t_start = omp_get_wtime();
+    // double t_start = omp_get_wtime();
 
     std::vector<Parallelepiped> output;
 
@@ -77,7 +77,7 @@ namespace codac2
           local_output.push_back(g_i.parallelepiped_eval(X));
         }
       }
-      #pragma omp critical
+      // #pragma omp critical
       {
         for (auto& elem : local_output)
           output.emplace_back(std::move(elem));
@@ -89,7 +89,7 @@ namespace codac2
       printf("\nPEIBOS statistics:\n");
       printf("------------------\n");
       printf("Real epsilon: %.4f\n", true_eps);
-      printf("Computation time: %.4fs\n\n", omp_get_wtime() - t_start);
+      // printf("Computation time: %.4fs\n\n", omp_get_wtime() - t_start);
     }
 
     return output;
