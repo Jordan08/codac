@@ -32,16 +32,8 @@ namespace codac2
 
       T init_value(ValuesMap& v, const T& x) const
       {
-        auto it = v.find(unique_id());
-
-        if(it == v.end())
-        {
-          v[unique_id()] = std::make_shared<T>(x);
-          return x;
-        }
-
-        *std::dynamic_pointer_cast<T>(it->second) = x;
-        return *std::dynamic_pointer_cast<T>(it->second);
+        v[unique_id()] = std::make_shared<T>(x);
+        return *std::dynamic_pointer_cast<T>(v[unique_id()]);
       }
 
       T& value(ValuesMap& v) const

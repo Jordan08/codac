@@ -31,11 +31,10 @@ namespace codac2
   vector<T> PEIBOS(const capd::IMap& i_map, double tf, const AnalyticFunction<VectorType>& psi_0, const vector<OctaSym>& Sigma, double epsilon, const Vector& offset, bool verbose)
   {
     int m = psi_0.input_size();
-    int n = psi_0.output_size();
 
-    assert_release(offset.size() == n);
-    assert_release(m < n);
-    assert_release(Sigma.size() > 0 && (int) Sigma[0].size() ==  n);
+    assert_release(offset.size() == psi_0.output_size());
+    assert_release(m < psi_0.output_size());
+    assert_release(Sigma.size() > 0 && (int) Sigma[0].size() ==  psi_0.output_size());
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
@@ -65,7 +64,8 @@ namespace codac2
       capd::ITimeMap timeMap(solver);
       capd::ITimeMap timeMap_punct(solver);
 
-      for (int i = start; i < end; ++i) {
+      for (int i = start; i < end; ++i) 
+      {
         const auto& sigma = *work[i].sigma;
         const auto& X = *work[i].box;
 
@@ -93,11 +93,12 @@ namespace codac2
     std::vector<std::thread> threads;
     int chunk_size = (int(work.size()) + nthreads - 1) / nthreads;
 
-    for (int t = 0; t < nthreads; ++t) {
-        int start = t * chunk_size;
-        int end = std::min(start + chunk_size, (int)work.size());
-        if (start >= end) break;
-        threads.emplace_back(worker, start, end, t);
+    for (int t = 0; t < nthreads; ++t) 
+    {
+      int start = t * chunk_size;
+      int end = std::min(start + chunk_size, (int)work.size());
+      if (start >= end) break;
+      threads.emplace_back(worker, start, end, t);
     }
 
     for (auto& th : threads) th.join();

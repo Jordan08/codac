@@ -13,6 +13,10 @@
 #include "codac2_peibos_tools.h"
 #include "codac2_OctaSym_operator.h"
 
+#include <thread>
+#include <algorithm>
+#include <chrono>
+
 using namespace codac2;
 
 namespace codac2
@@ -50,44 +54,65 @@ namespace codac2
     assert_release (m < psi_0.output_size());
     assert_release (Sigma.size() > 0 && (int) Sigma[0].size() == psi_0.output_size() && "no generator given or wrong dimension of generator (must match output size of psi_0)");
 
-    // double t_start = omp_get_wtime();
-
-    std::vector<Parallelepiped> output;
+    auto start_time = std::chrono::high_resolution_clock::now();
 
     std::vector<IntervalVector> boxes;
     double true_eps = split(IntervalVector::constant(m,{-1,1}), epsilon, boxes);
 
+    int nthreads = std::thread::hardware_concurrency();
+    std::vector<std::vector<Parallelepiped>> thread_outputs(nthreads);
+
+    struct WorkItem { const OctaSym* sigma; const IntervalVector* box; };
+    std::vector<WorkItem> work;
+    work.reserve(Sigma.size() * boxes.size());
+    for (const auto& sigma : Sigma)
+        for (const auto& box : boxes)
+            work.push_back({&sigma, &box});
     
-    // #pragma omp parallel
+    std::vector<Parallelepiped> local_output;
+    VectorVar x(m);
+
+    auto worker = [&](int start, int end, int tid) 
     {
-      std::vector<Parallelepiped> local_output;
-      VectorVar x(m);
-
-      // #pragma omp for collapse(2) nowait
-      for (size_t i = 0; i < Sigma.size(); ++i)
+      auto& local_output = thread_outputs[tid];
+      for (int i = start; i < end; ++i) 
       {
-        for (size_t j = 0; j < boxes.size(); ++j)
-        {
-          const auto& sigma = Sigma[i];
-          const auto& X     = boxes[j];
+        const auto& sigma = *work[i].sigma;
+        const auto& X = *work[i].box;
 
-          AnalyticFunction g_i ({x}, f(sigma(psi_0(x))+offset));
-          local_output.push_back(g_i.parallelepiped_eval(X));
-        }
+        AnalyticFunction g_i ({x}, f(sigma(psi_0(x))+offset));
+        local_output.push_back(g_i.parallelepiped_eval(X));
       }
-      // #pragma omp critical
-      {
-        for (auto& elem : local_output)
-          output.emplace_back(std::move(elem));
-      }
+    };
+
+    std::vector<std::thread> threads;
+    int chunk_size = (int(work.size()) + nthreads - 1) / nthreads;
+
+    for (int t = 0; t < nthreads; ++t) 
+    {
+      int start = t * chunk_size;
+      int end = std::min(start + chunk_size, (int)work.size());
+      if (start >= end) break;
+      threads.emplace_back(worker, start, end, t);
     }
+
+    for (auto& th : threads) th.join();
+
+    std::vector<Parallelepiped> output;
+    output.reserve(Sigma.size() * boxes.size());
+
+    for (auto& vec : thread_outputs)
+        for (auto& el : vec)
+            output.emplace_back(std::move(el));
+
 
     if (verbose)
     {
       printf("\nPEIBOS statistics:\n");
       printf("------------------\n");
       printf("Real epsilon: %.4f\n", true_eps);
-      // printf("Computation time: %.4fs\n\n", omp_get_wtime() - t_start);
+      std::chrono::duration<double> elapsed = std::chrono::high_resolution_clock::now() - start_time;
+      printf("Computation time: %.4fs\n\n", elapsed.count());
     }
 
     return output;

@@ -49,7 +49,7 @@ int main()
   figure_3d_proj.set_window_properties({25,600},{500,500});
   figure_3d_proj.set_axes({0,{-1.5,2.5}}, {1,{-2,2}});
 
-  auto v_par_3d = PEIBOS(f_3d, psi0_3d, {id_3d,s1,s1*s1,s1.invert(),s2,s2.invert()}, 0.2, true);  
+  auto v_par_3d = PEIBOS(f_3d, psi0_3d, {id_3d,s1,s1*s1,s1.invert(),s2,s2.invert()}, 0.025, true);  
 
   for (const auto& p : v_par_3d)
   {
