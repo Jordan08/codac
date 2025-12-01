@@ -25,8 +25,11 @@ namespace codac2
     Vector offset;
   };
 
-  std::vector<std::pair<PEIBOS_CAPD_Key,std::pair<capd::ITimeMap::SolutionCurve,capd::ITimeMap::SolutionCurve>>> PEIBOS(const capd::IMap& i_map, double tf, const AnalyticFunction<VectorType>& psi_0, const std::vector<OctaSym>& Sigma, double epsilon, bool verbose = false);
-  std::vector<std::pair<PEIBOS_CAPD_Key,std::pair<capd::ITimeMap::SolutionCurve,capd::ITimeMap::SolutionCurve>>> PEIBOS(const capd::IMap& i_map, double tf, const AnalyticFunction<VectorType>& psi_0, const std::vector<OctaSym>& Sigma, double epsilon, const Vector& offset, bool verbose = false);
+  using T = std::pair<PEIBOS_CAPD_Key,std::pair<IntervalVector,IntervalMatrix>>;
+  std::map<double, std::vector<T>> PEIBOS(const capd::IMap& i_map, double tf, double dt, const AnalyticFunction<VectorType>& psi_0, const std::vector<OctaSym>& Sigma, double epsilon, bool verbose = false);
+  using T = std::pair<PEIBOS_CAPD_Key,std::pair<IntervalVector,IntervalMatrix>>;
+  std::map<double, std::vector<T>> PEIBOS(const capd::IMap& i_map, double tf, double dt, const AnalyticFunction<VectorType>& psi_0, const std::vector<OctaSym>& Sigma, double epsilon, const Vector& offset, bool verbose = false);
 
-  std::vector<Parallelepiped> reach_set(const std::vector<std::pair<PEIBOS_CAPD_Key,std::pair<capd::ITimeMap::SolutionCurve,capd::ITimeMap::SolutionCurve>>>& peibos_output, double t);
+  using T = std::pair<PEIBOS_CAPD_Key,std::pair<IntervalVector,IntervalMatrix>>;
+  std::map<double, std::vector<Parallelepiped>> reach_set(const std::map<double, std::vector<T>>& peibos_output);
 }

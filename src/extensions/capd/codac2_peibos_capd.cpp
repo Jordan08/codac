@@ -19,17 +19,22 @@ using namespace std;
 
 namespace codac2
 {
-  vector<pair<PEIBOS_CAPD_Key,pair<capd::ITimeMap::SolutionCurve,capd::ITimeMap::SolutionCurve>>> PEIBOS(const capd::IMap& i_map, double tf, const AnalyticFunction<VectorType>& psi_0, const vector<OctaSym>& Sigma, double epsilon, bool verbose)
+  using T = std::pair<PEIBOS_CAPD_Key,std::pair<IntervalVector,IntervalMatrix>>;
+  std::map<double, std::vector<T>> PEIBOS(const capd::IMap& i_map, double tf, double dt, const AnalyticFunction<VectorType>& psi_0, const vector<OctaSym>& Sigma, double epsilon, bool verbose)
   {
-    return PEIBOS(i_map, tf, psi_0, Sigma, epsilon, Vector::zero(psi_0.output_size()), verbose);
+    return PEIBOS(i_map, tf, dt, psi_0, Sigma, epsilon, Vector::zero(psi_0.output_size()), verbose);
   }
 
-  using T = std::pair<PEIBOS_CAPD_Key,std::pair<
-        capd::ITimeMap::SolutionCurve,
-        capd::ITimeMap::SolutionCurve
-    >>;
-  vector<T> PEIBOS(const capd::IMap& i_map, double tf, const AnalyticFunction<VectorType>& psi_0, const vector<OctaSym>& Sigma, double epsilon, const Vector& offset, bool verbose)
+  using T = std::pair<PEIBOS_CAPD_Key,std::pair<IntervalVector,IntervalMatrix>>;
+  std::map<double, std::vector<T>> PEIBOS(const capd::IMap& i_map, double tf, double dt, const AnalyticFunction<VectorType>& psi_0, const vector<OctaSym>& Sigma, double epsilon, const Vector& offset, bool verbose)
   {
+    std::vector<double> time_points;
+    for (double t = 0.; t <= tf; t += dt)
+        time_points.push_back(t);
+        
+    if (time_points.back() < tf)
+        time_points.push_back(tf);
+
     int m = psi_0.input_size();
 
     assert_release(offset.size() == psi_0.output_size());
@@ -45,7 +50,7 @@ namespace codac2
     double true_eps = split(Interval(-1.,1.)*IntervalVector::Ones(m), epsilon, boxes);
 
     int nthreads = std::thread::hardware_concurrency();
-    std::vector<std::vector<T>> thread_outputs(nthreads);
+    std::vector<std::map<double, std::vector<T>>> thread_outputs(nthreads);
 
     struct WorkItem { const OctaSym* sigma; const IntervalVector* box; };
     std::vector<WorkItem> work;
@@ -71,14 +76,12 @@ namespace codac2
 
         PEIBOS_CAPD_Key key{X, psi_0, sigma, offset};
 
-        // Flow for X
         IntervalVector Y = sigma(psi_0.eval(X)) + offset;
         capd::ITimeMap::SolutionCurve solution(initialTime);
         capd::IVector c = to_capd(Y);
         capd::C1Rect2Set s(c);
         timeMap(finalTime, s, solution);
 
-        // Flow for X midpoint (punctured)
         auto xc = X.mid();
         auto yc = (sigma(psi_0.eval(xc)) + offset).mid();
         capd::ITimeMap::SolutionCurve solution_punct(initialTime);
@@ -86,7 +89,12 @@ namespace codac2
         capd::C1Rect2Set s_punct(c_punct);
         timeMap_punct(finalTime, s_punct, solution_punct);
 
-        local_output.emplace_back(key, std::make_pair(solution, solution_punct));
+        for (auto t : time_points) 
+        {
+            IntervalVector z = to_codac(solution_punct(t));
+            IntervalMatrix Jf = to_codac(solution.derivative(t));
+            local_output[t].emplace_back(key, std::make_pair(z, Jf));
+        }
       }
     };
 
@@ -103,12 +111,12 @@ namespace codac2
 
     for (auto& th : threads) th.join();
 
-    std::vector<T> output;
-    output.reserve(Sigma.size() * boxes.size());
+    std::map<double, std::vector<T>> output;
 
     for (auto& vec : thread_outputs)
-        for (auto& el : vec)
-            output.emplace_back(std::move(el));
+        for (auto t : time_points)
+            for (auto& item : vec[t])
+                output[t].push_back(item);
        
     
     if (verbose)
@@ -116,6 +124,7 @@ namespace codac2
       printf("\nPEIBOS statistics:\n");
       printf("------------------\n");
       printf("Real epsilon: %.4f\n", true_eps);
+      printf("Number of thread used: %d\n", nthreads);
       std::chrono::duration<double> elapsed = std::chrono::high_resolution_clock::now() - start_time;
       printf("Computation time: %.4fs\n\n", elapsed.count());
     }
@@ -123,22 +132,35 @@ namespace codac2
     return output;
   }
 
-  vector<Parallelepiped> reach_set(const vector<pair<PEIBOS_CAPD_Key,pair<capd::ITimeMap::SolutionCurve,capd::ITimeMap::SolutionCurve>>>& peibos_output, double t)
+  using T = std::pair<PEIBOS_CAPD_Key,std::pair<IntervalVector,IntervalMatrix>>;
+  std::map<double,std::vector<Parallelepiped>> reach_set(const std::map<double, std::vector<T>>& peibos_output)
   {
-    vector<Parallelepiped> output;
+    std::map<double,std::vector<Parallelepiped>> output;
 
-    for (const auto& [key,flow_pair] : peibos_output)
+    for (const auto& [time,vec] : peibos_output)
     {
-      const auto& [flow, flow_punct] = flow_pair;
+      for (const auto& [key,flow_pair] : vec)
+      {
+        const auto& [z, Jf] = flow_pair;
 
-      IntervalVector z = to_codac(flow_punct(t));
-      auto Jf_tild = (to_codac(flow_punct.derivative(t))).mid();
-      auto Jf = to_codac(flow.derivative(t));
+        auto p = parallelepiped_inclusion(z, Jf, Jf.mid(), key.psi_0, key.sigma, key.box);
 
-      auto p = parallelepiped_inclusion(z, Jf, Jf_tild, key.psi_0, key.sigma, key.box);
-
-      output.push_back(p);
+        output[time].push_back(p);
+      }
     }
+
+    // for (const auto& [key,flow_pair] : peibos_output)
+    // {
+    //   const auto& [flow, flow_punct] = flow_pair;
+
+    //   IntervalVector z = to_codac((*flow_punct)(t));
+    //   auto Jf_tild = (to_codac((*flow_punct).derivative(t))).mid();
+    //   auto Jf = to_codac((*flow).derivative(t));
+
+    //   auto p = parallelepiped_inclusion(z, Jf, Jf_tild, key.psi_0, key.sigma, key.box);
+
+    //   output.push_back(p);
+    // }
 
     return output;
   }

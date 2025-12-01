@@ -111,6 +111,7 @@ namespace codac2
       printf("\nPEIBOS statistics:\n");
       printf("------------------\n");
       printf("Real epsilon: %.4f\n", true_eps);
+      printf("Number of thread used: %d\n", nthreads);
       std::chrono::duration<double> elapsed = std::chrono::high_resolution_clock::now() - start_time;
       printf("Computation time: %.4fs\n\n", elapsed.count());
     }
