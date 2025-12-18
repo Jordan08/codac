@@ -30,10 +30,16 @@ namespace codac2
       virtual void bwd_eval(ValuesMap& v) const = 0;
       virtual std::pair<Index,Index> output_shape() const = 0;
 
-      T init_value(ValuesMap& v, const T& x) const
+      const T& init_value(ValuesMap& v, const T& x) const
       {
-        v[unique_id()] = std::make_shared<T>(x);
-        return *std::dynamic_pointer_cast<T>(v[unique_id()]);
+        auto& p = v[unique_id()];
+
+        if(!p)
+          p = std::make_shared<T>(x);
+        else
+          *std::dynamic_pointer_cast<T>(p) = x;
+
+        return x;
       }
 
       T& value(ValuesMap& v) const
