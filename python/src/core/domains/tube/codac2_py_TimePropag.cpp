@@ -28,10 +28,10 @@ void export_TimePropag(py::module& m)
     .value("FWD_BWD", TimePropag::FWD_BWD)
 
     .def(py::self & py::self,
-      TIMEPROPAG_OPERATORAND_TIMEPROPAG_TIMEPROPAG)
+      TIMEPROPAG_OPERATORINTER_TIMEPROPAG_TIMEPROPAG)
 
     .def(py::self | py::self,
-      TIMEPROPAG_OPERATOROR_TIMEPROPAG_TIMEPROPAG)
+      TIMEPROPAG_OPERATORUNION_TIMEPROPAG_TIMEPROPAG)
 
     .def("__repr__", [](const TimePropag& x) {
           std::ostringstream s;

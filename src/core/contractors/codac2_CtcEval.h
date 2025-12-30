@@ -107,7 +107,7 @@ namespace codac2
             it_t++;
           }
 
-          CtcDeriv ctc_deriv;
+          CtcDeriv ctc_deriv(TimePropag::FWD_BWD, true);
           ctc_deriv.restrict_tdomain(t);
           ctc_deriv.contract(x,v);
         }

@@ -32,7 +32,7 @@ void export_geometry(py::module& m)
     .value("UNKNOWN", OrientationInterval::UNKNOWN)
 
     .def(py::self | py::self,
-      ORIENTATIONINTERVAL_OPERATOROR_ORIENTATIONINTERVAL_ORIENTATIONINTERVAL)
+      ORIENTATIONINTERVAL_OPERATORUNION_ORIENTATIONINTERVAL_ORIENTATIONINTERVAL)
 
     .def("__repr__", [](const OrientationInterval& x) {
           std::ostringstream s;

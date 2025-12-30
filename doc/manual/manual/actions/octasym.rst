@@ -3,4 +3,4 @@
 Octahedral symmetries
 =====================
 
-TODO
+Further documentation upcoming.

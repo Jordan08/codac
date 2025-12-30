@@ -40,12 +40,21 @@ void export_ConvexPolygon(py::module& m)
       "x"_a)
 
     .def(py::self &= py::self,
-      CONVEXPOLYGON_REF_CONVEXPOLYGON_OPERATORANDEQ_CONST_CONVEXPOLYGON_REF,
+      CONVEXPOLYGON_REF_CONVEXPOLYGON_OPERATORINTEREQ_CONST_CONVEXPOLYGON_REF,
       "p"_a)
 
     // For MATLAB compatibility
     .def("self_inter", &ConvexPolygon::operator&=,
-      CONVEXPOLYGON_REF_CONVEXPOLYGON_OPERATORANDEQ_CONST_CONVEXPOLYGON_REF,
+      CONVEXPOLYGON_REF_CONVEXPOLYGON_OPERATORINTEREQ_CONST_CONVEXPOLYGON_REF,
+      "p"_a)
+
+    .def(py::self |= py::self,
+      CONVEXPOLYGON_REF_CONVEXPOLYGON_OPERATORUNIONEQ_CONST_CONVEXPOLYGON_REF,
+      "p"_a)
+
+    // For MATLAB compatibility
+    .def("self_union", &ConvexPolygon::operator|=,
+      CONVEXPOLYGON_REF_CONVEXPOLYGON_OPERATORUNIONEQ_CONST_CONVEXPOLYGON_REF,
       "p"_a)
 
     .def("__and__",
@@ -53,7 +62,7 @@ void export_ConvexPolygon(py::module& m)
         {
           return p1 & p2;
         },
-      CONVEXPOLYGON_OPERATORAND_CONST_CONVEXPOLYGON_REF_CONST_CONVEXPOLYGON_REF,
+      CONVEXPOLYGON_OPERATORINTER_CONST_CONVEXPOLYGON_REF_CONST_CONVEXPOLYGON_REF,
       "p2"_a)
 
     .def_static("empty", &ConvexPolygon::empty,

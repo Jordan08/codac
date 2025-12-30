@@ -92,6 +92,14 @@ namespace codac2
        */
       ConvexPolygon& operator&=(const ConvexPolygon& p);
 
+      /**
+       * \brief Self union of this and p
+       * 
+       * \param p the other convex polygon
+       * \return a reference to this
+       */
+      ConvexPolygon& operator|=(const ConvexPolygon& p);
+
     protected:
 
       /**

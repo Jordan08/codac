@@ -9,11 +9,23 @@
 
 #pragma once
 
-#include "codac2_AnalyticFunction.h"
-#include "codac2_OctaSym.h"
+#include <type_traits>
+#include "codac2_Matrix.h"
+#include "codac2_IntervalVector.h"
+#include "codac2_IntervalMatrix.h"
 
 namespace codac2
 {
+  // Forward declarations to reduce compilation load caused by heavy template use:
+  class AnalyticTypeBase;
+  
+  template<typename T>
+    requires std::is_base_of_v<AnalyticTypeBase,T>
+  class AnalyticFunction;
+
+  class Parallelepiped;
+  class OctaSym;
+
   /**
    * \brief Used in PEIBOS. Compute a parallelepiped enclosing of \f$\mathbf{g}([\mathbf{x}])\f$ where \f$\mathbf{g} = \mathbf{f}\circ \sigma \circ \psi_0\f$.
    * 
@@ -31,7 +43,7 @@ namespace codac2
   /**
    * \brief Compute a set of parallelepipeds enclosing \f$\mathbf{f}(\sigma(\psi_0([-1,1]^m)))\f$ for each symmetry \f$\sigma\f$ in the set of symmetries \f$\Sigma\f$. Note that \f$\left\{\psi_0,\Sigma\right\}\f$ form a gnomonic atlas.
    * 
-   * \param f The analytic function \f$\mathbf{f}:\mathbb{R}^n\rightarrow\mathbb{R}^n\f$ 
+   * \param f The analytic function \f$\mathbf{f}:\mathbb{R}^n\rightarrow\mathbb{R}^p,p\geq n\f$ 
    * \param psi_0 The transformation function \f$\psi_0:\mathbb{R}^m\rightarrow\mathbb{R}^n\f$ to construct the atlas
    * \param Sigma The set of symmetry operators \f$\sigma\f$ to construct the atlas
    * \param epsilon The maximum diameter of the boxes to split \f$[-1,1]^m\f$ before computing the parallelepiped inclusions
@@ -43,7 +55,7 @@ namespace codac2
 
   /**
    * \brief Compute a set of parallelepipeds enclosing \f$\mathbf{f}(\sigma(\psi_0([-1,1]^m)) + offset) \f$ for each symmetry \f$\sigma\f$ in the set of symmetries \f$\Sigma\f$. Note that \f$\left\{\psi_0,\Sigma\right\}\f$ form a gnomonic atlas.
-   * \param f The analytic function \f$\mathbf{f}:\mathbb{R}^n\rightarrow\mathbb{R}^n\f$ 
+   * \param f The analytic function \f$\mathbf{f}:\mathbb{R}^n\rightarrow\mathbb{R}^p,p\geq n\f$ 
    * \param psi_0 The transformation function \f$\psi_0:\mathbb{R}^m\rightarrow\mathbb{R}^n\f$ to construct the atlas
    * \param Sigma The set of symmetry operators \f$\sigma\f$ to construct the atlas
    * \param epsilon The maximum diameter of the boxes to split \f$[-1,1]^m\f$ before computing the parallelepiped inclusions

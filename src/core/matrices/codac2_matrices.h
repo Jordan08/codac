@@ -109,8 +109,13 @@ namespace codac2
 
   template<typename T>
   concept is_matrix_base_double =
-      std::is_base_of_v<Eigen::MatrixBase<std::decay_t<T>>, std::decay_t<T>> &&
-      std::is_same_v<typename std::decay_t<T>::Scalar, double>;
+    requires {
+      typename Eigen::internal::traits<std::decay_t<T>>::Scalar;
+      requires std::same_as<
+        typename Eigen::internal::traits<std::decay_t<T>>::Scalar,
+        double
+      >;
+    };
 }
 
 namespace codac2

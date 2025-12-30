@@ -207,6 +207,28 @@ void Figure2D_VIBes::draw_motor_boat(const Vector& x, float size, const StylePro
   vibes::drawMotorBoat(x[i()],x[j()],180.*x[j()+1]/PI, size, to_vibes_style(style), _params);
 }
 
+void Figure2D_VIBes::draw_text(const std::string& text, const Vector& ul, double scale, const StyleProperties& style)
+{
+  assert(_fig.size() <= ul.size());
+
+  auto new_style = style;
+  new_style.fill_color = new_style.stroke_color;
+  new_style.stroke_color = Color::none();
+
+  update_drawing_properties(new_style);
+
+  vibes::drawText(ul[0], ul[1], text, scale, to_vibes_style(new_style), _params);
+}
+
+void Figure2D_VIBes::draw_raster(const std::string& filename, const IntervalVector& bbox, const StyleProperties& style)
+{
+  assert(bbox.size()==2);
+
+  update_drawing_properties(style);
+
+  vibes::drawRaster(filename, bbox[0].lb(), bbox[1].ub(), bbox[0].diam(), bbox[1].diam(), _params);
+}
+
 std::string Figure2D_VIBes::to_vibes_style(const StyleProperties& style)
 {
   return style.stroke_color.hex_str() + "[" + style.fill_color.hex_str() + "]";

@@ -113,6 +113,7 @@ py::class_<Vector> export_Vector(py::module& m);
 py::class_<Matrix> export_Matrix(py::module& m);
 void export_hull(py::module& m);
 void export_inversion(py::module& m);
+void export_GaussJordan(py::module& m);
 void export_IntvFullPivLU(py::module& m);
 
 // operators
@@ -207,6 +208,7 @@ PYBIND11_MODULE(_core, m)
   export_EigenBlock<Vector>(m, "VectorBlock");
   export_hull(m);
   export_inversion(m);
+  export_GaussJordan(m);
   export_IntvFullPivLU(m);
 
   // domains
@@ -249,7 +251,7 @@ PYBIND11_MODULE(_core, m)
     .value("NATURAL", EvalMode::NATURAL)
     .value("CENTERED", EvalMode::CENTERED)
     .value("DEFAULT", EvalMode::DEFAULT)
-    .def(py::self | py::self, EVALMODE_OPERATOROR_EVALMODE_EVALMODE)
+    .def(py::self | py::self, EVALMODE_OPERATORUNION_EVALMODE_EVALMODE)
   ;
 
   #if FOR_MATLAB // Python enums do not seem to be callable in matlab

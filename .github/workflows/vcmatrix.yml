@@ -51,9 +51,7 @@ jobs:
       if: matrix.cfg.py_v_maj!=''
     - run: echo "VERBOSE=1" >> $GITHUB_ENV
       shell: bash
-    - run: |
-        (New-Object System.Net.WebClient).DownloadFile("http://www.ensta-bretagne.fr/lebars/Share/windows_extra_tools.zip", "C:\Windows\Temp\windows_extra_tools.zip") 
-        7z x C:\Windows\Temp\windows_extra_tools.zip -o"C:\Windows" -y
+    - run: choco install -y -r --no-progress wget
       shell: pwsh
       if: runner.os=='Windows'
     #- run: choco install -y -r --no-progress eigen --version=3.4.0.20240224 ${{ matrix.cfg.choco_flags }}

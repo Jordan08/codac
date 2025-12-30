@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include <numeric>
 #include "codac2_Ctc.h"
 #include "codac2_TimePropag.h"
 #include "codac2_ConvexPolygon.h"
@@ -26,7 +27,7 @@ namespace codac2
   {
     public:
 
-      CtcDeriv(const TimePropag& time_propag = TimePropag::FWD_BWD);
+      CtcDeriv(const TimePropag& time_propag = TimePropag::FWD_BWD, bool fast_mode = true);
 
       void restrict_tdomain(const Interval& tdomain)
       {
@@ -34,7 +35,7 @@ namespace codac2
       }
 
       template<typename T>
-      inline void contract(Slice<T>& x, const Slice<T>& v) const
+      inline void contract(Slice<T>& x, const Slice<T>& v, const std::vector<Index>& ctc_indices = {}) const
         requires std::is_same_v<T,Interval> || std::is_same_v<T,IntervalVector>
       {
         assert(x.size() == v.size());
@@ -45,11 +46,21 @@ namespace codac2
         T envelope = x.codomain();
 
         if constexpr(std::is_same_v<T,Interval>)
-          contract(x.t0_tf(), envelope, input, output, v.codomain(), _time_propag);
+          contract(x.t0_tf(), envelope, input, output, v.codomain(), _time_propag, _fast_mode);
 
         else if constexpr(std::is_same_v<T,IntervalVector>)
-          for(Index i = 0 ; i < x.size() ; i++)
-            contract(x.t0_tf(), envelope[i], input[i], output[i], v.codomain()[i], _time_propag);
+        {
+          std::vector<Index> ctc_indices_(ctc_indices);
+          if(ctc_indices_.empty())
+          {
+            // Then all the dimensions will be contracted
+            ctc_indices_ = std::vector<Index>(x.size());
+            std::iota(ctc_indices_.begin(), ctc_indices_.end(), 0);
+          }
+
+          for(auto i : ctc_indices_)
+            contract(x.t0_tf(), envelope[i], input[i], output[i], v.codomain()[i], _time_propag, _fast_mode);
+        }
 
         auto x_next = x.next_slice();
         if(x_next && x_next->is_gate())
@@ -63,7 +74,7 @@ namespace codac2
       }
 
       template<typename T>
-      inline void contract(SlicedTube<T>& x, const SlicedTube<T>& v) const
+      inline void contract(SlicedTube<T>& x, const SlicedTube<T>& v, const std::vector<Index>& ctc_indices = {}) const
         requires std::is_same_v<T,Interval> || std::is_same_v<T,IntervalVector>
       {
         assert_release(TDomain::are_same(x.tdomain(), v.tdomain()));
@@ -77,7 +88,7 @@ namespace codac2
           {
             auto sx = x.slice(it);
             if(!sx->is_gate())
-              this->contract(*sx, *v.slice(it));
+              this->contract(*sx, *v.slice(it), ctc_indices);
           }
         }
 
@@ -87,7 +98,7 @@ namespace codac2
           {
             auto sx = x.slice(it);
             if(!sx->is_gate())
-              this->contract(*sx, *v.slice(it));
+              this->contract(*sx, *v.slice(it), ctc_indices);
           }
         }
       }
@@ -103,9 +114,10 @@ namespace codac2
       static void contract(
         const Interval& t, Interval& envelope,
         Interval& input, Interval& output,
-        const Interval& v, const TimePropag& time_propag);
+        const Interval& v, const TimePropag& time_propag, bool fast_mode);
 
       const TimePropag _time_propag;
+      const bool _fast_mode;
       Interval _tdomain;
   };
 }

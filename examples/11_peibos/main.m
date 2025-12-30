@@ -14,7 +14,7 @@ b=0.3;
 f_2d = AnalyticFunction({y_2d},vec(y_2d(2)+1-a*sqr(y_2d(1)),b*y_2d(1)));
 
 X_2d = VectorVar(1);
-psi0_2d = AnalyticFunction({X_2d},vec(cos(X_2d(1)*PI/4.-PI/2),sin(X_2d(1)*PI/4.-PI/2)));
+psi0_2d = AnalyticFunction({X_2d},vec(sin(X_2d(1)*PI/4.),cos(X_2d(1)*PI/4.)));
 
 id_2d = OctaSym(int64([1,2]));
 s = OctaSym(int64([-2,1]));

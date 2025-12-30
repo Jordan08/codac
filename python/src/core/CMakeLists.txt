@@ -78,6 +78,7 @@
     matrices/codac2_py_hull.cpp
     matrices/codac2_py_inversion.cpp
     matrices/codac2_py_IntvFullPivLU.cpp
+    matrices/codac2_py_GaussJordan.cpp
     matrices/codac2_py_Matrix.cpp
     matrices/codac2_py_MatrixBase.h
     matrices/codac2_py_MatrixBlock.h

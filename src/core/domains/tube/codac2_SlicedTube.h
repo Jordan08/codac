@@ -305,10 +305,11 @@ namespace codac2
           }
       }
 
-      const SlicedTube<T>& inflate(double rad)
+      template<typename V>
+        requires (std::is_same_v<typename Wrapper<V>::Domain,T> || std::is_same_v<V,double>)
+      const SlicedTube<T>& inflate(const V& rad)
       {
-        assert_release(rad >= 0.);
-
+        // todo: faster implementation with iterators
         for(auto& s : *this)
           if(!s.is_gate())
             s.set(T(s.codomain()).inflate(rad), false);
@@ -316,6 +317,24 @@ namespace codac2
         for(auto& s : *this)
           if(s.is_gate())
             s.set(T(s.codomain()).inflate(rad), false);
+
+        return *this;
+      }
+
+      template<typename V>
+        requires (std::is_same_v<typename Wrapper<V>::Domain,T> || std::is_same_v<V,double>)
+      const SlicedTube<T>& inflate(const SampledTraj<V>& rad)
+      {
+        // todo: faster implementation with iterators
+        assert_release(tdomain()->t0_tf().is_subset(rad.tdomain()));
+
+        for(auto& s : *this)
+          if(!s.is_gate())
+            s.set(T(s.codomain()).inflate(rad(s.t0_tf()).ub()), false);
+
+        for(auto& s : *this)
+          if(s.is_gate())
+            s.set(T(s.codomain()).inflate(rad(s.t0_tf()).ub()), false);
 
         return *this;
       }

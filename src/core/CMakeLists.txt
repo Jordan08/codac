@@ -57,6 +57,8 @@
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/codac2_Domain.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/codac2_Wrapper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/ellipsoid/codac2_Ellipsoid.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/ellipsoid/codac2_Ellipsoid_checks.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/ellipsoid/codac2_Ellipsoid_mapping.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/ellipsoid/codac2_Ellipsoid.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/ellipsoid/codac2_Ellipsoid_utils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/ellipsoid/codac2_Ellipsoid_utils.h
@@ -96,6 +98,7 @@
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/codac2_FunctionBase.h
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/codac2_VarBase.h
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/analytic/codac2_analytic_constants.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/functions/analytic/codac2_analytic_constants_impl.h
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/analytic/codac2_analytic_variables.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/analytic/codac2_analytic_variables.h
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/analytic/codac2_AnalyticExpr.h

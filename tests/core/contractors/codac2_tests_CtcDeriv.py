@@ -28,7 +28,7 @@ class TestCtcDeriv(unittest.TestCase):
     x.set([-1,2],-1)
     x.set([-2,0],3)
 
-    ctc_deriv = CtcDeriv()
+    ctc_deriv = CtcDeriv(TimePropag.FWD_BWD, False)
     ctc_deriv.contract(sx, sv)
 
     self.assertTrue(sx.input_gate() == Interval(-1,2))
@@ -49,7 +49,7 @@ class TestCtcDeriv(unittest.TestCase):
     x.set([-1,3],-1)
     x.set([-5,0.5],3)
 
-    ctc_deriv = CtcDeriv()
+    ctc_deriv = CtcDeriv(TimePropag.FWD_BWD, False)
     ctc_deriv.contract(sx, sv)
 
     self.assertTrue(sx.input_gate() == Interval(-1,3))
@@ -70,7 +70,7 @@ class TestCtcDeriv(unittest.TestCase):
     x.set([1,3],-1)
     x.set([-4,-3],3)
 
-    ctc_deriv = CtcDeriv()
+    ctc_deriv = CtcDeriv(TimePropag.FWD_BWD, False)
     ctc_deriv.contract(sx, sv)
 
     self.assertTrue(sx.input_gate() == Interval(1))
@@ -95,7 +95,7 @@ class TestCtcDeriv(unittest.TestCase):
     x.set([-1,2],-1)
     x.set([-2,0],3)
 
-    ctc_deriv = CtcDeriv()
+    ctc_deriv = CtcDeriv(TimePropag.FWD_BWD, False)
     ctc_deriv.contract(sx, sv)
 
     self.assertTrue(sx.input_gate().is_empty())
@@ -116,7 +116,7 @@ class TestCtcDeriv(unittest.TestCase):
     x.set([-1,2],-1)
     x.set(Interval.empty(),3)
 
-    ctc_deriv = CtcDeriv()
+    ctc_deriv = CtcDeriv(TimePropag.FWD_BWD, False)
     ctc_deriv.contract(sx, sv)
 
     self.assertTrue(sx.input_gate().is_empty())
@@ -136,7 +136,7 @@ class TestCtcDeriv(unittest.TestCase):
     self.assertTrue(sx.output_gate() == Interval())
     self.assertTrue(sx.codomain() == Interval())
 
-    ctc_deriv = CtcDeriv()
+    ctc_deriv = CtcDeriv(TimePropag.FWD_BWD, False)
     ctc_deriv.contract(sx, sv)
 
     self.assertTrue(sx.input_gate() == Interval())
@@ -156,7 +156,7 @@ class TestCtcDeriv(unittest.TestCase):
     self.assertTrue(sx.output_gate() == Interval())
     self.assertTrue(sx.codomain() == Interval())
 
-    ctc_deriv = CtcDeriv()
+    ctc_deriv = CtcDeriv(TimePropag.FWD_BWD, False)
     ctc_deriv.contract(sx, sv)
 
     self.assertTrue(sx.input_gate() == Interval())
@@ -180,7 +180,7 @@ class TestCtcDeriv(unittest.TestCase):
     self.assertTrue(sx.codomain() == Interval())
     self.assertTrue(sv.codomain() == Interval(-oo,1))
 
-    ctc_deriv = CtcDeriv()
+    ctc_deriv = CtcDeriv(TimePropag.FWD_BWD, False)
     ctc_deriv.contract(sx, sv)
 
     self.assertTrue(sx.input_gate() == Interval(-1,2))
@@ -205,7 +205,7 @@ class TestCtcDeriv(unittest.TestCase):
     self.assertTrue(sx.codomain() == Interval())
     self.assertTrue(sv.codomain() == Interval(-1,oo))
 
-    ctc_deriv = CtcDeriv()
+    ctc_deriv = CtcDeriv(TimePropag.FWD_BWD, False)
     ctc_deriv.contract(sx, sv)
     
     self.assertTrue(sx.input_gate() == Interval(-1,2))
@@ -221,8 +221,8 @@ class TestCtcDeriv(unittest.TestCase):
     v = SlicedTube(tdomain, Interval(-0.5,1))
     x_fwdbwd = SlicedTube(x_fwd)
 
-    ctc_deriv_fwd = CtcDeriv(TimePropag.FWD)
-    ctc_deriv_fwdbwd = CtcDeriv(TimePropag.FWD_BWD)
+    ctc_deriv_fwd = CtcDeriv(TimePropag.FWD, False)
+    ctc_deriv_fwdbwd = CtcDeriv(TimePropag.FWD_BWD, False)
 
     ctc_deriv_fwd.contract(x_fwd, v)
     ctc_deriv_fwdbwd.contract(x_fwdbwd, v)
@@ -248,8 +248,8 @@ class TestCtcDeriv(unittest.TestCase):
     v = SlicedTube(tdomain, Interval(-1,0.5))
     x_fwdbwd = SlicedTube(x_bwd)
 
-    ctc_deriv_bwd = CtcDeriv(TimePropag.BWD)
-    ctc_deriv_fwdbwd = CtcDeriv(TimePropag.FWD_BWD)
+    ctc_deriv_bwd = CtcDeriv(TimePropag.BWD, False)
+    ctc_deriv_fwdbwd = CtcDeriv(TimePropag.FWD_BWD, False)
 
     ctc_deriv_bwd.contract(x_bwd, v)
     ctc_deriv_fwdbwd.contract(x_fwdbwd, v)
@@ -274,7 +274,7 @@ class TestCtcDeriv(unittest.TestCase):
     x.set([-1,1],[5,6])
     v = SlicedTube(tdomain, Interval(-1,0.5))
 
-    ctc_deriv = CtcDeriv()
+    ctc_deriv = CtcDeriv(TimePropag.FWD_BWD, False)
     ctc_deriv.contract(x, v)
 
     # Checking structure
@@ -300,7 +300,7 @@ class TestCtcDeriv(unittest.TestCase):
     v.set([0],[3,4])
     v.set([-0.5,0.5],[4,5])
 
-    ctc_deriv = CtcDeriv()
+    ctc_deriv = CtcDeriv(TimePropag.FWD_BWD, False)
     ctc_deriv.contract(x, v)
 
     # Checking structure
@@ -348,7 +348,7 @@ class TestCtcDeriv(unittest.TestCase):
     self.assertTrue(x.nb_slices() == 18)
     self.assertTrue(v.nb_slices() == 18)
 
-    ctc_deriv = CtcDeriv()
+    ctc_deriv = CtcDeriv(TimePropag.FWD_BWD, False)
     ctc_deriv.contract(x, v)
 
     self.assertTrue(sx[0].codomain() == Interval(-1,7))
@@ -402,7 +402,7 @@ class TestCtcDeriv(unittest.TestCase):
     x.set([-1,3],-1)
     x.set([-5,0.5],3)
 
-    ctc_deriv = CtcDeriv()
+    ctc_deriv = CtcDeriv(TimePropag.FWD_BWD, False)
     ctc_deriv.contract(x,v)
 
     self.assertTrue(sx.input_gate() == Interval(-1,3))
@@ -422,7 +422,7 @@ class TestCtcDeriv(unittest.TestCase):
     x.set([1,3],-1)
     x.set([-4,-3],3)
 
-    ctc_deriv = CtcDeriv()
+    ctc_deriv = CtcDeriv(TimePropag.FWD_BWD, False)
     ctc_deriv.contract(x,v)
 
     self.assertTrue(sx(Interval(0.5,2), sv) == Interval(-2,-0.5))

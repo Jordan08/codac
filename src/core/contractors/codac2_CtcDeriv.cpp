@@ -15,8 +15,8 @@
 using namespace std;
 using namespace codac2;
 
-CtcDeriv::CtcDeriv(const TimePropag& time_propag)
-  : _time_propag(time_propag)
+CtcDeriv::CtcDeriv(const TimePropag& time_propag, bool fast_mode)
+  : _time_propag(time_propag), _fast_mode(fast_mode)
 { }
 
 ConvexPolygon CtcDeriv::polygon_slice(
@@ -52,7 +52,8 @@ ConvexPolygon CtcDeriv::polygon_slice(
 void CtcDeriv::contract(
   const Interval& t, Interval& envelope,
   Interval& input, Interval& output,
-  const Interval& v, const TimePropag& time_propag)
+  const Interval& v, const TimePropag& time_propag,
+  bool fast_mode)
 {
   Interval proj_input;
   Interval proj_output;
@@ -67,7 +68,7 @@ void CtcDeriv::contract(
   if((time_propag & TimePropag::BWD) == TimePropag::BWD)
     proj_input &= output - d * v;
 
-  if(time_propag == TimePropag::FWD_BWD
+  if(!fast_mode && time_propag == TimePropag::FWD_BWD
     && (proj_output.is_superset(output) || proj_input.is_superset(input)))
   {
     // Optimal envelope

@@ -36,7 +36,7 @@ TEST_CASE("polygon_slice")
     x.set({-1,2},-1);
     x.set({-2,0},3);
 
-    CtcDeriv ctc_deriv;
+    CtcDeriv ctc_deriv(TimePropag::FWD_BWD, false);
     ctc_deriv.contract(*sx, *sv);
 
     ConvexPolygon p1 = sx->polygon_slice(*sv);
@@ -63,7 +63,7 @@ TEST_CASE("polygon_slice")
     x.set({-1,3},-1);
     x.set({-5,0.5},3);
 
-    CtcDeriv ctc_deriv;
+    CtcDeriv ctc_deriv(TimePropag::FWD_BWD, false);
     ctc_deriv.contract(*sx, *sv);
 
     ConvexPolygon p1 = sx->polygon_slice(*sv);
@@ -90,7 +90,7 @@ TEST_CASE("polygon_slice")
     x.set({1,3},-1);
     x.set({-4,-3},3);
 
-    CtcDeriv ctc_deriv;
+    CtcDeriv ctc_deriv(TimePropag::FWD_BWD, false);
     ctc_deriv.contract(*sx, *sv);
 
     ConvexPolygon p1 = sx->polygon_slice(*sv);
@@ -120,7 +120,7 @@ TEST_CASE("polygon_slice")
     x.set({2,3},0);
     x.set({3,4},4);
 
-    CtcDeriv ctc_deriv;
+    CtcDeriv ctc_deriv(TimePropag::FWD_BWD, false);
     ctc_deriv.contract(*sx, *sv);
 
     ConvexPolygon p1 = sx->polygon_slice(*sv);
@@ -148,7 +148,7 @@ TEST_CASE("polygon_slice")
     x.set({3,4},4);
     x.set({1},8);
 
-    CtcDeriv ctc_deriv;
+    CtcDeriv ctc_deriv(TimePropag::FWD_BWD, false);
     ctc_deriv.contract(*sx, *sv);
 
     ConvexPolygon p1 = sx->polygon_slice(*sv);
@@ -177,7 +177,7 @@ TEST_CASE("polygon_slice")
     x.set({1},8);
     x.set({1},12);
 
-    CtcDeriv ctc_deriv;
+    CtcDeriv ctc_deriv(TimePropag::FWD_BWD, false);
     ctc_deriv.contract(*sx, *sv);
 
     ConvexPolygon p1 = sx->polygon_slice(*sv);
@@ -206,7 +206,7 @@ TEST_CASE("polygon_slice")
     x.set({1},12);
     x.set({5.5},14);
 
-    CtcDeriv ctc_deriv;
+    CtcDeriv ctc_deriv(TimePropag::FWD_BWD, false);
     ctc_deriv.contract(*sx, *sv);
 
     ConvexPolygon p1 = sx->polygon_slice(*sv);
@@ -239,7 +239,7 @@ TEST_CASE("polygon_slice")
     //DefaultFigure::draw_box({{4,5},{3.5,4.25}});
     //DefaultFigure::draw_polygon(p, {Color::blue(),Color::blue(0.2)});
 
-    CtcDeriv ctc_deriv;
+    CtcDeriv ctc_deriv(TimePropag::FWD_BWD, false);
     ctc_deriv.contract(*sx, *sv);
     p = sx->polygon_slice(*sv);
     CHECK(p == ConvexPolygon({{4,4},{4,3.5},{5,4},{4.5,4.25}}));

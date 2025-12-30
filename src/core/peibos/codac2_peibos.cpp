@@ -7,6 +7,8 @@
  *  \license    GNU Lesser General Public License (LGPL)
  */
 
+#include "codac2_AnalyticFunction.h"
+#include "codac2_OctaSym.h"
 #include "codac2_peibos.h"
 #include "codac2_peibos_tools.h"
 #include "codac2_OctaSym_operator.h"
@@ -44,6 +46,7 @@ namespace codac2
 
     assert_release (f.input_size() == psi_0.output_size() && "output size of psi_0 must match input size of f");
     assert_release (offset.size() == psi_0.output_size() && "offset size must match output size of psi_0");
+    assert_release (f.output_size() >= f.input_size() && "output size of f must be greater than input size of f");
     assert_release (m < psi_0.output_size());
     assert_release (Sigma.size() > 0 && (int) Sigma[0].size() == psi_0.output_size() && "no generator given or wrong dimension of generator (must match output size of psi_0)");
 

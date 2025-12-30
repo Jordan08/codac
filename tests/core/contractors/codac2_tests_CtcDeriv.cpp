@@ -32,7 +32,7 @@ TEST_CASE("CtcDeriv")
     x.set({-1,2},-1);
     x.set({-2,0},3);
 
-    CtcDeriv ctc_deriv;
+    CtcDeriv ctc_deriv(TimePropag::FWD_BWD, false);
     ctc_deriv.contract(*sx, *sv);
 
     CHECK(sx->input_gate() == Interval(-1,2));
@@ -54,7 +54,7 @@ TEST_CASE("CtcDeriv")
     x.set({-1,3},-1);
     x.set({-5,0.5},3);
 
-    CtcDeriv ctc_deriv;
+    CtcDeriv ctc_deriv(TimePropag::FWD_BWD, false);
     ctc_deriv.contract(*sx, *sv);
 
     CHECK(sx->input_gate() == Interval(-1,3));
@@ -76,7 +76,7 @@ TEST_CASE("CtcDeriv")
     x.set({1,3},-1);
     x.set({-4,-3},3);
 
-    CtcDeriv ctc_deriv;
+    CtcDeriv ctc_deriv(TimePropag::FWD_BWD, false);
     ctc_deriv.contract(*sx, *sv);
 
     CHECK(sx->input_gate() == Interval(1));
@@ -102,7 +102,7 @@ TEST_CASE("CtcDeriv")
     x.set({-1,2},-1);
     x.set({-2,0},3);
 
-    CtcDeriv ctc_deriv;
+    CtcDeriv ctc_deriv(TimePropag::FWD_BWD, false);
     ctc_deriv.contract(*sx, *sv);
 
     CHECK(sx->input_gate().is_empty());
@@ -124,7 +124,7 @@ TEST_CASE("CtcDeriv")
     x.set({-1,2},-1);
     x.set(Interval::empty(),3);
 
-    CtcDeriv ctc_deriv;
+    CtcDeriv ctc_deriv(TimePropag::FWD_BWD, false);
     ctc_deriv.contract(*sx, *sv);
 
     CHECK(sx->input_gate().is_empty());
@@ -145,7 +145,7 @@ TEST_CASE("CtcDeriv")
     CHECK(sx->output_gate() == Interval());
     CHECK(sx->codomain() == Interval());
 
-    CtcDeriv ctc_deriv;
+    CtcDeriv ctc_deriv(TimePropag::FWD_BWD, false);
     ctc_deriv.contract(*sx, *sv);
 
     CHECK(sx->input_gate() == Interval());
@@ -166,7 +166,7 @@ TEST_CASE("CtcDeriv")
     CHECK(sx->output_gate() == Interval());
     CHECK(sx->codomain() == Interval());
 
-    CtcDeriv ctc_deriv;
+    CtcDeriv ctc_deriv(TimePropag::FWD_BWD, false);
     ctc_deriv.contract(*sx, *sv);
 
     CHECK(sx->input_gate() == Interval());
@@ -191,7 +191,7 @@ TEST_CASE("CtcDeriv")
     CHECK(sx->codomain() == Interval());
     CHECK(sv->codomain() == Interval(-oo,1));
 
-    CtcDeriv ctc_deriv;
+    CtcDeriv ctc_deriv(TimePropag::FWD_BWD, false);
     ctc_deriv.contract(*sx, *sv);
 
     CHECK(sx->input_gate() == Interval(-1,2));
@@ -217,7 +217,7 @@ TEST_CASE("CtcDeriv")
     CHECK(sx->codomain() == Interval());
     CHECK(sv->codomain() == Interval(-1,oo));
 
-    CtcDeriv ctc_deriv;
+    CtcDeriv ctc_deriv(TimePropag::FWD_BWD, false);
     ctc_deriv.contract(*sx, *sv);
     
     CHECK(sx->input_gate() == Interval(-1,2));
@@ -234,8 +234,8 @@ TEST_CASE("CtcDeriv")
     SlicedTube<Interval> v(tdomain, Interval(-0.5,1));
     SlicedTube<Interval> x_fwdbwd(x_fwd);
 
-    CtcDeriv ctc_deriv_fwd(TimePropag::FWD);
-    CtcDeriv ctc_deriv_fwdbwd(TimePropag::FWD_BWD);
+    CtcDeriv ctc_deriv_fwd(TimePropag::FWD, false);
+    CtcDeriv ctc_deriv_fwdbwd(TimePropag::FWD_BWD, false);
 
     ctc_deriv_fwd.contract(x_fwd, v);
     ctc_deriv_fwdbwd.contract(x_fwdbwd, v);
@@ -264,8 +264,8 @@ TEST_CASE("CtcDeriv")
     SlicedTube<Interval> v(tdomain, Interval(-1,0.5));
     SlicedTube<Interval> x_fwdbwd(x_bwd);
 
-    CtcDeriv ctc_deriv_bwd(TimePropag::BWD);
-    CtcDeriv ctc_deriv_fwdbwd(TimePropag::FWD_BWD);
+    CtcDeriv ctc_deriv_bwd(TimePropag::BWD, false);
+    CtcDeriv ctc_deriv_fwdbwd(TimePropag::FWD_BWD, false);
 
     ctc_deriv_bwd.contract(x_bwd, v);
     ctc_deriv_fwdbwd.contract(x_fwdbwd, v);
@@ -294,7 +294,7 @@ TEST_CASE("CtcDeriv")
     x.set({-1,1},{5,6});
     SlicedTube<Interval> v(tdomain, Interval(-1,0.5));
 
-    CtcDeriv ctc_deriv;
+    CtcDeriv ctc_deriv(TimePropag::FWD_BWD, false);
     ctc_deriv.contract(x, v);
 
     // Checking structure
@@ -324,7 +324,7 @@ TEST_CASE("CtcDeriv")
     v.set({0},{3,4});
     v.set({-0.5,0.5},{4,5});
 
-    CtcDeriv ctc_deriv;
+    CtcDeriv ctc_deriv(TimePropag::FWD_BWD, false);
     ctc_deriv.contract(x, v);
 
     // Checking structure
@@ -381,7 +381,7 @@ TEST_CASE("CtcDeriv")
     CHECK(x.nb_slices() == 18);
     CHECK(v.nb_slices() == 18);
 
-    CtcDeriv ctc_deriv;
+    CtcDeriv ctc_deriv(TimePropag::FWD_BWD, false);
     ctc_deriv.contract(x, v);
 
     CHECK(sx[0]->codomain() == Interval(-1,7));
@@ -436,7 +436,7 @@ TEST_CASE("CtcDeriv")
     x.set({-1,3},-1);
     x.set({-5,0.5},3);
 
-    CtcDeriv ctc_deriv;
+    CtcDeriv ctc_deriv(TimePropag::FWD_BWD, false);
     ctc_deriv.contract(x,v);
 
     CHECK(sx->input_gate() == Interval(-1,3));
@@ -457,7 +457,7 @@ TEST_CASE("CtcDeriv")
     x.set({1,3},-1);
     x.set({-4,-3},3);
 
-    CtcDeriv ctc_deriv;
+    CtcDeriv ctc_deriv(TimePropag::FWD_BWD, false);
     ctc_deriv.contract(x,v);
 
     CHECK(sx->operator()(Interval(0.5,2), *sv) == Interval(-2,-0.5));

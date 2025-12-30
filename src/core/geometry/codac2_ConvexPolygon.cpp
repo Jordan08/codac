@@ -57,6 +57,16 @@ namespace codac2
     *this = *this & p;
     return *this;
   }
+  
+  ConvexPolygon& ConvexPolygon::operator|=(const ConvexPolygon& p)
+  {
+    vector<IntervalVector> v, pv = p.vertices(), pthis = this->vertices();
+    v.reserve(pv.size() + pthis.size());
+    v.insert(v.end(), pv.begin(), pv.end());
+    v.insert(v.end(), pthis.begin(), pthis.end());
+    *this = ConvexPolygon(v, true);
+    return *this;
+  }
 
   ConvexPolygon operator&(const ConvexPolygon& p1, const ConvexPolygon& p2)
   {

@@ -28,7 +28,7 @@ class TestPolygonSlice(unittest.TestCase):
     x.set([-1,2],-1)
     x.set([-2,0],3)
 
-    ctc_deriv = CtcDeriv()
+    ctc_deriv = CtcDeriv(TimePropag.FWD_BWD, False)
     ctc_deriv.contract(sx, sv)
 
     p1 = sx.polygon_slice(sv)
@@ -50,7 +50,7 @@ class TestPolygonSlice(unittest.TestCase):
     x.set([-1,3],-1)
     x.set([-5,0.5],3)
 
-    ctc_deriv = CtcDeriv()
+    ctc_deriv = CtcDeriv(TimePropag.FWD_BWD, False)
     ctc_deriv.contract(sx, sv)
 
     p1 = sx.polygon_slice(sv)
@@ -72,7 +72,7 @@ class TestPolygonSlice(unittest.TestCase):
     x.set([1,3],-1)
     x.set([-4,-3],3)
 
-    ctc_deriv = CtcDeriv()
+    ctc_deriv = CtcDeriv(TimePropag.FWD_BWD, False)
     ctc_deriv.contract(sx, sv)
 
     p1 = sx.polygon_slice(sv)
@@ -98,7 +98,7 @@ class TestPolygonSlice(unittest.TestCase):
     x.set([2,3],0)
     x.set([3,4],4)
 
-    ctc_deriv = CtcDeriv()
+    ctc_deriv = CtcDeriv(TimePropag.FWD_BWD, False)
     ctc_deriv.contract(sx, sv)
 
     p1 = sx.polygon_slice(sv)
@@ -120,7 +120,7 @@ class TestPolygonSlice(unittest.TestCase):
     x.set([3,4],4)
     x.set([1],8)
 
-    ctc_deriv = CtcDeriv()
+    ctc_deriv = CtcDeriv(TimePropag.FWD_BWD, False)
     ctc_deriv.contract(sx, sv)
 
     p1 = sx.polygon_slice(sv)
@@ -144,7 +144,7 @@ class TestPolygonSlice(unittest.TestCase):
     x.set([1],8)
     x.set([1],12)
 
-    ctc_deriv = CtcDeriv()
+    ctc_deriv = CtcDeriv(TimePropag.FWD_BWD, False)
     ctc_deriv.contract(sx, sv)
 
     p1 = sx.polygon_slice(sv)
@@ -168,7 +168,7 @@ class TestPolygonSlice(unittest.TestCase):
     x.set([1],12)
     x.set([5.5],14)
 
-    ctc_deriv = CtcDeriv()
+    ctc_deriv = CtcDeriv(TimePropag.FWD_BWD, False)
     ctc_deriv.contract(sx, sv)
 
     p1 = sx.polygon_slice(sv)
@@ -195,7 +195,7 @@ class TestPolygonSlice(unittest.TestCase):
     p = sx.polygon_slice(sv);
     self.assertTrue(p == ConvexPolygon([[4,4],[4,3.5],[5,4],[4.5,4.25]]))
 
-    ctc_deriv = CtcDeriv()
+    ctc_deriv = CtcDeriv(TimePropag.FWD_BWD, False)
     ctc_deriv.contract(sx,sv)
     p = sx.polygon_slice(sv);
     self.assertTrue(p == ConvexPolygon([[4,4],[4,3.5],[5,4],[4.5,4.25]]))

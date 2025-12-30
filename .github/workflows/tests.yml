@@ -60,6 +60,9 @@ jobs:
         #pip install pyibex
         #pip install --upgrade pyibex==1.8.0
 
+        # Fort Python tests
+        pip install numpy
+
         pwd
         ls
         export ORIGIN_DIR=$PWD
@@ -102,6 +105,7 @@ jobs:
         cd ../../
         
         python ../tests/core/domains/codac2_tests_BoolInterval.py
+        python ../tests/core/trajectory/codac2_tests_SampledTraj.py
 
         ./tests/codac2_tests_core_contractors_CtcInverse
         ./tests/codac2_tests_core_contractors_CtcPolygon
