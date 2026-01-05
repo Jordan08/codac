@@ -278,10 +278,13 @@ void Figure2D::draw_parallelepiped(const Parallelepiped& p, const StylePropertie
 
   auto a1 = p.A.col(0), a2 = p.A.col(1);
 
-  draw_polygon(vector<Vector>({
-      Vector(p.z+a1+a2), Vector(p.z-a1+a2),
-      Vector(p.z-a1-a2), Vector(p.z+a1-a2)
-    }), style);
+  if (a1.isZero() || a2.isZero())
+      draw_polyline(vector<Vector>({p.z-a1-a2,p.z+a1+a2}), style);
+  else
+    draw_polygon(vector<Vector>({
+        Vector(p.z+a1+a2), Vector(p.z-a1+a2),
+        Vector(p.z-a1-a2), Vector(p.z+a1-a2)
+      }), style);
 }
 
 void Figure2D::draw_pie(const Vector& c, const Interval& r, const Interval& theta, const StyleProperties& style)
