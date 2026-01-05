@@ -12,7 +12,6 @@
 #include <map>
 #include <memory>
 #include <utility>
-#include <semaphore>
 #include "codac2_ExprBase.h"
 #include "codac2_Domain.h"
 #include "codac2_FunctionArgsList.h"
@@ -34,25 +33,31 @@ namespace codac2
       virtual std::pair<Index,Index> output_shape() const = 0;
 
       const T& init_value(ValuesMap& v, const T& x) const
-      {
-        // sem.acquire();
-        
+      {        
         auto& p = v[unique_id()];
 
         if(!p)
+        {
           p = std::make_shared<T>(x);
+          return *static_cast<T*>(p.get());
+        }
+
         else
-          *std::dynamic_pointer_cast<T>(p) = x;
-
-        // sem.release();
-
-        return x;
+        {
+          auto pt = std::dynamic_pointer_cast<T>(p);
+          assert(pt && "Type mismatch in ValuesMap for this ExprID");
+          *pt = x;
+          return *pt;
+        }
       }
 
       T& value(ValuesMap& v) const
       {
-        assert(v.find(unique_id()) != v.end() && "argument cannot be found");
-        return *std::dynamic_pointer_cast<T>(v[unique_id()]);
+        auto it = v.find(unique_id());
+        assert(it != v.end() && "argument cannot be found");
+        auto p = std::dynamic_pointer_cast<T>(it->second);
+        assert(p && "Type mismatch in ValuesMap for this ExprID");
+        return *p;
       }
 
       virtual bool belongs_to_args_list(const FunctionArgsList& args) const = 0;
@@ -139,7 +144,7 @@ namespace codac2
       {
         bool b = true;
 
-        std::apply([&b,args](auto &&... x)
+        std::apply([&b,&args](auto &&... x)
         {
           ((b &= x->belongs_to_args_list(args)), ...);
         }, this->_x);
