@@ -17,8 +17,6 @@
 #include "codac2_FunctionArgsList.h"
 #include "codac2_AnalyticType.h"
 
-inline std::counting_semaphore<1> sem(0);
-
 namespace codac2
 {
   using ValuesMap = std::map<ExprID,std::shared_ptr<AnalyticTypeBase>>;
