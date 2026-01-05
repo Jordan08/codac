@@ -138,6 +138,7 @@ This list is in alphabetical order by surname.
   * Auguste Bourgois
   * `Cyril Bouvier <http://www.lirmm.fr/~bouvier/index.en.html>`_
   * `Quentin Brateau <https://teusner.github.io>`_
+  * `Clément Carbonnel <https://www.lirmm.fr/~ccarbonnel/>`_
   * Gilles Chabert
   * `Julien Damers <http://damers.org>`_
   * Benoît Desrochers

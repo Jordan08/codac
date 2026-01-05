@@ -92,10 +92,12 @@ namespace codac2
           [this,&v,total_input_size,natural_eval](auto &&... x)
           {
             if(natural_eval)
-              return AnalyticExpr<Y>::init_value(v, C::fwd_natural(x->fwd_eval(v, total_input_size, natural_eval)...));
+              return AnalyticExpr<Y>::init_value(v,
+                C::fwd_natural(x->fwd_eval(v, total_input_size, natural_eval)...));
 
             else
-              return AnalyticExpr<Y>::init_value(v, C::fwd_centered(x->fwd_eval(v, total_input_size, natural_eval)...));
+              return AnalyticExpr<Y>::init_value(v,
+                C::fwd_centered(x->fwd_eval(v, total_input_size, natural_eval)...));
           },
         this->_x);
       }
