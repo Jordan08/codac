@@ -12,10 +12,13 @@
 #include <map>
 #include <memory>
 #include <utility>
+#include <semaphore>
 #include "codac2_ExprBase.h"
 #include "codac2_Domain.h"
 #include "codac2_FunctionArgsList.h"
 #include "codac2_AnalyticType.h"
+
+inline std::counting_semaphore<1> sem(0);
 
 namespace codac2
 {
@@ -32,12 +35,16 @@ namespace codac2
 
       const T& init_value(ValuesMap& v, const T& x) const
       {
+        // sem.acquire();
+        
         auto& p = v[unique_id()];
 
         if(!p)
           p = std::make_shared<T>(x);
         else
           *std::dynamic_pointer_cast<T>(p) = x;
+
+        // sem.release();
 
         return x;
       }

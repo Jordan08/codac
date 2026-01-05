@@ -119,9 +119,3 @@ namespace codac2
     return output;
   }
 }
-
-// output.insert(
-//         output.end(),
-//         std::make_move_iterator(local_output.begin()),
-//         std::make_move_iterator(local_output.end())
-//     );

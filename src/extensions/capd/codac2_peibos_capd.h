@@ -27,6 +27,7 @@ namespace codac2
 
   using T = std::pair<PEIBOS_CAPD_Key,std::pair<IntervalVector,IntervalMatrix>>;
   std::map<double, std::vector<T>> PEIBOS(const capd::IMap& i_map, double tf, double dt, const AnalyticFunction<VectorType>& psi_0, const std::vector<OctaSym>& Sigma, double epsilon, bool verbose = false);
+  
   using T = std::pair<PEIBOS_CAPD_Key,std::pair<IntervalVector,IntervalMatrix>>;
   std::map<double, std::vector<T>> PEIBOS(const capd::IMap& i_map, double tf, double dt, const AnalyticFunction<VectorType>& psi_0, const std::vector<OctaSym>& Sigma, double epsilon, const Vector& offset, bool verbose = false);
 
