@@ -148,20 +148,7 @@ namespace codac2
         output[time].push_back(p);
       }
     }
-
-    // for (const auto& [key,flow_pair] : peibos_output)
-    // {
-    //   const auto& [flow, flow_punct] = flow_pair;
-
-    //   IntervalVector z = to_codac((*flow_punct)(t));
-    //   auto Jf_tild = (to_codac((*flow_punct).derivative(t))).mid();
-    //   auto Jf = to_codac((*flow).derivative(t));
-
-    //   auto p = parallelepiped_inclusion(z, Jf, Jf_tild, key.psi_0, key.sigma, key.box);
-
-    //   output.push_back(p);
-    // }
-
+    
     return output;
   }
 
