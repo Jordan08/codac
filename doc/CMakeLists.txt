@@ -87,12 +87,14 @@
                       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
                       COMMENT "Generating the manual website using Sphinx")
 
+
     add_custom_command(
       TARGET manual POST_BUILD
       COMMAND ${CMAKE_COMMAND} -E copy_directory
               ${CMAKE_BINARY_DIR}/doc/api/html
               ${SPHINX_EXTRA_API}
       COMMENT "Copying generated Doxygen HTML to Sphinx extra_html/api"
+      COMMENT "SPHINX_EXTRA_API=${SPHINX_EXTRA_API}"
     )
     
     install(DIRECTORY ${SPHINX_BUILD}/
