@@ -8,27 +8,10 @@
 #include <capd/capdlib.h>
 // [codac-capd-1-end]
 
-// [peibos-capd-1-beg]
-std::map<double,std::vector<Parallelepiped>> reach_set(const std::map<double, std::vector<T>>& peibos_output)
-{
-  std::map<double,std::vector<Parallelepiped>> output;
-
-  for (const auto& [time,vec] : peibos_output)
-  {
-    for (const auto& [key, z, Jf] : vec)
-    {
-      auto p = parallelepiped_inclusion(z, Jf, Jf.mid(), key.psi_0, key.sigma, key.box);
-
-      output[time].push_back(p);
-    }
-  }
-  
-  return output;
-}
-// [peibos-capd-1-end]
+using namespace codac2;
 
 // [peibos-capd-2-beg]
-Parallelepiped parallelepiped_inclusion(const IntervalVector& Y, const IntervalMatrix& Jf, const Matrix& Jf_tild, const AnalyticFunction<VectorType>& psi_0, const OctaSym& sigma, const IntervalVector& X)
+Parallelepiped parallelepiped_inclusion_(const IntervalVector& Y, const IntervalMatrix& Jf, const Matrix& Jf_tild, const AnalyticFunction<VectorType>& psi_0, const OctaSym& sigma, const IntervalVector& X)
 {
   // Computation of the Jacobian of g = f o sigma(psi_0)
   IntervalMatrix Jg = Jf * (sigma.permutation_matrix().template cast<Interval>()) * psi_0.diff(X);
@@ -46,6 +29,25 @@ Parallelepiped parallelepiped_inclusion(const IntervalVector& Y, const IntervalM
   return Parallelepiped(z, A_inf);
 }
 // [peibos-capd-2-end]
+
+// [peibos-capd-1-beg]
+std::map<double,std::vector<Parallelepiped>> reach_set_(const std::map<double, std::vector<std::tuple<PEIBOS_CAPD_Key,IntervalVector,IntervalMatrix>>>& peibos_output)
+{
+  std::map<double,std::vector<Parallelepiped>> output;
+
+  for (const auto& [time,vec] : peibos_output)
+  {
+    for (const auto& [key, z, Jf] : vec)
+    {
+      auto p = parallelepiped_inclusion_(z, Jf, Jf.mid(), key.psi_0, key.sigma, key.box);
+
+      output[time].push_back(p);
+    }
+  }
+  
+  return output;
+}
+// [peibos-capd-1-end]
 
 int main()
 {
@@ -97,7 +99,7 @@ int main()
 
   // [codac-capd-8-beg]
 
-  auto tdomain = create_tdomain(codac2::Interval(0,20),0.05, true); // true to have gates
+  auto tdomain = create_tdomain(Interval(0,20),0.05, true); // true to have gates
   auto codac_tube = to_codac(solution, tdomain);
 
   // [codac-capd-8-end]
@@ -111,16 +113,16 @@ int main()
     std::cout << "\n\nafter time=" << T << " the image is: " << result;
     std::cout << "\ndiam(image): " << diam(result) << std::endl << std::endl;
 
-    codac2::DefaultFigure::set_axes(codac2::axis(0,{-2,1.5}),codac2::axis(1,{-2,3}));
+    DefaultFigure::set_axes(axis(0,{-2,1.5}),axis(1,{-2,3}));
 
-    codac2::DefaultFigure::draw_tube(codac_tube, codac2::ColorMap::blue_tube());
-    codac2::DefaultFigure::draw_tube(codac_tube, codac2::Color::black());
+    DefaultFigure::draw_tube(codac_tube, ColorMap::blue_tube());
+    DefaultFigure::draw_tube(codac_tube, Color::black());
 
     for (float t=0.;t<20.;t+=0.05)
-      codac2::DefaultFigure::draw_box(codac2::to_codac(solution(t)), {codac2::Color::none(), codac2::Color::orange(0.5)});
+      DefaultFigure::draw_box(to_codac(solution(t)), {Color::none(), Color::orange(0.5)});
 
-    codac2::DefaultFigure::draw_box(codac2::to_codac(c),codac2::Color::green());
-    codac2::DefaultFigure::draw_box(codac2::to_codac(result),codac2::Color::red());
+    DefaultFigure::draw_box(to_codac(c),Color::green());
+    DefaultFigure::draw_box(to_codac(result),Color::red());
     // [codac-capd-9-end]
   }
 
