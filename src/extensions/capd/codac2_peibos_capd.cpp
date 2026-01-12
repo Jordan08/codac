@@ -19,13 +19,11 @@ using namespace std;
 
 namespace codac2
 {
-  using T = std::pair<PEIBOS_CAPD_Key,std::pair<IntervalVector,IntervalMatrix>>;
   std::map<double, std::vector<T>> PEIBOS(const capd::IMap& i_map, double tf, double dt, const AnalyticFunction<VectorType>& psi_0, const vector<OctaSym>& Sigma, double epsilon, bool verbose)
   {
     return PEIBOS(i_map, tf, dt, psi_0, Sigma, epsilon, Vector::zero(psi_0.output_size()), verbose);
   }
 
-  using T = std::pair<PEIBOS_CAPD_Key,std::pair<IntervalVector,IntervalMatrix>>;
   std::map<double, std::vector<T>> PEIBOS(const capd::IMap& i_map, double tf, double dt, const AnalyticFunction<VectorType>& psi_0, const vector<OctaSym>& Sigma, double epsilon, const Vector& offset, bool verbose)
   {
     std::vector<double> time_points;
@@ -93,7 +91,7 @@ namespace codac2
         {
             IntervalVector z = to_codac(solution_punct(t));
             IntervalMatrix Jf = to_codac(solution.derivative(t));
-            local_output[t].emplace_back(key, std::make_pair(z, Jf));
+            local_output[t].emplace_back(key, z, Jf);
         }
       }
     };
@@ -132,17 +130,14 @@ namespace codac2
     return output;
   }
 
-  using T = std::pair<PEIBOS_CAPD_Key,std::pair<IntervalVector,IntervalMatrix>>;
   std::map<double,std::vector<Parallelepiped>> reach_set(const std::map<double, std::vector<T>>& peibos_output)
   {
     std::map<double,std::vector<Parallelepiped>> output;
 
     for (const auto& [time,vec] : peibos_output)
     {
-      for (const auto& [key,flow_pair] : vec)
+      for (const auto& [key,z, Jf] : vec)
       {
-        const auto& [z, Jf] = flow_pair;
-
         auto p = parallelepiped_inclusion(z, Jf, Jf.mid(), key.psi_0, key.sigma, key.box);
 
         output[time].push_back(p);
