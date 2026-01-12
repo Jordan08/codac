@@ -136,7 +136,7 @@ namespace codac2
 
     for (const auto& [time,vec] : peibos_output)
     {
-      for (const auto& [key,z, Jf] : vec)
+      for (const auto& [key, z, Jf] : vec)
       {
         auto p = parallelepiped_inclusion(z, Jf, Jf.mid(), key.psi_0, key.sigma, key.box);
 

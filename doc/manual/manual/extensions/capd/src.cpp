@@ -8,6 +8,44 @@
 #include <capd/capdlib.h>
 // [codac-capd-1-end]
 
+// [peibos-capd-1-beg]
+std::map<double,std::vector<Parallelepiped>> reach_set(const std::map<double, std::vector<T>>& peibos_output)
+{
+  std::map<double,std::vector<Parallelepiped>> output;
+
+  for (const auto& [time,vec] : peibos_output)
+  {
+    for (const auto& [key, z, Jf] : vec)
+    {
+      auto p = parallelepiped_inclusion(z, Jf, Jf.mid(), key.psi_0, key.sigma, key.box);
+
+      output[time].push_back(p);
+    }
+  }
+  
+  return output;
+}
+// [peibos-capd-1-end]
+
+// [peibos-capd-2-beg]
+Parallelepiped parallelepiped_inclusion(const IntervalVector& Y, const IntervalMatrix& Jf, const Matrix& Jf_tild, const AnalyticFunction<VectorType>& psi_0, const OctaSym& sigma, const IntervalVector& X)
+{
+  // Computation of the Jacobian of g = f o sigma(psi_0)
+  IntervalMatrix Jg = Jf * (sigma.permutation_matrix().template cast<Interval>()) * psi_0.diff(X);
+
+  Vector z = Y.mid();
+  // A is an approximation of the Jacobian of g at the center of X
+  Matrix A = (Jf_tild * sigma.permutation_matrix() * (psi_0.diff(X.mid()).mid()));
+
+  // Maximum error computation
+  double rho = error_peibos(Y, z, Jg, A, X);
+
+  // Inflation of the parallelepiped
+  Matrix A_inf = inflate_flat_parallelepiped(A, X.rad(), rho);
+
+  return Parallelepiped(z, A_inf);
+}
+// [peibos-capd-2-end]
 
 int main()
 {
@@ -84,6 +122,40 @@ int main()
     codac2::DefaultFigure::draw_box(codac2::to_codac(c),codac2::Color::green());
     codac2::DefaultFigure::draw_box(codac2::to_codac(result),codac2::Color::red());
     // [codac-capd-9-end]
+  }
+
+  {
+    // [peibos-capd-3-beg]
+    capd::IMap vectorField_pend("par:l,g;var:t,w;fun:w,-sin(t)*5 - 0.5*w;");
+ 
+    VectorVar X_2d(1);
+    AnalyticFunction psi0_pend ({X_2d},{0.1*X_2d[0],0.1});
+    OctaSym id_2d ({1,2});
+    OctaSym s ({-2,1});
+
+    auto peibos_output_pend = PEIBOS(vectorField_pend, 20., 0.2, psi0_pend, {id_2d,s,s*s,s.invert()}, 0.02, {-M_PI/2.,0.});
+
+    auto m_v_par_2d_pend = reach_set(peibos_output_pend);
+    // [peibos-capd-3-end]
+  }
+
+  {
+    // [peibos-capd-4-beg]
+    capd::IMap vectorField_lorenz("par:sigma,rho,beta;var:x1,x2,x3;fun:10*(x2-x1),28*x1-x2-x1*x3,-2.6*x3+x1*x2;");
+    vectorField_lorenz.setParameter("sigma", 10.);
+    vectorField_lorenz.setParameter("rho", 28.);
+    vectorField_lorenz.setParameter("beta", 8/3);
+
+    VectorVar X_3d(2);
+    AnalyticFunction psi0_lorenz ({X_3d},{1/sqrt(1+sqr(X_3d[0])+sqr(X_3d[1])),X_3d[0]/sqrt(1+sqr(X_3d[0])+sqr(X_3d[1])),X_3d[1]/sqrt(1+sqr(X_3d[0])+sqr(X_3d[1]))});
+    OctaSym id_3d ({1,2,3});
+    OctaSym s1 ({-2,1,3});
+    OctaSym s2 ({3,2,-1});
+
+    auto peibos_output_lorenz = PEIBOS(vectorField_lorenz, 0.1, 0.05, psi0_lorenz, {id_3d,s1,s1*s1,s1.invert(),s2,s2.invert()}, 0.1);
+
+    auto m_v_par_lorenz = reach_set(peibos_output_lorenz);
+    // [peibos-capd-4-end]
   }
  
 }
