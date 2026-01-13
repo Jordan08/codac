@@ -255,6 +255,7 @@
     ${CMAKE_CURRENT_SOURCE_DIR}/tools/codac2_RobotSimulator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/tools/codac2_serialization.h
     ${CMAKE_CURRENT_SOURCE_DIR}/tools/codac2_template_tools.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/tools/codac2_threading.h
     ${CMAKE_CURRENT_SOURCE_DIR}/tools/codac2_transformations.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tools/codac2_transformations.h
     ${CMAKE_CURRENT_SOURCE_DIR}/tools/codac2_trunc.cpp

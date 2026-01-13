@@ -51,6 +51,8 @@ std::map<double,std::vector<Parallelepiped>> reach_set_(const std::map<double, s
 
 int main()
 {
+  set_threads_used(max_threads());
+  
   // Equation of the pendulum with friction
   // [codac-capd-2-beg]
   capd::IMap vectorField("par:l,g;var:t,w;fun:w,-sin(t)*g/l - 0.5*w;");

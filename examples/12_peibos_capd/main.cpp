@@ -6,6 +6,8 @@ using namespace codac2;
 
 int main()
 {
+  set_threads_used(max_threads());
+  
   ColorMap cmap = ColorMap::rainbow();
   VectorVar X_2d(1);
   VectorVar X_3d(2);

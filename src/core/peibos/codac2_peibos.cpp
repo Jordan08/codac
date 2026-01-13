@@ -12,8 +12,8 @@
 #include "codac2_peibos.h"
 #include "codac2_peibos_tools.h"
 #include "codac2_OctaSym_operator.h"
+#include "codac2_threading.h"
 
-#include <thread>
 #include <algorithm>
 #include <chrono>
 
@@ -59,7 +59,7 @@ namespace codac2
     std::vector<IntervalVector> boxes;
     double true_eps = split(IntervalVector::constant(m,{-1,1}), epsilon, boxes);
 
-    int nthreads = std::thread::hardware_concurrency();
+    int nthreads = threads_used;
     std::vector<std::vector<Parallelepiped>> thread_outputs(nthreads);
 
     struct WorkItem { const OctaSym* sigma; const IntervalVector* box; };

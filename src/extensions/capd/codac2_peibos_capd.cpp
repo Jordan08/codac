@@ -10,8 +10,8 @@
 #include <cassert>
 #include "codac2_AnalyticFunction.h"
 #include "codac2_peibos_capd.h"
+#include "codac2_threading.h"
 
-#include <thread>
 #include <algorithm>
 #include <chrono>
 
@@ -47,7 +47,7 @@ namespace codac2
     vector<IntervalVector> boxes;
     double true_eps = split(Interval(-1.,1.)*IntervalVector::Ones(m), epsilon, boxes);
 
-    int nthreads = std::thread::hardware_concurrency();
+    int nthreads = threads_used;
     std::vector<std::map<double, std::vector<T>>> thread_outputs(nthreads);
 
     struct WorkItem { const OctaSym* sigma; const IntervalVector* box; };
