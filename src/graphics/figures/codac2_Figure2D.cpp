@@ -155,7 +155,7 @@ void Figure2D::draw_box(const IntervalVector& x, const StyleProperties& style)
       if(x.max_diam() == 0.)
         output_fig->draw_point({x[0].lb(),x[1].lb()}, style);
       else
-        output_fig->draw_box(x,style);
+        output_fig->draw_box(x & IntervalVector::constant(x.size(),{-9e10,9e10}),style);
     }
 }
 
