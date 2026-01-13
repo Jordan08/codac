@@ -265,7 +265,7 @@ It can also be deduced from a ``ColorMap`` object.
     fig.draw_trajectory(traj); // Default style
     fig.draw_trajectory(traj,ColorMap::haxby()); // haxby color map
 
-In addition, optional arguments can be passed to the ``StyleProperties`` object to define line style, line width, layer and Z-value.
+In addition, optional arguments can be passed to the ``StyleGradientProperties`` object to define line style, line width, layer and Z-value.
 For more information, see :ref:`subsec-graphics-colors-optional-arguments`.
 
 .. tabs::
