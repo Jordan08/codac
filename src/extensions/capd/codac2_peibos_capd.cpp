@@ -47,7 +47,7 @@ namespace codac2
     vector<IntervalVector> boxes;
     double true_eps = split(Interval(-1.,1.)*IntervalVector::Ones(m), epsilon, boxes);
 
-    int nthreads = threads_used;
+    int nthreads = get_threads_used();
     std::vector<std::map<double, std::vector<T>>> thread_outputs(nthreads);
 
     struct WorkItem { const OctaSym* sigma; const IntervalVector* box; };
