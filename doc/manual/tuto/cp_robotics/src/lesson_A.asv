@@ -1,0 +1,13 @@
+import py.codac4matlab.*
+
+% [A-q2-beg]
+x_truth = Vector([2,1,PI/6.0]);
+y_truth = Vector([6,PI/6.0]);
+m_truth = Vector([5,6]);
+% [A-q2-end]
+
+% [A-q3-beg]
+x = cart_prod(Interval(-oo,oo),Interval(-oo,oo),x_truth(3));
+m = IntervalVector(m_truth).inflate(0.2);
+y = IntervalVector(y_truth).inflate(Vector([]));
+% [A-q3-end]
