@@ -119,13 +119,10 @@ void export_MatrixBase(py::module& m, py::class_<S>& pyclass)
         #else
           "__setitem__"
         #endif
-        , [](S& x, std::vector<Index_type> ij, const T& a)
+        , [](S& x, const std::vector<Index_type>& ij, const T& a)
         {
           auto ij_conv = matlab::convert_indices(ij);
-          int i = ij_conv[0];
-          int j = ij_conv[1];
-
-          x(i, j) = a;
+          x(ij_conv[0],ij_conv[1]) = a;
         },
       MATRIX_ADDONS_BASE_SCALAR_REF_OPERATORCALL_INDEX_INDEX)
 
