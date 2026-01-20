@@ -23,12 +23,12 @@ DefaultFigure().draw_pie(x_truth.subvector(1,2), y(1).union(0), x_truth(3)+y(2),
 % [A-q6-beg]
 ctc_polar = CtcPolar();
 
-x123 = VectorVar(7);
-f_minus = AnalyticFunction({x123},vec(x123(1)-x123(3)-x123(6), x123(2)-x123(4)-x123(7)));
+[x1,x2,x3] = deal(VectorVar(2), VectorVar(3), VectorVar(2));
+f_minus = AnalyticFunction({x1,x2,x3},vec(x1(1)-x2(1)-x3(1), x1(2)-x2(2)-x3(2)));
 ctc_minus = CtcInverse(f_minus, Vector([0,0]));
 
-s =VectorVar(3);
-f_plus = AnalyticFunction({s}, s(1)+s(2)-s(3));
+[s1,s2,s3] = deal(ScalarVar(),ScalarVar(),ScalarVar());
+f_plus = AnalyticFunction({s1,s2,s3}, s1+s2-s3);
 ctc_plus = CtcInverse(f_plus, Interval(0,0));
 % [A-q6-end]
 
