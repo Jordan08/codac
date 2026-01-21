@@ -136,6 +136,25 @@ where :math:`\bigsqcup`, called *squared union*, returns the smallest box enclos
           const std::vector<IntervalVector> _M;
       };
 
+    .. code-tab:: matlab
+
+      classdef MyCtc < handle
+
+          properties
+              M
+          end
+
+          methods
+              function obj = MyCtc(M_)
+                  obj.M = M_;
+              end
+
+              function a = contract(obj, a)
+                  % Insert contraction formula here                  
+              end
+          end
+      end
+
   | Note that:
 
   * ``M`` represents the set :math:`\mathbb{M}`, made of 2d ``IntervalVector`` objects;
@@ -168,6 +187,14 @@ where :math:`\bigsqcup`, called *squared union*, returns the smallest box enclos
           :start-after: [B-q2-beg]
           :end-before: [B-q2-end]
           :dedent: 2
+
+      .. group-tab:: Matlab
+
+        .. literalinclude:: src/MyCtc.m
+          :language: matlab
+          :start-after: [B-q2-beg]
+          :end-before: [B-q2-end]
+          :dedent: 0
 
   **B.3.** Test your contractor with:
   
@@ -214,6 +241,24 @@ where :math:`\bigsqcup`, called *squared union*, returns the smallest box enclos
       ctc_constell.contract(a2);
       ctc_constell.contract(a3);
 
+    .. code-tab:: matlab
+
+      M = {IntervalVector([...]),IntervalVector([...]),...
+
+      for i = 1:numel(M)
+          M{i}.inflate(0.05);
+      end
+
+      a1 = IntervalVector({...
+      a2 = IntervalVector({...
+      a3 = IntervalVector({...
+
+      ctc_constell = MyCtc(M);
+
+      a1 = ctc_constell.contract(a1)
+      a2 = ctc_constell.contract(a2)
+      a3 = ctc_constell.contract(a3)
+
   .. container:: toggle, toggle-hidden
 
     .. tabs::
@@ -233,6 +278,14 @@ where :math:`\bigsqcup`, called *squared union*, returns the smallest box enclos
           :start-after: [B-q3-beg]
           :end-before: [B-q3-end]
           :dedent: 2
+
+      .. group-tab:: Matlab
+
+        .. literalinclude:: src/lesson_B.m
+          :language: matlab
+          :start-after: [B-q3-beg]
+          :end-before: [B-q3-end]
+          :dedent: 0
 
 .. figure:: img/CtcConstell_constell.png
   :width: 600px
@@ -280,6 +333,14 @@ We will localize the robot in the map :math:`\mathbb{M}` created in Question **B
           :end-before: [B-q4-end]
           :dedent: 2
 
+      .. group-tab:: Matlab
+
+        .. literalinclude:: src/lesson_B.m
+          :language: matlab
+          :start-after: [B-q4-beg]
+          :end-before: [B-q4-end]
+          :dedent: 0
+
   **B.5.** Display the robot and the landmarks in a graphical view with:
 
   .. tabs::
@@ -299,6 +360,14 @@ We will localize the robot in the map :math:`\mathbb{M}` created in Question **B
         :start-after: [B-q5-beg]
         :end-before: [B-q5-end]
         :dedent: 2
+
+    .. group-tab:: Matlab
+
+        .. literalinclude:: src/lesson_B.m
+          :language: matlab
+          :start-after: [B-q5-beg]
+          :end-before: [B-q5-end]
+          :dedent: 0
 
   You should obtain this result.
 
@@ -325,6 +394,14 @@ We will localize the robot in the map :math:`\mathbb{M}` created in Question **B
         :end-before: [B-q6-end]
         :dedent: 0
 
+    .. group-tab:: Matlab
+
+        .. literalinclude:: src/lesson_B.m
+          :language: matlab
+          :start-after: [B-q6-beg]
+          :end-before: [B-q6-end]
+          :dedent: 0
+
   The returned value is a vector of [range]×[bearing] interval values.
 
   Compute and display the measurements in the view with ``.draw_pie()``, as we did in the previous lesson.
@@ -347,6 +424,14 @@ We will localize the robot in the map :math:`\mathbb{M}` created in Question **B
         :start-after: [B-q7-beg]
         :end-before: [B-q7-end]
         :dedent: 2
+
+    .. group-tab:: Matlab
+
+        .. literalinclude:: src/lesson_B.m
+          :language: matlab
+          :start-after: [B-q7-beg]
+          :end-before: [B-q7-end]
+          :dedent: 0
 
   You should obtain a figure similar to this one:
 
@@ -391,6 +476,14 @@ We will first reuse the fixpoint method of the previous Lesson, and apply it on 
           :start-after: [B-q7b-beg]
           :end-before: [B-q7b-end]
           :dedent: 2
+      
+      .. group-tab:: Matlab
+
+        .. literalinclude:: src/lesson_B.m
+          :language: matlab
+          :start-after: [B-q7b-beg]
+          :end-before: [B-q7b-end]
+          :dedent: 0
 
   **B.8.** Display the resulted contracted box :math:`[\mathbf{x}]` with:
 
@@ -413,6 +506,14 @@ We will first reuse the fixpoint method of the previous Lesson, and apply it on 
           :start-after: [B-q8-beg]
           :end-before: [B-q8-end]
           :dedent: 2
+
+      .. group-tab:: Matlab
+
+        .. literalinclude:: src/lesson_B.m
+          :language: matlab
+          :start-after: [B-q8-beg]
+          :end-before: [B-q8-end]
+          :dedent: 0
 
   You should obtain this result in black (considering uncertainties proposed in Question **B.6**):
 
@@ -453,6 +554,14 @@ We now assume that the identities of the landmarks are not known. This means tha
           :end-before: [B-q9-end]
           :dedent: 2
 
+      .. group-tab:: Matlab
+
+        .. literalinclude:: src/lesson_B.m
+          :language: matlab
+          :start-after: [B-q9-beg]
+          :end-before: [B-q9-end]
+          :dedent: 0
+
 
   **B.11.** *Same result* means that the data association worked: each measurement has been automatically associated to the correct landmark without ambiguity.
 
@@ -479,6 +588,14 @@ We now assume that the identities of the landmarks are not known. This means tha
         :start-after: [B-q10-beg]
         :end-before: [B-q10-end]
         :dedent: 2
+
+    .. group-tab:: Matlab
+
+        .. literalinclude:: src/lesson_B.m
+          :language: matlab
+          :start-after: [B-q10-beg]
+          :end-before: [B-q10-end]
+          :dedent: 4
 
   Expected result:
 

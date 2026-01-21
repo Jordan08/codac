@@ -153,7 +153,7 @@ def ctc_all_obs_datasso(x):
     # ========================
     x,yi,mi,ai,di = fixpoint(ctc_one_obs_datasso, x,yi,mi,ai,di)
     # [B-q10-beg]
-    if mi.max_diam() <= 1:
+    if mi.max_diam() < 0.11:
       DefaultFigure.draw_point(mi.mid())
     # [B-q10-end]
   return x

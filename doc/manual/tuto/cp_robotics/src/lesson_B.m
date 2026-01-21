@@ -13,7 +13,9 @@ a3 = IntervalVector({{1.1,3.25},{0.2,1.4}});
 
 ctc_constell = MyCtc(M);
 
-[a1,a2,a3] = deal(ctc_constell.contract(a1),ctc_constell.contract(a2),ctc_constell.contract(a3))
+a1 = ctc_constell.contract(a1)
+a2 = ctc_constell.contract(a2)
+a3 = ctc_constell.contract(a3)
 % [B-q3-end]
 
 % [B-q4-beg]
@@ -41,6 +43,8 @@ end
 obs = {};
 for i = 1:numel(M)
     obs{end+1} = cart_prod(g(x_truth, M{i}), M{i});
+    % We append the position of the landmark to the measurement
+    % yi = {range}×{bearing}×{2d position}
 end
 
 for i = 1:numel(obs)
@@ -184,8 +188,10 @@ function x = ctc_all_obs_datasso_mi(x,obs,ctc_plus,ctc_polar,ctc_minus,ctc_const
         mi = py.codac4matlab.IntervalVector(2); % the identity (position) of the landmark is not known
         % ========================
         [x,yi,mi,ai,di] = fixpoint_ctc_one_obs_datasso(x,yi,mi,ai,di,ctc_plus,ctc_polar,ctc_minus,ctc_constell);
+        % [B-q10-beg]
         if mi.max_diam() < 0.11
             py.codac4matlab.DefaultFigure().draw_point(mi.mid());
+        % [B-q10-end]
         end
     end
 end
