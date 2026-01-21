@@ -60,6 +60,7 @@ def constraints(x,y,m,a,d):
   m,x,d = ctc_minus.contract(m,x,d)
   return x,y,m,a,d
 
+
 x,y,m,a,d = fixpoint(constraints, x,y,m,a,d)
 # [A-q8-end]
 

@@ -93,7 +93,7 @@ function x = ctc_all_obs(x,obs,ctc_plus,ctc_polar,ctc_minus)
         ai = py.codac4matlab.Interval();
         di = py.codac4matlab.IntervalVector(2);
         mi = yi.subvector(3,4);
-        [x,yi,mi,ai,di] = fixpoint_ctc_one_obs(x,yi,mi,ai,di,ctc_plus,ctc_polar,ctc_minus);
+        [x,yi,mi,ai,di] = fixpoint_ctc_one_obs(x,yi,mi,ai,di,ctc_plus,ctc_polar,ctc_minus)
     end
 end
 
@@ -137,69 +137,37 @@ function [x,yi,mi,ai,di] = ctc_one_obs_datasso(x,yi,mi,ai,di,ctc_plus,ctc_polar,
     % ==========================
 end
 
-function [x,y,m,a,d] = fixpoint_ctc_one_obs_datasso(x,y,m,a,d,ctc_plus,ctc_polar,ctc_minus,ctc_constell)
+function [x,y,m,a,d] = fixpoint_ctc_one_obs_datasso(x,y,m,a,d,ctc_plus,ctc_polar,ctc_minus)
     vol = -1.;
     prev_vol = -2.;
 
     while vol ~= prev_vol
         prev_vol = vol;
-        [x,y,m,a,d] = ctc_one_obs_datasso(x,y,m,a,d,ctc_plus,ctc_polar,ctc_minus,ctc_constell);
+        [x,y,m,a,d] = ctc_one_obs(x,y,m,a,d,ctc_plus,ctc_polar,ctc_minus);
         vol = x.volume() + y.volume() + m.volume() + a.volume() + d.volume();
     end
 end
 
-function x = ctc_all_obs_datasso(x,obs,ctc_plus,ctc_polar,ctc_minus,ctc_constell)
+function x = ctc_all_obs(x,obs,ctc_plus,ctc_polar,ctc_minus)
     for i = 1:numel(obs)
         yi = obs{i};
         ai = py.codac4matlab.Interval();
         di = py.codac4matlab.IntervalVector(2);
-        % ==== Changed domain ====
-        mi = py.codac4matlab.IntervalVector(2); % the identity (position) of the landmark is not known
-        % ========================
-        [x,yi,mi,ai,di] = fixpoint_ctc_one_obs_datasso(x,yi,mi,ai,di,ctc_plus,ctc_polar,ctc_minus,ctc_constell);
+        mi = yi.subvector(3,4);
+        [x,yi,mi,ai,di] = fixpoint_ctc_one_obs(x,yi,mi,ai,di,ctc_plus,ctc_polar,ctc_minus)
     end
 end
 
-function x = fixpoint_ctc_all_obs_datasso(x,obs,ctc_plus,ctc_polar,ctc_minus,ctc_constell)
+function x = fixpoint_ctc_all_obs(x,obs,ctc_plus,ctc_polar,ctc_minus)
     vol = -1.;
     prev_vol = -2.;
 
     while vol ~= prev_vol
         prev_vol = vol;
-        x = ctc_all_obs_datasso(x,obs,ctc_plus,ctc_polar,ctc_minus,ctc_constell);
+        x = ctc_all_obs(x,obs,ctc_plus,ctc_polar,ctc_minus);
         vol = x.volume();
     end
 end
 
 x = cart_prod(IntervalVector(2),x_truth(3));
-x = fixpoint_ctc_all_obs_datasso(x,obs,ctc_plus,ctc_polar,ctc_minus,ctc_constell);
-% [B-q9-end]
-
-function x = ctc_all_obs_datasso_mi(x,obs,ctc_plus,ctc_polar,ctc_minus,ctc_constell)
-    for i = 1:numel(obs)
-        yi = obs{i};
-        ai = py.codac4matlab.Interval();
-        di = py.codac4matlab.IntervalVector(2);
-        % ==== Changed domain ====
-        mi = py.codac4matlab.IntervalVector(2); % the identity (position) of the landmark is not known
-        % ========================
-        [x,yi,mi,ai,di] = fixpoint_ctc_one_obs_datasso(x,yi,mi,ai,di,ctc_plus,ctc_polar,ctc_minus,ctc_constell);
-        if mi.max_diam() < 0.11
-            py.codac4matlab.DefaultFigure().draw_point(mi.mid());
-        end
-    end
-end
-
-function x = fixpoint_ctc_all_obs_datasso_mi(x,obs,ctc_plus,ctc_polar,ctc_minus,ctc_constell)
-    vol = -1.;
-    prev_vol = -2.;
-
-    while vol ~= prev_vol
-        prev_vol = vol;
-        x = ctc_all_obs_datasso_mi(x,obs,ctc_plus,ctc_polar,ctc_minus,ctc_constell);
-        vol = x.volume();
-    end
-end
-
-x = cart_prod(IntervalVector(2),x_truth(3));
-x = fixpoint_ctc_all_obs_datasso_mi(x,obs,ctc_plus,ctc_polar,ctc_minus,ctc_constell);
+x = fixpoint_ctc_all_obs(x,obs,ctc_plus,ctc_polar,ctc_minus);

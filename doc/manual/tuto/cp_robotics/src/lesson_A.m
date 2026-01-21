@@ -16,7 +16,7 @@ DefaultFigure().draw_box(m,Color().red());
 DefaultFigure().draw_tank(x_truth, 1, StyleProperties({Color().black(),Color().yellow()}));
 
 % [A-q5-beg]
-DefaultFigure().draw_pie(x_truth.subvector(1,2), y(1), x_truth(3)+y(2), Color().red());
+DefaultFigure().draw_pie(x_truth.subvector(1,2), y(1),          x_truth(3)+y(2), Color().red());
 DefaultFigure().draw_pie(x_truth.subvector(1,2), y(1).union(0), x_truth(3)+y(2), Color().light_gray());
 % [A-q5-end]
 
@@ -39,6 +39,7 @@ d = IntervalVector(2);
 
 % [A-q8-beg]
 % Either with a smart order of contractor calls:
+
 res_ctc_plus = ctc_plus.contract(cart_prod(x(3), y(2), a)); % The result is a 3D IntervalVector
 x.setitem(3,res_ctc_plus(1));
 y.setitem(2,res_ctc_plus(2));
@@ -54,9 +55,41 @@ res_ctc_minus = ctc_minus.contract(cart_prod(m,x,d)); % The result is a 7D Inter
 m = res_ctc_minus.subvector(1,2);
 x = res_ctc_minus.subvector(3,5);
 d = res_ctc_minus.subvector(6,7);
+
+% Or using a fixpoint method:
+function [x,y,m,a,d] = constraints(x,y,m,a,d,ctc_plus,ctc_polar,ctc_minus)
+    res_ctc_plus = ctc_plus.contract(py.codac4matlab.cart_prod(x(3), y(2), a)); % The result is a 3D IntervalVector
+    x.setitem(3,res_ctc_plus(1));
+    y.setitem(2,res_ctc_plus(2));
+    a = res_ctc_plus(3);
+
+    res_ctc_polar = ctc_polar.contract(py.codac4matlab.cart_prod(d(1),d(2),y(1),a)); % The result is a 4D IntervalVector
+    d.setitem(1,res_ctc_polar(1));
+    d.setitem(2,res_ctc_polar(2));
+    y.setitem(1,res_ctc_polar(3));
+    a = res_ctc_polar(4);
+
+    res_ctc_minus = ctc_minus.contract(py.codac4matlab.cart_prod(m,x,d)); % The result is a 7D IntervalVector
+    m = res_ctc_minus.subvector(1,2);
+    x = res_ctc_minus.subvector(3,5);
+    d = res_ctc_minus.subvector(6,7);
+end
+
+function [x,y,m,a,d] = fixpoint(x,y,m,a,d,ctc_plus,ctc_polar,ctc_minus)
+    vol = -1.;
+    prev_vol = -2.;
+
+    while vol ~= prev_vol
+        prev_vol = vol;
+        [x,y,m,a,d] = constraints(x,y,m,a,d,ctc_plus,ctc_polar,ctc_minus);
+        vol = x.volume() + y.volume() + m.volume() + a.volume() + d.volume();
+    end
+end
+
+[x,y,m,a,d] = fixpoint(x,y,m,a,d,ctc_plus,ctc_polar,ctc_minus);
 % [A-q8-end]
 
 % [A-q9-beg]
 x
-DefaultFigure().draw_box(x) % does not display anything if unbounded
+DefaultFigure().draw_box(x); % does not display anything if unbounded
 % [A-q9-end]
