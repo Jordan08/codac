@@ -180,6 +180,8 @@ Overview of Codac
 User manual
 -----------
 
+* :ref:`sec-intro`
+
 * :ref:`sec-install`
    * :ref:`sec-install-py`
    * :ref:`sec-install-cpp`
@@ -392,6 +394,7 @@ Development
    :caption: User manual
    :maxdepth: 2
 
+   manual/introduction/index.rst
    manual/installation/index.rst
    manual/intervals/index.rst
    manual/linear/index.rst
