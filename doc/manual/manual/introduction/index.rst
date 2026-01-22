@@ -10,7 +10,7 @@ Then, a solver performs **constraint propagation** on the variables and provides
 
 The following figure presents a conceptual view of a constraint propagation.
 
-.. Figure:: ./cst.png
+.. figure:: ./cst.png
 
   In this theoretical view, a domain :math:`\mathbb{X}` depicted in yellow is known to enclose a solution :math:`\mathbf{x}^*` pictured by a red dot and consistent with two constraints :math:`\mathcal{L}_1` and :math:`\mathcal{L}_2`. The estimation of :math:`\mathbf{x}^*` consists in reducing :math:`\mathbb{X}` while satisfying :math:`\mathcal{L}_1` and :math:`\mathcal{L}_2`. After the propagation process, the set of feasible solutions has been reduced by removing vectors that were not consistent with the constraints: we obtain a finer approximation of :math:`\mathbf{x}^*`.
 
@@ -62,7 +62,7 @@ Contractors
 
 Contractors are operators designed to reduce domains without losing any solution consistent with the related constraint. In Codac, the contractors act on intervals, boxes and tubes.
 
-.. Figure:: ./ctc.png
+.. figure:: ./ctc.png
 
   Implementation of the constraints :math:`\mathcal{L}_1` and :math:`\mathcal{L}_2` of the previous figure by means of respective contractors :math:`\mathcal{C}_1` and :math:`\mathcal{C}_2`. On this theoretical example, the domain :math:`\mathbb{X}` is now a subset of a box :math:`[\mathbf{x}]`, easily representable and contractible.
 

@@ -324,4 +324,4 @@ These functions are useful in the context of interval arithmetic to tightly cont
 
 .. admonition:: Technical documentation
 
-  See the `C++ API documentation of the Interval class` <../../api/html/classcodac2_1_1_interval.html>`_.
+  See the `C++ API documentation of the Interval class <../../api/html/classcodac2_1_1_interval.html>`_.
