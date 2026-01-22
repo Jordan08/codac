@@ -336,6 +336,7 @@ User manual
 * :ref:`sec-tools`
    * :ref:`sec-tools-serialization`
    * :ref:`sec-tools-registration`
+   * :ref:`sec-tools-octasym`
 
 * Codac extensions
    * :ref:`sec-extensions-capd`
@@ -401,7 +402,6 @@ Development
    manual/functions/index.rst
    manual/contractors/index.rst
    manual/geometry/index.rst
-   manual/actions/index.rst
    manual/ellipsoids/index.rst
    manual/visualization/index.rst
    manual/tools/index.rst
