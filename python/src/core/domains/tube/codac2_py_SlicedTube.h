@@ -255,7 +255,7 @@ void export_SlicedTube(py::module& m, const std::string& name)
 
       .def(
           #if FOR_MATLAB
-            "__call__"
+            "getitem"
           #else
             "__getitem__"
           #endif
@@ -274,6 +274,16 @@ void export_SlicedTube(py::module& m, const std::string& name)
             matlab::test_integer(i);
             matlab::test_integer(j);
             return x.subvector(matlab::input_index(i),matlab::input_index(j));
+          },
+        SLICEDTUBE_INTERVALVECTOR_SLICEDTUBE_T_SUBVECTOR_INDEX_INDEX_CONST,
+        "i"_a, "j"_a)
+
+      .def("subvector_0",
+          [](const SlicedTube<IntervalVector>& x, Index_type i, Index_type j) -> SlicedTube<IntervalVector>
+          {
+            matlab::test_integer(i);
+            matlab::test_integer(j);
+            return x.subvector(i,j);
           },
         SLICEDTUBE_INTERVALVECTOR_SLICEDTUBE_T_SUBVECTOR_INDEX_INDEX_CONST,
         "i"_a, "j"_a)

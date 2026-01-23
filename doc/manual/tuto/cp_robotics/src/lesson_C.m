@@ -1,0 +1,168 @@
+clear all;
+
+import py.codac4matlab.*
+
+function obs = g(t,x,M)
+    obs = {};
+    scope_range = py.codac4matlab.Interval(0,10);
+    scope_angle = py.codac4matlab.Interval(-py.codac4matlab.PI/4,py.codac4matlab.PI/4);
+
+    for i = 1:numel(M)
+        mi = M{i};
+        r = py.codac4matlab.sqrt(py.codac4matlab.sqr(mi(1)-x(1)) + py.codac4matlab.sqr(mi(2)-x(2)));
+        a = py.codac4matlab.atan2(mi(2)-x(2),mi(1)-x(1)) - x(3);
+
+        if scope_range.is_superset(r) && scope_angle.is_superset(a)
+            obs{end+1} =py.codac4matlab.cart_prod(t,r,a);
+        end
+    end
+end
+
+srand();
+N = 50;
+X = IntervalVector({{-40,40},{-40,40}});
+
+M={};
+for i = 1:N
+    M{i} = IntervalVector(X.rand()).inflate(0.2);
+end
+
+fig = Figure2D("Robot simulation", GraphicOutput().VIBES);
+fig.set_axes(axis(1, X(1).inflate(10),"x_1"),axis(2, X(2).inflate(10),"x_2")).auto_scale();
+for i = 1:numel(M)
+  fig.draw_box(M{i}, StyleProperties({Color().dark_green(),Color().green()}))
+end
+
+wpts={};
+X = IntervalVector({{-35,35},{-35,35}});
+for i = 1:5
+  wpts{i} = X.rand();
+end
+
+s = RobotSimulator();
+s.w_max = 0.2;
+u = SampledVectorTraj();
+x_truth = s.simulate(Vector({0,0,0,0}), 0.01, wpts, u);
+
+prev_t = 0.;
+time_between_obs = 3.;
+obs = {};
+
+t = double(x_truth.tdomain().lb());
+
+while t < x_truth.tdomain().ub()
+    if t-prev_t > time_between_obs
+        x_truth_t = x_truth(t);
+        obs_ti = g(t,x_truth_t,M);
+
+        for i = 1:numel(obs_ti)
+            yi = obs_ti{i};
+            prev_t = yi(1).mid();
+            fig.draw_pie(x_truth_t.subvector(1,2), yi(2).union(0), x_truth_t(3)+yi(3), Color().light_gray());
+            fig.draw_pie(x_truth_t.subvector(1,2), yi(2),          x_truth_t(3)+yi(3), Color().red());
+
+            obs{end+1} = yi;
+        end
+    end
+    t = t + 0.5; % to replace by 0.01
+end
+
+x_ = VectorVar(4);
+h = AnalyticFunction({x_},vec(Interval(-oo,oo),Interval(-oo,oo), x_(3) + 0.02*Interval(-1,1), x_(4) + 0.02*Interval(-1,1)));
+
+tdomain = create_tdomain(x_truth.tdomain(),0.05, true);
+
+x = h.tube_eval(SlicedTube(tdomain,x_truth));
+
+v = SlicedTube(tdomain, IntervalVector(4));
+
+[x1,x2,x3] = deal(VectorVar(2), VectorVar(3), VectorVar(2));
+f_minus = AnalyticFunction({x1,x2,x3},vec(x1(1)-x2(1)-x3(1), x1(2)-x2(2)-x3(2)));
+ctc_minus = CtcInverse(f_minus, Vector([0,0]));
+
+[s1,s2,s3] = deal(ScalarVar(),ScalarVar(),ScalarVar());
+f_plus = AnalyticFunction({s1,s2,s3}, s1+s2-s3);
+ctc_plus = CtcInverse(f_plus, Interval(0,0));
+
+ctc_deriv = CtcDeriv();
+
+[x_,v_] = deal(VectorVar(4),VectorVar(4));
+f = AnalyticFunction({x_,v_},vec(x_(1)-x_(4)*cos(x_(3)), x_(1)-x_(4)*sin(x_(3))));
+
+ctc_f = CtcInverse(f, Vector([0,0]));
+
+ctc_polar = CtcPolar();
+ctc_constell = MyCtc(M);
+
+function [xi,yi,mi,ai,si] = ctc_one_obs(xi,yi,mi,ai,si,ctc_plus,ctc_polar,ctc_minus,ctc_constell)
+    res_ctc_minus = ctc_minus.contract(py.codac4matlab.cart_prod(mi,xi,si)); % The result is a 7D IntervalVector
+    [mi,xi,si] = deal(res_ctc_minus.subvector(1,2),res_ctc_minus.subvector(3,5),res_ctc_minus.subvector(6,7));
+
+    res_ctc_plus = ctc_plus.contract(py.codac4matlab.cart_prod(xi(3), yi(2), ai)); % The result is a 3D IntervalVector
+    xi.setitem(3,res_ctc_plus(1));
+    yi.setitem(2,res_ctc_plus(2));
+    ai = res_ctc_plus(3);
+
+    res_ctc_polar = ctc_polar.contract(py.codac4matlab.cart_prod(si(1),si(2),yi(1),ai)); % The result is a 4D IntervalVector
+    si.setitem(1,res_ctc_polar(1));
+    si.setitem(2,res_ctc_polar(2));
+    yi.setitem(1,res_ctc_polar(3));
+    ai = res_ctc_polar(4);
+
+    mi = ctc_constell.contract(mi);
+end
+
+function [x,y,m,a,d] = fixpoint_ctc_one_obs(x,y,m,a,d,ctc_plus,ctc_polar,ctc_minus,ctc_constell)
+    vol = -1.;
+    prev_vol = -2.;
+
+    while vol ~= prev_vol
+        prev_vol = vol;
+        [x,y,m,a,d] = ctc_one_obs(x,y,m,a,d,ctc_plus,ctc_polar,ctc_minus,ctc_constell);
+        vol = x.volume() + y.volume() + m.volume() + a.volume() + d.volume();
+        if x.is_empty() || y.is_empty() || m.is_empty() || a.is_empty() || d.is_empty()
+            break
+        end
+    end
+end
+
+function [x,v] = ctc_all_obs(x,v,obs,ctc_plus,ctc_polar,ctc_minus,ctc_constell,ctc_f,ctc_deriv)
+    for i = 1:numel(obs)
+        yi = obs{i};
+        xi = x(yi(1));
+        ai = py.codac4matlab.Interval();
+        si = py.codac4matlab.IntervalVector(2);
+        mi = py.codac4matlab.IntervalVector(2);
+        [xi,yi,mi,ai,di] = fixpoint_ctc_one_obs(xi,yi,mi,ai,si,ctc_plus,ctc_polar,ctc_minus,ctc_constell);
+        if ~yi.is_empty()
+            x.set(xi,yi(1));
+        end
+    end
+
+    res_ctc_f = ctc_f.contract_tube(x,v);
+    x = res_ctc_f{1}
+    v = res_ctc_f{2}
+
+    test = ctc_deriv.contract(x,v)
+end
+
+function x = fixpoint_ctc_all_obs(x,v,obs,ctc_plus,ctc_polar,ctc_minus,ctc_constell,ctc_f,ctc_deriv)
+    vol = -1.;
+    prev_vol = -2.;
+
+    while vol ~= prev_vol
+        prev_vol = vol;
+        x = ctc_all_obs(x,v,obs,ctc_plus,ctc_polar,ctc_minus,ctc_constell,ctc_f,ctc_deriv);
+        vol = x.volume()
+        if x.is_empty()
+            break
+        end
+    end
+end
+x
+v
+test2 = ctc_deriv.contract(x,v)
+% ctc_all_obs(x,v,obs,ctc_plus,ctc_polar,ctc_minus,ctc_constell,ctc_f,ctc_deriv);
+
+% fig.draw_tube(x)
+fig.draw_trajectory(x_truth);
