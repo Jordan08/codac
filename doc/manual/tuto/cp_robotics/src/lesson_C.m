@@ -64,7 +64,7 @@ while t < x_truth.tdomain().ub()
             obs{end+1} = yi;
         end
     end
-    t = t + 0.5; % to replace by 0.01
+    t = t + 0.1; % to replace by 0.01
 end
 
 x_ = VectorVar(4);
@@ -76,7 +76,7 @@ x = h.tube_eval(SlicedTube(tdomain,x_truth));
 
 v = SlicedTube(tdomain, IntervalVector(4));
 
-[x1,x2,x3] = deal(VectorVar(2), VectorVar(3), VectorVar(2));
+[x1,x2,x3] = deal(VectorVar(2), VectorVar(4), VectorVar(2));
 f_minus = AnalyticFunction({x1,x2,x3},vec(x1(1)-x2(1)-x3(1), x1(2)-x2(2)-x3(2)));
 ctc_minus = CtcInverse(f_minus, Vector([0,0]));
 
@@ -86,8 +86,8 @@ ctc_plus = CtcInverse(f_plus, Interval(0,0));
 
 ctc_deriv = CtcDeriv();
 
-[x_,v_] = deal(VectorVar(4),VectorVar(4));
-f = AnalyticFunction({x_,v_},vec(x_(1)-x_(4)*cos(x_(3)), x_(1)-x_(4)*sin(x_(3))));
+[x_f,v_f] = deal(VectorVar(4),VectorVar(4));
+f = AnalyticFunction({x_f,v_f},vec(v_f(1)-x_f(4)*cos(x_f(3)), v_f(1)-x_f(4)*sin(x_f(3))));
 
 ctc_f = CtcInverse(f, Vector([0,0]));
 
@@ -95,8 +95,8 @@ ctc_polar = CtcPolar();
 ctc_constell = MyCtc(M);
 
 function [xi,yi,mi,ai,si] = ctc_one_obs(xi,yi,mi,ai,si,ctc_plus,ctc_polar,ctc_minus,ctc_constell)
-    res_ctc_minus = ctc_minus.contract(py.codac4matlab.cart_prod(mi,xi,si)); % The result is a 7D IntervalVector
-    [mi,xi,si] = deal(res_ctc_minus.subvector(1,2),res_ctc_minus.subvector(3,5),res_ctc_minus.subvector(6,7));
+    res_ctc_minus = ctc_minus.contract(py.codac4matlab.cart_prod(mi,xi,si)); % The result is a 8D IntervalVector
+    [mi,xi,si] = deal(res_ctc_minus.subvector(1,2),res_ctc_minus.subvector(3,6),res_ctc_minus.subvector(7,8));
 
     res_ctc_plus = ctc_plus.contract(py.codac4matlab.cart_prod(xi(3), yi(2), ai)); % The result is a 3D IntervalVector
     xi.setitem(3,res_ctc_plus(1));
@@ -112,15 +112,31 @@ function [xi,yi,mi,ai,si] = ctc_one_obs(xi,yi,mi,ai,si,ctc_plus,ctc_polar,ctc_mi
     mi = ctc_constell.contract(mi);
 end
 
-function [x,y,m,a,d] = fixpoint_ctc_one_obs(x,y,m,a,d,ctc_plus,ctc_polar,ctc_minus,ctc_constell)
+function [x,y,m,a,s] = fixpoint_ctc_one_obs(x,y,m,a,s,ctc_plus,ctc_polar,ctc_minus,ctc_constell)
     vol = -1.;
     prev_vol = -2.;
 
     while vol ~= prev_vol
         prev_vol = vol;
-        [x,y,m,a,d] = ctc_one_obs(x,y,m,a,d,ctc_plus,ctc_polar,ctc_minus,ctc_constell);
-        vol = x.volume() + y.volume() + m.volume() + a.volume() + d.volume();
-        if x.is_empty() || y.is_empty() || m.is_empty() || a.is_empty() || d.is_empty()
+        [x,y,m,a,s] = ctc_one_obs(x,y,m,a,s,ctc_plus,ctc_polar,ctc_minus,ctc_constell);
+        vol = 0.;
+        [x_vol,y_vol,m_vol,a_vol,s_vol] = deal(x.volume(), y.volume(), m.volume(), a.volume(), s.volume());
+        if x_vol~=inf
+            vol = vol + x_vol;
+        end
+        if y_vol~=inf
+            vol = vol + y_vol;
+        end
+        if m_vol~=inf
+            vol = vol + m_vol;
+        end
+        if a_vol~=inf
+            vol = vol + a_vol;
+        end
+        if s_vol~=inf
+            vol = vol + s_vol;
+        end
+        if x.is_empty() || y.is_empty() || m.is_empty() || a.is_empty() || s.is_empty()
             break
         end
     end
@@ -133,17 +149,18 @@ function [x,v] = ctc_all_obs(x,v,obs,ctc_plus,ctc_polar,ctc_minus,ctc_constell,c
         ai = py.codac4matlab.Interval();
         si = py.codac4matlab.IntervalVector(2);
         mi = py.codac4matlab.IntervalVector(2);
-        [xi,yi,mi,ai,di] = fixpoint_ctc_one_obs(xi,yi,mi,ai,si,ctc_plus,ctc_polar,ctc_minus,ctc_constell);
+        [xi,yi,mi,ai,si] = fixpoint_ctc_one_obs(xi,yi,mi,ai,si,ctc_plus,ctc_polar,ctc_minus,ctc_constell);
         if ~yi.is_empty()
             x.set(xi,yi(1));
         end
     end
 
     res_ctc_f = ctc_f.contract_tube(x,v);
-    x = res_ctc_f{1}
-    v = res_ctc_f{2}
+    x = res_ctc_f{1};
+    v = res_ctc_f{2};
 
-    test = ctc_deriv.contract(x,v)
+    % ctc_deriv.contract(x,v);
+
 end
 
 function x = fixpoint_ctc_all_obs(x,v,obs,ctc_plus,ctc_polar,ctc_minus,ctc_constell,ctc_f,ctc_deriv)
@@ -152,17 +169,15 @@ function x = fixpoint_ctc_all_obs(x,v,obs,ctc_plus,ctc_polar,ctc_minus,ctc_const
 
     while vol ~= prev_vol
         prev_vol = vol;
-        x = ctc_all_obs(x,v,obs,ctc_plus,ctc_polar,ctc_minus,ctc_constell,ctc_f,ctc_deriv);
-        vol = x.volume()
+        [x,v] = ctc_all_obs(x,v,obs,ctc_plus,ctc_polar,ctc_minus,ctc_constell,ctc_f,ctc_deriv);
+        vol = x.volume();
         if x.is_empty()
             break
         end
     end
 end
-x
-v
-test2 = ctc_deriv.contract(x,v)
-% ctc_all_obs(x,v,obs,ctc_plus,ctc_polar,ctc_minus,ctc_constell,ctc_f,ctc_deriv);
 
-% fig.draw_tube(x)
+fixpoint_ctc_all_obs(x,v,obs,ctc_plus,ctc_polar,ctc_minus,ctc_constell,ctc_f,ctc_deriv);
+x
+fig.draw_tube(x);
 fig.draw_trajectory(x_truth);
