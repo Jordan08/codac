@@ -25,42 +25,21 @@ A box can be created from:
 
 .. tabs::
 
-   .. group-tab:: Python
+  .. group-tab:: Python
 
-      .. code-block:: py
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [intervalvector-class-1-beg]
+      :end-before: [intervalvector-class-1-end]
+      :dedent: 4
 
-         # Default box: [-oo,oo]^n
-         x = IntervalVector(3)
+  .. group-tab:: C++
 
-         # Cube [-1,3]^2
-         y = IntervalVector(2, Interval(-1,3))
-
-         # From a list of bounds (each entry is [lb,ub])
-         z = IntervalVector([[3,4],[4,6]]) # [3,4]×[4,6]
-
-         # From a list of components (Intervals and/or bounds pairs)
-         q = IntervalVector([y[1], z[0], [0,oo]]) # [-1,3]×[3,4]×[0,oo]
-
-         # From a point (degenerate intervals)
-         p = Vector([0.42,0.42,0.42])
-         bp = IntervalVector(p) # [0.42,0.42]^3
-
-   .. group-tab:: C++
-
-      .. code-block:: c++
-
-         // Default box: [-oo,oo]^n (Interval default constructor)
-         IntervalVector x(3);
-
-         // Cube [-1,3]^2
-         IntervalVector y(2, Interval(-1,3));
-
-         // From a list of bounds (initializer-list style)
-         IntervalVector z{{3,4},{4,6}}; // [3,4]×[4,6]
-
-         // From a point (degenerate intervals)
-         Vector p({0.42,0.42,0.42});
-         IntervalVector bp(p); // [0.42,0.42]^3
+    .. literalinclude:: src.cpp
+      :language: c++
+      :start-after: [intervalvector-class-1-beg]
+      :end-before: [intervalvector-class-1-end]
+      :dedent: 4
 
 .. note::
 
@@ -74,45 +53,22 @@ Components are intervals; indexing is 0-based in Python/C++ and 1-based in Matla
 
 .. tabs::
 
-   .. group-tab:: Python
+  .. group-tab:: Python
 
-      .. code-block:: py
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [intervalvector-class-2-beg]
+      :end-before: [intervalvector-class-2-end]
+      :dedent: 4
 
-         x = IntervalVector(2, [-1,3])     # [-1,3]^2
-         x[1] = Interval(0,10)             # [-1,3]×[0,10]
+  .. group-tab:: C++
 
-         # Iterating/accessing over components
-         y = IntervalVector(2)
-         for i, xi in enumerate(x):
-            y[i] = xi
+    .. literalinclude:: src.cpp
+      :language: c++
+      :start-after: [intervalvector-class-2-beg]
+      :end-before: [intervalvector-class-2-end]
+      :dedent: 4
 
-         # Unpacking (Python convenience)
-         a,b = x
-         assert a == x[0] and b == x[1]
-
-         # Building a new box from existing components
-         v = IntervalVector([*x, [3,6]])   # concatenation in Python
-         # v == [[-1,3]×[0,10]×[3,6]]
-
-         # Resize: new components are default-initialized ([-oo,oo])
-         v.resize(4) # v == [[-1,3]×[0,10]×[3,6]×[-oo,oo]]
-         s = v.subvector(1,2) # [0,10]×[3,6]
-
-   .. group-tab:: C++
-
-      .. code-block:: c++
-
-        IntervalVector x(2, Interval(-1,3));  // [-1,3]^2
-        x[1] = Interval(0, 10);               // [-1,3]×[0,10]
-
-        // Accessing components
-        const Interval& x0 = x[0];
-
-        // Resize: new components are default-initialized ([-oo,oo])
-        x.resize(4); // x == [-1,3]×[0,10]×[-oo,oo]×[-oo,oo]
-
-        // Subvector / segment extraction
-        IntervalVector s = x.subvector(1,2); // [0,10]×[-oo,oo]
 
 Box properties
 --------------
@@ -127,30 +83,21 @@ Typical accessors you will use in practice:
 
 .. tabs::
 
-   .. group-tab:: Python
+  .. group-tab:: Python
 
-      .. code-block:: py
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [intervalvector-class-3-beg]
+      :end-before: [intervalvector-class-3-end]
+      :dedent: 4
 
-         x = IntervalVector([[0,2],[-1,3]])
+  .. group-tab:: C++
 
-         n = x.size()        # dimension
-         # Common box information (component-wise):
-         lo = x.lb()         # Vector of lower bounds
-         hi = x.ub()         # Vector of upper bounds
-         m  = x.mid()        # Vector of midpoints
-         d  = x.diam()       # Vector of diameters
-
-   .. group-tab:: C++
-
-      .. code-block:: c++
-
-         IntervalVector x{{0,2},{-1,3}};
-
-         Index n   = x.size();
-         Vector lo = x.lb();
-         Vector hi = x.ub();
-         Vector m  = x.mid();
-         Vector d  = x.diam();
+    .. literalinclude:: src.cpp
+      :language: c++
+      :start-after: [intervalvector-class-3-beg]
+      :end-before: [intervalvector-class-3-end]
+      :dedent: 4
 
 .. note::
 
@@ -171,25 +118,21 @@ Common predicates include:
 
 .. tabs::
 
-   .. group-tab:: Python
+  .. group-tab:: Python
 
-      .. code-block:: py
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [intervalvector-class-4-beg]
+      :end-before: [intervalvector-class-4-end]
+      :dedent: 4
 
-         x = IntervalVector([[0,1],[2,3]])
-         y = IntervalVector([[0.5,2],[1,4]])
+  .. group-tab:: C++
 
-         assert x.intersects(y)
-         assert x.is_subset(y)
-
-   .. group-tab:: C++
-
-      .. code-block:: c++
-
-         IntervalVector x{{0,1},{2,3}};
-         IntervalVector y{{0.5,2},{1,4}};
-
-         assert(x.intersects(y));
-         assert(x.is_subset(y));
+    .. literalinclude:: src.cpp
+      :language: c++
+      :start-after: [intervalvector-class-4-beg]
+      :end-before: [intervalvector-class-4-end]
+      :dedent: 4
 
 Advanced operations
 -------------------
@@ -220,29 +163,23 @@ Because ``IntervalVector`` is a vector of ``Interval``, standard arithmetic is n
 * interactions with real vectors/matrices,
 * matrix–vector products involving :class:`~codac.IntervalMatrix`.
 
-.. tabs::
+  .. tabs::
 
-   .. group-tab:: Python
+    .. group-tab:: Python
 
-      .. code-block:: py
+      .. literalinclude:: src.py
+        :language: py
+        :start-after: [intervalvector-class-5-beg]
+        :end-before: [intervalvector-class-5-end]
+        :dedent: 4
 
-         x = IntervalVector([[0,1],[2,3]])
-         y = IntervalVector([[1,2],[0,1]])
+    .. group-tab:: C++
 
-         z1 = x+y
-         z2 = 2*x
-         z3 = x-1
-
-   .. group-tab:: C++
-
-      .. code-block:: c++
-
-         IntervalVector x{{0,1},{2,3}};
-         IntervalVector y{{1,2},{0,1}};
-
-         IntervalVector z1 = x+y;
-         IntervalVector z2 = 2.*x;
-         IntervalVector z3 = x-1.;
+      .. literalinclude:: src.cpp
+        :language: c++
+        :start-after: [intervalvector-class-5-beg]
+        :end-before: [intervalvector-class-5-end]
+        :dedent: 4
 
 
 .. admonition:: Technical documentation
