@@ -109,3 +109,76 @@ TEST_CASE("Interval class - manual")
     CHECK(x != 1.);
   }
 }
+
+TEST_CASE("IntervalVector class - manual")
+{
+  {
+    // [intervalvector-class-1-beg]
+    // Default box: [-oo,oo]^n (Interval default constructor)
+    IntervalVector x(3);
+
+    // Cube [-1,3]^2
+    IntervalVector y = IntervalVector::constant(2,{-1,3});
+
+    // From a list of bounds (initializer-list style)
+    IntervalVector z{{3,4},{4,6}}; // [3,4]×[4,6]
+
+    // From a point (degenerate intervals)
+    Vector p({0.42,0.42,0.42});
+    IntervalVector bp(p); // [0.42,0.42]^3
+    // [intervalvector-class-1-end]
+  }
+  
+  {
+    // [intervalvector-class-2-beg]
+    IntervalVector x = IntervalVector::constant(2,{-1,3}); // [-1,3]^2
+    x[1] = Interval(0,10); // [-1,3]×[0,10]
+
+    // Accessing components
+    const Interval& x0 = x[0];
+
+    // Resize: new components are default-initialized ([-oo,oo])
+    x.resize(4); // x == [-1,3]×[0,10]×[-oo,oo]×[-oo,oo]
+
+    // Subvector / segment extraction
+    IntervalVector s = x.subvector(1,2); // [0,10]×[-oo,oo]
+    // [intervalvector-class-2-end]
+
+    (void)x0; // avoid warning on unused variable
+  }
+  
+  {
+    // [intervalvector-class-3-beg]
+    IntervalVector x{{0,2},{-1,3}};
+
+    Index n   = x.size();
+    Vector lo = x.lb();
+    Vector hi = x.ub();
+    Vector m  = x.mid();
+    Vector d  = x.diam();
+    // [intervalvector-class-3-end]
+
+    (void)n; // avoid warning on unused variable
+  }
+
+  {
+    // [intervalvector-class-4-beg]
+    IntervalVector x{{0,1},{2,3}};
+    IntervalVector y{{-0.5,2},{1,4}};
+
+    assert(x.intersects(y));
+    assert(x.is_subset(y));
+    // [intervalvector-class-4-end]
+  }
+  
+  {
+    // [intervalvector-class-5-beg]
+    IntervalVector x{{0,1},{2,3}};
+    IntervalVector y{{1,2},{0,1}};
+
+    IntervalVector z1 = x+y;
+    IntervalVector z2 = 2.*x;
+    IntervalVector z3 = x/2.;
+    // [intervalvector-class-5-end]
+  }
+}
