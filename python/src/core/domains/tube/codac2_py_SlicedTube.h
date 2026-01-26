@@ -267,6 +267,15 @@ void export_SlicedTube(py::module& m, const std::string& name)
           },
         SLICEDTUBE_INTERVAL_SLICEDTUBE_T_OPERATORCOMPO_INDEX_CONST,
         "i"_a)
+        
+      .def("get_item_0",
+          [](const SlicedTube<IntervalVector>& x, Index_type i) -> SlicedTube<Interval>
+          {
+            matlab::test_integer(i);
+            return x[i];
+          },
+        SLICEDTUBE_INTERVAL_SLICEDTUBE_T_OPERATORCOMPO_INDEX_CONST,
+        "i"_a)
 
       .def("subvector",
           [](const SlicedTube<IntervalVector>& x, Index_type i, Index_type j) -> SlicedTube<IntervalVector>
