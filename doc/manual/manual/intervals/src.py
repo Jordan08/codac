@@ -14,6 +14,21 @@ from codac import *
 
 class TestIntervalManual(unittest.TestCase):
 
+  def tests_BoolInterval_manual(test):
+
+    # [boolinterval-class-1-beg]
+    BoolInterval.FALSE   # certainly false
+    BoolInterval.TRUE    # certainly true
+    BoolInterval.UNKNOWN # undetermined
+    BoolInterval.EMPTY   # inconsistent / impossible
+    # [boolinterval-class-1-end]
+
+    # [boolinterval-class-2-beg]
+    BoolInterval.UNKNOWN == BoolInterval.TRUE | BoolInterval.FALSE
+    BoolInterval.EMPTY   == BoolInterval.TRUE & BoolInterval.FALSE
+    # [boolinterval-class-2-end]
+
+
   def tests_Interval_manual(test):
 
     # [interval-class-1-beg]
