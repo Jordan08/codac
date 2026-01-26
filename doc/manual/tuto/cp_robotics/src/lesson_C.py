@@ -39,7 +39,7 @@ def g(t,x,M):
 
 
 # [C-q2-beg]
-srand(1) # initialize the random seed (from C++)
+srand() # initialize the random seed (from C++)
 N = 50 # number of landmarks
 X = IntervalVector([[-40,40],[-40,40]]) # landmarks distribution zone
 
@@ -47,7 +47,7 @@ M = [] # creating the landmarks
 for i in range (0,N):
   M.append(IntervalVector(X.rand()).inflate(0.2))
 
-fig = Figure2D("Robot simulation", GraphicOutput.VIBES)
+fig = Figure2D("Robot simulation", GraphicOutput.VIBES | GraphicOutput.IPE)
 fig.set_axes(
   axis(0, X[0].inflate(10), "x_1"),
   axis(1, X[1].inflate(10), "x_2")
@@ -92,7 +92,7 @@ while t < x_truth.tdomain().ub():
 
     obs.extend(obs_ti)
 
-  t += 1e-1
+  t += 1e-2
 # [C-q5-end]
 
 
@@ -167,18 +167,9 @@ def ctc_all_obs(x):
     mi = IntervalVector(2)
     xi,yi,mi,ai,si = fixpoint(ctc_one_obs, xi,yi,mi,ai,si)
     x.set(xi,yi[0]) # restriction on the tube x at time ti=yi[0]
-  print(x)
-  print(v)
-  print()
+
   x,v = ctc_f.contract_tube(x,v)
-  print(x)
-  print(v)
-  print()
   ctc_deriv.contract(x,v)
-  print(x)
-  print(v)
-  print()
-  print()
 
   return x
 

@@ -105,6 +105,14 @@ Before going into a set-membership state estimation, we set up a simulation envi
         :end-before: [C-q2-end]
         :dedent: 2
 
+    .. group-tab:: Matlab
+
+      .. literalinclude:: src/lesson_C.m
+        :language: matlab
+        :start-after: [C-q2-beg]
+        :end-before: [C-q2-end]
+        :dedent: 0
+
   **C.3.** Now, we simulate a mobile robot moving in the middle of the field of landmarks. The trajectory is defined by a set of random waypoints. The class ``RobotSimulator`` is used to simplify the simulation:
 
   .. tabs::
@@ -125,6 +133,14 @@ Before going into a set-membership state estimation, we set up a simulation envi
         :end-before: [C-q3-end]
         :dedent: 2
 
+    .. group-tab:: Matlab
+
+      .. literalinclude:: src/lesson_C.m
+        :language: matlab
+        :start-after: [C-q3-beg]
+        :end-before: [C-q3-end]
+        :dedent: 0
+
   **C.4.** We update the observation function ``g`` of the previous lessons for the dynamical case. To ease the code, the returned observation vector will contain the observation time :math:`t_i`.
 
   .. tabs::
@@ -141,6 +157,14 @@ Before going into a set-membership state estimation, we set up a simulation envi
 
       .. literalinclude:: src/lesson_C.cpp
         :language: c++
+        :start-after: [C-q4-beg]
+        :end-before: [C-q4-end]
+        :dedent: 0
+
+    .. group-tab:: Matlab
+
+      .. literalinclude:: src/lesson_C.m
+        :language: matlab
         :start-after: [C-q4-beg]
         :end-before: [C-q4-end]
         :dedent: 0
@@ -164,6 +188,14 @@ Before going into a set-membership state estimation, we set up a simulation envi
         :start-after: [C-q5-beg]
         :end-before: [C-q5-end]
         :dedent: 2
+
+    .. group-tab:: Matlab
+
+      .. literalinclude:: src/lesson_C.m
+        :language: matlab
+        :start-after: [C-q5-beg]
+        :end-before: [C-q5-end]
+        :dedent: 0
 
 
 State estimation with constraint programming
@@ -191,6 +223,14 @@ State estimation with constraint programming
         :end-before: [C-q6-end]
         :dedent: 2
 
+    .. group-tab:: Matlab
+
+      .. literalinclude:: src/lesson_C.m
+        :language: matlab
+        :start-after: [C-q6-beg]
+        :end-before: [C-q6-end]
+        :dedent: 0
+
   In the above code, the intermediate variable :math:`\mathbf{v}(\cdot)` has also its own domain ``v``. It is initialized to :math:`[-\infty,\infty]` for each dimension.
 
 
@@ -216,6 +256,14 @@ State estimation with constraint programming
           :end-before: [C-q7-end]
           :dedent: 2
 
+      .. group-tab:: Matlab
+
+      .. literalinclude:: src/lesson_C.m
+        :language: matlab
+        :start-after: [C-q7-beg]
+        :end-before: [C-q7-end]
+        :dedent: 0
+
   **C.8.** **Fixpoint resolution.** Finally, the propagation loops need to be updated to incorporate the dynamic constraints.
   Note that the contractors :math:`\mathcal{C}_\mathbf{f}` and :math:`\mathcal{C}_{\mathrm{deriv}}` apply to the whole tubes :math:`[\mathbf{x}](\cdot)` and :math:`[\mathbf{v}](\cdot)`. Furthermore, the class ``CtcInverse`` can contract tubes using the ``.contract_tube(..)`` method, exactly as we would do for boxes. Finally, a *restriction* on a tube (*i.e.* setting a value to a slice) can be done using the ``.set(y,t)`` method, for setting the interval vector value ``y`` at time ``t``.
 
@@ -239,6 +287,14 @@ State estimation with constraint programming
           :end-before: [C-q8-end]
           :dedent: 2
 
+      .. group-tab:: Matlab
+
+      .. literalinclude:: src/lesson_C.m
+        :language: matlab
+        :start-after: [C-q8-beg]
+        :end-before: [C-q8-end]
+        :dedent: 0
+
 
 
 
@@ -248,6 +304,21 @@ You should obtain a result similar to:
   
   Localization by solving data association: the state trajectory :math:`\mathbf{x}(\cdot)` (in white) has been estimated (in blue) together with the identification of the perceived landmarks.
 
+Note that to obtain this exact result it is possible to manually set the random seed to ``287``.
+
+  .. tabs::
+
+    .. code-tab:: py
+
+      srand(287)
+
+    .. code-tab:: cpp
+
+      srand(287);
+
+    .. code-tab:: matlab
+
+      srand(int32(287));
 
 .. rubric:: Why is this problem of localization and data association difficult?
 
