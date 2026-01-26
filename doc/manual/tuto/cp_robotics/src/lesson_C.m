@@ -87,7 +87,7 @@ ctc_plus = CtcInverse(f_plus, Interval(0,0));
 ctc_deriv = CtcDeriv();
 
 [x_f,v_f] = deal(VectorVar(4),VectorVar(4));
-f = AnalyticFunction({x_f,v_f},vec(v_f(1)-x_f(4)*cos(x_f(3)), v_f(1)-x_f(4)*sin(x_f(3))));
+f = AnalyticFunction({x_f,v_f},vec(v_f(1)-x_f(4)*cos(x_f(3)), v_f(2)-x_f(4)*sin(x_f(3))));
 
 ctc_f = CtcInverse(f, Vector([0,0]));
 
@@ -150,16 +150,28 @@ function [x,v] = ctc_all_obs(x,v,obs,ctc_plus,ctc_polar,ctc_minus,ctc_constell,c
         si = py.codac4matlab.IntervalVector(2);
         mi = py.codac4matlab.IntervalVector(2);
         [xi,yi,mi,ai,si] = fixpoint_ctc_one_obs(xi,yi,mi,ai,si,ctc_plus,ctc_polar,ctc_minus,ctc_constell);
-        if ~yi.is_empty()
+        if ~yi(1).is_empty()
+            disp("adding")
+            yi
+            x(yi(1))
+            mi
+            ai
+            si
             x.set(xi,yi(1));
+            x(yi(1))
         end
     end
-
+    disp("here")
+    x
+    v
     res_ctc_f = ctc_f.contract_tube(x,v);
-    x = res_ctc_f{1};
-    v = res_ctc_f{2};
+    x = res_ctc_f{1}
+    v = res_ctc_f{2}
 
-    % ctc_deriv.contract(x,v);
+    ctc_deriv.contract(x,v);
+    x
+    v
+    disp("there")
 
 end
 
