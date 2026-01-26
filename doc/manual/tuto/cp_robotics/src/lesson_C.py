@@ -47,7 +47,7 @@ M = [] # creating the landmarks
 for i in range (0,N):
   M.append(IntervalVector(X.rand()).inflate(0.2))
 
-fig = Figure2D("Robot simulation", GraphicOutput.VIBES | GraphicOutput.IPE)
+fig = Figure2D("Robot simulation", GraphicOutput.VIBES)
 fig.set_axes(
   axis(0, X[0].inflate(10), "x_1"),
   axis(1, X[1].inflate(10), "x_2")

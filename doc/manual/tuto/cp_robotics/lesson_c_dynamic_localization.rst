@@ -258,11 +258,11 @@ State estimation with constraint programming
 
       .. group-tab:: Matlab
 
-      .. literalinclude:: src/lesson_C.m
-        :language: matlab
-        :start-after: [C-q7-beg]
-        :end-before: [C-q7-end]
-        :dedent: 0
+        .. literalinclude:: src/lesson_C.m
+          :language: matlab
+          :start-after: [C-q7-beg]
+          :end-before: [C-q7-end]
+          :dedent: 0
 
   **C.8.** **Fixpoint resolution.** Finally, the propagation loops need to be updated to incorporate the dynamic constraints.
   Note that the contractors :math:`\mathcal{C}_\mathbf{f}` and :math:`\mathcal{C}_{\mathrm{deriv}}` apply to the whole tubes :math:`[\mathbf{x}](\cdot)` and :math:`[\mathbf{v}](\cdot)`. Furthermore, the class ``CtcInverse`` can contract tubes using the ``.contract_tube(..)`` method, exactly as we would do for boxes. Finally, a *restriction* on a tube (*i.e.* setting a value to a slice) can be done using the ``.set(y,t)`` method, for setting the interval vector value ``y`` at time ``t``.
@@ -289,11 +289,11 @@ State estimation with constraint programming
 
       .. group-tab:: Matlab
 
-      .. literalinclude:: src/lesson_C.m
-        :language: matlab
-        :start-after: [C-q8-beg]
-        :end-before: [C-q8-end]
-        :dedent: 0
+        .. literalinclude:: src/lesson_C.m
+          :language: matlab
+          :start-after: [C-q8-beg]
+          :end-before: [C-q8-end]
+          :dedent: 0
 
 
 
