@@ -6,7 +6,7 @@ Intervals
 Codac provides data structures for handling basic interval sets. These structures represent the building blocks of most domain structures provided in Codac. The elementary interval structures are:
 
 - :ref:`The Interval class <sec-intervals-class>`: represents a real bounded interval :math:`[x^{-},x^{+}]`.
-- ``IntervalVector`` (or ``IntervalRow``): represents a vector (or row) where each component is an interval.
+- :ref:`The IntervalVector class <sec-intervals-intervalvector-class>` (or ``IntervalRow``): represents a vector (or row) where each component is an interval.
 - ``IntervalMatrix``: represents a matrix where each element is an interval.
 
 
