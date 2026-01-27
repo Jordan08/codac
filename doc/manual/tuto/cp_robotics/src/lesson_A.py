@@ -54,14 +54,14 @@ m,x,d = ctc_minus.contract(m,x,d)
 
 # Or using a fixpoint method:
 
-def constraints(x,y,m,a,d):
+def contract(x,y,m,a,d):
   x[2],y[1],a = ctc_plus.contract(x[2],y[1],a)
   d[0],d[1],y[0],a = ctc_polar.contract(d[0],d[1],y[0],a)
   m,x,d = ctc_minus.contract(m,x,d)
   return x,y,m,a,d
 
 
-x,y,m,a,d = fixpoint(constraints, x,y,m,a,d)
+x,y,m,a,d = fixpoint(contract, x,y,m,a,d)
 # [A-q8-end]
 
 # [A-q9-beg]

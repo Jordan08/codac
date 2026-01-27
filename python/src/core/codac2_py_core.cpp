@@ -336,5 +336,6 @@ PYBIND11_MODULE(_core, m)
     {
       srand(seed);
     },
-    DOC_TO_BE_DEFINED);
+    DOC_TO_BE_DEFINED,
+    "seed"_a);
 }

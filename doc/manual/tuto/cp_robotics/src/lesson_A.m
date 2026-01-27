@@ -57,7 +57,7 @@ x = res_ctc_minus.subvector(3,5);
 d = res_ctc_minus.subvector(6,7);
 
 % Or using a fixpoint method:
-function [x,y,m,a,d] = constraints(x,y,m,a,d,ctc_plus,ctc_polar,ctc_minus)
+function [x,y,m,a,d] = contract(x,y,m,a,d,ctc_plus,ctc_polar,ctc_minus)
     res_ctc_plus = ctc_plus.contract(py.codac4matlab.cart_prod(x(3), y(2), a)); % The result is a 3D IntervalVector
     x.setitem(3,res_ctc_plus(1));
     y.setitem(2,res_ctc_plus(2));
@@ -81,7 +81,7 @@ function [x,y,m,a,d] = fixpoint(x,y,m,a,d,ctc_plus,ctc_polar,ctc_minus)
 
     while vol ~= prev_vol
         prev_vol = vol;
-        [x,y,m,a,d] = constraints(x,y,m,a,d,ctc_plus,ctc_polar,ctc_minus);
+        [x,y,m,a,d] = contract(x,y,m,a,d,ctc_plus,ctc_polar,ctc_minus);
         vol = x.volume() + y.volume() + m.volume() + a.volume() + d.volume();
     end
 end

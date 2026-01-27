@@ -142,11 +142,11 @@ where :math:`a,b,\dots,e` are intermediate variables used for the decomposition.
     % Contractor associated with the constraint g(x,m,y)\in[u], with [u]=[0,0]
     ctc_g = CtcInverse(g, 0);
 
-    // Now ctc_g can be called with the .contract(..) method to contract all domains:
-    // Example:
-    a = IntervalVector(2); // box for x
-    b = IntervalVector({{2,3},{5,6.2}}); // box for m
-    d = Interval(4.5,5); // interval for y
+    % Now ctc_g can be called with the .contract(..) method to contract all domains:
+    % Example:
+    a = IntervalVector(2); % box for x
+    b = IntervalVector({{2,3},{5,6.2}}); % box for m
+    d = Interval(4.5,5); % interval for y
 
     res = ctc_g.contract(cart_prod(a,d,b));
     a = res.subvector(1,2);
