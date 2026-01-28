@@ -64,11 +64,11 @@ TEST_CASE("CtcInverse - manual")
     VectorVar x(2);
     AnalyticFunction f({x}, x[0]-x[1]);
     CtcInverse c(f, 0);
-    // c.function().input_size() == 2
-    // c.function().output_size() == 1
+    // c.f().input_size() == 2
+    // c.f().output_size() == 1
     // [ctcinv-6-end]
 
-    CHECK(c.function().input_size() == 2);
-    CHECK(c.function().output_size() == 1);
+    CHECK(c.f().input_size() == 2);
+    CHECK(c.f().output_size() == 1);
   }
 }
