@@ -84,6 +84,14 @@ To represent the vectors :math:`\mathbf{x}\in\mathbb{R}^n` consistent with the c
       :end-before: [ctcinv-1-end]
       :dedent: 4
 
+  .. group-tab:: Matlab
+
+    .. literalinclude:: src.m
+      :language: matlab
+      :start-after: [ctcinv-1-beg]
+      :end-before: [ctcinv-1-end]
+      :dedent: 0
+
 The contractor can be used as an operator to contract a 2d box :math:`[\mathbf{x}]`. It can also be involved in a paver in order to reveal the constraint:
 
 .. tabs::
@@ -103,6 +111,14 @@ The contractor can be used as an operator to contract a 2d box :math:`[\mathbf{x
       :start-after: [ctcinv-2-beg]
       :end-before: [ctcinv-2-end]
       :dedent: 4
+
+  .. group-tab:: Matlab
+
+    .. literalinclude:: src.m
+      :language: matlab
+      :start-after: [ctcinv-2-beg]
+      :end-before: [ctcinv-2-end]
+      :dedent: 0
 
 Which produces the following output:
 
@@ -130,6 +146,15 @@ We recall that for thick solution sets, one should prefer the use of the ``SepIn
       :start-after: [ctcinv-3-beg]
       :end-before: [ctcinv-3-end]
       :dedent: 4
+
+  .. group-tab:: Matlab
+
+    .. literalinclude:: src.m
+      :language: matlab
+      :start-after: [ctcinv-3-beg]
+      :end-before: [ctcinv-3-end]
+      :dedent: 0
+
 
 .. figure:: ./himmelblau_50_inner.png
   :width: 400px
@@ -162,6 +187,14 @@ can be easily approximated by the following union of contractors:
       :start-after: [ctcinv-4-beg]
       :end-before: [ctcinv-4-end]
       :dedent: 4
+
+  .. group-tab:: Matlab
+
+    .. literalinclude:: src.m
+      :language: matlab
+      :start-after: [ctcinv-4-beg]
+      :end-before: [ctcinv-4-end]
+      :dedent: 0
 
 .. figure:: ./himmelblau_50_150_250.png
   :width: 400px
@@ -302,6 +335,14 @@ When the constraint is a complement constraint :math:`\mathbf{f}(\mathbf{x})\not
       :end-before: [ctcinv-5-end]
       :dedent: 4
 
+  .. group-tab:: Matlab
+
+    .. literalinclude:: src.m
+      :language: matlab
+      :start-after: [ctcinv-5-beg]
+      :end-before: [ctcinv-5-end]
+      :dedent: 0
+
 
 Miscellaneous
 -------------
@@ -309,7 +350,7 @@ Miscellaneous
 Access to the underlying function
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The underlying analytic function can be accessed through ``.function()`` (useful for dimension checks or meta-programming).
+The underlying analytic function can be accessed through ``.fnc()`` (useful for dimension checks or meta-programming).
 
 .. tabs::
 
@@ -328,6 +369,14 @@ The underlying analytic function can be accessed through ``.function()`` (useful
       :start-after: [ctcinv-6-beg]
       :end-before: [ctcinv-6-end]
       :dedent: 4
+
+  .. group-tab:: Matlab
+
+    .. literalinclude:: src.m
+      :language: matlab
+      :start-after: [ctcinv-6-beg]
+      :end-before: [ctcinv-6-end]
+      :dedent: 0
 
 Centered form option
 ^^^^^^^^^^^^^^^^^^^^
