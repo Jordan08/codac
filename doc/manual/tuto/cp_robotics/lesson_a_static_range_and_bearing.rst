@@ -3,6 +3,8 @@
 Lesson A: Static range-and-bearing localization
 ===============================================
 
+  Main authors: `Simon Rohou <https://www.simon-rohou.fr/research/>`_, `Maël Godard <https://godardma.github.io>`_ (Matlab binding)
+
 In this lessson, we focus on the perception of landmarks clearly identified: each observation is related to a known position.
 The problem amounts to estimate the feasible positions of a robot measuring distances and bearing from known landmarks.
 The *bearing* corresponds to the angular position of the landmarks with respect to the heading of the robot.

@@ -69,14 +69,14 @@ function [x,yi,mi,ai,di] = ctc_one_obs(x,yi,mi,ai,di,ctc_plus,ctc_polar,ctc_minu
     [mi,x,di] = deal(res_ctc_minus.subvector(1,2),res_ctc_minus.subvector(3,5),res_ctc_minus.subvector(6,7));
 
     res_ctc_plus = ctc_plus.contract(py.codac4matlab.cart_prod(x(3), yi(2), ai)); % The result is a 3D IntervalVector
-    x.setitem(3,res_ctc_plus(1));
-    yi.setitem(2,res_ctc_plus(2));
+    x.set_item(3,res_ctc_plus(1));
+    yi.set_item(2,res_ctc_plus(2));
     ai = res_ctc_plus(3);
     
     res_ctc_polar = ctc_polar.contract(py.codac4matlab.cart_prod(di(1),di(2),yi(1),ai)); % The result is a 4D IntervalVector
-    di.setitem(1,res_ctc_polar(1));
-    di.setitem(2,res_ctc_polar(2));
-    yi.setitem(1,res_ctc_polar(3));
+    di.set_item(1,res_ctc_polar(1));
+    di.set_item(2,res_ctc_polar(2));
+    yi.set_item(1,res_ctc_polar(3));
     ai = res_ctc_polar(4);
 end
 
@@ -127,14 +127,14 @@ function [x,yi,mi,ai,di] = ctc_one_obs_datasso(x,yi,mi,ai,di,ctc_plus,ctc_polar,
     [mi,x,di] = deal(res_ctc_minus.subvector(1,2),res_ctc_minus.subvector(3,5),res_ctc_minus.subvector(6,7));
 
     res_ctc_plus = ctc_plus.contract(py.codac4matlab.cart_prod(x(3), yi(2), ai)); % The result is a 3D IntervalVector
-    x.setitem(3,res_ctc_plus(1));
-    yi.setitem(2,res_ctc_plus(2));
+    x.set_item(3,res_ctc_plus(1));
+    yi.set_item(2,res_ctc_plus(2));
     ai = res_ctc_plus(3);
     
     res_ctc_polar = ctc_polar.contract(py.codac4matlab.cart_prod(di(1),di(2),yi(1),ai)); % The result is a 4D IntervalVector
-    di.setitem(1,res_ctc_polar(1));
-    di.setitem(2,res_ctc_polar(2));
-    yi.setitem(1,res_ctc_polar(3));
+    di.set_item(1,res_ctc_polar(1));
+    di.set_item(2,res_ctc_polar(2));
+    yi.set_item(1,res_ctc_polar(3));
     ai = res_ctc_polar(4);
     % ==== Added contractor ====
     mi = ctc_constell.contract(mi);

@@ -3,6 +3,8 @@
 Lesson B: Data association
 ==========================
 
+  Main authors: `Simon Rohou <https://www.simon-rohou.fr/research/>`_, `Maël Godard <https://godardma.github.io>`_ (Matlab binding)
+
 This lesson will extend the previous exercise by dealing with a **data association** problem together with localization: the landmarks perceived by the robot are now **indistinguishable**: they all look alike. The goal of this exercise is to develop our own contractor in order to solve the problem.
 
 

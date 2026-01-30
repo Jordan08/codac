@@ -350,7 +350,7 @@ Miscellaneous
 Access to the underlying function
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The underlying analytic function can be accessed through ``.f()`` (useful for dimension checks or meta-programming).
+The underlying analytic function can be accessed through ``.fnc()`` (useful for dimension checks or meta-programming).
 
 .. tabs::
 
