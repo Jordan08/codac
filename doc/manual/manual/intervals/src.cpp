@@ -14,6 +14,26 @@
 using namespace std;
 using namespace codac2;
 
+TEST_CASE("BoolInterval class - manual")
+{
+  {
+    // [boolinterval-class-1-beg]
+    BoolInterval::FALSE;   // certainly false
+    BoolInterval::TRUE;    // certainly true
+    BoolInterval::UNKNOWN; // undetermined
+    BoolInterval::EMPTY;   // inconsistent / impossible
+    // [boolinterval-class-1-end]
+  }
+  /*
+  {
+    // [boolinterval-class-2-beg]
+    BoolInterval::UNKNOWN == BoolInterval::TRUE | BoolInterval::FALSE
+    BoolInterval::EMPTY   == BoolInterval::TRUE & BoolInterval::FALSE
+    // [boolinterval-class-2-end]
+  }
+  */
+}
+
 TEST_CASE("Interval class - manual")
 {
   #if 0

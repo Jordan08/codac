@@ -8,6 +8,7 @@ Codac provides data structures for handling basic interval sets. These structure
 - :ref:`The Interval class <sec-intervals-class>`: represents a real bounded interval :math:`[x^{-},x^{+}]`.
 - :ref:`The IntervalVector class <sec-intervals-intervalvector-class>` (or ``IntervalRow``): represents a vector (or row) where each component is an interval.
 - ``IntervalMatrix``: represents a matrix where each element is an interval.
+- :ref:`The BoolInterval class <sec-intervals-boolinterval-class>`: represents a Boolean interval.
 
 
 .. toctree::
@@ -16,6 +17,7 @@ Codac provides data structures for handling basic interval sets. These structure
    Interval_class.rst
    .. Vector_class.rst
    IntervalVector_class.rst
+   BoolInterval_class.rst
 
 ..    What is an interval? <http://codac.io>
    The Interval class <http://codac.io>
