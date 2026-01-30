@@ -63,7 +63,7 @@ void export_VectorBase([[maybe_unused]] py::module& m, py::class_<S>& pyclass)
 
     .def(
         #if FOR_MATLAB
-          "setitem"
+          "set_item"
         #else
           "__setitem__"
         #endif
