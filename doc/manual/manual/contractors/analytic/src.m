@@ -1,7 +1,7 @@
 %  Codac tests
 % ----------------------------------------------------------------------------
 %  \date       2026
-%  \author     Simon Rohou
+%  \author     Maël Godard, Simon Rohou
 %  \copyright  Copyright 2026 Codac Team
 %  \license    GNU Lesser General Public License (LGPL)
 
@@ -48,6 +48,6 @@ assert(y==IntervalVector({{1,3},{-1,1}}));
 x = VectorVar(2);
 f = AnalyticFunction({x}, x(1)-x(2));
 c = CtcInverse(f, 0);
-assert(c.f().input_size()==2);
-assert(c.f().output_size()==1);
+assert(c.fnc().input_size() == 2);
+assert(c.fnc().output_size() == 1);
 % [ctcinv-6-end]

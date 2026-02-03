@@ -41,14 +41,14 @@ d = IntervalVector(2);
 % Either with a smart order of contractor calls:
 
 res_ctc_plus = ctc_plus.contract(cart_prod(x(3), y(2), a)); % The result is a 3D IntervalVector
-x.setitem(3,res_ctc_plus(1));
-y.setitem(2,res_ctc_plus(2));
+x.set_item(3,res_ctc_plus(1));
+y.set_item(2,res_ctc_plus(2));
 a = res_ctc_plus(3);
 
 res_ctc_polar = ctc_polar.contract(cart_prod(d(1),d(2),y(1),a)); % The result is a 4D IntervalVector
-d.setitem(1,res_ctc_polar(1));
-d.setitem(2,res_ctc_polar(2));
-y.setitem(1,res_ctc_polar(3));
+d.set_item(1,res_ctc_polar(1));
+d.set_item(2,res_ctc_polar(2));
+y.set_item(1,res_ctc_polar(3));
 a = res_ctc_polar(4);
 
 res_ctc_minus = ctc_minus.contract(cart_prod(m,x,d)); % The result is a 7D IntervalVector
@@ -59,14 +59,14 @@ d = res_ctc_minus.subvector(6,7);
 % Or using a fixpoint method:
 function [x,y,m,a,d] = contract(x,y,m,a,d,ctc_plus,ctc_polar,ctc_minus)
     res_ctc_plus = ctc_plus.contract(py.codac4matlab.cart_prod(x(3), y(2), a)); % The result is a 3D IntervalVector
-    x.setitem(3,res_ctc_plus(1));
-    y.setitem(2,res_ctc_plus(2));
+    x.set_item(3,res_ctc_plus(1));
+    y.set_item(2,res_ctc_plus(2));
     a = res_ctc_plus(3);
 
     res_ctc_polar = ctc_polar.contract(py.codac4matlab.cart_prod(d(1),d(2),y(1),a)); % The result is a 4D IntervalVector
-    d.setitem(1,res_ctc_polar(1));
-    d.setitem(2,res_ctc_polar(2));
-    y.setitem(1,res_ctc_polar(3));
+    d.set_item(1,res_ctc_polar(1));
+    d.set_item(2,res_ctc_polar(2));
+    y.set_item(1,res_ctc_polar(3));
     a = res_ctc_polar(4);
 
     res_ctc_minus = ctc_minus.contract(py.codac4matlab.cart_prod(m,x,d)); % The result is a 7D IntervalVector

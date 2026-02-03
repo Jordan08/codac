@@ -183,8 +183,8 @@ class CtcInverse(Ctc_IntervalVector):
   def copy(self):
     return self.c.copy()
 
-  def f(self):
-    return self.c.f()
+  def fnc(self):
+    return self.c.fnc()
 
 
 class CtcInverseNotIn(Ctc_IntervalVector):

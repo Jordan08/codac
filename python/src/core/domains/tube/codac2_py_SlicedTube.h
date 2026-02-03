@@ -255,7 +255,7 @@ void export_SlicedTube(py::module& m, const std::string& name)
 
       .def(
           #if FOR_MATLAB
-            "getitem"
+            "get_item"
           #else
             "__getitem__"
           #endif
