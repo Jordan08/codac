@@ -94,7 +94,7 @@ To represent the vectors :math:`\mathbf{x}\in\mathbb{R}^n` consistent with the c
 
 The contractor can be used as an operator to contract a :math:`n`-d box :math:`[\mathbf{x}]`.
 
-Note that the contraction may be fast but not minimal, depending on your analytic expression. Therefore, you can also combine a ``CtcInverse`` with a ``CtcFixpoint`` to apply the contraction procedure repeatedly until a fixpoint is reached on the same box. The following code corresponds to the next figure, which shows contraction cases in blue and their fixpoint counterparts in red.
+Note that the contraction may be fast but not minimal, depending on your analytic expression. Therefore, you can also combine a ``CtcInverse`` with a ``CtcFixpoint`` to apply the contraction procedure repeatedly until a fixpoint is reached on the same box. The following code corresponds to a contraction revealed in the next figure, which shows contraction cases in blue and their fixpoint counterparts in red.
 
 .. tabs::
 

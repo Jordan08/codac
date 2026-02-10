@@ -18,9 +18,9 @@ c = CtcInverse(f,50.0);
 
 % [ctcinv-2-beg]
 z = IntervalVector({{0.0,3.5},{0.0,1.0}});
-DefaultFigure().draw_box(z, {Color().blue(),Color().blue(.1)}); % prior to contraction
+DefaultFigure().draw_box(z, StyleProperties({Color().blue(),Color().blue(.1)})); % prior to contraction
 z = c.contract(z);
-DefaultFigure().draw_box(z, {Color().blue(),Color().white()}); % after one CtcInverse contraction
+DefaultFigure().draw_box(z, StyleProperties({Color().blue(),Color().white()})); % after one CtcInverse contraction
 % z == [ [1.84, 3.5] ; [0, 1] ]
 
 % Combining CtcInverse with a CtcFixpoint:
