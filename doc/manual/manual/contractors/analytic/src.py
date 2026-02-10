@@ -56,8 +56,8 @@ class TestCtcAnalyticManual(unittest.TestCase):
     x = VectorVar(2)
     f = AnalyticFunction([x], x[0]-x[1])
     c = CtcInverse(f, 0)
-    assert c.function().input_size() == 2
-    assert c.function().output_size() == 1
+    assert c.fnc().input_size() == 2
+    assert c.fnc().output_size() == 1
     # [ctcinv-6-end]
 
 if __name__ ==  '__main__':
