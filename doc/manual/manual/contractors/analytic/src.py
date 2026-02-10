@@ -60,7 +60,7 @@ class TestCtcAnalyticManual(unittest.TestCase):
     z = IntervalVector([[0,3.5],[0,1]])
     DefaultFigure.draw_box(z, [Color.blue(),Color.blue(.1)]) # prior to contraction
     z = c.contract(z)
-    DefaultFigure.draw_box(z, Color.blue()) # after one CtcInverse contraction
+    DefaultFigure.draw_box(z, [Color.blue(),Color.white()]) # after one CtcInverse contraction
     # z == [ [1.84, 3.5] ; [0, 1] ]
 
     # Combining CtcInverse with a CtcFixpoint:
