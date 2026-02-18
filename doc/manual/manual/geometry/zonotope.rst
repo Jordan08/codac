@@ -15,8 +15,8 @@ Zonotope
 A zonotope is a convex and symmetric polytope. 
 It can be represented as the Minkowski sum of a finite number of line segments, which are called its generators.
 
-In Codac, zonotopes are represented by the class `Zonotope`. A zonotope is defined by its center and its generators.
-The center is a `Vector`, noted :math:`z`, and the generators are stored in a `Matrix`, noted :math:`A`. 
+In Codac, zonotopes are represented by the class :class:`Zonotope`. A zonotope is defined by its center and its generators.
+The center is a :class:`Vector`, noted :math:`z`, and the generators are stored in a :class:`Matrix`, noted :math:`A`. 
 Each column of the matrix corresponds to a generator.
 
 The resulting zonotope is:
@@ -31,7 +31,7 @@ For example, let us consider the following zonotope in :math:`\mathbb{R}^2`:
 .. math::
   Z = \left(\begin{array}{c} 1\\ 2\\ \end{array}\right) + \left(\begin{array}{ccc} 1 & 0 & 2 \\ 0 & 1 & 1 \end{array}\right) \cdot [-1,1]^3
 
-Can be constructed in Codac as follows:
+It can be constructed in Codac as follows:
 
 .. tabs::
   
@@ -63,18 +63,18 @@ The resulting zonotope is represented in the figure below:
 
 Additional methods are provided to handle zonotopes.
 
-- `box()`: returns the bounding box of the zonotope (`IntervalVector`).
-- `proj(v)`: returns the projection of the zonotope on a given subspace, defined by the vector of indices `v` (`Zonotope`).
+- `box()`: gives the bounding box of the zonotope. Returns an :class:`IntervalVector`.
+- `proj(v)`: Projects of the zonotope on a given subspace, defined by the vector of indices `v`. Returns a :class:`Zonotope`.
 
 .. _subsec-zonotope-parallelepiped:
 
 Parallelepiped
 --------------
 
-A parellelepiped is a special case of zonotope, where the number of generators is equal or less than the dimension of the space.
+A parallelepiped is a special case of zonotope, where the number of generators is equal or less than the dimension of the space.
 
 It inherits from the `Zonotope` class, and thus has the same properties and methods. In addition, it defines the following methods:
 
-- `vertices()`: returns the vertices of the parallelepiped (`std::vector<Vector>`).
-- `contains(v)`: checks if the point `v` is contained in the parallelepiped (`BoolInterval`). **The matrix A must be invertible**
-- `is_superset(x)`: checks if the parallelepiped is a superset of the IntervalVector `x` (`BoolInterval`). **The matrix A must be invertible**
+- `vertices()`: gives the vertices of the parallelepiped. Returns a :class:`std::vector\<Vector\>`.
+- `contains(v)`: checks if the point `v` is contained in the parallelepiped. Returns a :class:`BoolInterval`. **The matrix A must be invertible**
+- `is_superset(x)`: checks if the parallelepiped is a superset of the :class:`IntervalVector` `x`. Returns a :class:`BoolInterval`. **The matrix A must be invertible**
