@@ -64,7 +64,7 @@ The resulting zonotope is represented in the figure below:
 Additional methods are provided to handle zonotopes.
 
 - `box()`: gives the bounding box of the zonotope. Returns an :class:`IntervalVector`.
-- `proj(v)`: Projects of the zonotope on a given subspace, defined by the vector of indices `v`. Returns a :class:`Zonotope`.
+- `proj(v)`: Projects the zonotope on a given subspace, defined by the vector of indices `v` (:class:`std::vector\<Index\>`). Returns a :class:`Zonotope`.
 
 .. _subsec-zonotope-parallelepiped:
 
