@@ -103,7 +103,8 @@ The inverse of a symmetry can be computed using the method `invert()`. These sym
     sigma_inv = sigma.invert();
     sigma_comp = sigma * sigma_inv; % identity symmetry
 
-To apply the symmetry to an object, the classical operator `()` is used. Objects which support the application of a symmetry are :
+To apply the symmetry to an object, the classical operator `()` is used. Objects which support the application of a symmetry are listed below.
+**Objects in bold are not supported yet but will be in the future**.
 
 - Vectors
 
@@ -113,7 +114,10 @@ To apply the symmetry to an object, the classical operator `()` is used. Objects
 
 - Contractors and separators. :ref:`see more <sec-ctc>`
 
-- Sampled trajectories :class:`SampledTraj`.
+- **Analytic** and sampled trajectories. :class:`SampledTraj`.
+
+- **Sliced tubes**.
+
 
 For example, wtih the symmetry :math:`\sigma` defined earlier:
 
