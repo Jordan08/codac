@@ -35,7 +35,7 @@ jobs:
             - { os: windows-2022    , shell: cmd , arch: x64    , runtime: vc17          , cmake_params: '-G "Visual Studio 17" -T v143 -A x64'  , cpcfg: '-win_amd64', py_v_maj: 3, py_v_min: 8 , desc: 'Windows Visual Studio 2022 x64 Python 3.8' }
     name: ${{ matrix.cfg.desc }}
     steps: 
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         submodules: true
         fetch-depth: 0
