@@ -126,7 +126,7 @@ For example, wtih the symmetry :math:`\sigma` defined earlier:
 
     x = VectorVar(3)    
     f = AnalyticFunction([x], sigma(2*x))
-    Y=f.eval(X) # Y is the (poncual) interval vector (12,-8,10)
+    Y = f.eval(X) # Y is the (poncual) interval vector (12,-8,10)
 
   .. code-tab:: c++
       
