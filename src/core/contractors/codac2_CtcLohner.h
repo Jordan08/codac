@@ -107,12 +107,31 @@ namespace codac2
     const AnalyticFunction<VectorType> *f; //!< litteral function of the system \f$\dot{\mathbf{x}}=\mathbf{f}(\mathbf{x})\f$
   };
 
+  /**
+   * \class CtcLohner
+   * 
+   * \brief The Lohner contractor uses Lohner's guaranteed integration algorithm to contract a tube according to a differential
+   * equation
+   */
   class CtcLohner
   {
     public:
 
+      /**
+       * \brief Creates the contractor.
+       * 
+       * \param f function defining the system \f$\dot{\mathbf{x}}=\mathbf{f}(\mathbf{x})\f$
+       * \param contractions number of contractions of the global enclosure by the estimated local enclosure
+       * \param eps inflation parameter for the global enclosure
+       */
       CtcLohner(const AnalyticFunction<VectorType>& f, int contractions = 5, double eps = 0.1);
 
+      /**
+       * \brief Applies \f$\mathcal{C}_{\textrm{Lohner}}\big([\mathbf{x}]\big)\f$.
+       * 
+       * \param tube ``SlicedTube`` to contract
+       * \param t_propa time propagation direction (forward, backward or both)
+       */
       void contract(SlicedTube<IntervalVector> &tube, TimePropag t_propa = TimePropag::FWD_BWD) const;
 
 
@@ -122,8 +141,5 @@ namespace codac2
       int contractions; //!< number of contractions of the global enclosure by the estimated local enclosure
       int dim; //!< dimension of the state vector
       double eps; //!< inflation parameter for the global enclosure
-
-      static const std::string m_ctc_name; //!< class name (mainly used for CN Exceptions)
-      static std::vector<std::string> m_str_expected_doms;
   };
 }

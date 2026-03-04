@@ -4,6 +4,7 @@ Contractors, separators
 .. toctree::
 
   CtcInverse <analytic/ctcinverse>
+  CtcLohner <dynamic/ctclohner>
   CtcDist <geometric/ctcdist>
   CtcPolar <geometric/ctcpolar>
 
