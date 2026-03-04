@@ -42,7 +42,7 @@ namespace codac2
      *
      * \param f function defining the system \f$\dot{\mathbf{x}}=\mathbf{f}(\mathbf{x})\f$
      * \param h time step of the integration method
-     * \param direction forward or backaward integration
+     * \param forward forward integration if true, backaward otherwise
      * \param u0 initial condition of the system
      * \param contractions number of contractions of the global enclosure by the estimated local enclosure
      * \param eps inflation parameter for the global enclosure
@@ -113,7 +113,7 @@ namespace codac2
 
       CtcLohner(const AnalyticFunction<VectorType>& f, int contractions = 5, double eps = 0.1);
 
-      void contract(SlicedTube<IntervalVector> &tube, TimePropag t_propa = TimePropag::FWD_BWD);
+      void contract(SlicedTube<IntervalVector> &tube, TimePropag t_propa = TimePropag::FWD_BWD) const;
 
 
     protected:
