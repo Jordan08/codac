@@ -50,6 +50,8 @@ Codac implementation
 
 The main representation used in Codac is the Cauchy's notation. **We suppose that the first row of the cauchy's representation is in increasing order, i.e. (1,2,...n)**.
 
+**Note that the indexing starts at 1 as 0 and -0 can not be distinguished**.
+
 The constructors of the :class:`OctaSym` class then require a single vector reprensenting the second row of the Cauchy's representation.
 
 For example, the symmetry :math:`\sigma` mentionned earlier can be created in Codac as follows:
@@ -119,7 +121,7 @@ To apply the symmetry to an object, the classical operator `()` is used. Objects
 - **Sliced tubes**.
 
 
-For example, wtih the symmetry :math:`\sigma` defined earlier:
+For example, with the symmetry :math:`\sigma` defined earlier:
 
 .. tabs::
   
