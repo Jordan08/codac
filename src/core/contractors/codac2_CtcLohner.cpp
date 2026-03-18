@@ -10,9 +10,6 @@
 #include "codac2_CtcLohner.h"
 #include "codac2_Slice.h"
 
-// TO DELETE
-#include <iostream>
-
 using namespace std;
 using namespace codac2;
 
