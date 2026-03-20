@@ -48,7 +48,7 @@ jobs:
         sudo apt-get -y install flex bison catch2 # libeigen3-dev
   
         # For documentation
-        pip install sphinx breathe sphinx-issues sphinx-tabs sphinx_rtd_theme
+        pip install sphinx breathe sphinx-issues sphinx-tabs sphinx_rtd_theme sympy
         sudo apt-get -y install doxygen graphviz
 
         # Doxygen might need to be upgraded
@@ -61,7 +61,7 @@ jobs:
         #pip install --upgrade pyibex==1.8.0
 
         # Fort Python tests
-        pip install numpy
+        pip install numpy sympy
 
         pwd
         ls
