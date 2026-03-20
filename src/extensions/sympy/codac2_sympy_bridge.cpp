@@ -90,22 +90,30 @@ namespace codac2
       });
     }
 
+    namespace
+    {
+      std::unordered_map<std::string,pybind11::object>& imported_modules_cache()
+      {
+        // Intentionally leaked: cached Python module objects must not be destroyed
+        // during C++ static teardown, because their destructors may run after the
+        // Python runtime has already started shutting down.
+        static auto* modules = new std::unordered_map<std::string,pybind11::object>();
+        return *modules;
+      }
+    }
+
     const pybind11::object& import_module(const char* module_name)
     {
       ensure_python_runtime();
       pybind11::gil_scoped_acquire gil;
 
-      static std::unordered_map<std::string,std::unique_ptr<pybind11::object>> modules;
-
+      auto& modules = imported_modules_cache();
       const std::string key(module_name);
       auto it = modules.find(key);
       if(it == modules.end())
-      {
-        auto module = std::make_unique<pybind11::object>(pybind11::module_::import(module_name));
-        it = modules.emplace(key, std::move(module)).first;
-      }
+        it = modules.emplace(key, pybind11::module_::import(module_name)).first;
 
-      return *(it->second);
+      return it->second;
     }
 
     const pybind11::object& import_sympy()
