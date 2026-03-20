@@ -55,6 +55,10 @@ void export_sympy(py::module& m)
     ANALYTICFUNCTION_SCALARTYPE_SYMPY_PARTIAL_DIFF_CONST_ANALYTICFUNCTION_SCALARTYPE_REF_CONST_SCALARVAR_REF,
     "f"_a, "x"_a);
 
+  m.def("sympy_partial_diff_", (AnalyticFunction<ScalarType> (*)(const AnalyticFunction<ScalarType>&,const ScalarExpr&))&codac2::sympy_partial_diff,
+    ANALYTICFUNCTION_SCALARTYPE_SYMPY_PARTIAL_DIFF_CONST_ANALYTICFUNCTION_SCALARTYPE_REF_CONST_SCALARVAR_REF,
+    "f"_a, "x"_a);
+
   // sympy_diff
 
   m.def("sympy_diff_scalar", (AnalyticFunction<ScalarType> (*)(const AnalyticFunction<ScalarType>&))&codac2::sympy_diff,
@@ -65,11 +69,19 @@ void export_sympy(py::module& m)
     ANALYTICFUNCTION_SCALARTYPE_SYMPY_DIFF_CONST_ANALYTICFUNCTION_SCALARTYPE_REF_CONST_SCALARVAR_REF,
     "f"_a, "x"_a);
 
+  m.def("sympy_diff_scalar", (AnalyticFunction<ScalarType> (*)(const AnalyticFunction<ScalarType>&,const ScalarExpr&))&codac2::sympy_diff,
+    ANALYTICFUNCTION_SCALARTYPE_SYMPY_DIFF_CONST_ANALYTICFUNCTION_SCALARTYPE_REF_CONST_SCALARVAR_REF,
+    "f"_a, "x"_a);
+
   m.def("sympy_diff_scalar", (AnalyticFunction<ScalarType> (*)(const AnalyticFunction<ScalarType>&,Index))&codac2::sympy_diff,
     ANALYTICFUNCTION_SCALARTYPE_SYMPY_DIFF_CONST_ANALYTICFUNCTION_SCALARTYPE_REF_INDEX,
     "f"_a, "order"_a);
 
   m.def("sympy_diff_scalar", (AnalyticFunction<ScalarType> (*)(const AnalyticFunction<ScalarType>&,const ScalarVar&,Index))&codac2::sympy_diff,
+    ANALYTICFUNCTION_SCALARTYPE_SYMPY_DIFF_CONST_ANALYTICFUNCTION_SCALARTYPE_REF_CONST_SCALARVAR_REF_INDEX,
+    "f"_a, "x"_a, "order"_a);
+
+  m.def("sympy_diff_scalar", (AnalyticFunction<ScalarType> (*)(const AnalyticFunction<ScalarType>&,const ScalarExpr&,Index))&codac2::sympy_diff,
     ANALYTICFUNCTION_SCALARTYPE_SYMPY_DIFF_CONST_ANALYTICFUNCTION_SCALARTYPE_REF_CONST_SCALARVAR_REF_INDEX,
     "f"_a, "x"_a, "order"_a);
 
@@ -96,6 +108,10 @@ void export_sympy(py::module& m)
     "f"_a, "center"_a, "order"_a);
   
   m.def("sympy_series_", (AnalyticFunction<ScalarType> (*)(const AnalyticFunction<ScalarType>&,const ScalarVar&,double,Index))&codac2::sympy_series,
+    ANALYTICFUNCTION_SCALARTYPE_SYMPY_SERIES_CONST_ANALYTICFUNCTION_SCALARTYPE_REF_CONST_SCALARVAR_REF_DOUBLE_INDEX,
+    "f"_a, "x"_a, "center"_a, "order"_a);
+  
+  m.def("sympy_series_", (AnalyticFunction<ScalarType> (*)(const AnalyticFunction<ScalarType>&,const ScalarExpr&,double,Index))&codac2::sympy_series,
     ANALYTICFUNCTION_SCALARTYPE_SYMPY_SERIES_CONST_ANALYTICFUNCTION_SCALARTYPE_REF_CONST_SCALARVAR_REF_DOUBLE_INDEX,
     "f"_a, "x"_a, "center"_a, "order"_a);
 

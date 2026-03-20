@@ -15,27 +15,13 @@
 namespace codac2
 {
   /**
-   * \brief Exception thrown when a symbolic operation through SymPy fails.
-   *
-   * This exception is part of the public SymPy API. Internal bridge classes and
-   * Python-specific implementation details remain private to the extension.
-   */
-  class SymbolicDiffError : public std::runtime_error
-  {
-  public:
-    explicit SymbolicDiffError(const std::string& msg)
-      : std::runtime_error(msg)
-    {
-    }
-  };
-
-  /**
    * \brief Symbolically simplifies a scalar analytic function.
    *
    * \param f Function to simplify.
    * \return A simplified analytic function.
    */
-  AnalyticFunction<ScalarType> sympy_simplify(const AnalyticFunction<ScalarType>& f);
+  AnalyticFunction<ScalarType>
+  sympy_simplify(const AnalyticFunction<ScalarType>& f);
 
   /**
    * \brief Symbolically simplifies a vector analytic function componentwise.
@@ -43,7 +29,8 @@ namespace codac2
    * \param f Function to simplify.
    * \return A simplified analytic function.
    */
-  AnalyticFunction<VectorType> sympy_simplify(const AnalyticFunction<VectorType>& f);
+  AnalyticFunction<VectorType>
+  sympy_simplify(const AnalyticFunction<VectorType>& f);
 
   /**
    * \brief Symbolically simplifies a matrix analytic function componentwise.
@@ -51,7 +38,8 @@ namespace codac2
    * \param f Function to simplify.
    * \return A simplified analytic function.
    */
-  AnalyticFunction<MatrixType> sympy_simplify(const AnalyticFunction<MatrixType>& f);
+  AnalyticFunction<MatrixType>
+  sympy_simplify(const AnalyticFunction<MatrixType>& f);
 
   /**
    * \brief Rewrites a scalar analytic function in Horner form when possible.
@@ -59,7 +47,8 @@ namespace codac2
    * \param f Function to rewrite.
    * \return A rewritten analytic function.
    */
-  AnalyticFunction<ScalarType> sympy_horner(const AnalyticFunction<ScalarType>& f);
+  AnalyticFunction<ScalarType>
+  sympy_horner(const AnalyticFunction<ScalarType>& f);
 
   /**
    * \brief Rewrites a vector analytic function in Horner form componentwise.
@@ -67,7 +56,8 @@ namespace codac2
    * \param f Function to rewrite.
    * \return A rewritten analytic function.
    */
-  AnalyticFunction<VectorType> sympy_horner(const AnalyticFunction<VectorType>& f);
+  AnalyticFunction<VectorType>
+  sympy_horner(const AnalyticFunction<VectorType>& f);
 
   /**
    * \brief Rewrites a matrix analytic function in Horner form componentwise.
@@ -75,7 +65,8 @@ namespace codac2
    * \param f Function to rewrite.
    * \return A rewritten analytic function.
    */
-  AnalyticFunction<MatrixType> sympy_horner(const AnalyticFunction<MatrixType>& f);
+  AnalyticFunction<MatrixType>
+  sympy_horner(const AnalyticFunction<MatrixType>& f);
 
   /**
    * \brief Returns the symbolic partial derivative of a scalar function.
@@ -87,7 +78,8 @@ namespace codac2
    * \param flat_input_index Flattened input index.
    * \return The symbolic partial derivative.
    */
-  AnalyticFunction<ScalarType> sympy_partial_diff(const AnalyticFunction<ScalarType>& f, Index flat_input_index);
+  AnalyticFunction<ScalarType>
+  sympy_partial_diff(const AnalyticFunction<ScalarType>& f, Index flat_input_index);
 
   /**
    * \brief Returns the symbolic partial derivative of a scalar function
@@ -100,7 +92,22 @@ namespace codac2
    * \param x Scalar input variable.
    * \return The symbolic partial derivative.
    */
-  AnalyticFunction<ScalarType> sympy_partial_diff(const AnalyticFunction<ScalarType>& f, const ScalarVar& x);
+  AnalyticFunction<ScalarType>
+  sympy_partial_diff(const AnalyticFunction<ScalarType>& f, const ScalarVar& x);
+
+  /**
+   * \brief Returns the symbolic partial derivative of a scalar function
+   *        with respect to a scalar input expression.
+   *
+   * This overload supports either a scalar input variable, or a direct scalar
+   * component of a vectorial or matricial input variable.
+   *
+   * \param f Scalar function.
+   * \param x Scalar input expression.
+   * \return The symbolic partial derivative.
+   */
+  AnalyticFunction<ScalarType>
+  sympy_partial_diff(const AnalyticFunction<ScalarType>& f, const ScalarExpr& x);
 
   /**
    * \brief Returns the symbolic derivative of a scalar univariate function.
@@ -108,7 +115,8 @@ namespace codac2
    * \param f Scalar function.
    * \return The symbolic derivative.
    */
-  AnalyticFunction<ScalarType> sympy_diff(const AnalyticFunction<ScalarType>& f);
+  AnalyticFunction<ScalarType>
+  sympy_diff(const AnalyticFunction<ScalarType>& f);
 
   /**
    * \brief Returns the symbolic first derivative of a scalar function with
@@ -118,7 +126,22 @@ namespace codac2
    * \param x Scalar input variable.
    * \return The symbolic derivative with respect to \p x.
    */
-  AnalyticFunction<ScalarType> sympy_diff(const AnalyticFunction<ScalarType>& f, const ScalarVar& x);
+  AnalyticFunction<ScalarType>
+  sympy_diff(const AnalyticFunction<ScalarType>& f, const ScalarVar& x);
+
+  /**
+   * \brief Returns the symbolic first derivative of a scalar function with
+   *        respect to a scalar input expression.
+   *
+   * This overload supports either a scalar input variable, or a direct scalar
+   * component of a vectorial or matricial input variable.
+   *
+   * \param f Scalar function.
+   * \param x Scalar input expression.
+   * \return The symbolic derivative with respect to \p x.
+   */
+  AnalyticFunction<ScalarType>
+  sympy_diff(const AnalyticFunction<ScalarType>& f, const ScalarExpr& x);
 
   /**
    * \brief Returns the symbolic derivative of given order for a scalar univariate function.
@@ -127,7 +150,8 @@ namespace codac2
    * \param order Derivation order.
    * \return The symbolic derivative of order \p order.
    */
-  AnalyticFunction<ScalarType> sympy_diff(const AnalyticFunction<ScalarType>& f, Index order);
+  AnalyticFunction<ScalarType>
+  sympy_diff(const AnalyticFunction<ScalarType>& f, Index order);
 
   /**
    * \brief Returns the symbolic derivative of given order for a scalar
@@ -138,7 +162,23 @@ namespace codac2
    * \param order Derivation order.
    * \return The symbolic derivative of order \p order with respect to \p x.
    */
-  AnalyticFunction<ScalarType> sympy_diff(const AnalyticFunction<ScalarType>& f, const ScalarVar& x, Index order);
+  AnalyticFunction<ScalarType>
+  sympy_diff(const AnalyticFunction<ScalarType>& f, const ScalarVar& x, Index order);
+
+  /**
+   * \brief Returns the symbolic derivative of given order for a scalar
+   *        function with respect to a scalar input expression.
+   *
+   * This overload supports either a scalar input variable, or a direct scalar
+   * component of a vectorial or matricial input variable.
+   *
+   * \param f Scalar function.
+   * \param x Scalar input expression.
+   * \param order Derivation order.
+   * \return The symbolic derivative of order \p order with respect to \p x.
+   */
+  AnalyticFunction<ScalarType>
+  sympy_diff(const AnalyticFunction<ScalarType>& f, const ScalarExpr& x, Index order);
 
   /**
    * \brief Returns the symbolic gradient of a scalar function.
@@ -146,7 +186,8 @@ namespace codac2
    * \param f Scalar function.
    * \return The symbolic gradient.
    */
-  AnalyticFunction<VectorType> sympy_gradient(const AnalyticFunction<ScalarType>& f);
+  AnalyticFunction<VectorType>
+  sympy_gradient(const AnalyticFunction<ScalarType>& f);
 
   /**
    * \brief Returns the symbolic Hessian matrix of a scalar function.
@@ -154,7 +195,8 @@ namespace codac2
    * \param f Scalar function.
    * \return The symbolic Hessian matrix.
    */
-  AnalyticFunction<MatrixType> sympy_hessian(const AnalyticFunction<ScalarType>& f);
+  AnalyticFunction<MatrixType>
+  sympy_hessian(const AnalyticFunction<ScalarType>& f);
 
   /**
    * \brief Returns the symbolic Jacobian matrix of a vector function.
@@ -162,7 +204,8 @@ namespace codac2
    * \param f Vector function.
    * \return The symbolic Jacobian matrix.
    */
-  AnalyticFunction<MatrixType> sympy_diff(const AnalyticFunction<VectorType>& f);
+  AnalyticFunction<MatrixType>
+  sympy_diff(const AnalyticFunction<VectorType>& f);
 
   /**
    * \brief Returns a truncated Taylor series of a scalar univariate function.
@@ -172,7 +215,8 @@ namespace codac2
    * \param order Truncation order.
    * \return The truncated Taylor series.
    */
-  AnalyticFunction<ScalarType> sympy_series(const AnalyticFunction<ScalarType>& f, double center, Index order);
+  AnalyticFunction<ScalarType>
+  sympy_series(const AnalyticFunction<ScalarType>& f, double center, Index order);
 
   /**
    * \brief Returns a truncated Taylor series of a scalar function with
@@ -186,7 +230,25 @@ namespace codac2
    * \param order Truncation order.
    * \return The truncated Taylor series.
    */
-  AnalyticFunction<ScalarType> sympy_series(const AnalyticFunction<ScalarType>& f, const ScalarVar& x, double center, Index order);
+  AnalyticFunction<ScalarType>
+  sympy_series(const AnalyticFunction<ScalarType>& f, const ScalarVar& x, double center, Index order);
+
+  /**
+   * \brief Returns a truncated Taylor series of a scalar function with
+   *        respect to a scalar input expression.
+   *
+   * Other input variables are treated as constants. This overload supports
+   * either a scalar input variable, or a direct scalar component of a
+   * vectorial or matricial input variable.
+   *
+   * \param f Scalar function.
+   * \param x Scalar input expression.
+   * \param center Expansion center.
+   * \param order Truncation order.
+   * \return The truncated Taylor series.
+   */
+  AnalyticFunction<ScalarType>
+  sympy_series(const AnalyticFunction<ScalarType>& f, const ScalarExpr& x, double center, Index order);
 
   /**
    * \brief Tests symbolic equality of two scalar analytic functions through SymPy.

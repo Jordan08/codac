@@ -103,8 +103,8 @@ namespace codac2::symbolic::detail
        */
       const FlatInputBinding& binding_of(const ExprID& id) const;
 
-      FlatInputLayout _layout;                             //!< Flattened input layout.
-      std::vector<std::string> _names;                    //!< Symbol names indexed by flat input index.
+      FlatInputLayout _layout; //!< Flattened input layout.
+      std::vector<std::string> _names; //!< Symbol names indexed by flat input index.
       std::unordered_map<std::string,ScalarExpr> _codac_scalars; //!< Reverse mapping from symbol names to Codac scalar expressions.
   };
 
@@ -146,30 +146,31 @@ namespace codac2::symbolic::detail
    */
   class SympyImporter
   {
-  public:
-    /**
-     * \brief Builds an importer associated with a symbol table.
-     *
-     * \param symbols Flat symbol table.
-     */
-    explicit SympyImporter(const FlatSymbolTable& symbols);
+    public:
 
-    /**
-     * \brief Imports a SymPy scalar expression.
-     *
-     * \param obj SymPy expression handle.
-     * \return Corresponding Codac scalar expression.
-     */
-    ScalarExpr import_scalar(const pybind11::handle& obj) const;
+      /**
+       * \brief Builds an importer associated with a symbol table.
+       *
+       * \param symbols Flat symbol table.
+       */
+      explicit SympyImporter(const FlatSymbolTable& symbols);
 
-  private:
-    ScalarExpr import_add(const pybind11::handle& obj) const;
-    ScalarExpr import_mul(const pybind11::handle& obj) const;
-    ScalarExpr import_pow(const pybind11::handle& obj) const;
-    ScalarExpr import_function(const pybind11::handle& obj) const;
+      /**
+       * \brief Imports a SymPy scalar expression.
+       *
+       * \param obj SymPy expression handle.
+       * \return Corresponding Codac scalar expression.
+       */
+      ScalarExpr import_scalar(const pybind11::handle& obj) const;
 
-  private:
-    const FlatSymbolTable& _symbols; //!< Associated symbol table.
+    private:
+
+      ScalarExpr import_add(const pybind11::handle& obj) const;
+      ScalarExpr import_mul(const pybind11::handle& obj) const;
+      ScalarExpr import_pow(const pybind11::handle& obj) const;
+      ScalarExpr import_function(const pybind11::handle& obj) const;
+
+      const FlatSymbolTable& _symbols; //!< Associated symbol table.
   };
 
   /**
@@ -183,58 +184,60 @@ namespace codac2::symbolic::detail
    */
   class ScalarBridgeContext
   {
-  public:
-    /**
-     * \brief Builds a scalar bridge context for a given function argument list.
-     *
-     * \param args Function argument list.
-     */
-    explicit ScalarBridgeContext(const FunctionArgsList& args);
+    public:
 
-    /**
-     * \brief Returns the imported SymPy module.
-     *
-     * \return SymPy module.
-     */
-    const pybind11::object& sympy() const;
+      /**
+       * \brief Builds a scalar bridge context for a given function argument list.
+       *
+       * \param args Function argument list.
+       */
+      explicit ScalarBridgeContext(const FunctionArgsList& args);
 
-    /**
-     * \brief Returns the associated flat symbol table.
-     *
-     * \return Flat symbol table.
-     */
-    const FlatSymbolTable& symbols() const;
+      /**
+       * \brief Returns the imported SymPy module.
+       *
+       * \return SymPy module.
+       */
+      const pybind11::object& sympy() const;
 
-    /**
-     * \brief Exports a Codac scalar expression to SymPy.
-     *
-     * \param y Codac scalar expression.
-     * \return Corresponding SymPy expression.
-     */
-    pybind11::object export_scalar(const ScalarExpr& y) const;
+      /**
+       * \brief Returns the associated flat symbol table.
+       *
+       * \return Flat symbol table.
+       */
+      const FlatSymbolTable& symbols() const;
 
-    /**
-     * \brief Imports a SymPy scalar expression into Codac.
-     *
-     * \param obj SymPy expression handle.
-     * \return Corresponding Codac scalar expression.
-     */
-    ScalarExpr import_scalar(const pybind11::handle& obj) const;
+      /**
+       * \brief Exports a Codac scalar expression to SymPy.
+       *
+       * \param y Codac scalar expression.
+       * \return Corresponding SymPy expression.
+       */
+      pybind11::object export_scalar(const ScalarExpr& y) const;
 
-    /**
-     * \brief Applies a SymPy transformation to a Codac scalar expression.
-     *
-     * \param y Codac scalar expression.
-     * \param transform SymPy transformation.
-     * \param do_expand Whether the transformed expression should be expanded.
-     * \return Transformed Codac scalar expression.
-     */
-    ScalarExpr transform_scalar_expr(const ScalarExpr& y, const SympyTransform& transform, bool do_expand = true) const;
+      /**
+       * \brief Imports a SymPy scalar expression into Codac.
+       *
+       * \param obj SymPy expression handle.
+       * \return Corresponding Codac scalar expression.
+       */
+      ScalarExpr import_scalar(const pybind11::handle& obj) const;
 
-  private:
-    FlatSymbolTable _symbols; //!< Flat symbol table.
-    SympyExporter _exporter;  //!< Exporter.
-    SympyImporter _importer;  //!< Importer.
+      /**
+       * \brief Applies a SymPy transformation to a Codac scalar expression.
+       *
+       * \param y Codac scalar expression.
+       * \param transform SymPy transformation.
+       * \param do_expand Whether the transformed expression should be expanded.
+       * \return Transformed Codac scalar expression.
+       */
+      ScalarExpr transform_scalar_expr(const ScalarExpr& y, const SympyTransform& transform, bool do_expand = true) const;
+
+    private:
+      
+      FlatSymbolTable _symbols; //!< Flat symbol table.
+      SympyExporter _exporter;  //!< Exporter.
+      SympyImporter _importer;  //!< Importer.
   };
 
   /**

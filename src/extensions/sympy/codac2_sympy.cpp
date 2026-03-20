@@ -19,6 +19,29 @@ namespace codac2
   {
     using symbolic::detail::FlatSymbolTable;
     using symbolic::detail::ScalarBridgeContext;
+    using symbolic::detail::SympyTransform;
+
+    template<typename Y>
+    AnalyticFunction<Y> transform_componentwise(
+      const AnalyticFunction<Y>& f,
+      const SympyTransform& transform,
+      bool do_expand = true)
+    {
+      ScalarBridgeContext ctx(f.args());
+      return map_scalar_entries(f, [&](const ScalarExpr& y)
+      {
+        return ctx.transform_scalar_expr(y, transform, do_expand);
+      });
+    }
+
+    Index flat_input_index_of(const FunctionArgsList& args, const ScalarExpr& x)
+    {
+      const FlatInputLayout layout(args);
+      Index flat_input_index = -1;
+      if(layout.flat_index_of(x, flat_input_index))
+        return flat_input_index;
+      assert(false && "flat_input_index_of: expected a scalar input variable or a direct component of a vector/matrix input variable");
+    }
 
     pybind11::object remap_to_reference_symbols(
       pybind11::object expr,
@@ -26,7 +49,9 @@ namespace codac2
       const FlatSymbolTable& reference_symbols)
     {
       if(source_symbols.size() != reference_symbols.size())
-        throw SymbolicDiffError("sympy_equal: inconsistent flattened symbol tables");
+      {
+        assert(false && "sympy_equal: inconsistent flattened symbol tables");
+      }
 
       pybind11::dict subs;
       for(Index k = 0 ; k < source_symbols.size() ; ++k)
@@ -89,7 +114,9 @@ namespace codac2
       Index flat_input_index)
     {
       if(flat_input_index < 0 || flat_input_index >= ctx.symbols().size())
-        throw SymbolicDiffError("sympy_partial_diff_expr: flat_input_index out of bounds");
+      {
+        assert(false && "sympy_partial_diff_expr: flat_input_index out of bounds");
+      }
 
       return ctx.transform_scalar_expr(
         y,
@@ -105,119 +132,76 @@ namespace codac2
   AnalyticFunction<ScalarType>
   sympy_simplify(const AnalyticFunction<ScalarType>& f)
   {
-    ScalarBridgeContext ctx(f.args());
-
-    return map_scalar_entries(f, [&](const ScalarExpr& y)
-    {
-      return ctx.transform_scalar_expr(
-        y,
-        [](const pybind11::object& sympy,
-           const pybind11::object& ys,
-           const FlatSymbolTable&)
-        {
-          return sympy.attr("simplify")(ys);
-        });
-    });
+    return transform_componentwise(f,
+      []([[maybe_unused]] const pybind11::object& sympy, const pybind11::object& ys, const FlatSymbolTable&)
+      {
+        return sympy.attr("simplify")(ys);
+      },
+      true);
   }
 
   AnalyticFunction<VectorType>
   sympy_simplify(const AnalyticFunction<VectorType>& f)
   {
-    ScalarBridgeContext ctx(f.args());
-
-    return map_scalar_entries(f, [&](const ScalarExpr& y)
-    {
-      return ctx.transform_scalar_expr(
-        y,
-        [](const pybind11::object& sympy,
-           const pybind11::object& ys,
-           const FlatSymbolTable&)
-        {
-          return sympy.attr("simplify")(ys);
-        });
-    });
+    return transform_componentwise(f,
+      []([[maybe_unused]] const pybind11::object& sympy, const pybind11::object& ys, const FlatSymbolTable&)
+      {
+        return sympy.attr("simplify")(ys);
+      },
+      true);
   }
 
   AnalyticFunction<MatrixType>
   sympy_simplify(const AnalyticFunction<MatrixType>& f)
   {
-    ScalarBridgeContext ctx(f.args());
-
-    return map_scalar_entries(f, [&](const ScalarExpr& y)
-    {
-      return ctx.transform_scalar_expr(
-        y,
-        [](const pybind11::object& sympy,
-           const pybind11::object& ys,
-           const FlatSymbolTable&)
-        {
-          return sympy.attr("simplify")(ys);
-        });
-    });
+    return transform_componentwise(f,
+      []([[maybe_unused]] const pybind11::object& sympy, const pybind11::object& ys, const FlatSymbolTable&)
+      {
+        return sympy.attr("simplify")(ys);
+      },
+      true);
   }
 
   AnalyticFunction<ScalarType>
   sympy_horner(const AnalyticFunction<ScalarType>& f)
   {
-    ScalarBridgeContext ctx(f.args());
-
-    return map_scalar_entries(f, [&](const ScalarExpr& y)
-    {
-      return ctx.transform_scalar_expr(
-        y,
-        [](const pybind11::object&,
-           const pybind11::object& ys,
-           const FlatSymbolTable&)
-        {
-          return symbolic::detail::import_polyfuncs().attr("horner")(ys);
-        },
-        false);
-    });
+    return transform_componentwise(f,
+      []([[maybe_unused]] const pybind11::object& sympy, const pybind11::object& ys, const FlatSymbolTable&)
+      {
+        return symbolic::detail::import_polyfuncs().attr("horner")(ys);
+      },
+      false);
   }
 
   AnalyticFunction<VectorType>
   sympy_horner(const AnalyticFunction<VectorType>& f)
   {
-    ScalarBridgeContext ctx(f.args());
-
-    return map_scalar_entries(f, [&](const ScalarExpr& y)
-    {
-      return ctx.transform_scalar_expr(
-        y,
-        [](const pybind11::object&,
-           const pybind11::object& ys,
-           const FlatSymbolTable&)
-        {
-          return symbolic::detail::import_polyfuncs().attr("horner")(ys);
-        },
-        false);
-    });
+    return transform_componentwise(f,
+      []([[maybe_unused]] const pybind11::object& sympy, const pybind11::object& ys, const FlatSymbolTable&)
+      {
+        return symbolic::detail::import_polyfuncs().attr("horner")(ys);
+      },
+      false);
   }
 
   AnalyticFunction<MatrixType>
   sympy_horner(const AnalyticFunction<MatrixType>& f)
   {
-    ScalarBridgeContext ctx(f.args());
-
-    return map_scalar_entries(f, [&](const ScalarExpr& y)
-    {
-      return ctx.transform_scalar_expr(
-        y,
-        [](const pybind11::object&,
-           const pybind11::object& ys,
-           const FlatSymbolTable&)
-        {
-          return symbolic::detail::import_polyfuncs().attr("horner")(ys);
-        },
-        false);
-    });
+    return transform_componentwise(f,
+      []([[maybe_unused]] const pybind11::object& sympy, const pybind11::object& ys, const FlatSymbolTable&)
+      {
+        return symbolic::detail::import_polyfuncs().attr("horner")(ys);
+      },
+      false);
   }
 
   AnalyticFunction<ScalarType>
   sympy_partial_diff(const AnalyticFunction<ScalarType>& f, Index flat_input_index)
   {
     if(flat_input_index < 0 || flat_input_index >= f.input_size())
-      throw SymbolicDiffError("sympy_partial_diff: flat_input_index out of bounds");
+    {
+      assert(false && "sympy_partial_diff: flat_input_index out of bounds");
+    }
 
     ScalarBridgeContext ctx(f.args());
     return AnalyticFunction<ScalarType>(
@@ -228,23 +212,35 @@ namespace codac2
   AnalyticFunction<ScalarType>
   sympy_partial_diff(const AnalyticFunction<ScalarType>& f, const ScalarVar& x)
   {
-    const FlatInputLayout layout(f.args());
-    return sympy_partial_diff(f, layout.flat_index_of(x));
+    return sympy_partial_diff(f, ScalarExpr(x));
+  }
+
+  AnalyticFunction<ScalarType>
+  sympy_partial_diff(const AnalyticFunction<ScalarType>& f, const ScalarExpr& x)
+  {
+    return sympy_partial_diff(f, flat_input_index_of(f.args(),x));
   }
 
   AnalyticFunction<ScalarType>
   sympy_diff(const AnalyticFunction<ScalarType>& f)
   {
     if(f.input_size() != 1)
-      throw SymbolicDiffError(
-        "sympy_diff(f): this overload supports only scalar functions with one flattened input. "
-        "Use sympy_partial_diff(f,j), sympy_diff(f,order), or sympy_gradient(f) for multivariate scalar functions.");
+    {
+      assert(false && "sympy_diff(f): this overload supports only scalar functions with one flattened input. \
+        Use sympy_partial_diff(f,j), sympy_diff(f,order), or sympy_gradient(f) for multivariate scalar functions.");
+    }
 
     return sympy_partial_diff(f, 0);
   }
 
   AnalyticFunction<ScalarType>
   sympy_diff(const AnalyticFunction<ScalarType>& f, const ScalarVar& x)
+  {
+    return sympy_diff(f, ScalarExpr(x));
+  }
+
+  AnalyticFunction<ScalarType>
+  sympy_diff(const AnalyticFunction<ScalarType>& f, const ScalarExpr& x)
   {
     return sympy_partial_diff(f, x);
   }
@@ -253,13 +249,17 @@ namespace codac2
   sympy_diff(const AnalyticFunction<ScalarType>& f, Index order)
   {
     if(order < 0)
-      throw SymbolicDiffError("sympy_diff(f,order): order must be nonnegative");
+    {
+      assert(false && "sympy_diff(f,order): order must be nonnegative");
+    }
 
     if(order == 0)
       return f;
 
     if(f.input_size() != 1)
-      throw SymbolicDiffError("sympy_diff(f,order): this overload supports only scalar functions with one flattened input");
+    {
+      assert(false && "sympy_diff(f,order): this overload supports only scalar functions with one flattened input");
+    }
 
     ScalarBridgeContext ctx(f.args());
     ScalarExpr y(f.expr());
@@ -272,14 +272,21 @@ namespace codac2
   AnalyticFunction<ScalarType>
   sympy_diff(const AnalyticFunction<ScalarType>& f, const ScalarVar& x, Index order)
   {
+    return sympy_diff(f, ScalarExpr(x), order);
+  }
+
+  AnalyticFunction<ScalarType>
+  sympy_diff(const AnalyticFunction<ScalarType>& f, const ScalarExpr& x, Index order)
+  {
     if(order < 0)
-      throw SymbolicDiffError("sympy_diff(f,x,order): order must be nonnegative");
+    {
+      assert(false && "sympy_diff(f,x,order): order must be nonnegative");
+    }
 
     if(order == 0)
       return f;
 
-    const FlatInputLayout layout(f.args());
-    const Index flat_input_index = layout.flat_index_of(x);
+    const Index flat_input_index = flat_input_index_of(f.args(),x);
 
     ScalarBridgeContext ctx(f.args());
     ScalarExpr y(f.expr());
@@ -329,7 +336,9 @@ namespace codac2
   {
     const auto shape = f.output_shape();
     if(shape.second != 1)
-      throw SymbolicDiffError("sympy_diff(VectorType): only column-vector outputs are supported");
+    {
+      assert(false && "sympy_diff(VectorType): only column-vector outputs are supported");
+    }
 
     ScalarBridgeContext ctx(f.args());
     std::vector<VectorExpr> cols;
@@ -352,10 +361,14 @@ namespace codac2
   sympy_series(const AnalyticFunction<ScalarType>& f, double center, Index order)
   {
     if(order < 0)
-      throw SymbolicDiffError("sympy_series: order must be nonnegative");
+    {
+      assert(false && "sympy_series: order must be nonnegative");
+    }
 
     if(f.input_size() != 1)
-      throw SymbolicDiffError("sympy_series: this overload supports only scalar functions with one flattened input");
+    {
+      assert(false && "sympy_series: this overload supports only scalar functions with one flattened input");
+    }
 
     return AnalyticFunction<ScalarType>(
       f.args(),
@@ -375,11 +388,18 @@ namespace codac2
   AnalyticFunction<ScalarType>
   sympy_series(const AnalyticFunction<ScalarType>& f, const ScalarVar& x, double center, Index order)
   {
-    if(order < 0)
-      throw SymbolicDiffError("sympy_series: order must be nonnegative");
+    return sympy_series(f, ScalarExpr(x), center, order);
+  }
 
-    const FlatInputLayout layout(f.args());
-    const Index flat_input_index = layout.flat_index_of(x);
+  AnalyticFunction<ScalarType>
+  sympy_series(const AnalyticFunction<ScalarType>& f, const ScalarExpr& x, double center, Index order)
+  {
+    if(order < 0)
+    {
+      assert(false && "sympy_series: order must be nonnegative");
+    }
+
+    const Index flat_input_index = flat_input_index_of(f.args(),x);
 
     return AnalyticFunction<ScalarType>(
       f.args(),
@@ -396,14 +416,12 @@ namespace codac2
         }));
   }
 
-  bool
-  sympy_equal(const AnalyticFunction<ScalarType>& f, const AnalyticFunction<ScalarType>& g)
+  bool sympy_equal(const AnalyticFunction<ScalarType>& f, const AnalyticFunction<ScalarType>& g)
   {
     return sympy_equal_scalar_expr(f.args(), ScalarExpr(f.expr()), g.args(), ScalarExpr(g.expr()));
   }
 
-  bool
-  sympy_equal(const AnalyticFunction<VectorType>& f, const AnalyticFunction<VectorType>& g)
+  bool sympy_equal(const AnalyticFunction<VectorType>& f, const AnalyticFunction<VectorType>& g)
   {
     const FlatInputLayout layout_f(f.args());
     if(!layout_f.same_domain_as(g.args()))
@@ -426,8 +444,7 @@ namespace codac2
     return true;
   }
 
-  bool
-  sympy_equal(const AnalyticFunction<MatrixType>& f, const AnalyticFunction<MatrixType>& g)
+  bool sympy_equal(const AnalyticFunction<MatrixType>& f, const AnalyticFunction<MatrixType>& g)
   {
     const FlatInputLayout layout_f(f.args());
     if(!layout_f.same_domain_as(g.args()))
