@@ -10,45 +10,15 @@
 #include "codac2_sympy.h"
 #include "codac2_sympy_bridge.h"
 
+#include "codac2_analytic_componentwise.h"
+#include "codac2_analytic_flat_input_layout.h"
+
 namespace codac2
 {
   namespace
   {
     using symbolic::detail::FlatSymbolTable;
     using symbolic::detail::ScalarBridgeContext;
-    using symbolic::detail::SympyTransform;
-
-    bool same_flattened_domain(const FunctionArgsList& args_f, const FunctionArgsList& args_g)
-    {
-      return args_f.total_size() == args_g.total_size();
-    }
-
-    Index flat_input_index_of_scalar_var(const FunctionArgsList& args, const ScalarVar& x, const char* ctx)
-    {
-      Index flat = 0;
-      const auto xid = x.unique_id();
-
-      for(const auto& arg : args)
-      {
-        if(auto s = std::dynamic_pointer_cast<ScalarVar>(arg))
-        {
-          if(s->unique_id() == xid)
-            return flat;
-          ++flat;
-        }
-
-        else if(auto v = std::dynamic_pointer_cast<VectorVar>(arg))
-          flat += v->size();
-
-        else if(auto m = std::dynamic_pointer_cast<MatrixVar>(arg))
-          flat += m->rows() * m->cols();
-
-        else
-          throw SymbolicDiffError(std::string(ctx) + ": unsupported variable type in argument list");
-      }
-
-      throw SymbolicDiffError(std::string(ctx) + ": scalar variable is not part of the function arguments");
-    }
 
     pybind11::object remap_to_reference_symbols(
       pybind11::object expr,
@@ -96,11 +66,13 @@ namespace codac2
       const FunctionArgsList& args_g,
       const ScalarExpr& yg)
     {
-      if(!same_flattened_domain(args_f, args_g))
+      const FlatInputLayout layout_f(args_f);
+      if(!layout_f.same_domain_as(args_g))
         return false;
 
       symbolic::detail::ensure_python_runtime();
       pybind11::gil_scoped_acquire gil;
+
       ScalarBridgeContext reference_ctx(args_f);
       ScalarBridgeContext source_ctx(args_g);
 
@@ -121,138 +93,124 @@ namespace codac2
 
       return ctx.transform_scalar_expr(
         y,
-        [flat_input_index](const pybind11::object& sympy, const pybind11::object& ys, const FlatSymbolTable& symbols)
+        [flat_input_index](const pybind11::object& sympy,
+                           const pybind11::object& ys,
+                           const FlatSymbolTable& symbols)
         {
           return sympy.attr("diff")(ys, symbols.by_flat_index(flat_input_index));
         });
-    }
-
-    ScalarExpr sympy_partial_diff_expr(
-      const FunctionArgsList& args,
-      const ScalarExpr& y,
-      Index flat_input_index)
-    {
-      ScalarBridgeContext ctx(args);
-      return sympy_partial_diff_expr(ctx, y, flat_input_index);
-    }
-
-    AnalyticFunction<VectorType>
-    transform_vector_function(
-      const AnalyticFunction<VectorType>& f,
-      const SympyTransform& transform,
-      bool do_expand = true)
-    {
-      const auto shape = f.output_shape();
-      if(shape.second != 1)
-        throw SymbolicDiffError("Only column-vector outputs are supported");
-
-      ScalarBridgeContext ctx(f.args());
-      VectorExpr y(f.expr());
-      std::vector<ScalarExpr> entries;
-      entries.reserve(static_cast<std::size_t>(shape.first));
-
-      for(Index i = 0 ; i < shape.first ; ++i)
-        entries.push_back(ctx.transform_scalar_expr(y[i], transform, do_expand));
-
-      return AnalyticFunction<VectorType>(f.args(), vec(entries));
-    }
-
-    AnalyticFunction<MatrixType>
-    transform_matrix_function(
-      const AnalyticFunction<MatrixType>& f,
-      const SympyTransform& transform,
-      bool do_expand = true)
-    {
-      const auto shape = f.output_shape();
-      ScalarBridgeContext ctx(f.args());
-      MatrixExpr y(f.expr());
-      std::vector<VectorExpr> cols;
-      cols.reserve(static_cast<std::size_t>(shape.second));
-
-      for(Index j = 0 ; j < shape.second ; ++j)
-      {
-        std::vector<ScalarExpr> col_entries;
-        col_entries.reserve(static_cast<std::size_t>(shape.first));
-        for(Index i = 0 ; i < shape.first ; ++i)
-          col_entries.push_back(ctx.transform_scalar_expr(y(i,j), transform, do_expand));
-        cols.push_back(vec(col_entries));
-      }
-
-      return AnalyticFunction<MatrixType>(f.args(), mat(cols));
     }
   }
 
   AnalyticFunction<ScalarType>
   sympy_simplify(const AnalyticFunction<ScalarType>& f)
   {
-    return AnalyticFunction<ScalarType>(
-      f.args(),
-      symbolic::detail::transform_scalar_expr(
-        f.args(), ScalarExpr(f.expr()),
-        [](const pybind11::object& sympy, const pybind11::object& ys, const FlatSymbolTable&)
+    ScalarBridgeContext ctx(f.args());
+
+    return map_scalar_entries(f, [&](const ScalarExpr& y)
+    {
+      return ctx.transform_scalar_expr(
+        y,
+        [](const pybind11::object& sympy,
+           const pybind11::object& ys,
+           const FlatSymbolTable&)
         {
           return sympy.attr("simplify")(ys);
-        }));
+        });
+    });
   }
 
   AnalyticFunction<VectorType>
   sympy_simplify(const AnalyticFunction<VectorType>& f)
   {
-    return transform_vector_function(
-      f,
-      [](const pybind11::object& sympy, const pybind11::object& ys, const FlatSymbolTable&)
-      {
-        return sympy.attr("simplify")(ys);
-      });
+    ScalarBridgeContext ctx(f.args());
+
+    return map_scalar_entries(f, [&](const ScalarExpr& y)
+    {
+      return ctx.transform_scalar_expr(
+        y,
+        [](const pybind11::object& sympy,
+           const pybind11::object& ys,
+           const FlatSymbolTable&)
+        {
+          return sympy.attr("simplify")(ys);
+        });
+    });
   }
 
   AnalyticFunction<MatrixType>
   sympy_simplify(const AnalyticFunction<MatrixType>& f)
   {
-    return transform_matrix_function(
-      f,
-      [](const pybind11::object& sympy, const pybind11::object& ys, const FlatSymbolTable&)
-      {
-        return sympy.attr("simplify")(ys);
-      });
+    ScalarBridgeContext ctx(f.args());
+
+    return map_scalar_entries(f, [&](const ScalarExpr& y)
+    {
+      return ctx.transform_scalar_expr(
+        y,
+        [](const pybind11::object& sympy,
+           const pybind11::object& ys,
+           const FlatSymbolTable&)
+        {
+          return sympy.attr("simplify")(ys);
+        });
+    });
   }
 
   AnalyticFunction<ScalarType>
   sympy_horner(const AnalyticFunction<ScalarType>& f)
   {
-    return AnalyticFunction<ScalarType>(
-      f.args(),
-      symbolic::detail::transform_scalar_expr(
-        f.args(), ScalarExpr(f.expr()),
-        [](const pybind11::object&, const pybind11::object& ys, const FlatSymbolTable&)
+    ScalarBridgeContext ctx(f.args());
+
+    return map_scalar_entries(f, [&](const ScalarExpr& y)
+    {
+      return ctx.transform_scalar_expr(
+        y,
+        [](const pybind11::object&,
+           const pybind11::object& ys,
+           const FlatSymbolTable&)
         {
           return symbolic::detail::import_polyfuncs().attr("horner")(ys);
         },
-        false));
+        false);
+    });
   }
 
   AnalyticFunction<VectorType>
   sympy_horner(const AnalyticFunction<VectorType>& f)
   {
-    return transform_vector_function(
-      f,
-      [](const pybind11::object&, const pybind11::object& ys, const FlatSymbolTable&)
-      {
-        return symbolic::detail::import_polyfuncs().attr("horner")(ys);
-      },
-      false);
+    ScalarBridgeContext ctx(f.args());
+
+    return map_scalar_entries(f, [&](const ScalarExpr& y)
+    {
+      return ctx.transform_scalar_expr(
+        y,
+        [](const pybind11::object&,
+           const pybind11::object& ys,
+           const FlatSymbolTable&)
+        {
+          return symbolic::detail::import_polyfuncs().attr("horner")(ys);
+        },
+        false);
+    });
   }
 
   AnalyticFunction<MatrixType>
   sympy_horner(const AnalyticFunction<MatrixType>& f)
   {
-    return transform_matrix_function(
-      f,
-      [](const pybind11::object&, const pybind11::object& ys, const FlatSymbolTable&)
-      {
-        return symbolic::detail::import_polyfuncs().attr("horner")(ys);
-      },
-      false);
+    ScalarBridgeContext ctx(f.args());
+
+    return map_scalar_entries(f, [&](const ScalarExpr& y)
+    {
+      return ctx.transform_scalar_expr(
+        y,
+        [](const pybind11::object&,
+           const pybind11::object& ys,
+           const FlatSymbolTable&)
+        {
+          return symbolic::detail::import_polyfuncs().attr("horner")(ys);
+        },
+        false);
+    });
   }
 
   AnalyticFunction<ScalarType>
@@ -270,7 +228,8 @@ namespace codac2
   AnalyticFunction<ScalarType>
   sympy_partial_diff(const AnalyticFunction<ScalarType>& f, const ScalarVar& x)
   {
-    return sympy_partial_diff(f, flat_input_index_of_scalar_var(f.args(), x, "sympy_partial_diff"));
+    const FlatInputLayout layout(f.args());
+    return sympy_partial_diff(f, layout.flat_index_of(x));
   }
 
   AnalyticFunction<ScalarType>
@@ -319,7 +278,8 @@ namespace codac2
     if(order == 0)
       return f;
 
-    const Index flat_input_index = flat_input_index_of_scalar_var(f.args(), x, "sympy_diff");
+    const FlatInputLayout layout(f.args());
+    const Index flat_input_index = layout.flat_index_of(x);
 
     ScalarBridgeContext ctx(f.args());
     ScalarExpr y(f.expr());
@@ -401,11 +361,14 @@ namespace codac2
       f.args(),
       symbolic::detail::transform_scalar_expr(
         f.args(), ScalarExpr(f.expr()),
-        [center, order](const pybind11::object& sympy, const pybind11::object& ys, const FlatSymbolTable& symbols)
+        [center, order](const pybind11::object& sympy,
+                        const pybind11::object& ys,
+                        const FlatSymbolTable& symbols)
         {
-          pybind11::object x = symbols.by_flat_index(0);
-          pybind11::object out = sympy.attr("series")(ys, x, pybind11::float_(center), pybind11::int_(order+1));
-          return out.attr("removeO")();
+          pybind11::object x0 = symbols.by_flat_index(0);
+          pybind11::object s = sympy.attr("series")(ys, x0, pybind11::float_(center), pybind11::int_(order+1));
+          pybind11::object poly = s.attr("removeO")();
+          return sympy.attr("expand")(poly);
         }));
   }
 
@@ -415,13 +378,16 @@ namespace codac2
     if(order < 0)
       throw SymbolicDiffError("sympy_series: order must be nonnegative");
 
-    const Index flat_input_index = flat_input_index_of_scalar_var(f.args(), x, "sympy_series");
+    const FlatInputLayout layout(f.args());
+    const Index flat_input_index = layout.flat_index_of(x);
 
     return AnalyticFunction<ScalarType>(
       f.args(),
       symbolic::detail::transform_scalar_expr(
         f.args(), ScalarExpr(f.expr()),
-        [center, order, flat_input_index](const pybind11::object& sympy, const pybind11::object& ys, const FlatSymbolTable& symbols)
+        [center, order, flat_input_index](const pybind11::object& sympy,
+                                          const pybind11::object& ys,
+                                          const FlatSymbolTable& symbols)
         {
           pybind11::object xj = symbols.by_flat_index(flat_input_index);
           pybind11::object s = sympy.attr("series")(ys, xj, pybind11::float_(center), pybind11::int_(order+1));
@@ -439,7 +405,8 @@ namespace codac2
   bool
   sympy_equal(const AnalyticFunction<VectorType>& f, const AnalyticFunction<VectorType>& g)
   {
-    if(!same_flattened_domain(f.args(), g.args()))
+    const FlatInputLayout layout_f(f.args());
+    if(!layout_f.same_domain_as(g.args()))
       return false;
 
     const auto shape_f = f.output_shape();
@@ -462,7 +429,8 @@ namespace codac2
   bool
   sympy_equal(const AnalyticFunction<MatrixType>& f, const AnalyticFunction<MatrixType>& g)
   {
-    if(!same_flattened_domain(f.args(), g.args()))
+    const FlatInputLayout layout_f(f.args());
+    if(!layout_f.same_domain_as(g.args()))
       return false;
 
     const auto shape_f = f.output_shape();

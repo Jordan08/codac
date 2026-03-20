@@ -9,9 +9,13 @@
 
 #include "codac2_sympy_bridge.h"
 
-#include <sstream>
-#include <mutex>
 #include <cmath>
+#include <memory>
+#include <mutex>
+#include <sstream>
+#include <unordered_map>
+
+#include "codac2_assert.h"
 
 namespace codac2
 {
@@ -72,245 +76,224 @@ namespace codac2
 
   namespace symbolic::detail
   {
-
-void ensure_python_runtime()
-{
-  static std::once_flag once;
-
-  if(Py_IsInitialized() != 0)
-    return;
-
-  std::call_once(once, []()
-  {
-    if(Py_IsInitialized() == 0)
-      pybind11::initialize_interpreter();
-  });
-}
-
-const pybind11::object& import_sympy()
-{
-  ensure_python_runtime();
-  pybind11::gil_scoped_acquire gil;
-  static pybind11::object* sympy = new pybind11::object(pybind11::module_::import("sympy"));
-  return *sympy;
-}
-
-const pybind11::object& import_polyfuncs()
-{
-  ensure_python_runtime();
-  pybind11::gil_scoped_acquire gil;
-  static pybind11::object* polyfuncs = new pybind11::object(pybind11::module_::import("sympy.polys.polyfuncs"));
-  return *polyfuncs;
-}
-
-const pybind11::object& import_builtins()
-{
-  ensure_python_runtime();
-  pybind11::gil_scoped_acquire gil;
-  static pybind11::object* builtins = new pybind11::object(pybind11::module_::import("builtins"));
-  return *builtins;
-}
-
-pybind11::object normalize_sympy_expr(const pybind11::object& sympy, pybind11::object expr, bool do_expand)
-{
-  expr = expr.attr("rewrite")(sympy.attr("sin"));
-  expr = expr.attr("rewrite")(sympy.attr("cos"));
-  expr = expr.attr("rewrite")(sympy.attr("sinh"));
-  expr = expr.attr("rewrite")(sympy.attr("cosh"));
-  if(do_expand)
-    expr = sympy.attr("expand")(expr);
-  return expr;
-}
-
-ScalarBridgeContext::ScalarBridgeContext(const FunctionArgsList& args)
-  : _symbols(args),
-    _exporter(_symbols),
-    _importer(_symbols)
-{
-}
-
-const pybind11::object& ScalarBridgeContext::sympy() const
-{
-  return import_sympy();
-}
-
-const FlatSymbolTable& ScalarBridgeContext::symbols() const
-{
-  return _symbols;
-}
-
-pybind11::object ScalarBridgeContext::export_scalar(const ScalarExpr& y) const
-{
-  return _exporter.export_scalar(y);
-}
-
-ScalarExpr ScalarBridgeContext::import_scalar(const pybind11::handle& obj) const
-{
-  return _importer.import_scalar(obj);
-}
-
-ScalarExpr ScalarBridgeContext::transform_scalar_expr(
-  const ScalarExpr& y,
-  const SympyTransform& transform,
-  bool do_expand) const
-{
-  ensure_python_runtime();
-  pybind11::gil_scoped_acquire gil;
-  const pybind11::object& sympy = import_sympy();
-  pybind11::object ys = _exporter.export_scalar(y);
-  pybind11::object out = transform(sympy, ys, _symbols);
-  return _importer.import_scalar(normalize_sympy_expr(sympy, out, do_expand));
-}
-
-ScalarExpr transform_scalar_expr(
-  const FunctionArgsList& args,
-  const ScalarExpr& y,
-  const SympyTransform& transform,
-  bool do_expand)
-{
-  ensure_python_runtime();
-  pybind11::gil_scoped_acquire gil;
-  ScalarBridgeContext ctx(args);
-  return ctx.transform_scalar_expr(y, transform, do_expand);
-}
-
-
-FlatSymbolTable::FlatSymbolTable(const FunctionArgsList& args)
-{
-  Index flat = 0;
-  for(const auto& arg : args)
-  {
-    if(auto s = std::dynamic_pointer_cast<ScalarVar>(arg))
+    void ensure_python_runtime()
     {
-      FlatInputBinding b;
-      b.kind = FlatInputBinding::Kind::Scalar;
-      b.offset = flat;
-      b.rows = 1;
-      b.cols = 1;
-      _bindings[arg->unique_id().id()] = b;
+      static std::once_flag once;
 
-      const auto name = make_symbol_name(flat);
-      _names.push_back(name);
-      _codac_scalars.emplace(name, ScalarExpr(*s));
-      ++flat;
-      continue;
+      if(Py_IsInitialized() != 0)
+        return;
+
+      std::call_once(once, []()
+      {
+        if(Py_IsInitialized() == 0)
+          pybind11::initialize_interpreter();
+      });
     }
 
-    if(auto v = std::dynamic_pointer_cast<VectorVar>(arg))
+    const pybind11::object& import_module(const char* module_name)
     {
-      FlatInputBinding b;
-      b.kind = FlatInputBinding::Kind::Vector;
-      b.offset = flat;
-      b.rows = v->size();
-      b.cols = 1;
-      _bindings[arg->unique_id().id()] = b;
+      ensure_python_runtime();
+      pybind11::gil_scoped_acquire gil;
 
-      VectorExpr vv(*v);
-      for(Index i = 0 ; i < v->size() ; ++i)
+      static std::unordered_map<std::string,std::unique_ptr<pybind11::object>> modules;
+
+      const std::string key(module_name);
+      auto it = modules.find(key);
+      if(it == modules.end())
       {
-        const auto name = make_symbol_name(flat);
-        _names.push_back(name);
-        _codac_scalars.emplace(name, vv[i]);
-        ++flat;
+        auto module = std::make_unique<pybind11::object>(pybind11::module_::import(module_name));
+        it = modules.emplace(key, std::move(module)).first;
       }
-      continue;
+
+      return *(it->second);
     }
 
-    if(auto m = std::dynamic_pointer_cast<MatrixVar>(arg))
+    const pybind11::object& import_sympy()
     {
-      FlatInputBinding b;
-      b.kind = FlatInputBinding::Kind::Matrix;
-      b.offset = flat;
-      b.rows = m->rows();
-      b.cols = m->cols();
-      _bindings[arg->unique_id().id()] = b;
+      return import_module("sympy");
+    }
 
-      MatrixExpr mm(*m);
-      for(Index i = 0 ; i < m->rows() ; ++i)
+    const pybind11::object& import_polyfuncs()
+    {
+      return import_module("sympy.polys.polyfuncs");
+    }
+
+    const pybind11::object& import_builtins()
+    {
+      return import_module("builtins");
+    }
+
+    pybind11::object normalize_sympy_expr(const pybind11::object& sympy, pybind11::object expr, bool do_expand)
+    {
+      expr = expr.attr("rewrite")(sympy.attr("sin"));
+      expr = expr.attr("rewrite")(sympy.attr("cos"));
+      expr = expr.attr("rewrite")(sympy.attr("sinh"));
+      expr = expr.attr("rewrite")(sympy.attr("cosh"));
+      if(do_expand)
+        expr = sympy.attr("expand")(expr);
+      return expr;
+    }
+
+    ScalarBridgeContext::ScalarBridgeContext(const FunctionArgsList& args)
+      : _symbols(args),
+        _exporter(_symbols),
+        _importer(_symbols)
+    {
+    }
+
+    const pybind11::object& ScalarBridgeContext::sympy() const
+    {
+      return import_sympy();
+    }
+
+    const FlatSymbolTable& ScalarBridgeContext::symbols() const
+    {
+      return _symbols;
+    }
+
+    pybind11::object ScalarBridgeContext::export_scalar(const ScalarExpr& y) const
+    {
+      return _exporter.export_scalar(y);
+    }
+
+    ScalarExpr ScalarBridgeContext::import_scalar(const pybind11::handle& obj) const
+    {
+      return _importer.import_scalar(obj);
+    }
+
+    ScalarExpr ScalarBridgeContext::transform_scalar_expr(
+      const ScalarExpr& y,
+      const SympyTransform& transform,
+      bool do_expand) const
+    {
+      ensure_python_runtime();
+      pybind11::gil_scoped_acquire gil;
+      const pybind11::object& sympy = import_sympy();
+      pybind11::object ys = _exporter.export_scalar(y);
+      pybind11::object out = transform(sympy, ys, _symbols);
+      return _importer.import_scalar(normalize_sympy_expr(sympy, out, do_expand));
+    }
+
+    ScalarExpr transform_scalar_expr(
+      const FunctionArgsList& args,
+      const ScalarExpr& y,
+      const SympyTransform& transform,
+      bool do_expand)
+    {
+      ensure_python_runtime();
+      pybind11::gil_scoped_acquire gil;
+      ScalarBridgeContext ctx(args);
+      return ctx.transform_scalar_expr(y, transform, do_expand);
+    }
+
+    FlatSymbolTable::FlatSymbolTable(const FunctionArgsList& args)
+      : _layout(args)
+    {
+      _names.reserve(static_cast<std::size_t>(_layout.size()));
+
+      for(const auto& arg : args)
       {
-        for(Index j = 0 ; j < m->cols() ; ++j)
+        const auto& b = _layout.binding_of(arg->unique_id());
+
+        if(auto s = std::dynamic_pointer_cast<ScalarVar>(arg))
         {
-          const auto name = make_symbol_name(flat);
+          const auto name = make_symbol_name(b.offset);
           _names.push_back(name);
-          _codac_scalars.emplace(name, mm(i,j));
-          ++flat;
+          _codac_scalars.emplace(name, ScalarExpr(*s));
+          continue;
         }
+
+        if(auto v = std::dynamic_pointer_cast<VectorVar>(arg))
+        {
+          VectorExpr vv(*v);
+          for(Index i = 0 ; i < v->size() ; ++i)
+          {
+            const auto name = make_symbol_name(b.offset + i);
+            _names.push_back(name);
+            _codac_scalars.emplace(name, vv[i]);
+          }
+          continue;
+        }
+
+        if(auto m = std::dynamic_pointer_cast<MatrixVar>(arg))
+        {
+          MatrixExpr mm(*m);
+          for(Index i = 0 ; i < m->rows() ; ++i)
+          {
+            for(Index j = 0 ; j < m->cols() ; ++j)
+            {
+              const auto name = make_symbol_name(b.offset + b.cols*i + j);
+              _names.push_back(name);
+              _codac_scalars.emplace(name, mm(i,j));
+            }
+          }
+          continue;
+        }
+
+        assert_release(false && "Unsupported variable type in FlatSymbolTable");
       }
-      continue;
     }
 
-    throw SymbolicDiffError("Unsupported variable type in FlatSymbolTable");
-  }
-}
+    pybind11::object FlatSymbolTable::by_flat_index(Index k) const
+    {
+      assert_release(k >= 0 && k < static_cast<Index>(_names.size())
+        && "Flat input index out of bounds");
 
-pybind11::object FlatSymbolTable::by_flat_index(Index k) const
-{
-  if(k < 0 || k >= static_cast<Index>(_names.size()))
-    throw SymbolicDiffError("Flat input index out of bounds");
+      ensure_python_runtime();
+      pybind11::gil_scoped_acquire gil;
+      return import_sympy().attr("Symbol")(_names[static_cast<std::size_t>(k)], pybind11::arg("real")=true);
+    }
 
-  ensure_python_runtime();
-  pybind11::gil_scoped_acquire gil;
-  return import_sympy().attr("Symbol")(_names[static_cast<std::size_t>(k)], pybind11::arg("real")=true);
-}
+    ScalarExpr FlatSymbolTable::codac_expr_by_name(const std::string& name) const
+    {
+      auto it = _codac_scalars.find(name);
+      assert_release(it != _codac_scalars.end() && "Unknown SymPy symbol in importer");
+      return it->second;
+    }
 
-ScalarExpr FlatSymbolTable::codac_expr_by_name(const std::string& name) const
-{
-  auto it = _codac_scalars.find(name);
-  if(it == _codac_scalars.end())
-    throw SymbolicDiffError("Unknown SymPy symbol in importer: " + name);
-  return it->second;
-}
+    Index FlatSymbolTable::size() const
+    {
+      return _layout.size();
+    }
 
-Index FlatSymbolTable::size() const
-{
-  return static_cast<Index>(_names.size());
-}
+    pybind11::object FlatSymbolTable::for_scalar_var(const ScalarVar& x) const
+    {
+      const auto& b = binding_of(x.unique_id());
+      assert_release(b.is_scalar() && "Internal binding mismatch for scalar variable");
+      return by_flat_index(b.offset);
+    }
 
-pybind11::object FlatSymbolTable::for_scalar_var(const ScalarVar& x) const
-{
-  const auto& b = binding_of(x.unique_id());
-  if(b.kind != FlatInputBinding::Kind::Scalar)
-    throw SymbolicDiffError("Internal binding mismatch for scalar variable");
-  return by_flat_index(b.offset);
-}
+    pybind11::object FlatSymbolTable::for_vector_component(const VectorVar& x, Index i) const
+    {
+      const auto& b = binding_of(x.unique_id());
+      assert_release(b.is_vector() && "Internal binding mismatch for vector variable");
+      assert_release(i >= 0 && i < b.rows && "Vector component out of bounds");
+      return by_flat_index(b.offset + i);
+    }
 
-pybind11::object FlatSymbolTable::for_vector_component(const VectorVar& x, Index i) const
-{
-  const auto& b = binding_of(x.unique_id());
-  if(b.kind != FlatInputBinding::Kind::Vector)
-    throw SymbolicDiffError("Internal binding mismatch for vector variable");
-  if(i < 0 || i >= b.rows)
-    throw SymbolicDiffError("Vector component out of bounds");
-  return by_flat_index(b.offset + i);
-}
+    pybind11::object FlatSymbolTable::for_matrix_component(const MatrixVar& x, Index i, Index j) const
+    {
+      const auto& b = binding_of(x.unique_id());
+      assert_release(b.is_matrix() && "Internal binding mismatch for matrix variable");
+      assert_release(i >= 0 && i < b.rows && j >= 0 && j < b.cols
+        && "Matrix component out of bounds");
 
-pybind11::object FlatSymbolTable::for_matrix_component(const MatrixVar& x, Index i, Index j) const
-{
-  const auto& b = binding_of(x.unique_id());
-  if(b.kind != FlatInputBinding::Kind::Matrix)
-    throw SymbolicDiffError("Internal binding mismatch for matrix variable");
-  if(i < 0 || i >= b.rows || j < 0 || j >= b.cols)
-    throw SymbolicDiffError("Matrix component out of bounds");
+      return by_flat_index(b.offset + b.cols*i + j);
+    }
 
-  return by_flat_index(b.offset + b.cols*i + j);
-}
+    std::string FlatSymbolTable::make_symbol_name(Index flat_index)
+    {
+      std::ostringstream oss;
+      oss << "_codac_sym_" << flat_index;
+      return oss.str();
+    }
 
-std::string FlatSymbolTable::make_symbol_name(Index flat_index)
-{
-  std::ostringstream oss;
-  oss << "_codac_sym_" << flat_index;
-  return oss.str();
-}
+    const FlatInputBinding& FlatSymbolTable::binding_of(const ExprID& id) const
+    {
+      return _layout.binding_of(id);
+    }
 
-const FlatInputBinding& FlatSymbolTable::binding_of(const ExprID& id) const
-{
-  auto it = _bindings.find(id.id());
-  if(it == _bindings.end())
-    throw SymbolicDiffError("No flat-symbol binding for expression id " + std::to_string(id.id()));
-  return it->second;
-}
-
-SympyExporter::SympyExporter(const FlatSymbolTable& symbols)
+    SympyExporter::SympyExporter(const FlatSymbolTable& symbols)
       : _symbols(symbols)
     {
     }
@@ -341,167 +324,168 @@ SympyExporter::SympyExporter(const FlatSymbolTable& symbols)
       if(auto op = std::dynamic_pointer_cast<PosNode>(e))
       {
         auto ch = op->children_expr_base();
-        return export_node(child_at(ch, 0, "unary plus"));
+        return export_node(child_at(ch,0));
       }
 
       if(auto op = std::dynamic_pointer_cast<NegNode>(e))
       {
         auto ch = op->children_expr_base();
-        return -export_node(child_at(ch, 0, "unary minus"));
+        return -export_node(child_at(ch,0));
       }
 
       if(auto op = std::dynamic_pointer_cast<AddNode>(e))
       {
         auto ch = op->children_expr_base();
-        return export_node(child_at(ch, 0, "add")) + export_node(child_at(ch, 1, "add"));
+        return export_node(child_at(ch,0)) + export_node(child_at(ch,1));
       }
 
       if(auto op = std::dynamic_pointer_cast<SubNode>(e))
       {
         auto ch = op->children_expr_base();
-        return export_node(child_at(ch, 0, "sub")) - export_node(child_at(ch, 1, "sub"));
+        return export_node(child_at(ch,0)) - export_node(child_at(ch,1));
       }
 
       if(auto op = std::dynamic_pointer_cast<MulNode>(e))
       {
         auto ch = op->children_expr_base();
-        return export_node(child_at(ch, 0, "mul")) * export_node(child_at(ch, 1, "mul"));
+        return export_node(child_at(ch,0)) * export_node(child_at(ch,1));
       }
 
       if(auto op = std::dynamic_pointer_cast<DivNode>(e))
       {
         auto ch = op->children_expr_base();
-        return export_node(child_at(ch, 0, "div")) / export_node(child_at(ch, 1, "div"));
+        return export_node(child_at(ch,0)) / export_node(child_at(ch,1));
       }
 
       if(auto op = std::dynamic_pointer_cast<PowNode>(e))
       {
         auto ch = op->children_expr_base();
-        return sympy.attr("Pow")(export_node(child_at(ch, 0, "pow")), export_node(child_at(ch, 1, "pow")));
+        return sympy.attr("Pow")(export_node(child_at(ch,0)), export_node(child_at(ch,1)));
       }
 
       if(auto op = std::dynamic_pointer_cast<SinNode>(e))
       {
         auto ch = op->children_expr_base();
-        return sympy.attr("sin")(export_node(child_at(ch, 0, "sin")));
+        return sympy.attr("sin")(export_node(child_at(ch,0)));
       }
 
       if(auto op = std::dynamic_pointer_cast<CosNode>(e))
       {
         auto ch = op->children_expr_base();
-        return sympy.attr("cos")(export_node(child_at(ch, 0, "cos")));
+        return sympy.attr("cos")(export_node(child_at(ch,0)));
       }
 
       if(auto op = std::dynamic_pointer_cast<ExpNode>(e))
       {
         auto ch = op->children_expr_base();
-        return sympy.attr("exp")(export_node(child_at(ch, 0, "exp")));
+        return sympy.attr("exp")(export_node(child_at(ch,0)));
       }
 
       if(auto op = std::dynamic_pointer_cast<LogNode>(e))
       {
         auto ch = op->children_expr_base();
-        return sympy.attr("log")(export_node(child_at(ch, 0, "log")));
+        return sympy.attr("log")(export_node(child_at(ch,0)));
       }
 
       if(auto op = std::dynamic_pointer_cast<SqrtNode>(e))
       {
         auto ch = op->children_expr_base();
-        return sympy.attr("sqrt")(export_node(child_at(ch, 0, "sqrt")));
+        return sympy.attr("sqrt")(export_node(child_at(ch,0)));
       }
 
       if(auto op = std::dynamic_pointer_cast<SqrNode>(e))
       {
         auto ch = op->children_expr_base();
-        return sympy.attr("Pow")(export_node(child_at(ch, 0, "sqr")), 2);
+        return sympy.attr("Pow")(export_node(child_at(ch,0)), 2);
       }
 
       if(auto op = std::dynamic_pointer_cast<TanNode>(e))
       {
         auto ch = op->children_expr_base();
-        return sympy.attr("tan")(export_node(child_at(ch, 0, "tan")));
+        return sympy.attr("tan")(export_node(child_at(ch,0)));
       }
 
       if(auto op = std::dynamic_pointer_cast<AsinNode>(e))
       {
         auto ch = op->children_expr_base();
-        return sympy.attr("asin")(export_node(child_at(ch, 0, "asin")));
+        return sympy.attr("asin")(export_node(child_at(ch,0)));
       }
 
       if(auto op = std::dynamic_pointer_cast<AcosNode>(e))
       {
         auto ch = op->children_expr_base();
-        return sympy.attr("acos")(export_node(child_at(ch, 0, "acos")));
+        return sympy.attr("acos")(export_node(child_at(ch,0)));
       }
 
       if(auto op = std::dynamic_pointer_cast<AtanNode>(e))
       {
         auto ch = op->children_expr_base();
-        return sympy.attr("atan")(export_node(child_at(ch, 0, "atan")));
+        return sympy.attr("atan")(export_node(child_at(ch,0)));
       }
 
       if(auto op = std::dynamic_pointer_cast<Atan2Node>(e))
       {
         auto ch = op->children_expr_base();
         return sympy.attr("atan2")(
-          export_node(child_at(ch, 0, "atan2")), export_node(child_at(ch, 1, "atan2")));
+          export_node(child_at(ch,0)), export_node(child_at(ch,1)));
       }
 
       if(auto op = std::dynamic_pointer_cast<SinhNode>(e))
       {
         auto ch = op->children_expr_base();
-        return sympy.attr("sinh")(export_node(child_at(ch, 0, "sinh")));
+        return sympy.attr("sinh")(export_node(child_at(ch,0)));
       }
 
       if(auto op = std::dynamic_pointer_cast<CoshNode>(e))
       {
         auto ch = op->children_expr_base();
-        return sympy.attr("cosh")(export_node(child_at(ch, 0, "cosh")));
+        return sympy.attr("cosh")(export_node(child_at(ch,0)));
       }
 
       if(auto op = std::dynamic_pointer_cast<TanhNode>(e))
       {
         auto ch = op->children_expr_base();
-        return sympy.attr("tanh")(export_node(child_at(ch, 0, "tanh")));
+        return sympy.attr("tanh")(export_node(child_at(ch,0)));
       }
 
       if(auto op = std::dynamic_pointer_cast<AbsNode>(e))
       {
         auto ch = op->children_expr_base();
-        return sympy.attr("Abs")(export_node(child_at(ch, 0, "abs")));
+        return sympy.attr("Abs")(export_node(child_at(ch,0)));
       }
 
       if(auto op = std::dynamic_pointer_cast<SignNode>(e))
       {
         auto ch = op->children_expr_base();
-        return sympy.attr("sign")(export_node(child_at(ch, 0, "sign")));
+        return sympy.attr("sign")(export_node(child_at(ch,0)));
       }
 
       if(auto op = std::dynamic_pointer_cast<FloorNode>(e))
       {
         auto ch = op->children_expr_base();
-        return sympy.attr("floor")(export_node(child_at(ch, 0, "floor")));
+        return sympy.attr("floor")(export_node(child_at(ch,0)));
       }
 
       if(auto op = std::dynamic_pointer_cast<CeilNode>(e))
       {
         auto ch = op->children_expr_base();
-        return sympy.attr("ceiling")(export_node(child_at(ch, 0, "ceil")));
+        return sympy.attr("ceiling")(export_node(child_at(ch,0)));
       }
 
       if(auto op = std::dynamic_pointer_cast<VecCompNode>(e))
       {
         auto ch = op->children_expr_base();
-        return export_vector_component(child_at(ch, 0, "vector component"), op->i());
+        return export_vector_component(child_at(ch,0), op->i());
       }
 
       if(auto op = std::dynamic_pointer_cast<MatCompNode>(e))
       {
         auto ch = op->children_expr_base();
-        return export_matrix_component(child_at(ch, 0, "matrix component"), op->i(), op->j());
+        return export_matrix_component(child_at(ch,0), op->i(), op->j());
       }
 
-      throw SymbolicDiffError("Unsupported Codac scalar node in SympyExporter");
+      assert_release(false && "Unsupported Codac scalar node in SympyExporter");
+      return pybind11::none();
     }
 
     pybind11::object SympyExporter::export_vector_component(const std::shared_ptr<ExprBase>& e, Index i) const
@@ -514,12 +498,12 @@ SympyExporter::SympyExporter(const FlatSymbolTable& symbols)
         auto shape = ve->output_shape();
         auto children = maybe_children_expr_base(e);
         if(shape.second == 1 && i >= 0 && i < shape.first && children.size() == static_cast<std::size_t>(shape.first))
-          return export_node(child_at(children, i, "vector expression"));
+          return export_node(child_at(children,i));
       }
 
-      throw SymbolicDiffError(
-        "Unsupported vector-component expression. Supported cases: direct VectorVar components, "
-        "or vector expressions exposing scalar children via children_expr_base().");
+      assert_release(false
+        && "Unsupported vector-component expression. Supported cases: direct VectorVar components, or vector expressions exposing scalar children via children_expr_base().");
+      return pybind11::none();
     }
 
     pybind11::object SympyExporter::export_matrix_component(const std::shared_ptr<ExprBase>& e, Index i, Index j) const
@@ -533,27 +517,26 @@ SympyExporter::SympyExporter(const FlatSymbolTable& symbols)
         auto children = maybe_children_expr_base(e);
         if(i >= 0 && i < shape.first && j >= 0 && j < shape.second
           && children.size() == static_cast<std::size_t>(shape.second))
-          return export_vector_component(child_at(children, j, "matrix expression"), i);
+          return export_vector_component(child_at(children,j), i);
       }
 
-      throw SymbolicDiffError(
-        "Unsupported matrix-component expression. Supported cases: direct MatrixVar components, "
-        "or matrix expressions exposing column children via children_expr_base().");
+      assert_release(false
+        && "Unsupported matrix-component expression. Supported cases: direct MatrixVar components, or matrix expressions exposing column children via children_expr_base().");
+      return pybind11::none();
     }
 
     double SympyExporter::scalar_const_value(const ConstValueExpr<ScalarType>& c)
     {
       const Interval& v = c.value();
-      if(!v.is_degenerated())
-        throw SymbolicDiffError("Only degenerate scalar constants can be exported to SymPy");
+      assert_release(v.is_degenerated() && "Only degenerate scalar constants can be exported to SymPy");
       return v.mid();
     }
 
     std::shared_ptr<ExprBase> SympyExporter::child_at(
-      const std::vector<std::shared_ptr<ExprBase>>& children, Index i, const char* ctx)
+      const std::vector<std::shared_ptr<ExprBase>>& children, Index i)
     {
-      if(i < 0 || i >= static_cast<Index>(children.size()))
-        throw SymbolicDiffError(std::string("Arity mismatch while exporting ") + ctx);
+      assert_release(i >= 0 && i < static_cast<Index>(children.size())
+        && "Arity mismatch while exporting SymPy expression");
       return children[static_cast<std::size_t>(i)];
     }
 
@@ -588,8 +571,7 @@ SympyExporter::SympyExporter(const FlatSymbolTable& symbols)
     ScalarExpr SympyImporter::import_add(const pybind11::handle& obj) const
     {
       pybind11::tuple args = py_args(obj);
-      if(args.empty())
-        throw SymbolicDiffError("Unexpected empty Add in SymPy importer");
+      assert_release(!args.empty() && "Unexpected empty Add in SymPy importer");
 
       ScalarExpr acc = import_scalar(args[0]);
       for(pybind11::size_t i = 1 ; i < args.size() ; ++i)
@@ -600,8 +582,7 @@ SympyExporter::SympyExporter(const FlatSymbolTable& symbols)
     ScalarExpr SympyImporter::import_mul(const pybind11::handle& obj) const
     {
       pybind11::tuple args = py_args(obj);
-      if(args.empty())
-        throw SymbolicDiffError("Unexpected empty Mul in SymPy importer");
+      assert_release(!args.empty() && "Unexpected empty Mul in SymPy importer");
 
       ScalarExpr acc = import_scalar(args[0]);
       for(pybind11::size_t i = 1 ; i < args.size() ; ++i)
@@ -612,8 +593,7 @@ SympyExporter::SympyExporter(const FlatSymbolTable& symbols)
     ScalarExpr SympyImporter::import_pow(const pybind11::handle& obj) const
     {
       pybind11::tuple args = py_args(obj);
-      if(args.size() != 2)
-        throw SymbolicDiffError("SymPy Pow node should have arity 2");
+      assert_release(args.size() == 2 && "SymPy Pow node should have arity 2");
 
       const pybind11::object& sympy = import_sympy();
       const auto base = import_scalar(args[0]);
@@ -693,11 +673,8 @@ SympyExporter::SympyExporter(const FlatSymbolTable& symbols)
         if(func.is(sympy.attr("atan2"))) return atan2(x1, x2);
       }
 
-      throw SymbolicDiffError(
-        "Unsupported SymPy node in importer: " + pybind11::cast<std::string>(pybind11::str(obj)));
+      assert_release(false && "Unsupported SymPy node in importer");
+      return const_value(0.);
     }
   }
 }
-
-
-
