@@ -2,7 +2,7 @@
  *  codac2_sympy.cpp
  * ----------------------------------------------------------------------------
  *  \date       2026
- *  \author     Simon Rohou
+ *  \author     Simon Rohou, Maël Godard
  *  \copyright  Copyright 2026 Codac Team
  *  \license    GNU Lesser General Public License (LGPL)
  */
