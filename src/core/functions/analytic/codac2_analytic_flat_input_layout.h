@@ -12,13 +12,16 @@
 #include <typeindex>
 #include <unordered_map>
 
+#include "codac2_AnalyticExprWrapper.h"
 #include "codac2_AnalyticType.h"
-#include "codac2_FunctionArgsList.h"
 #include "codac2_ExprBase.h"
+#include "codac2_FunctionArgsList.h"
 
 namespace codac2
 {
   class ScalarVar;
+  class VectorVar;
+  class MatrixVar;
 
   /**
    * \brief Binding information associated with one input argument in a flattened input domain.
@@ -27,7 +30,10 @@ namespace codac2
    * In a flattened input domain, each argument is represented by a contiguous
    * block of scalar inputs.
    *
-   * The type field stores the analytic category of the argument (ScalarType, VectorType, MatrixType)
+   * The \p type field stores the analytic category of the argument and is one of:
+   * - <tt>typeid(ScalarType)</tt>
+   * - <tt>typeid(VectorType)</tt>
+   * - <tt>typeid(MatrixType)</tt>
    */
   struct FlatInputBinding
   {
@@ -113,6 +119,39 @@ namespace codac2
       Index flat_index_of(const ScalarVar& x) const;
 
       /**
+       * \brief Returns the flat index associated with a direct component of a vector input variable.
+       *
+       * \param x Vector input variable.
+       * \param i Component index.
+       * \return Flat index associated with \p x[i].
+       */
+      Index flat_index_of(const VectorVar& x, Index i) const;
+
+      /**
+       * \brief Returns the flat index associated with a direct component of a matrix input variable.
+       *
+       * \param x Matrix input variable.
+       * \param i Row index.
+       * \param j Column index.
+       * \return Flat index associated with \p x(i,j).
+       */
+      Index flat_index_of(const MatrixVar& x, Index i, Index j) const;
+
+      /**
+       * \brief Tries to resolve a scalar input expression into a flat input index.
+       *
+       * Supported expressions are:
+       * - a scalar input variable;
+       * - a direct component of a vector input variable;
+       * - a direct component of a matrix input variable.
+       *
+       * \param x Scalar input expression.
+       * \param flat_index Output flat input index.
+       * \return True if \p x could be resolved into a flat input index.
+       */
+      bool flat_index_of(const ScalarExpr& x, Index& flat_index) const;
+
+      /**
        * \brief Returns the binding associated with an input expression identifier.
        *
        * \param id Input expression identifier.
@@ -120,8 +159,16 @@ namespace codac2
        */
       const FlatInputBinding& binding_of(const ExprID& id) const;
 
+      /**
+       * \brief Returns the binding associated with an input expression identifier, if any.
+       *
+       * \param id Input expression identifier.
+       * \return Pointer to the associated binding, or nullptr if \p id does not belong to the layout.
+       */
+      const FlatInputBinding* find_binding(const ExprID& id) const;
+
     private:
-    
+
       std::unordered_map<Index,FlatInputBinding> _bindings; //!< Bindings indexed by input expression identifier.
       Index _size = 0;                                      //!< Total number of scalar inputs in the flattened domain.
   };
