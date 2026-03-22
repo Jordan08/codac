@@ -31,7 +31,8 @@
   set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
   add_library(${PROJECT_NAME}-sympy ${CODAC_SYMPY_SRC})
-  target_link_libraries(${PROJECT_NAME}-sympy PUBLIC ${PROJECT_NAME}-core Ibex::ibex Eigen3::Eigen pybind11::embed)
+  target_link_libraries(${PROJECT_NAME}-sympy PUBLIC ${PROJECT_NAME}-core Ibex::ibex Eigen3::Eigen)
+  target_link_libraries(${PROJECT_NAME}-sympy PRIVATE pybind11::pybind11)
 
   ################################################################################
   # For the generation of the PKG file
