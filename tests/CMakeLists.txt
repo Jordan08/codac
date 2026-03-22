@@ -116,8 +116,14 @@ file(COPY
 
 set(CODAC_LIBRARIES ${PROJECT_NAME}-core ${PROJECT_NAME}-graphics)
 
+option(BUILD_SYMPY_EMBED_TESTS "Build C++ tests that require embedded Python for Sympy" ON)
+if(WITH_PYTHON AND DEFINED PYBIND11_FINDPYTHON AND NOT PYBIND11_FINDPYTHON)
+  message(STATUS "Disabling Sympy C++ embed tests because PYBIND11_FINDPYTHON=OFF")
+  set(BUILD_SYMPY_EMBED_TESTS OFF)
+endif()
+
 # Sympy test
-if (WITH_PYTHON)
+if (WITH_PYTHON AND BUILD_SYMPY_EMBED_TESTS)
   list(APPEND SRC_TESTS
     extensions/sympy/codac2_tests_sympy
     ../doc/manual/manual/extensions/sympy/src
