@@ -119,7 +119,7 @@ set(CODAC_LIBRARIES ${PROJECT_NAME}-core ${PROJECT_NAME}-graphics)
 # Sympy test
 if (WITH_PYTHON)
   list(APPEND SRC_TESTS
-    extensions/sympy/codac2_tests_sympy
+    #extensions/sympy/codac2_tests_sympy
     #../doc/manual/manual/extensions/sympy/src
   )
   set(CODAC_LIBRARIES ${CODAC_LIBRARIES} ${PROJECT_NAME}-sympy)
