@@ -79,33 +79,31 @@ Simulation
 The following code provides a simulation of the actual but unknown trajectory :math:`\mathbf{x}^*(\cdot)`, without uncertainties.
 This code can be used as a starting point for your project.
 
-.. code-block:: python
+.. tabs::
 
-  from codac import *
-  import random
-  import numpy as np
+  .. group-tab:: Python
 
-  dt = 0.02 # temporal discretization 
-  t0tf = Interval(0,15) # temporal domain [t0,tf]
+    .. literalinclude:: src/lesson_D.py
+      :language: py
+      :start-after: [D-q1-beg]
+      :end-before: [D-q1-end]
+      :dedent: 0
 
-  # System input
-  t = ScalarVar()
-  # Input u(.) is given as an analytic trajectory
-  u = AnalyticTraj(AnalyticFunction([t],3*(sin(t)^2)+t/100), t0tf).sampled(dt)
+  .. group-tab:: C++
 
-  # Implementing manually the evolution function (Eq. (2))
-  truth_heading = u.primitive()
-  truth_px = (cos(truth_heading)*10.).primitive()
-  truth_py = (sin(truth_heading)*10.).primitive()
+    .. literalinclude:: src/lesson_D.cpp
+      :language: c++
+      :start-after: [D-q1-beg]
+      :end-before: [D-q1-end]
+      :dedent: 2
 
-  # Actual state trajectory
-  # Note that this trajectory is unknown to the estimation process
-  s1,s2,s3 = ScalarVar(),ScalarVar(),ScalarVar()
-  f_concat = AnalyticFunction([s1,s2,s3], [s1,s2,s3])
-  truth_x = f_concat.traj_eval(truth_px,truth_py,truth_heading)
+  .. group-tab:: Matlab
 
-  DefaultFigure.draw_trajectory(truth_x)
-  DefaultFigure.draw_tank(truth_x(t0tf.ub()), 1., [Color.dark_gray(),Color.yellow()])
+    .. literalinclude:: src/lesson_D.m
+      :language: matlab
+      :start-after: [D-q1-beg]
+      :end-before: [D-q1-end]
+      :dedent: 0
 
 Using VIBes, you should visualize these states:
 
@@ -129,10 +127,31 @@ considering only heading measurements and the evolution function :math:`\mathbf{
   The set of feasible positions along time is a *tube* (interval of trajectories).
   We create a tube :math:`[\mathbf{x}](\cdot)` using:
 
-  .. code-block:: python
+  .. tabs::
 
-    tdomain = create_tdomain(t0tf, dt) # temporal discretization over [t0,tf]
-    x = SlicedTube(tdomain, IntervalVector(3))
+    .. group-tab:: Python
+
+      .. literalinclude:: src/lesson_D.py
+        :language: py
+        :start-after: [D-q2-beg]
+        :end-before: [D-q2-end]
+        :dedent: 0
+
+    .. group-tab:: C++
+
+      .. literalinclude:: src/lesson_D.cpp
+        :language: c++
+        :start-after: [D-q2-beg]
+        :end-before: [D-q2-end]
+        :dedent: 2
+
+    .. group-tab:: Matlab
+
+      .. literalinclude:: src/lesson_D.m
+        :language: matlab
+        :start-after: [D-q2-beg]
+        :end-before: [D-q2-end]
+        :dedent: 0
 
   where ``tdomain`` is the temporal discretization over :math:`[t_0,t_f]`,
   and ``dt`` is the discretization parameter. Here, ``x`` is a 3d tube.
@@ -142,9 +161,31 @@ considering only heading measurements and the evolution function :math:`\mathbf{
 
   This can be verified, for instance at :math:`t=0`, with:
 
-  .. code-block:: python
+  .. tabs::
 
-    print(x(0.))
+    .. group-tab:: Python
+
+      .. literalinclude:: src/lesson_D.py
+        :language: py
+        :start-after: [D-q2b-beg]
+        :end-before: [D-q2b-end]
+        :dedent: 0
+
+    .. group-tab:: C++
+
+      .. literalinclude:: src/lesson_D.cpp
+        :language: c++
+        :start-after: [D-q2b-beg]
+        :end-before: [D-q2b-end]
+        :dedent: 2
+
+    .. group-tab:: Matlab
+
+      .. literalinclude:: src/lesson_D.m
+        :language: matlab
+        :start-after: [D-q2b-beg]
+        :end-before: [D-q2b-end]
+        :dedent: 0
 
 .. admonition:: Exercise
 
@@ -153,13 +194,31 @@ considering only heading measurements and the evolution function :math:`\mathbf{
   bounded in :math:`[-0.03,0.03]`. We set these bounded measurements in the last
   component of the tube vector :math:`[\mathbf{x}](\cdot)` with:
 
-  .. code-block:: python
+  .. tabs::
 
-    x = tube_cart_prod(
-      SlicedTube(tdomain, IntervalVector(2)),
-      # Heading measurement with bounded uncertainties:
-      SlicedTube(tdomain, truth_heading).inflate(0.03)
-    )
+    .. group-tab:: Python
+
+      .. literalinclude:: src/lesson_D.py
+        :language: py
+        :start-after: [D-q3-beg]
+        :end-before: [D-q3-end]
+        :dedent: 0
+
+    .. group-tab:: C++
+
+      .. literalinclude:: src/lesson_D.cpp
+        :language: c++
+        :start-after: [D-q3-beg]
+        :end-before: [D-q3-end]
+        :dedent: 2
+
+    .. group-tab:: Matlab
+
+      .. literalinclude:: src/lesson_D.m
+        :language: matlab
+        :start-after: [D-q3-beg]
+        :end-before: [D-q3-end]
+        :dedent: 0
 
 .. admonition:: Exercise
 
@@ -167,10 +226,31 @@ considering only heading measurements and the evolution function :math:`\mathbf{
   The initial state :math:`\mathbf{x}(0)` (position and heading) is known, which
   can be implemented in the tube with:
 
-  .. code-block:: python
+  .. tabs::
 
-    x.set([0,0,0], 0.) # setting a vector value (0,0,0) at t=0
-    print(x(0.))
+    .. group-tab:: Python
+
+      .. literalinclude:: src/lesson_D.py
+        :language: py
+        :start-after: [D-q4-beg]
+        :end-before: [D-q4-end]
+        :dedent: 0
+
+    .. group-tab:: C++
+
+      .. literalinclude:: src/lesson_D.cpp
+        :language: c++
+        :start-after: [D-q4-beg]
+        :end-before: [D-q4-end]
+        :dedent: 2
+
+    .. group-tab:: Matlab
+
+      .. literalinclude:: src/lesson_D.m
+        :language: matlab
+        :start-after: [D-q4-beg]
+        :end-before: [D-q4-end]
+        :dedent: 0
 
 Now that a domain (a tube) has been defined for enclosing the estimates together
 with their uncertainties, it remains to define contractors for narrowing their bounds.
@@ -192,21 +272,59 @@ possible states in :math:`[\mathbf{x}](\cdot)`.
 
   **D.6. Contractors.** Then, create a contractor for :math:`\mathbf{v}(\cdot)=\mathbf{f}(\mathbf{x}(\cdot))`. The associated constraint is expressed as an implicit form :math:`\mathbf{f}(\mathbf{x}(\cdot),\mathbf{v}(\cdot))=\mathbf{0}`.
 
-  .. code-block:: python
+  .. tabs::
 
-    vx,vv = VectorVar(3),VectorVar(3)
-    f_evol = AnalyticFunction([vx,vv], [
-        vv[0]-10*cos(vx[2]),
-        vv[1]-10*sin(vx[2]),
-      ])
+    .. group-tab:: Python
 
-    ctc_f = CtcInverse(f_evol, [0,0]) # [0,0] stands for the implicit form f(..)=0
+      .. literalinclude:: src/lesson_D.py
+        :language: py
+        :start-after: [D-q6-beg]
+        :end-before: [D-q6-end]
+        :dedent: 0
+
+    .. group-tab:: C++
+
+      .. literalinclude:: src/lesson_D.cpp
+        :language: c++
+        :start-after: [D-q6-beg]
+        :end-before: [D-q6-end]
+        :dedent: 2
+
+    .. group-tab:: Matlab
+
+      .. literalinclude:: src/lesson_D.m
+        :language: matlab
+        :start-after: [D-q6-beg]
+        :end-before: [D-q6-end]
+        :dedent: 0
 
   Create a contractor for :math:`\dot{\mathbf{x}}(t)=\mathbf{v}(t)`:
 
-  .. code-block:: python
+  .. tabs::
 
-    ctc_deriv = CtcDeriv()
+    .. group-tab:: Python
+
+      .. literalinclude:: src/lesson_D.py
+        :language: py
+        :start-after: [D-q6b-beg]
+        :end-before: [D-q6b-end]
+        :dedent: 0
+
+    .. group-tab:: C++
+
+      .. literalinclude:: src/lesson_D.cpp
+        :language: c++
+        :start-after: [D-q6b-beg]
+        :end-before: [D-q6b-end]
+        :dedent: 2
+
+    .. group-tab:: Matlab
+
+      .. literalinclude:: src/lesson_D.m
+        :language: matlab
+        :start-after: [D-q6b-beg]
+        :end-before: [D-q6b-end]
+        :dedent: 0
 
 We recall that contractors are algorithms for reducing sets of feasible values (intervals, boxes,
 tubes..).
@@ -214,20 +332,62 @@ tubes..).
 .. admonition:: Exercise
 
   **D.7. Deadreckoning estimation.** At this point, you can implement an algorithm for deadreckoning, by calling the previously defined contractors.
+  
+  .. tabs::
 
-  .. code-block:: python
+    .. group-tab:: Python
 
-    ctc_f.contract_tube(x,v)
-    ctc_deriv.contract(x,v)
+      .. literalinclude:: src/lesson_D.py
+        :language: py
+        :start-after: [D-q7-beg]
+        :end-before: [D-q7-end]
+        :dedent: 0
+
+    .. group-tab:: C++
+
+      .. literalinclude:: src/lesson_D.cpp
+        :language: c++
+        :start-after: [D-q7-beg]
+        :end-before: [D-q7-end]
+        :dedent: 2
+
+    .. group-tab:: Matlab
+
+      .. literalinclude:: src/lesson_D.m
+        :language: matlab
+        :start-after: [D-q7-beg]
+        :end-before: [D-q7-end]
+        :dedent: 0
 
 .. admonition:: Exercise
 
   **D.8. Display.** Finally, the contracted tube :math:`[\mathbf{x}](t)` can be displayed with:
 
-  .. code-block:: python
+  .. tabs::
 
-    DefaultFigure.draw_tube(x, [Color.light_gray(),Color.light_gray()])
-    DefaultFigure.draw_trajectory(truth_x)
+    .. group-tab:: Python
+
+      .. literalinclude:: src/lesson_D.py
+        :language: py
+        :start-after: [D-q8-beg]
+        :end-before: [D-q8-end]
+        :dedent: 0
+
+    .. group-tab:: C++
+
+      .. literalinclude:: src/lesson_D.cpp
+        :language: c++
+        :start-after: [D-q8-beg]
+        :end-before: [D-q8-end]
+        :dedent: 2
+
+    .. group-tab:: Matlab
+
+      .. literalinclude:: src/lesson_D.m
+        :language: matlab
+        :start-after: [D-q8-beg]
+        :end-before: [D-q8-end]
+        :dedent: 0
 
 You should obtain the following result:
 
@@ -252,33 +412,93 @@ to solve with conventional methods.
 
   **D.9. Landmarks.** Define five landmarks with:
 
-  .. code-block:: python
+  .. tabs::
 
-    b = [(6,12),(-2,-5),(-3,20),(3,4),(-10,0)]
+    .. group-tab:: Python
+
+      .. literalinclude:: src/lesson_D.py
+        :language: py
+        :start-after: [D-q9-beg]
+        :end-before: [D-q9-end]
+        :dedent: 0
+
+    .. group-tab:: C++
+
+      .. literalinclude:: src/lesson_D.cpp
+        :language: c++
+        :start-after: [D-q9-beg]
+        :end-before: [D-q9-end]
+        :dedent: 2
+
+    .. group-tab:: Matlab
+
+      .. literalinclude:: src/lesson_D.m
+        :language: matlab
+        :start-after: [D-q9-beg]
+        :end-before: [D-q9-end]
+        :dedent: 0
 
 .. admonition:: Exercise
 
   **D.10. Range observations.** In a loop, for each :math:`t_i\in\{0,1,\dots,15\}`, compute the distance measured
   from a random landmark:
 
-  .. code-block:: python
+  .. tabs::
 
-    Y = []
-    for ti in np.arange(0,15):
-      k = random.randint(0,len(b)-1) # a random landmark is perceived
-      d = sqrt(sqr(truth_x(ti)[0]-b[k][0])+sqr(truth_x(ti)[1]-b[k][1]))
-      Y.append([k,ti,d])
+    .. group-tab:: Python
+
+      .. literalinclude:: src/lesson_D.py
+        :language: py
+        :start-after: [D-q10-beg]
+        :end-before: [D-q10-end]
+        :dedent: 0
+
+    .. group-tab:: C++
+
+      .. literalinclude:: src/lesson_D.cpp
+        :language: c++
+        :start-after: [D-q10-beg]
+        :end-before: [D-q10-end]
+        :dedent: 2
+
+    .. group-tab:: Matlab
+
+      .. literalinclude:: src/lesson_D.m
+        :language: matlab
+        :start-after: [D-q10-beg]
+        :end-before: [D-q10-end]
+        :dedent: 0
 
 .. admonition:: Exercise
 
   **D.11. Measurement uncertainty.** The measurements come with some errors (not computed here) that are known to be
   bounded within :math:`[-0.03,0.03]`. We use intervals for enclosing the observations:
 
-  .. code-block:: python
+  .. tabs::
 
-    ...
-      d += Interval(-0.03,0.03)
-      # or equivalently: d.inflate(3e-2)
+    .. group-tab:: Python
+
+      .. literalinclude:: src/lesson_D.py
+        :language: py
+        :start-after: [D-q11-beg]
+        :end-before: [D-q11-end]
+        :dedent: 0
+
+    .. group-tab:: C++
+
+      .. literalinclude:: src/lesson_D.cpp
+        :language: c++
+        :start-after: [D-q11-beg]
+        :end-before: [D-q11-end]
+        :dedent: 2
+
+    .. group-tab:: Matlab
+
+      .. literalinclude:: src/lesson_D.m
+        :language: matlab
+        :start-after: [D-q11-beg]
+        :end-before: [D-q11-end]
+        :dedent: 0
 
 As in the previous lessons, a fixpoint function can be used to manage the contractors automatically.
 In another ``for`` loop, we will combine contractors using a fixpoint method, in order to improve the localization of the robot.
@@ -288,46 +508,92 @@ In another ``for`` loop, we will combine contractors using a fixpoint method, in
   **D.12. Observation contractors.** The state observations are added to the
   set of constraints by means of a new distance contractor linking the state to the position of a landmark:
 
-  .. code-block:: python
+  .. tabs::
 
-    var_b = VectorVar(2)
-    var_d = ScalarVar()
-    f_dist = AnalyticFunction([var_x,var_b,var_d], sqrt(sqr(var_x[0]-var_b[0])+sqr(var_x[1]-var_b[1]))-var_d)
-    ctc_dist = CtcInverse(f_dist, 0) # also expressed in a implicit form g(x,b,d)=0
+    .. group-tab:: Python
 
+      .. literalinclude:: src/lesson_D.py
+        :language: py
+        :start-after: [D-q12-beg]
+        :end-before: [D-q12-end]
+        :dedent: 0
+
+    .. group-tab:: C++
+
+      .. literalinclude:: src/lesson_D.cpp
+        :language: c++
+        :start-after: [D-q12-beg]
+        :end-before: [D-q12-end]
+        :dedent: 2
+
+    .. group-tab:: Matlab
+
+      .. literalinclude:: src/lesson_D.m
+        :language: matlab
+        :start-after: [D-q12-beg]
+        :end-before: [D-q12-end]
+        :dedent: 0
 
 .. admonition:: Exercise
 
   **D.13. Range-only localization.** 
   The contractor network is now as follows:
 
-  .. code-block:: python
+  .. tabs::
 
-    def contractors_list(x,v):
-      ctc_deriv.contract(x,v)
-      ctc_f.contract_tube(x,v)
-      for yi in Y: # for each range-only measurement
-        ti = yi[1]
-        pi = x(ti)
-        bi = IntervalVector(b[yi[0]])
-        di = yi[2]
-        pi,bi,di = ctc_dist.contract(pi,bi,di)
-        x.set(pi, ti)
-      return x,v
+    .. group-tab:: Python
 
-    x,v = fixpoint(contractors_list, x,v)
+      .. literalinclude:: src/lesson_D.py
+        :language: py
+        :start-after: [D-q13-beg]
+        :end-before: [D-q13-end]
+        :dedent: 0
 
+    .. group-tab:: C++
+
+      .. literalinclude:: src/lesson_D.cpp
+        :language: c++
+        :start-after: [D-q13-beg]
+        :end-before: [D-q13-end]
+        :dedent: 2
+
+    .. group-tab:: Matlab
+
+      .. literalinclude:: src/lesson_D.m
+        :language: matlab
+        :start-after: [D-q13-beg]
+        :end-before: [D-q13-end]
+        :dedent: 0
 
 .. admonition:: Exercise
 
   **D.14. Display the contracted tube.** 
 
-  .. code-block:: python
+  .. tabs::
 
-    DefaultFigure.draw_tube(x, ColorMap.blue_tube())
-    DefaultFigure.draw_trajectory(truth_x)
-    DefaultFigure.draw_tank(truth_x(t0tf.ub()), 1., [Color.dark_gray(),Color.yellow()])
+    .. group-tab:: Python
 
+      .. literalinclude:: src/lesson_D.py
+        :language: py
+        :start-after: [D-q14-beg]
+        :end-before: [D-q14-end]
+        :dedent: 0
+
+    .. group-tab:: C++
+
+      .. literalinclude:: src/lesson_D.cpp
+        :language: c++
+        :start-after: [D-q14-beg]
+        :end-before: [D-q14-end]
+        :dedent: 2
+
+    .. group-tab:: Matlab
+
+      .. literalinclude:: src/lesson_D.m
+        :language: matlab
+        :start-after: [D-q14-beg]
+        :end-before: [D-q14-end]
+        :dedent: 0
 
 You should obtain the following result:
 
