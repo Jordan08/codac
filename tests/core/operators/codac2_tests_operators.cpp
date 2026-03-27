@@ -165,7 +165,7 @@ void CHECK_bwd_imod(double p,
   const Interval& x1, const Interval& x2, const Interval& expected_x1, const Interval& expected_x2)
 {
   Interval _x1, _x2;
-  _x1 = x1; _x2 = x2; ModOp::bwd(_x1,_x2,p);
+  _x1 = x1; _x2 = x2; ModOp::fwd_bwd(_x1,_x2,p);
   CHECK(Approx(_x1) == expected_x1);
   CHECK(Approx(_x2) == expected_x2);
 }
