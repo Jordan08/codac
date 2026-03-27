@@ -16,6 +16,13 @@
 
 namespace codac2
 {
+  static inline double canonical_mod(double x, double p)
+  {
+    double r = std::fmod(x, p);
+    if(r < 0.0) r += p;
+    return r;
+  }
+
   struct ModOp
   {
     template<typename X1,typename P>
@@ -35,9 +42,10 @@ namespace codac2
     static ScalarType fwd_centered(const ScalarType& x1, const ScalarType& p);
     static void bwd(const Interval& y, Interval& x1, Interval& p);
 
-    static void fwd_bwd(Interval& x1, Interval& x2, double p);
-    static void fwd_bwd(Interval& x1, Interval& x2, Interval& p);
+    static void fwd_bwd(Interval& y, Interval& x1, double p);
+    static void fwd_bwd(Interval& y, Interval& x1, Interval& p);
   };
+
   // Analytic operator
   // The following function can be used to build analytic expressions.
 
@@ -51,9 +59,41 @@ namespace codac2
 
   inline Interval ModOp::fwd(const Interval& x1, const Interval& p)
   {
-    Interval x2, x1_(x1), p_(p);
-    ModOp::fwd_bwd(x2,x1_,p_);
-    return x2;
+    if(x1.is_empty() || p.is_empty())
+      return Interval::empty();
+
+    Interval pp = p & Interval(next_float(0),oo);
+    if(pp.is_empty())
+      return Interval::empty();
+
+    // Exact case: singleton / singleton
+    if(x1.is_degenerated() && pp.is_degenerated())
+      return { canonical_mod(x1.lb(), pp.lb()) };
+
+    // Exact case: for every admissible p, x1 is already in the canonical band [0,p)
+    if(x1.lb() >= 0.0 && x1.ub() < pp.lb())
+      return x1;
+
+    // Exact case: scalar period and constant quotient over the whole x1
+    if(pp.lb() == pp.ub())
+    {
+      const double q = pp.lb();
+      const double k1 = std::floor(x1.lb() / q);
+      const double k2 = std::floor(x1.ub() / q);
+
+      if(k1 == k2)
+      {
+        // y = x1 - k*q
+        return x1 - (Interval(k1) * q);
+      }
+    }
+
+    // Safe but intentionally simple enclosure
+    double yub = pp.ub();
+    if(x1.lb() >= 0.0)
+      yub = std::min(yub, x1.ub());
+
+    return { 0.0, yub };
   }
 
   inline ScalarType ModOp::fwd_natural(const ScalarType& x1, const ScalarType& p)
@@ -79,55 +119,95 @@ namespace codac2
 
   inline void ModOp::bwd(const Interval& y, Interval& x1, Interval& p)
   {
-    Interval y_(y);
-    ModOp::fwd_bwd(y_,x1,p);
-  }
-
-  inline void ModOp::fwd_bwd(Interval& y, Interval& x1, double p) // y = x1 mod(p)
-  {
-    // The content of this function comes from the IBEX library.
-    // See ibex::Interval (IBEX lib, main author: Gilles Chabert)
-    //   https://ibex-lib.readthedocs.io
-
-    assert_release(p > 0. && "Modulo needs a strictly positive period p.");
-
-    if(!(x1.diam() > p || y.diam() > p))
+    auto set_empty = [&]()
     {
-      Interval r = (y-x1)/p;
-      Interval ir = integer(r);
+      x1.set_empty();
+      p.set_empty();
+    };
 
-      if(ir.is_empty()) // additional protection because an empty interval is considered degenerated.
+    if(y.is_empty() || x1.is_empty() || p.is_empty())
+    {
+      set_empty();
+      return;
+    }
+
+    // Modulo is defined only for p > 0
+    p &= Interval(next_float(0),oo);
+    if(p.is_empty())
+    {
+      set_empty();
+      return;
+    }
+
+    // Since y is not contracted here (const), we only keep the part
+    // potentially compatible with a canonical remainder: 0 <= y <= p.ub()
+    Interval y0 = y & Interval(0.0, p.ub());
+    if(y0.is_empty())
+    {
+      set_empty();
+      return;
+    }
+
+    // Candidate integer quotients:
+    // x1 = y + k p  <=>  k = (x1 - y)/p
+    Interval r = (x1-y0)/p;
+
+    const double kmin_d = std::ceil(r.lb());
+    const double kmax_d = std::floor(r.ub());
+
+    if(!(kmin_d <= kmax_d))
+    {
+      set_empty();
+      return;
+    }
+
+    Interval K(kmin_d, kmax_d);
+
+    // Coarse hull contraction
+    x1 &= y0+K*p;
+    if(x1.is_empty())
+    {
+      set_empty();
+      return;
+    }
+
+    // If 0 is not in K, we can also contract p approximately
+    if(!K.contains(0.))
+    {
+      p &= (x1-y0)/K;
+      p &= Interval(next_float(0),oo);
+
+      if(p.is_empty())
       {
-        y.set_empty();
-        x1.set_empty();
+        set_empty();
+        return;
       }
 
-      else
+      y0 &= Interval(0.0, p.ub());
+      if(y0.is_empty())
       {
-        if(ir.is_degenerated())
-          SubOp::bwd(ir*p,y,x1);
+        set_empty();
+        return;
+      }
 
-        else if(ir.diam() == 1.)
-        {
-          Interval y_1 = y; Interval y_2 = y;
-          Interval x1_1 = x1; Interval x1_2 = x1;
-          SubOp::bwd(Interval(ir.lb()*p),y_1,x1_1);
-          SubOp::bwd(Interval(ir.ub()*p),y_2,x1_2);
-          y = y_1 | y_2;
-          x1 = x1_1 | x1_2;
-        }
-
-        else
-        {
-          assert_release_constexpr(false && "Modulo diameter error.");
-        }
+      x1 &= y0+K*p;
+      if(x1.is_empty())
+      {
+        set_empty();
+        return;
       }
     }
   }
 
-  inline void ModOp::fwd_bwd(Interval& y, Interval& x1, Interval& p) // x = y mod(p)
+  inline void ModOp::fwd_bwd(Interval& y, Interval& x1, double p)
   {
-    assert_release(p.is_degenerated() && "ModOp::fwd_bwd(y,x1,p) (with y and x1 intervals) not implemented yet");
-    ModOp::fwd_bwd(y, x1, p.mid());
+    Interval ip(p);
+    ModOp::fwd_bwd(y,x1,ip);
+  }
+
+  inline void ModOp::fwd_bwd(Interval& y, Interval& x1, Interval& p)
+  {
+    y &= ModOp::fwd(x1,p);
+    ModOp::bwd(y,x1,p);
   }
 }
