@@ -569,24 +569,26 @@ def fixpoint(contract, *x):
   while vol != prev_vol:
 
     prev_vol = vol
-    if isinstance(x, tuple):
+    if type(x) is tuple:
       x = contract(*x)
     else: # prevent from unpacking
       x = contract(x)
 
-    if not isinstance(x,tuple):
-      vol = x.get_item_0(0).volume()
-    else:
-      vol = 0.0
-      for xi in x:
-        if xi.is_empty():
-          return x
-        w = xi.volume()
-        # As infinity is absorbent, this would not
-        # allow us to identify a contraction, so we
-        # exclude these cases:
-        if w != oo:
-          vol += w
+    # For computing the volume:
+    # only a real Python tuple is considered as a collection of objects.
+    # Otherwise, any iterable object (tube, boxes, etc.) will be divided in the for loop.
+    items = x if type(x) is tuple else (x,)
+
+    vol = 0.0
+    for xi in items:
+      if xi.is_empty():
+        return x
+      w = xi.volume()
+      # As infinity is absorbent, this would not
+      # allow us to identify a contraction, so we
+      # exclude these cases:
+      if w != oo:
+        vol += w
 
   return x
 
