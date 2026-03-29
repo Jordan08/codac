@@ -558,6 +558,9 @@ class SlicedTube:
   def empty_value(self):
     return self.tube.empty_value()
 
+  def mid(self):
+    return self.tube.mid()
+
 
 def fixpoint(contract, *x):
   vol = -1.0
