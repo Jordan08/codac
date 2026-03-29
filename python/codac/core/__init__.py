@@ -543,8 +543,8 @@ class SlicedTube:
     else:
       return self.tube.partial_integral(t1,t2)
 
-  def primitive(self):
-    return self.tube.primitive()
+  def primitive(self,*args):
+    return self.tube.primitive(*args)
     
   def as_function(self):
     return AnalyticFunction(self.tube.as_function())
