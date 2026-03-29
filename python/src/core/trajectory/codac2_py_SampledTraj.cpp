@@ -249,9 +249,9 @@ void add_operators(py::class_<SampledTraj<T>>& pyclass)
 
 void export_SampledTraj(py::module& m)
 {
-  auto py_SampledTraj_double = _export_SampledTraj<double>(m, "SampledScalarTraj");
-  auto py_SampledTraj_Vector = _export_SampledTraj<Vector>(m, "SampledVectorTraj");
-  auto py_SampledTraj_Matrix = _export_SampledTraj<Matrix>(m, "SampledMatrixTraj");
+  auto py_SampledTraj_double = _export_SampledTraj<double>(m, "SampledTraj_Scalar");
+  auto py_SampledTraj_Vector = _export_SampledTraj<Vector>(m, "SampledTraj_Vector");
+  auto py_SampledTraj_Matrix = _export_SampledTraj<Matrix>(m, "SampledTraj_Matrix");
 
   add_operators<double>(py_SampledTraj_double);
 

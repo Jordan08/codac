@@ -445,11 +445,11 @@ class SlicedTube:
     else:
       if isinstance(y, AnalyticFunction):
         self.__init__(x, y.f)
-      elif isinstance(y, (Interval,AnalyticFunction_Scalar,SampledScalarTraj)):
+      elif isinstance(y, (Interval,AnalyticFunction_Scalar,SampledTraj_Scalar)):
         self.tube = SlicedTube_Interval(x, y)
-      elif isinstance(y, (IntervalVector,AnalyticFunction_Vector,SampledVectorTraj)):
+      elif isinstance(y, (IntervalVector,AnalyticFunction_Vector,SampledTraj_Vector)):
         self.tube = SlicedTube_IntervalVector(x, y)
-      elif isinstance(y, (IntervalMatrix,AnalyticFunction_Matrix,SampledMatrixTraj)):
+      elif isinstance(y, (IntervalMatrix,AnalyticFunction_Matrix,SampledTraj_Matrix)):
         self.tube = SlicedTube_IntervalMatrix(x, y)
       else:
         codac_error("SlicedTube: can only build this tube from an AnalyticFunction_[Scalar/Vector/Matrix]")
