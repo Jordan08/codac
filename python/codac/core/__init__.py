@@ -378,6 +378,13 @@ def tube_cart_prod(*x):
     return tube_cart_prod_list([*x])
 
 
+def traj_cart_prod(*x):
+  if not isinstance(x,tuple):
+    return traj_cart_prod_list([x])
+  else:
+    return traj_cart_prod_list([*x])
+
+
 class AnalyticTraj:
 
   def __init__(self, f, t):
