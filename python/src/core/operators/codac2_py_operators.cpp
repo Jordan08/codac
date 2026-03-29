@@ -620,6 +620,10 @@ void export_operators(py::module& m)
       "y"_a, "x1"_a, "p"_a)
   ;
 
+  m.def("mod", [](const ScalarExpr& e1, const ScalarExpr& p) { return mod(e1,p); },
+    SCALAREXPR_MOD_CONST_SCALAREXPR_REF_CONST_SCALAREXPR_REF,
+    "x1"_a, "p"_a);
+
   py::class_<PowOp>(m, "PowOp")
     .def(py::init<>()) // for using static methods in Matlab
     .def_static("fwd", (Interval(*)(const Interval&,const Interval&)) &PowOp::fwd,
