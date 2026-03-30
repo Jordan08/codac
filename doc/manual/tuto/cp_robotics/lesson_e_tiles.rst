@@ -8,7 +8,14 @@ Lesson E: Tile-based localization
 This lesson addresses a state-estimation problem arising in indoor mobile robotics. A differential-drive robot evolves on a floor covered with square tiles of known width :math:`L`. Unlike range-based localization, we do not rely on external landmarks. Instead, the floor itself provides sparse exteroceptive information: each time the passive support caster crosses a grout line between two tiles, a shock appears in the accelerometer signal and can be detected after a simple filtering stage.
 
 The platform considered here is a `TurtleBot Burger <https://emanual.robotis.com/docs/en/platform/turtlebot3/overview/>`_-like robot with two motorized wheels and one passive caster. Wheel odometers provide two signals :math:`u[0](\cdot)` and :math:`u[1](\cdot)`, from which the signed longitudinal speed can be reconstructed.
-We assume that a heading sensor provides bounded measurements. Furthermore, the tile-crossing instants are already extracted from accelerometers data and provided in a ``txt`` file. The objective is to combine these data in order to re-estimate the robot position over time.
+In addition, we assume that a heading sensor provides bounded measurements. The tile-crossing instants are already extracted from accelerometers data and provided in a ``txt`` file. The objective is to combine these data in order to re-estimate the robot position over time.
+
+.. list-table::
+
+  * - .. image:: img/robot_scene.JPG
+         :height: 200px
+    - .. image:: img/robot_turtlebot_herdeudedac.JPG
+         :height: 200px
 
 This problem is interesting for two reasons. First, the observations are sparse and **event-based**: the exteroceptive information is a list of time stamps, not a continuous signal. Second, each event is ambiguous: when a shock is detected, we do not know a priori whether the caster crossed a vertical grout line or a horizontal one, nor which line of the infinite grid was involved. Each observation therefore defines a union of feasible sets, which is a natural setting for interval analysis and contractor programming.
 
@@ -26,7 +33,21 @@ The robot parameters are:
 
 * :math:`R_1`: radius of each motorized wheel;
 * :math:`R_2`: distance between the two motorized wheels;
-* :math:`BL`: distance between the axle midpoint and the passive caster.
+* :math:`R_3`: distance between the axle midpoint and the passive caster.
+
+.. figure:: img/robot_scheme.png
+  :width: 100%
+
+  Robot notations used in this lesson. :math:`(x_1,x_2)` is the axle-midpoint position, :math:`x_3` the heading, :math:`x_4` the longitudinal speed, :math:`R_1` the wheel radius, :math:`R_2` the distance between the two driving wheels, and :math:`R_3` the distance between axle and passive caster. When :math:`x_4<0`, the robot moves backward and the caster becomes the leading contact point with respect to the direction of motion.
+
+.. list-table::
+
+  * - .. image:: img/robot_turtlebot_R1.JPG
+         :height: 200px
+    - .. image:: img/robot_turtlebot_R2.JPG
+         :height: 200px
+    - .. image:: img/robot_turtlebot_R3.JPG
+         :height: 200px
 
 The wheel odometers provide two wheel-angle trajectories :math:`u[0](\cdot)` and :math:`u[1](\cdot)`. The usual differential-drive relations give
 
@@ -61,7 +82,7 @@ The passive caster is located on the longitudinal axis of the robot, behind the 
     x_1(t)\\
     x_2(t)
   \end{pmatrix}
-  - BL
+  - R_3
   \begin{pmatrix}
     \cos\big(x_3(t)\big)\\
     \sin\big(x_3(t)\big)
@@ -100,26 +121,16 @@ This is the observation model we will encode with a contractor.
   Overview of the experiment. The blue curve is the actual robot trajectory. The small markers indicate the detected tile-crossing events associated with the passive support wheel. As expected, these detections are distributed along the grout lines of the square tiling and provide sparse, event-based information that will be exploited for localization.
 
 
-
-Robot notations
----------------
-
-.. figure:: img/robot_scheme.png
-  :width: 65%
-
-  Robot notations used in this lesson. :math:`(x_1,x_2)` is the axle-midpoint position, :math:`x_3` the heading, :math:`x_4` the longitudinal speed, :math:`R_1` the wheel radius, :math:`R_2` the distance between the two driving wheels, and :math:`BL` the distance between axle and passive caster. When :math:`x_4<0`, the robot moves backward and the caster becomes the leading contact point with respect to the direction of motion.
-
-
 Provided data
 -------------
 
 The lesson uses three data files stored in the local directory ``./data``:
 
-* :download:`Measured heading trajectory <./data/herdeudedac_tiles_pos.cdc>`
-* :download:`Wheel-odometry trajectory <./data/herdeudedac_tiles_odo.cdc>`
-* :download:`Detected tile-crossing instants <./data/herdeudedac_tiles_detections.txt>`
+* :download:`Measured heading trajectory <./src/data/herdeudedac_tiles_pos.cdc>`
+* :download:`Wheel-odometry trajectory <./src/data/herdeudedac_tiles_odo.cdc>`
+* :download:`Detected tile-crossing instants <./src/data/herdeudedac_tiles_detections.txt>`
 
-Files with extension ``.cdc`` are Codac binary data files, used to serialize and reload trajectories, tubes, and other Codac objects. See :ref:`how to serialize Codac objects <sec-tools-serialization>`.
+Files with extension ``.cdc`` are Codac binary data files, used to serialize and reload boxes, trajectories, and other Codac objects. See :ref:`how to serialize Codac objects <sec-tools-serialization>`.
 
 Initialization and data loading
 -------------------------------
@@ -152,78 +163,121 @@ The following instructions are given in Python, but feel free to use C++ or Matl
   **E.1. Imports and data paths.**
   Start with the imports below. We explicitly import ``builtins`` because ``from codac import *`` shadows Python's ``min`` and ``max``.
 
-  .. code-block:: python
+  .. tabs::
 
-    from codac import *
-    import builtins as py
-    import math
+    .. group-tab:: Python
 
+      .. literalinclude:: src/lesson_E.py
+        :language: py
+        :start-after: [E-q1-beg]
+        :end-before: [E-q1-end]
+        :dedent: 0
 
-.. admonition:: Exercise
+    .. group-tab:: C++
+
+      .. literalinclude:: src/lesson_E.cpp
+        :language: c++
+        :start-after: [E-q1-beg]
+        :end-before: [E-q1-end]
+        :dedent: 2
+
+    .. group-tab:: Matlab
+
+      .. literalinclude:: src/lesson_E.m
+        :language: matlab
+        :start-after: [E-q1-beg]
+        :end-before: [E-q1-end]
+        :dedent: 0
 
   **E.2. Loading sampled trajectories.**
   Load the binary ``.cdc`` files into sampled trajectories. We resample the wheel odometry on the same temporal support as ``pos``.
 
-  .. code-block:: python
+  .. tabs::
 
-    # Loaded trajectories
-    pos = SampledTraj_Vector()
-    with open("./data/herdeudedac_tiles_pos.cdc", "rb") as f:
-        deserialize(f, pos)
-    u = SampledTraj_Vector()
-    with open("./data/herdeudedac_tiles_odo.cdc", "rb") as f:
-        deserialize(f, u)
-    u = u.sampled_as(pos)
+    .. group-tab:: Python
 
+      .. literalinclude:: src/lesson_E.py
+        :language: py
+        :start-after: [E-q2-beg]
+        :end-before: [E-q2-end]
+        :dedent: 0
 
-.. admonition:: Exercise
+    .. group-tab:: C++
+
+      .. literalinclude:: src/lesson_E.cpp
+        :language: c++
+        :start-after: [E-q2-beg]
+        :end-before: [E-q2-end]
+        :dedent: 2
+
+    .. group-tab:: Matlab
+
+      .. literalinclude:: src/lesson_E.m
+        :language: matlab
+        :start-after: [E-q2-beg]
+        :end-before: [E-q2-end]
+        :dedent: 0
+
 
   **E.3. Reading detection times.**
   Write a helper function that reads the detection times from the text file:
 
-  .. code-block:: python
+  .. tabs::
 
-    def tile_times(file):
-        with open(file, "r", encoding="utf-8") as f:
-            t = []
-            for token in f:
-                token = token.strip()
-                if token:
-                    t.append(float(token))
-            return t
+    .. group-tab:: Python
+
+      .. literalinclude:: src/lesson_E.py
+        :language: py
+        :start-after: [E-q3-beg]
+        :end-before: [E-q3-end]
+        :dedent: 0
+
+    .. group-tab:: C++
+
+      .. literalinclude:: src/lesson_E.cpp
+        :language: c++
+        :start-after: [E-q3-beg]
+        :end-before: [E-q3-end]
+        :dedent: 2
+
+    .. group-tab:: Matlab
+
+      .. literalinclude:: src/lesson_E.m
+        :language: matlab
+        :start-after: [E-q3-beg]
+        :end-before: [E-q3-end]
+        :dedent: 0
 
 
   **E.4. Drawing the map.**
   Write a function ``draw_map(X, L)`` that draws the infinite grid, clipped to a bounding box ``X``. As in the reference example, two tiles are highlighted in green.
 
-  .. code-block:: python
+  .. tabs::
 
-    def draw_map(X, L):
-        for d in range(2):
-            kmin = py.min(0, math.floor(X[d].lb() / L) + 1)
-            kmax = py.max(0, math.ceil(X[d].ub() / L) - 1)
+    .. group-tab:: Python
 
-            for k in range(kmin, kmax + 1):
-                a = k * L
-                if d == 0:
-                    DefaultFigure.draw_line(
-                        [[a, X[1].lb()], [a, X[1].ub()]],
-                        Color.light_gray()
-                    )
-                else:
-                    DefaultFigure.draw_line(
-                        [[X[0].lb(), a], [X[0].ub(), a]],
-                        Color.light_gray()
-                    )
+      .. literalinclude:: src/lesson_E.py
+        :language: py
+        :start-after: [E-q4-beg]
+        :end-before: [E-q4-end]
+        :dedent: 0
 
-        for v in (Vector([0, 0]), Vector([-8, 8])):
-            DefaultFigure.draw_box(
-                IntervalVector(L * v) + IntervalVector([[0, L], [0, L]]),
-                [Color.dark_green(), Color.green(0.1)]
-            )
+    .. group-tab:: C++
 
+      .. literalinclude:: src/lesson_E.cpp
+        :language: c++
+        :start-after: [E-q4-beg]
+        :end-before: [E-q4-end]
+        :dedent: 2
 
-.. admonition:: Exercise
+    .. group-tab:: Matlab
+
+      .. literalinclude:: src/lesson_E.m
+        :language: matlab
+        :start-after: [E-q4-beg]
+        :end-before: [E-q4-end]
+        :dedent: 0
+
 
   **E.5. The tile-map contractor.**
   Build a contractor expressing that a 2D point lies close to **either** a vertical grout line **or** a horizontal grout line. In other words, your contractor must encode
@@ -237,16 +291,34 @@ The following instructions are given in Python, but feel free to use C++ or Matl
   You may introduce one analytic function for the first coordinate and one for the second one, as in the previous lessons, and then combine :ref:`the corresponding contractors <sec-ctc-analytic-ctcinverse>` with a union. A union of contractors is represented by the ``CtcUnion`` class, and can be called directly using the operator ``|``.
 
 
-.. admonition:: Exercise
-
   **E.6. Verify that your tile-map contractor is correct, in a separate view.**
   Before using the contractor in the localization pipeline, it is a good idea to test it alone. In a separate view, pave a 2D search box with your contractor and verify visually that the feasible set is a family of thin horizontal and vertical strips spaced by :math:`L`.
 
-  .. code-block:: python
+  .. tabs::
 
-    fig_ctcmap = Figure2D("Testing tile-map contractor", GraphicOutput.VIBES)
-    fig_ctcmap.set_axes(axis(0,[-1,1]), axis(1,[-1,1])).auto_scale()
-    fig_ctcmap.pave([[-1,1],[-1,1]], <your_contractor>, 1e-2)
+    .. group-tab:: Python
+
+      .. literalinclude:: src/lesson_E.py
+        :language: py
+        :start-after: [E-q6-beg]
+        :end-before: [E-q6-end]
+        :dedent: 0
+
+    .. group-tab:: C++
+
+      .. literalinclude:: src/lesson_E.cpp
+        :language: c++
+        :start-after: [E-q6-beg]
+        :end-before: [E-q6-end]
+        :dedent: 2
+
+    .. group-tab:: Matlab
+
+      .. literalinclude:: src/lesson_E.m
+        :language: matlab
+        :start-after: [E-q6-beg]
+        :end-before: [E-q6-end]
+        :dedent: 0
 
   The grid must be centered at the origin: the grout lines are expected at :math:`x=kL` and :math:`y=kL`, so in particular one vertical strip and one horizontal strip must pass through :math:`(0,0)`.
 
@@ -272,28 +344,36 @@ The recorded heading and wheel-odometry trajectories are loaded from the files i
     \qquad
     R_2 = 0.16,
     \qquad
-    BL = 8\times 10^{-2},
+    R_3 = 8\times 10^{-2},
     \qquad
     \mathbf{x}(0)=\left(\frac{L}{2},\frac{L}{2},0.018,0\right)^\intercal.
 
-  .. code-block:: python
+  .. tabs::
 
-    L = 0.3
-    L_eps = 1e-2
+    .. group-tab:: Python
 
-    R1 = 0.033
-    R2 = 0.16
-    BL = 8e-2
-    x0 = Vector([L / 2, L / 2, 0.018, 0.0])
+      .. literalinclude:: src/lesson_E.py
+        :language: py
+        :start-after: [E-q7-beg]
+        :end-before: [E-q7-end]
+        :dedent: 0
 
-    traj_spd = R1 * (u[1].derivative() + u[0].derivative()) / 2
-    traj_hdg = (R1 * (u[1].derivative() - u[0].derivative()) / R2).primitive() + x0[2]
+    .. group-tab:: C++
 
-    # Better: use the directly measured heading to avoid odometric drift.
-    traj_hdg = continuous_traj(pos[2])
+      .. literalinclude:: src/lesson_E.cpp
+        :language: c++
+        :start-after: [E-q7-beg]
+        :end-before: [E-q7-end]
+        :dedent: 2
 
+    .. group-tab:: Matlab
 
-.. admonition:: Exercise
+      .. literalinclude:: src/lesson_E.m
+        :language: matlab
+        :start-after: [E-q7-beg]
+        :end-before: [E-q7-end]
+        :dedent: 0
+
 
   **E.8. Create the heading and speed tubes.**
   We now enclose the measured heading and reconstructed speed by bounded tubes.
@@ -304,18 +384,31 @@ The recorded heading and wheel-odometry trajectories are loaded from the files i
 
   These bounds are encoded by inflating the corresponding sampled trajectories after creating a temporal discretization.
 
-  .. code-block:: python
+  .. tabs::
 
-    tdomain = create_tdomain(u.tdomain(), 5e-2)
+    .. group-tab:: Python
 
-    tube_hdg = SlicedTube(tdomain, traj_hdg)
-    tube_hdg.inflate(2e-3)
+      .. literalinclude:: src/lesson_E.py
+        :language: py
+        :start-after: [E-q8-beg]
+        :end-before: [E-q8-end]
+        :dedent: 0
 
-    tube_spd = SlicedTube(tdomain, traj_spd)
-    tube_spd.inflate(9e-3)
+    .. group-tab:: C++
 
+      .. literalinclude:: src/lesson_E.cpp
+        :language: c++
+        :start-after: [E-q8-beg]
+        :end-before: [E-q8-end]
+        :dedent: 2
 
-.. admonition:: Exercise
+    .. group-tab:: Matlab
+
+      .. literalinclude:: src/lesson_E.m
+        :language: matlab
+        :start-after: [E-q8-beg]
+        :end-before: [E-q8-end]
+        :dedent: 0
 
   **E.9. Compute the planar velocity tube.**
   Using Eq. :eq:`eq-tile-f`, define the analytic evolution function
@@ -330,19 +423,32 @@ The recorded heading and wheel-odometry trajectories are loaded from the files i
 
   and evaluate it over the heading and speed tubes.
 
-  .. code-block:: python
+  .. tabs::
 
-    v_hdg = ScalarVar()
-    v_spd = ScalarVar()
-    f_evol = AnalyticFunction([v_hdg, v_spd], [
-        v_spd * cos(v_hdg),
-        v_spd * sin(v_hdg)
-    ])
+    .. group-tab:: Python
 
-    tube_v12 = f_evol.tube_eval(tube_hdg, tube_spd)
+      .. literalinclude:: src/lesson_E.py
+        :language: py
+        :start-after: [E-q9-beg]
+        :end-before: [E-q9-end]
+        :dedent: 0
 
+    .. group-tab:: C++
 
-.. admonition:: Exercise
+      .. literalinclude:: src/lesson_E.cpp
+        :language: c++
+        :start-after: [E-q9-beg]
+        :end-before: [E-q9-end]
+        :dedent: 2
+
+    .. group-tab:: Matlab
+
+      .. literalinclude:: src/lesson_E.m
+        :language: matlab
+        :start-after: [E-q9-beg]
+        :end-before: [E-q9-end]
+        :dedent: 0
+
 
   **E.10. Integrate an initial position tube.**
   Let :math:`[\mathbf{x}_{12}](\cdot)` denote the position tube.
@@ -354,28 +460,61 @@ The recorded heading and wheel-odometry trajectories are loaded from the files i
 
   then integrate the velocity tube.
 
-  .. code-block:: python
+  .. tabs::
 
-    ix0 = IntervalVector(x0.subvector(0, 1))
-    ix0.inflate(L / 3)
+    .. group-tab:: Python
 
-    tube_x12 = tube_v12.primitive(ix0)
+      .. literalinclude:: src/lesson_E.py
+        :language: py
+        :start-after: [E-q10-beg]
+        :end-before: [E-q10-end]
+        :dedent: 0
 
+    .. group-tab:: C++
 
-.. admonition:: Exercise
+      .. literalinclude:: src/lesson_E.cpp
+        :language: c++
+        :start-after: [E-q10-beg]
+        :end-before: [E-q10-end]
+        :dedent: 2
+
+    .. group-tab:: Matlab
+
+      .. literalinclude:: src/lesson_E.m
+        :language: matlab
+        :start-after: [E-q10-beg]
+        :end-before: [E-q10-end]
+        :dedent: 0
+
 
   **E.11. Display the dead-reckoning enclosure.**
   Open a figure, draw the map, and display the dead-reckoning position tube. At this stage, no tile-crossing event has been used yet.
 
-  .. code-block:: python
+  .. tabs::
 
-    X = IntervalVector([[-5, 2], [-2, 5]])
-    DefaultFigure.set_window_properties([50, 50], [1000, 1000])
-    DefaultFigure.set_axes(axis(0, X[0]), axis(1, X[1])).auto_scale()
+    .. group-tab:: Python
 
-    draw_map(X, L)
-    DefaultFigure.draw_tube(tube_x12, [Color.light_gray(), Color.light_gray()])
+      .. literalinclude:: src/lesson_E.py
+        :language: py
+        :start-after: [E-q11-beg]
+        :end-before: [E-q11-end]
+        :dedent: 0
 
+    .. group-tab:: C++
+
+      .. literalinclude:: src/lesson_E.cpp
+        :language: c++
+        :start-after: [E-q11-beg]
+        :end-before: [E-q11-end]
+        :dedent: 2
+
+    .. group-tab:: Matlab
+
+      .. literalinclude:: src/lesson_E.m
+        :language: matlab
+        :start-after: [E-q11-beg]
+        :end-before: [E-q11-end]
+        :dedent: 0
 
 
 Localization from tile-crossing events
@@ -389,13 +528,32 @@ The derivative contractor will be used to propagate local contractions over time
   **E.12. Prepare the contractors.**
   Instantiate the derivative contractor and your tile-map contractor.
 
-  .. code-block:: python
+  .. tabs::
 
-    ctc_deriv = CtcDeriv()
-    ctc_map = map_contractor(L, L_eps)
+    .. group-tab:: Python
 
+      .. literalinclude:: src/lesson_E.py
+        :language: py
+        :start-after: [E-q12-beg]
+        :end-before: [E-q12-end]
+        :dedent: 0
 
-.. admonition:: Exercise
+    .. group-tab:: C++
+
+      .. literalinclude:: src/lesson_E.cpp
+        :language: c++
+        :start-after: [E-q12-beg]
+        :end-before: [E-q12-end]
+        :dedent: 2
+
+    .. group-tab:: Matlab
+
+      .. literalinclude:: src/lesson_E.m
+        :language: matlab
+        :start-after: [E-q12-beg]
+        :end-before: [E-q12-end]
+        :dedent: 0
+
 
   **E.13. Contract the tile-crossing events and run a fixpoint loop.**
   At each detected instant :math:`t_i`, the shock extracted from the accelerometer is not expected to coincide exactly with the ideal geometric crossing time. The mechanical contact, the vibration propagation, the filtering, and the detection threshold may introduce a small delay. For this reason, the reference implementation evaluates the constraint at a slightly earlier instant
@@ -404,20 +562,40 @@ The derivative contractor will be used to propagate local contractions over time
 
     t_j = t_i - 0.01.
 
-  The idea is the following: just before the detected shock, the caster should already be very close to a grout line. Starting from the position box :math:`[\mathbf{x}_{12}](t_j)` and the heading interval :math:`[x_3](t_j)`, compute the corresponding caster box with Eq. :eq:`eq-tile-caster`, contract this box with your tile-map contractor, then project the contraction back onto the position box and propagate it through the whole tube with a derivative contractor inside a fixpoint loop.
+  The idea is the following: just before the detected shock, the caster should already be very close to a grout line. Starting from the position box :math:`[\mathbf{x}_{12}](t_j)` and the heading interval :math:`[x_3](t_j)`, compute the corresponding caster box :math:`[\mathbf{b}_i]` with Eq. :eq:`eq-tile-caster`, contract this box with your tile-map contractor, then project the contraction back onto the position box :math:`[\mathbf{x}_{12}](t_j)` and propagate it through the whole tube with a derivative contractor inside a fixpoint loop.
   
   Implement this step yourself. The methodology is the same as in Lessons B, C and D: express each piece of available information as a contractor, apply these contractors repeatedly in a fixpoint loop, and let the contractions propagate through the tube until no significant improvement is obtained.
 
-.. admonition:: Exercise
 
   **E.14. Display the final contracted tube.**
   Once the fixpoint loop has been implemented, display the contracted tube and overlay the grid.
 
-  .. code-block:: python
+  .. tabs::
 
-    if not tube_x12.is_empty():
-        DefaultFigure.draw_tube(tube_x12, ColorMap.blue_tube())
-        draw_map(X,L) # drawing again the map over the tube
+    .. group-tab:: Python
+
+      .. literalinclude:: src/lesson_E.py
+        :language: py
+        :start-after: [E-q14-beg]
+        :end-before: [E-q14-end]
+        :dedent: 0
+
+    .. group-tab:: C++
+
+      .. literalinclude:: src/lesson_E.cpp
+        :language: c++
+        :start-after: [E-q14-beg]
+        :end-before: [E-q14-end]
+        :dedent: 2
+
+    .. group-tab:: Matlab
+
+      .. literalinclude:: src/lesson_E.m
+        :language: matlab
+        :start-after: [E-q14-beg]
+        :end-before: [E-q14-end]
+        :dedent: 0
+
 
 After solving the full localization problem, it is convenient to define a helper that draws a trajectory, the robot poses corresponding to the detected tile crossings, and the implied caster positions.
 
@@ -426,26 +604,34 @@ After solving the full localization problem, it is convenient to define a helper
   **E.15. Draw the detections along a trajectory.**
   Define a helper ``draw_estim`` that, given a trajectory ``x`` and the detection times ``T``, draws the trajectory, a robot icon at each detection instant, and the corresponding caster point.
 
-  .. code-block:: python
+  .. tabs::
 
-    def draw_estim(x, T, BL, traj_hdg, traj_col, detec_col):
-        DefaultFigure.draw_trajectory(x, traj_col)
+    .. group-tab:: Python
 
-        for ti in T:
-            pi = cart_prod(x(ti).subvector(0, 1), traj_hdg(ti))
-            bi = Vector([
-                pi[0] + BL * math.cos(pi[2] + PI),
-                pi[1] + BL * math.sin(pi[2] + PI)
-            ])
+      .. literalinclude:: src/lesson_E.py
+        :language: py
+        :start-after: [E-q15-beg]
+        :end-before: [E-q15-end]
+        :dedent: 0
 
-            DefaultFigure.draw_tank(pi.subvector(0, 2), 0.15, detec_col)
-            DefaultFigure.draw_circle(bi, 5e-3, detec_col)
+    .. group-tab:: C++
 
-    draw_estim(tube_x12.mid(), T, BL, traj_hdg, Color.white(), Color.dark_blue())
+      .. literalinclude:: src/lesson_E.cpp
+        :language: c++
+        :start-after: [E-q15-beg]
+        :end-before: [E-q15-end]
+        :dedent: 2
+
+    .. group-tab:: Matlab
+
+      .. literalinclude:: src/lesson_E.m
+        :language: matlab
+        :start-after: [E-q15-beg]
+        :end-before: [E-q15-end]
+        :dedent: 0
 
   When the estimated tube has become sufficiently thin, the support wheel markers obtained from its midpoint trajectory should appear approximately on the tile grout lines.
 
-.. admonition:: Exercise
 
   **E.16. Verify a double passage through a box.**
   We know from the experiment that the robot passes twice through the box
@@ -454,14 +640,7 @@ After solving the full localization problem, it is convenient to define a helper
 
     [[-2.4,-2.1],[2.4,2.7]].
 
-  Draw this box and check visually that the contracted position tube also passes through it twice.
-
-  .. code-block:: python
-
-    DefaultFigure.draw_box(
-        IntervalVector([[-2.4, -2.1], [2.4, 2.7]]),
-        [Color.white(), Color.blue(0.1)]
-    )
+  This box is already drawn (from E.4). Check visually that the contracted position tube also passes through it twice.
 
 
 Conclusion
