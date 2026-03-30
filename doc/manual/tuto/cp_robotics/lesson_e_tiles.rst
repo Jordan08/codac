@@ -5,7 +5,7 @@ Lesson E: Tile-based localization
 
   Main authors: `Simon Rohou <https://www.simon-rohou.fr/research/>`_, `Maël Godard <https://godardma.github.io>`_
 
-This lesson addresses a state-estimation problem arising in indoor mobile robotics. A differential-drive robot evolves on a floor covered with square tiles of known width :math:`L`. Unlike range-based localization, we do not rely on external landmarks. Instead, the floor itself provides sparse exteroceptive information: each time the passive support caster crosses a grout line between two tiles, a shock appears in the accelerometer signal and can be detected after a simple filtering stage.
+This lesson addresses a state-estimation problem arising in indoor mobile robotics. A differential-drive robot evolves on a floor covered with square tiles of known width :math:`L`. Unlike range-based localization, we do not rely on external landmarks. Instead, the floor itself provides sparse exteroceptive information: each time the passive support caster crosses a grout line between two tiles, a shock appears in the gyroscope data and can be detected after a simple filtering stage.
 
 The platform considered here is a `TurtleBot Burger <https://emanual.robotis.com/docs/en/platform/turtlebot3/overview/>`_-like robot with two motorized wheels and one passive caster. Wheel odometers provide two signals :math:`u[0](\cdot)` and :math:`u[1](\cdot)`, from which the signed longitudinal speed can be reconstructed.
 In addition, we assume that a heading sensor provides bounded measurements. The tile-crossing instants are already extracted from accelerometers data and provided in a ``txt`` file. The objective is to combine these data in order to re-estimate the robot position over time.
@@ -58,7 +58,7 @@ The wheel odometers provide two wheel-angle trajectories :math:`u[0](\cdot)` and
   \qquad
   \dot x_3(t)=\frac{R_1}{R_2}\Big(\dot u[1](t)-\dot u[0](t)\Big).
 
-In practice, the heading is measured directly and these measurements will be preferred to the one obtained by integrating :math:`\dot x_3`, in order to avoid drift. The planar kinematics of the axle midpoint is therefore modeled by
+In practice, the heading is provided and these measurements will be preferred to the one obtained by integrating :math:`\dot x_3`, in order to avoid drift. The planar kinematics of the axle midpoint is therefore modeled by
 
 .. math::
   :label: eq-tile-f
