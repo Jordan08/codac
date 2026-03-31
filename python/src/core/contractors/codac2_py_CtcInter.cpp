@@ -51,7 +51,7 @@ void export_CtcInter(py::module& m, py::class_<CtcBase<IntervalVector>,pyCtcInte
       SIZET_CTCINTER_X_NB_CONST)
 
     .def(CONTRACT_BOX_METHOD(CtcInter<IntervalVector>,
-      VOID_CTCINTER_X_CONTRACT_IMPL_X__REF_CONST))
+      VOID_CTCINTER_X_CONTRACT_X_REF_VARIADIC_CONST))
 
     .def("__iand__", [](CtcInter<IntervalVector>& c1, const CtcBase<IntervalVector>& c2)
         {

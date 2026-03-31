@@ -233,8 +233,8 @@ User manual
       * CtcGaussSeidel
       * CtcLinearPrecond
    * Set contractors
+      * :ref:`sec-ctc-set-ctcinter`
       * CtcUnion
-      * CtcInter
       * CtcQInter
       * CtcCartProd
       * CtcProj
