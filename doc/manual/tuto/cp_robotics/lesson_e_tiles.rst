@@ -5,7 +5,7 @@ Lesson E: Tile-based localization
 
   Main authors: `Simon Rohou <https://www.simon-rohou.fr/research/>`_, `Maël Godard <https://godardma.github.io>`_
 
-This lesson addresses a state-estimation problem arising in indoor mobile robotics. A differential-drive robot evolves on a floor covered with square tiles of known width :math:`L`. Unlike range-based localization, we do not rely on external landmarks. Instead, the floor itself provides sparse exteroceptive information: each time the passive support caster crosses a grout line between two tiles, a shock appears in the accelerometer signal and can be detected after a simple filtering stage.
+This lesson addresses a state-estimation problem arising in indoor mobile robotics. A differential-drive robot evolves on a floor covered with square tiles of known width :math:`L`. Unlike range-based localization, we do not rely on external landmarks. Instead, the floor itself provides sparse exteroceptive information: each time the passive support caster crosses a grout line between two tiles, a shock appears in the gyroscope data and can be detected after a simple filtering stage.
 
 The platform considered here is a `TurtleBot Burger <https://emanual.robotis.com/docs/en/platform/turtlebot3/overview/>`_-like robot with two motorized wheels and one passive caster. Wheel odometers provide two signals :math:`u[0](\cdot)` and :math:`u[1](\cdot)`, from which the signed longitudinal speed can be reconstructed.
 In addition, we assume that a heading sensor provides bounded measurements. The tile-crossing instants are already extracted from accelerometers data and provided in a ``txt`` file. The objective is to combine these data in order to re-estimate the robot position over time.
@@ -58,7 +58,7 @@ The wheel odometers provide two wheel-angle trajectories :math:`u[0](\cdot)` and
   \qquad
   \dot x_3(t)=\frac{R_1}{R_2}\Big(\dot u[1](t)-\dot u[0](t)\Big).
 
-In practice, the heading is measured directly and these measurements will be preferred to the one obtained by integrating :math:`\dot x_3`, in order to avoid drift. The planar kinematics of the axle midpoint is therefore modeled by
+In practice, the heading is provided and these measurements will be preferred to the one obtained by integrating :math:`\dot x_3`, in order to avoid drift. The planar kinematics of the axle midpoint is therefore modeled by
 
 .. math::
   :label: eq-tile-f
@@ -66,6 +66,10 @@ In practice, the heading is measured directly and these measurements will be pre
   \dot x_1(t)=x_4(t)\cos\big(x_3(t)\big),
   \qquad
   \dot x_2(t)=x_4(t)\sin\big(x_3(t)\big).
+
+
+The passive caster (support wheel)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The passive caster is located on the longitudinal axis of the robot, behind the axle in the robot frame. Its position in the world frame is thus
 
@@ -90,16 +94,24 @@ The passive caster is located on the longitudinal axis of the robot, behind the 
 
 A useful practical remark is that the robot crosses tile joints more sharply when driving backward. In that case, the passive caster becomes the leading contact point with respect to the direction of motion, so the shock induced by a grout line is generally more pronounced and easier to detect. In this dataset, the integration is therefore performed with a reverse speed, i.e. :math:`x_4(t)` is mostly negative. This does not change the geometry of the robot: the caster is still given by Eq. :eq:`eq-tile-caster`, but it becomes the first element of the robot to meet the joint along the direction of motion.
 
+
+The tile floor
+^^^^^^^^^^^^^^
+
 The floor is modeled as an infinite square tiling of width :math:`L`. The set of grout lines is the union of vertical lines :math:`x=kL` and horizontal lines :math:`y=kL`, for all :math:`k\in\mathbb{Z}`. If :math:`t_i` is one of the extracted detection times, the caster position must satisfy
 
 .. math::
   :label: eq-tile-obs-set
 
-  b_1(t_i) \in L\mathbb{Z} + [-\varepsilon_L,\varepsilon_L]
+  b_1(t_i) \in L\mathbb{Z} + [-\frac{\varepsilon_L}{2},\frac{\varepsilon_L}{2}]
   \quad \text{or} \quad
-  b_2(t_i) \in L\mathbb{Z} + [-\varepsilon_L,\varepsilon_L],
+  b_2(t_i) \in L\mathbb{Z} + [-\frac{\varepsilon_L}{2},\frac{\varepsilon_L}{2}],
 
 where :math:`\varepsilon_L>0` accounts for tile and grout imperfections, as well as small geometric mismatches between the ideal square grid model and the actual floor.
+
+
+Tile-crossing events
+^^^^^^^^^^^^^^^^^^^^
 
 The fact that the filtered shock is detected slightly after the physical crossing is treated separately at the temporal level: in practice, the contraction will be applied at a time slightly before :math:`t_i`.
 
@@ -108,9 +120,9 @@ A convenient implicit formulation uses the modulo operator:
 .. math::
   :label: eq-tile-mod
 
-  \operatorname{mod}\big(b_1(t_i),L\big)\in[-\varepsilon_L,\varepsilon_L]
+  \operatorname{mod}\big(b_1(t_i^-),L\big)\in[-\varepsilon_L,\varepsilon_L]
   \quad \text{or} \quad
-  \operatorname{mod}\big(b_2(t_i),L\big)\in[-\varepsilon_L,\varepsilon_L].
+  \operatorname{mod}\big(b_2(t_i^-),L\big)\in[-\varepsilon_L,\varepsilon_L].
 
 This is the observation model we will encode with a contractor.
 
@@ -153,15 +165,13 @@ Initialization and data loading
     > Name: codac
       Version: 2.0.0.dev28
 
-  The required version for this tutorial is 2.0.0.dev28 or later.
-
-The following instructions are given in Python, but feel free to use C++ or Matlab if you prefer.
+  The required version for this tutorial is ``2.0.0.dev28`` or later.
 
 
 .. admonition:: Exercise
 
-  **E.1. Imports and data paths.**
-  Start with the imports below. We explicitly import ``builtins`` because ``from codac import *`` shadows Python's ``min`` and ``max``.
+  **E.1. Imports.**
+  Start with the imports below. 
 
   .. tabs::
 
@@ -179,7 +189,7 @@ The following instructions are given in Python, but feel free to use C++ or Matl
         :language: c++
         :start-after: [E-q1-beg]
         :end-before: [E-q1-end]
-        :dedent: 2
+        :dedent: 0
 
     .. group-tab:: Matlab
 
@@ -190,7 +200,7 @@ The following instructions are given in Python, but feel free to use C++ or Matl
         :dedent: 0
 
   **E.2. Loading sampled trajectories.**
-  Load the binary ``.cdc`` files into sampled trajectories. We resample the wheel odometry on the same temporal support as ``pos``.
+  Load the binary ``.cdc`` files into sampled trajectories. We further resample the wheel odometry on the same temporal support as ``pos``.
 
   .. tabs::
 
@@ -238,7 +248,7 @@ The following instructions are given in Python, but feel free to use C++ or Matl
         :language: c++
         :start-after: [E-q3-beg]
         :end-before: [E-q3-end]
-        :dedent: 2
+        :dedent: 0
 
     .. group-tab:: Matlab
 
@@ -248,9 +258,61 @@ The following instructions are given in Python, but feel free to use C++ or Matl
         :end-before: [E-q3-end]
         :dedent: 0
 
+  .. tabs::
+
+    .. group-tab:: Python
+
+      .. literalinclude:: src/lesson_E.py
+        :language: py
+        :start-after: [E-q3b-beg]
+        :end-before: [E-q3b-end]
+        :dedent: 0
+
+    .. group-tab:: C++
+
+      .. literalinclude:: src/lesson_E.cpp
+        :language: c++
+        :start-after: [E-q3b-beg]
+        :end-before: [E-q3b-end]
+        :dedent: 2
+
+    .. group-tab:: Matlab
+
+      .. literalinclude:: src/lesson_E.m
+        :language: matlab
+        :start-after: [E-q3b-beg]
+        :end-before: [E-q3b-end]
+        :dedent: 0
+
 
   **E.4. Drawing the map.**
-  Write a function ``draw_map(X, L)`` that draws the infinite grid, clipped to a bounding box ``X``. As in the reference example, two tiles are highlighted in green.
+  Write a function ``draw_map(X,L)`` that draws the infinite grid, clipped to a bounding box ``X``. As in the reference example, two tiles are highlighted in green.
+
+  .. tabs::
+
+    .. group-tab:: Python
+
+      .. literalinclude:: src/lesson_E.py
+        :language: py
+        :start-after: [E-q4b-beg]
+        :end-before: [E-q4b-end]
+        :dedent: 0
+
+    .. group-tab:: C++
+
+      .. literalinclude:: src/lesson_E.cpp
+        :language: c++
+        :start-after: [E-q4b-beg]
+        :end-before: [E-q4b-end]
+        :dedent: 2
+
+    .. group-tab:: Matlab
+
+      .. literalinclude:: src/lesson_E.m
+        :language: matlab
+        :start-after: [E-q4b-beg]
+        :end-before: [E-q4b-end]
+        :dedent: 0
 
   .. tabs::
 
@@ -268,7 +330,7 @@ The following instructions are given in Python, but feel free to use C++ or Matl
         :language: c++
         :start-after: [E-q4-beg]
         :end-before: [E-q4-end]
-        :dedent: 2
+        :dedent: 0
 
     .. group-tab:: Matlab
 
@@ -284,9 +346,9 @@ The following instructions are given in Python, but feel free to use C++ or Matl
 
   .. math::
 
-    \operatorname{mod}(b_1,L)\in[-\varepsilon_L,\varepsilon_L]
-    \quad \lor \quad
-    \operatorname{mod}(b_2,L)\in[-\varepsilon_L,\varepsilon_L].
+    \left(\operatorname{mod}(b_1+\frac{\varepsilon_L}{2},L)\in[0,\varepsilon_L]
+    \enspace \lor \enspace
+    \operatorname{mod}(b_2+\frac{\varepsilon_L}{2},L)\in[0,\varepsilon_L]\right).
 
   You may introduce one analytic function for the first coordinate and one for the second one, as in the previous lessons, and then combine :ref:`the corresponding contractors <sec-ctc-analytic-ctcinverse>` with a union. A union of contractors is represented by the ``CtcUnion`` class, and can be called directly using the operator ``|``.
 
@@ -458,7 +520,7 @@ The recorded heading and wheel-odometry trajectories are loaded from the files i
 
     [\mathbf{x}_{12}](0):=\left(x_1(0),x_2(0)\right)^\intercal + [-L/3,L/3]^2,
 
-  then integrate the velocity tube.
+  then we integrate the velocity tube.
 
   .. tabs::
 
@@ -634,12 +696,7 @@ After solving the full localization problem, it is convenient to define a helper
 
 
   **E.16. Verify a double passage through a box.**
-  We know from the experiment that the robot passes twice through the box
-
-  .. math::
-
-    [[-2.4,-2.1],[2.4,2.7]].
-
+  We know from the experiment that the robot passes twice through the box :math:`[[-2.4,-2.1],[2.4,2.7]]`.
   This box is already drawn (from E.4). Check visually that the contracted position tube also passes through it twice.
 
 

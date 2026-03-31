@@ -1,12 +1,13 @@
 # [E-q1-beg]
 from codac import *
+# We explicitly import `builtins` because the previous line shadows Python's `min` and `max`
 import builtins as py
 import math
 # [E-q1-end]
 
 
 # [E-q2-beg]
-# Loaded trajectories
+# Loading trajectories
 pos = SampledTraj_Vector()
 with open("./data/herdeudedac_tiles_pos.cdc", "rb") as f:
   deserialize(f, pos)
@@ -26,15 +27,21 @@ def tile_times(file):
       if token:
         t.append(float(token))
     return t
-
-T = tile_times("./data/herdeudedac_tiles_detections.txt")
 # [E-q3-end]
 
+# [E-q3b-beg]
+# Observations (times of tiles detections)
+T = tile_times("./data/herdeudedac_tiles_detections.txt")
+# [E-q3b-end]
 
-# [E-q4-beg]
+
+# [E-q4b-beg]
+# Map parameters
 L = 0.3 # tile width
 L_eps = 1e-2 # tile thickness
+# [E-q4b-end]
 
+# [E-q4-beg]
 def draw_map(X, L):
   for d in range(2):
     kmin = py.min(0, math.floor(X[d].lb() / L) + 1)
@@ -62,19 +69,16 @@ def draw_map(X, L):
 
 
 # [E-q5-beg]
-def map_contractor(L, L_eps):
-  def f(i):
-    x = VectorVar(2)
-    return AnalyticFunction([x], mod(x[i], L))
+def f(i):
+  x = VectorVar(2)
+  return AnalyticFunction([x], mod(x[i]+L_eps/2,L))
 
-  c_verti = CtcInverse(f(0), [-L_eps, L_eps])
-  c_horiz = CtcInverse(f(1), [-L_eps, L_eps])
+c_verti = CtcInverse(f(0), [0,L_eps])
+c_horiz = CtcInverse(f(1), [0,L_eps])
 
-  return c_verti | c_horiz
-
-your_contractor = map_contractor(L, L_eps)
-ctc_map = map_contractor(L, L_eps)
+your_contractor = c_verti | c_horiz
 # [E-q5-end]
+ctc_map = your_contractor
 
 
 # [E-q6-beg]
@@ -85,10 +89,11 @@ fig_ctcmap.pave([[-1,1],[-1,1]], your_contractor, 1e-2)
 
 
 # [E-q7-beg]
+# Robot parameters
 R1 = 0.033
 R2 = 0.16
 R3 = 8e-2
-x0 = Vector([L/2, L/2, 0.018, 0.0])
+x0 = Vector([L/2, L/2, 0.018, 0.0]) # initial state
 
 traj_spd = R1 * (u[1].derivative() + u[0].derivative()) / 2
 traj_hdg = (R1 * (u[1].derivative() - u[0].derivative()) / R2).primitive() + x0[2]
@@ -110,17 +115,19 @@ tube_spd.inflate(9e-3)
 
 
 # [E-q9-beg]
+# Computing tube of velocities
 v_hdg,v_spd = ScalarVar(),ScalarVar()
 f_evol = AnalyticFunction([v_hdg,v_spd], [
   v_spd*cos(v_hdg),
   v_spd*sin(v_hdg)
 ])
 
-tube_v12 = f_evol.tube_eval(tube_hdg, tube_spd)
+tube_v12 = f_evol.tube_eval(tube_hdg,tube_spd)
 # [E-q9-end]
 
 
 # [E-q10-beg]
+# Computing initial tube of positions
 ix0 = IntervalVector(x0.subvector(0,1))
 ix0.inflate(L/3)
 
@@ -130,7 +137,7 @@ tube_x12 = tube_v12.primitive(ix0)
 
 # [E-q11-beg]
 X = IntervalVector([[-5,2],[-2,5]])
-DefaultFigure.set_window_properties([50, 50], [1000, 1000])
+DefaultFigure.set_window_properties([50,50],[1000,1000])
 DefaultFigure.set_axes(axis(0,X[0]),axis(1,X[1])).auto_scale()
 
 draw_map(X,L)
@@ -140,7 +147,7 @@ DefaultFigure.draw_tube(tube_x12, [Color.light_gray(),Color.light_gray()])
 
 # [E-q12-beg]
 ctc_deriv = CtcDeriv()
-ctc_map = map_contractor(L,L_eps)
+# ctc_map is already defined from E.5
 # [E-q12-end]
 
 
