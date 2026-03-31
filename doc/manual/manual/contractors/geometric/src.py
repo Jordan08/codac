@@ -88,5 +88,29 @@ class TestCtcGeometricManual(unittest.TestCase):
     test.assertTrue(Approx(rho,1e-5) == Interval([7,8]))
     test.assertTrue(Approx(theta,1e-5) == Interval([1.20558,1.38218]))
 
+  def test_CtcVisible(test):
+    # [ctcvisible-beg]
+    a = [1, 1]
+    s = Segment([1, 4], [3, 2])
+    ctc = CtcVisible(a, s)
+    DefaultFigure.pave(
+        [[-1,6],[-1,6]],
+        ctc,
+        0.1
+      )
+    # [ctcvisible-end]
+
+    # [ctcnovisible-beg]
+    a = [1, 1]
+    s = Segment([1, 4], [3, 2])
+    ctc = CtcNoVisible(a, s)
+    DefaultFigure.pave(
+        [[-1,6],[-1,6]],
+        ctc,
+        0.1
+      )
+    # [ctcnovisible-end]
+
+
 if __name__ ==  '__main__':
   unittest.main()

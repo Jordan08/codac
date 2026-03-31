@@ -11,6 +11,7 @@
 #include <codac2_CtcDist.h>
 #include <codac2_CtcPolar.h>
 #include <codac2_CtcProj.h>
+#include <codac2_CtcVisible.h>
 #include <codac2_Approx.h>
 #include <codac2_cart_prod.h>
 #include <codac2_CtcInter.h>
@@ -85,5 +86,34 @@ TEST_CASE("CtcPolar - manual")
     c.contract(x,y,rho,theta);
     // x = [1.5, 2.5] ; y = [6.53834, 7.85812] ; rho = [7, 8] ; theta = [1.20558, 1.38218]
     // [ctcpolar-2-end]
+  }
+}
+
+TEST_CASE("CtcVisible - manual")
+{
+  {
+    // [ctcvisible-beg]
+    Vector a({1, 1});
+    Segment s({{1, 1}, {4, 4}}, {{3, 3}, {2, 2}});
+    CtcVisible ctc(Vector({0.0, 0.0}), Segment({2.0, -1.0}, {2.0, 1.0}));
+    DefaultFigure::pave(
+      {{-1,6},{-1,6}},
+      CtcNoVisible(a, s),
+      1e-1
+    );
+    // [ctcvisible-end]
+  }
+
+  {
+    // [ctcnovisible-beg]
+    Vector a({1, 1});
+    Segment s({{1, 1}, {4, 4}}, {{3, 3}, {2, 2}});
+    CtcNoVisible sep(a, s);
+    DefaultFigure::pave(
+      {{-1,6},{-1,6}},
+      CtcNoVisible(a, s),
+      1e-1
+    );
+    // [ctcnovisible-end]
   }
 }

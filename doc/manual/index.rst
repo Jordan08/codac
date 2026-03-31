@@ -246,6 +246,7 @@ User manual
    * Geometric contractors
       * :ref:`sec-ctc-geom-ctcdist`
       * :ref:`sec-ctc-geom-ctcpolar`
+      * :ref:`sec-ctc-geom-ctcvisible`
       * CtcSegment
       * CtcPolygon
       * CtcPointCloud
@@ -284,6 +285,7 @@ User manual
       * SepInverse
       * SepTransform
    * Geometrical separators
+      * SepVisible
       * SepPolarCart or SepCartPolar
       * SepPolygon
       * SepEllipse
