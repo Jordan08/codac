@@ -22,6 +22,16 @@ import py.codac4matlab.*
 % [E-q3-end]
 
 
+% [E-q3b-beg]
+
+% [E-q3b-end]
+
+
+% [E-q4b-beg]
+
+% [E-q4b-end]
+
+
 % [E-q4-beg]
 
 % [E-q4-end]
