@@ -63,6 +63,8 @@
     domains/tube/codac2_py_tube_cart_prod.cpp
     domains/codac2_py_BoolInterval.cpp
 
+    extensions/sympy/codac2_py_sympy.cpp
+
     functions/analytic/codac2_py_analytic_variables.cpp
     functions/analytic/codac2_py_AnalyticFunction.h
     functions/analytic/codac2_py_AnalyticExprWrapper.h
@@ -123,6 +125,7 @@
     trajectory/codac2_py_AnalyticTraj.cpp
     trajectory/codac2_py_SampledTraj.cpp
     trajectory/codac2_py_TrajBase.h
+    trajectory/codac2_py_traj_cart_prod.cpp
   )
 
   target_include_directories(_core
@@ -137,6 +140,7 @@
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/domains/paving/
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/domains/zonotope/
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/domains/tube/
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/extensions/sympy/
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/functions/
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/functions/analytic/
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/graphics/
@@ -149,7 +153,7 @@
   )
 
   target_link_libraries(_core
-    PRIVATE ${PROJECT_NAME}-core ${LIBS} Ibex::ibex
+    PRIVATE ${PROJECT_NAME}-core ${PROJECT_NAME}-sympy ${LIBS} Ibex::ibex
   )
 
   # Copy the generated library in the package folder
