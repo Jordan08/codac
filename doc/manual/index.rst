@@ -243,6 +243,8 @@ User manual
    * Analytic contractors
       * :ref:`sec-ctc-analytic-ctcinverse`
       * CtcInverseNotIn
+   * Dynamic contractors
+      * :ref:`sec-ctc-dynamic-ctclohner`
    * Geometric contractors
       * :ref:`sec-ctc-geom-ctcdist`
       * :ref:`sec-ctc-geom-ctcpolar`
