@@ -19,90 +19,90 @@ LohnerAlgorithm::LohnerAlgorithm(const AnalyticFunction<VectorType> *f,
                                  const IntervalVector &u0,
                                  int contractions,
                                  double eps)
-    : dim(f->input_size()),
-      h(h),
-      direction((forward) ? FWD : BWD),
-      eps(eps),
-      contractions(contractions),
-      u(u0),
-      z(u0 - u0.mid()),
-      r(z),
-      B(Matrix::eye(dim,dim)),
-      Binv(Matrix::eye(dim,dim)),
-      u_hat(u0.mid()),
-      f(f) {}
+    : _dim(f->input_size()),
+      _h(h),
+      _direction((forward) ? FWD : BWD),
+      _eps(eps),
+      _contractions(contractions),
+      _u(u0),
+      _z(u0 - u0.mid()),
+      _r(_z),
+      _B(Matrix::eye(_dim,_dim)),
+      _Binv(Matrix::eye(_dim,_dim)),
+      _u_hat(u0.mid()),
+      _f(f) {}
 
 const IntervalVector &LohnerAlgorithm::integrate(unsigned int steps, double H) {
-  if (H > 0) h = H;
+  if (H > 0) _h = H;
   for (unsigned int i = 0; i < steps; ++i) {
-    IntervalVector z1 = z, r1 = r, u1 = u;
-    Matrix B1 = B, B1inv = Binv;
-    Vector u_hat1 = u_hat;
-    IntervalVector u_t = globalEnclosure(u, FWD);
-    for (int j = 0; j < contractions; ++j) {
-      z1 = 0.5 * h * h * f->diff(u_t) * f->eval(u_t);
+    IntervalVector z1 = _z, r1 = _r, u1 = _u;
+    Matrix B1 = _B, B1inv = _Binv;
+    Vector u_hat1 = _u_hat;
+    IntervalVector u_t = globalEnclosure(_u, FWD);
+    for (int j = 0; j < _contractions; ++j) {
+      z1 = 0.5 * _h * _h * _f->diff(u_t) * _f->eval(u_t);
       Vector m1 = z1.mid();
-      IntervalMatrix A = Matrix::eye(dim,dim) + h * direction * f->diff(u);
-      Eigen::HouseholderQR<Eigen::MatrixXd> qr((A * B.template cast<Interval>()).mid());
+      IntervalMatrix A = Matrix::eye(_dim,_dim) + _h * _direction * _f->diff(_u);
+      Eigen::HouseholderQR<Eigen::MatrixXd> qr((A * _B.template cast<Interval>()).mid());
       B1 = qr.householderQ();
       B1inv = B1.inverse();
-      r1 = (B1inv.template cast<Interval>() * A * B.template cast<Interval>()) * r + B1inv.template cast<Interval>() * (z1 - m1);
-      IntervalVector inter = f->eval(u_hat);
-      u_hat1 = u_hat + h * direction * inter.mid() + m1;
+      r1 = (B1inv.template cast<Interval>() * A * _B.template cast<Interval>()) * _r + B1inv.template cast<Interval>() * (z1 - m1);
+      IntervalVector inter = _f->eval(_u_hat);
+      u_hat1 = _u_hat + _h * _direction * inter.mid() + m1;
       u1 = u_hat1 + B1 * r1;
-      if (j < contractions - 1) {
+      if (j < _contractions - 1) {
         u_t = u_t & globalEnclosure(u1, BWD);
       }
     }
-    z = z1, r = r1, u = u1, B = B1, Binv = B1inv, u_hat = u_hat1, u_tilde = u_t;
+    _z = z1, _r = r1, _u = u1, _B = B1, _Binv = B1inv, _u_hat = u_hat1, _u_tilde = u_t;
   }
-  return u;
+  return _u;
 }
 
 IntervalVector LohnerAlgorithm::globalEnclosure(const IntervalVector &initialGuess, double dir) {
   IntervalVector u_0 = initialGuess;
   for (unsigned int i = 0; i < 30; ++i) {
-    IntervalVector u_1 = initialGuess + dir * direction * Interval(0, h) * f->eval(u_0);
+    IntervalVector u_1 = initialGuess + dir * _direction * Interval(0, _h) * _f->eval(u_0);
     if (u_0.is_superset(u_1)) {
       return u_0;
     } else {
-      u_0 = (1 + eps) * u_1 - eps * u_1;
+      u_0 = (1 + _eps) * u_1 - _eps * u_1;
     }
   }
   throw GlobalEnclosureError();
 }
 
 void LohnerAlgorithm::contractStep(const IntervalVector &x) {
-  u = x & u;
-  u_hat = u.mid();
-  r = r & (Binv * (u - u_hat));
+  _u = x & _u;
+  _u_hat = _u.mid();
+  _r = _r & (_Binv * (_u - _u_hat));
 }
 
 const IntervalVector &LohnerAlgorithm::getLocalEnclosure() const {
-  return u;
+  return _u;
 }
 
 const IntervalVector &LohnerAlgorithm::getGlobalEnclosure() const {
-  return u_tilde;
+  return _u_tilde;
 }
 
 CtcLohner::CtcLohner(const AnalyticFunction<VectorType>& f, int contractions, double eps)
-  :   m_f(f),
-      contractions(contractions),
-      dim(f.input_size()),
-      eps(eps) {}
+  :   _f(f),
+      _contractions(contractions),
+      _dim(f.input_size()),
+      _eps(eps) {}
 
 void CtcLohner::contract(codac2::SlicedTube<IntervalVector> &tube, TimePropag t_propa) const
 {
-  assert((!tube.is_empty()) && (tube.size() == dim));
-  IntervalVector input_gate = IntervalVector::constant(dim, Interval(0));
-  IntervalVector output_gate = IntervalVector::constant(dim, Interval(0));
-  IntervalVector slice = IntervalVector::constant(dim, Interval(0));
+  assert((!tube.is_empty()) && (tube.size() == _dim));
+  IntervalVector input_gate = IntervalVector::zero(_dim);
+  IntervalVector output_gate = IntervalVector::zero(_dim);
+  IntervalVector slice = IntervalVector::zero(_dim);
   double h;
-  if ((t_propa & TimePropag::FWD) != static_cast<TimePropag>(0)) 
+  if((t_propa & TimePropag::FWD) == TimePropag::FWD)
   {
     input_gate = tube.first_slice()->input_gate();
-    LohnerAlgorithm lo(&m_f, 0.1, true, input_gate, contractions, eps);
+    LohnerAlgorithm lo(&_f, 0.1, true, input_gate, _contractions, _eps);
     // Forward loop
     for (auto it = tube[0].tdomain()->begin(); it != tube[0].tdomain()->end(); ++it) 
     {
@@ -118,10 +118,10 @@ void CtcLohner::contract(codac2::SlicedTube<IntervalVector> &tube, TimePropag t_
     }
     tube.set(output_gate & lo.getLocalEnclosure(), tube.tdomain()->t0_tf().ub());
   }
-  if ((t_propa & TimePropag::BWD) != static_cast<TimePropag>(0)) 
+  if((t_propa & TimePropag::BWD) == TimePropag::BWD) 
   {
     input_gate = tube.last_slice()->output_gate();
-    LohnerAlgorithm lo2(&m_f, 0.1, false, input_gate, contractions, eps);
+    LohnerAlgorithm lo2(&_f, 0.1, false, input_gate, _contractions, _eps);
     // Backward loop
     for (auto it = tube[0].tdomain()->rbegin(); it != tube[0].tdomain()->rend(); ++it) 
     {

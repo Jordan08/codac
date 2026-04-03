@@ -149,8 +149,8 @@ class TestCtcLohner(unittest.TestCase):
     ctc_lohner.contract(a)
     ctc_lohner.contract(b)
 
-    DefaultFigure.plot_tube(a[0])
-    DefaultFigure.plot_tube(b[0],StyleProperties([Color.blue(),Color.blue()]))
+    # DefaultFigure.plot_tube(a[0])
+    # DefaultFigure.plot_tube(b[0],StyleProperties([Color.blue(),Color.blue()]))
   
 if __name__ ==  '__main__':
   unittest.main()

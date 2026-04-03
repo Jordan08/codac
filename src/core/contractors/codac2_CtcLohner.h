@@ -50,7 +50,7 @@ namespace codac2
     LohnerAlgorithm(const AnalyticFunction<VectorType> *f,
                     double h,
                     bool forward,
-                    const IntervalVector &u0 = IntervalVector::empty(1),
+                    const IntervalVector &u0,
                     int contractions = 1,
                     double eps = 0.1);
     /**
@@ -93,18 +93,18 @@ namespace codac2
      */
     IntervalVector globalEnclosure(const IntervalVector &initialGuess, double dir);
 
-    unsigned int dim; //!< dimension of the system's state
-    double h; //!< integration time step
-    double direction; //!< forward or backward integration
-    double eps; //!< inflation parameter for the global enclosure
-    int contractions; //!< number of contractions of the global enclosure by the estimated local enclosure
-    IntervalVector u; //!< local enclosure
-    IntervalVector z; //!< Taylor-Lagrange remainder (order 2)
-    IntervalVector r; //!< enclosure of uncertainties in the frame given by the matrix B
-    IntervalVector u_tilde; //!< global enclosure
-    Matrix B, Binv;
-    Vector u_hat; //!< center of the box u
-    const AnalyticFunction<VectorType> *f; //!< litteral function of the system \f$\dot{\mathbf{x}}=\mathbf{f}(\mathbf{x})\f$
+    unsigned int _dim; //!< dimension of the system's state
+    double _h; //!< integration time step
+    double _direction; //!< forward or backward integration
+    double _eps; //!< inflation parameter for the global enclosure
+    int _contractions; //!< number of contractions of the global enclosure by the estimated local enclosure
+    IntervalVector _u; //!< local enclosure
+    IntervalVector _z; //!< Taylor-Lagrange remainder (order 2)
+    IntervalVector _r; //!< enclosure of uncertainties in the frame given by the matrix B
+    IntervalVector _u_tilde; //!< global enclosure
+    Matrix _B, _Binv;
+    Vector _u_hat; //!< center of the box u
+    const AnalyticFunction<VectorType> *_f; //!< litteral function of the system \f$\dot{\mathbf{x}}=\mathbf{f}(\mathbf{x})\f$
   };
 
   /**
@@ -137,9 +137,9 @@ namespace codac2
 
     protected:
 
-      AnalyticFunction<VectorType> m_f; //!< forward function
-      int contractions; //!< number of contractions of the global enclosure by the estimated local enclosure
-      int dim; //!< dimension of the state vector
-      double eps; //!< inflation parameter for the global enclosure
+      AnalyticFunction<VectorType> _f; //!< forward function
+      int _contractions; //!< number of contractions of the global enclosure by the estimated local enclosure
+      int _dim; //!< dimension of the state vector
+      double _eps; //!< inflation parameter for the global enclosure
   };
 }
