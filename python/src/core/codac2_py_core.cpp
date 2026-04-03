@@ -48,6 +48,7 @@ void export_CtcIdentity(py::module& m, py::class_<CtcBase<IntervalVector>,pyCtcI
 void export_CtcInnerOuter(py::module& m, py::class_<CtcBase<IntervalVector>,pyCtcIntervalVector>& ctc);
 void export_CtcInter(py::module& m, py::class_<CtcBase<IntervalVector>,pyCtcIntervalVector>& ctc);
 void export_CtcLazy(py::module& m, py::class_<CtcBase<IntervalVector>,pyCtcIntervalVector>& ctc);
+void export_CtcLohner(py::module& m);
 void export_CtcNot(py::module& m, py::class_<CtcBase<IntervalVector>,pyCtcIntervalVector>& ctc);
 void export_CtcPointCloud(py::module& m, py::class_<CtcBase<IntervalVector>,pyCtcIntervalVector>& ctc);
 void export_CtcPolar(py::module& m, py::class_<CtcBase<IntervalVector>,pyCtcIntervalVector>& ctc);
@@ -198,6 +199,7 @@ PYBIND11_MODULE(_core, m)
   export_CtcInverseNotIn<ScalarType>(m,"CtcInverseNotIn_Interval",py_ctc_iv);
   export_CtcInverseNotIn<VectorType>(m,"CtcInverseNotIn_IntervalVector",py_ctc_iv);
   export_CtcLazy(m, py_ctc_iv);
+  export_CtcLohner(m);
   export_CtcNot(m, py_ctc_iv);
   export_CtcPointCloud(m, py_ctc_iv);
   export_CtcPolar(m, py_ctc_iv);
