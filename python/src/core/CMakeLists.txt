@@ -36,8 +36,8 @@
     contractors/codac2_py_CtcQInter.cpp
     contractors/codac2_py_CtcSegment.cpp
     contractors/codac2_py_CtcUnion.cpp
-    contractors/codac2_py_CtcUnion.cpp
     contractors/codac2_py_CtcVisible.cpp
+    contractors/codac2_py_CtcWrapper.cpp
     contractors/codac2_py_linear_ctc.cpp
 
     domains/ellipsoid/codac2_py_Ellipsoid.cpp

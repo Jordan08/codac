@@ -19,7 +19,7 @@ namespace codac2
       /**
        * \brief Constructor for visibility from point 'a' relative to segment 's'.
        */
-      CtcVisible(const Vector& a, const Segment& s);
+      CtcVisible(const IntervalVector& a, const Segment& s);
 
       void contract(IntervalVector& x) const;
 

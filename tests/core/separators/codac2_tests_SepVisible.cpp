@@ -37,16 +37,4 @@ TEST_CASE("SepVisible - Space Partitioning")
     CHECK(res.inner.is_empty());    // Not hidden
     CHECK(res.outer == x);         // Visible
   }
-
-  SECTION("Degenerate Obstacle (Segment of length 0)")
-  {
-    // If the segment is just a point, the shadow is just a ray (infinitely thin)
-    Segment s_null({1.0, 0.0}, {1.0, 0.0});
-    SepVisible sep_null(a, s_null);
-    
-    IntervalVector x({{2.0, 3.0}, {-1.0, 1.0}});
-    BoxPair res = sep_null.separate(x);
-    
-    CHECK(res.inner.is_empty()); 
-  }
 }

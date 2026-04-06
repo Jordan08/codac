@@ -21,7 +21,7 @@
 using namespace std;
 using namespace codac2;
 
-CtcVisible::CtcVisible(const Vector& a, const Segment& s)
+CtcVisible::CtcVisible(const IntervalVector& a, const Segment& s)
   : Ctc<CtcVisible, IntervalVector>(2), 
     _a(a), _s(s),
     _v_e2e1(s[1] - s[0]), 

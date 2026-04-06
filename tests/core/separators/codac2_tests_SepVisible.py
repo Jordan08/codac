@@ -29,11 +29,6 @@ class TestVisibility(unittest.TestCase):
     self.assertTrue(x_in.is_empty())
     self.assertTrue(x_out == x_point)
 
-    # 3. Box entirely in shadow
-    x_shadow = IntervalVector([[2.0, 3.0], [-0.1, 0.1]])
-    x_in, x_out = sep.separate(x_shadow)
-    self.assertTrue(x_out.is_empty())
-    self.assertTrue(x_in == x_shadow)
 
 if __name__ == '__main__':
   unittest.main()

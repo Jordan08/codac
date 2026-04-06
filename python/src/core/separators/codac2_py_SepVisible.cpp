@@ -10,11 +10,7 @@
 #include <pybind11/stl.h>
 #include <codac2_SepVisible.h>
 #include "codac2_py_Sep.h"
-#include "codac2_py_SepUnion_docs.h" // Generated file from Doxygen XML (doxygen2docstring.py):
-
-#define SEPVISIBILITY_MAIN "Separator for visibility characterization (Inside=Hidden, Outside=Visible)."
-#define SEPVISIBILITY_INIT "Initialize SepVisible with an observation point 'a' and an obstacle segment 's'."
-#define SEPVISIBILITY_SEPARATE "Separate the box into hidden and visible parts, returning a tuple (x_in, x_out)."
+#include "codac2_py_SepVisible_docs.h" // Generated file from Doxygen XML (doxygen2docstring.py):
 
 using namespace std;
 using namespace codac2;
@@ -23,14 +19,14 @@ using namespace pybind11::literals;
 
 void export_SepVisible(py::module& m, py::class_<SepBase, pySep>& pysep)
 {
-  py::class_<SepVisible> exported(m, "SepVisible", pysep, SEPVISIBILITY_MAIN);
+  py::class_<SepVisible> exported(m, "SepVisible", pysep, SEPVISIBLE_MAIN);
   exported
-    .def(py::init<const Vector&, const Segment&>(),
+    .def(py::init<const IntervalVector&, const Segment&>(),
       "a"_a, "s"_a, 
-      SEPVISIBILITY_INIT)
+      SEPVISIBLE_SEPVISIBLE_CONST_INTERVALVECTOR_REF_CONST_SEGMENT_REF)
     
     .def("separate", &SepVisible::separate, 
       "x"_a, 
-      SEPVISIBILITY_SEPARATE)
+      BOXPAIR_SEPVISIBLE_SEPARATE_CONST_INTERVALVECTOR_REF_CONST)
   ;
 }

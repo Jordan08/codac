@@ -16,7 +16,7 @@ namespace codac2 {
   class SepVisible : public Sep<SepVisible> {
   public:
 
-    SepVisible(const Vector& a, const Segment& s) 
+    SepVisible(const IntervalVector& a, const Segment& s) 
       : Sep<SepVisible>(2), 
         _ctc_visible(a, s), 
         _ctc_novisible(a, s) 
