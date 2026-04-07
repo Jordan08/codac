@@ -2,7 +2,7 @@ from codac import *
 import numpy as np
 
 if __name__=="__main__":
-  set_threads_used(max_threads())
+  set_nb_threads(max_threads())
 
   # 2D example of the PEIBOS algorithm
 

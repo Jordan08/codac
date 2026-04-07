@@ -5,7 +5,7 @@ using namespace codac2;
 
 int main()
 {
-  set_threads_used(max_threads());
+  set_nb_threads(max_threads());
   
   // 2D example of the PEIBOS algorithm
   VectorVar y_2d(2);

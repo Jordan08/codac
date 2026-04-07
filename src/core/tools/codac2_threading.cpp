@@ -12,29 +12,21 @@
 using namespace std;
 using namespace codac2;
 
-namespace
-{
-  int threads_used = 1;
-}
 
 namespace codac2
 {
-  // FOR SIMON : when is this resolved ? 
-  // i.e. if I compile the library on a machine (say a github one), and used it on my personnal machine
-  // will I get the hardware_concurrency of my machine or the github one ?
-  // And what if I just write const int max_threads = std::thread::hardware_concurrency(); ?
   int max_threads()
   {
     return std::thread::hardware_concurrency(); 
   }
   
-  void set_threads_used(int n)
+  void set_nb_threads(int n)
   {
-    threads_used = (n > 1 ? std::min(n,max_threads()) : 1);
+    threading::threads_used = (n > 1 ? std::min(n,max_threads()) : 1);
   }
 
-  int get_threads_used()
+  int nb_threads()
   {
-    return threads_used;
+    return threading::threads_used;
   }
 }

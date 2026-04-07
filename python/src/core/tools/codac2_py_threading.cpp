@@ -23,10 +23,10 @@ void export_threading(py::module& m)
   m.def("max_threads", &codac2::max_threads,
         INT_MAX_THREADS);
   
-  m.def("set_threads_used", &codac2::set_threads_used,
-        VOID_SET_THREADS_USED_INT,
+  m.def("set_nb_threads", &codac2::set_nb_threads,
+        VOID_SET_NB_THREADS_INT,
         "n"_a);
 
-  m.def("get_threads_used", &codac2::get_threads_used,
-        INT_GET_THREADS_USED);
+  m.def("nb_threads", &codac2::nb_threads,
+        INT_NB_THREADS);
 }

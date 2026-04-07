@@ -51,7 +51,7 @@ std::map<double,std::vector<Parallelepiped>> reach_set_(const std::map<double, s
 
 int main()
 {
-  set_threads_used(max_threads());
+  set_nb_threads(max_threads());
   
   // Equation of the pendulum with friction
   // [codac-capd-2-beg]

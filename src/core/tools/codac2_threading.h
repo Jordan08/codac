@@ -11,15 +11,16 @@
 
 #include <thread>
 
-namespace codac2_threading
-{
-  inline int threads_used = 1;
-}
+
 
 namespace codac2
 {
   int max_threads();
-  void set_threads_used(int n);
-  int get_threads_used();
+  void set_nb_threads(int n);
+  int nb_threads();
   
+  namespace threading
+  {
+    inline int threads_used = 1;
+  }
 }
