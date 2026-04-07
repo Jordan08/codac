@@ -22,6 +22,10 @@ void export_CtcVisible(py::module& m, py::class_<CtcBase<IntervalVector>, pyCtcI
   vis
     .def(py::init<const IntervalVector&, const Segment&>(), 
       CTCVISIBLE_CTCVISIBLE_CONST_INTERVALVECTOR_REF_CONST_SEGMENT_REF, "a"_a, "s"_a)
+    .def(py::init<const IntervalVector&, const std::vector<Segment>&>(), 
+      CTCVISIBLE_CTCVISIBLE_CONST_INTERVALVECTOR_REF_CONST_VECTOR_SEGMENT_REF, "a"_a, "l"_a)
+    .def(py::init<const IntervalVector&, const Polygon&>(), 
+      CTCVISIBLE_CTCVISIBLE_CONST_INTERVALVECTOR_REF_CONST_POLYGON_REF, "a"_a, "p"_a)
     .def(CONTRACT_BOX_METHOD(CtcVisible, VOID_CTCVISIBLE_CONTRACT_INTERVALVECTOR_REF_CONST));
 }
 
@@ -31,5 +35,9 @@ void export_CtcNoVisible(py::module& m, py::class_<CtcBase<IntervalVector>, pyCt
   nvis
     .def(py::init<const IntervalVector&, const Segment&>(), 
       CTCNOVISIBLE_CTCNOVISIBLE_CONST_INTERVALVECTOR_REF_CONST_SEGMENT_REF, "a"_a, "s"_a)
+    .def(py::init<const IntervalVector&, const std::vector<Segment>&>(), 
+      CTCNOVISIBLE_CTCNOVISIBLE_CONST_INTERVALVECTOR_REF_CONST_VECTOR_SEGMENT_REF, "a"_a, "l"_a)
+    .def(py::init<const IntervalVector&, const Polygon&>(), 
+      CTCNOVISIBLE_CTCNOVISIBLE_CONST_INTERVALVECTOR_REF_CONST_POLYGON_REF, "a"_a, "p"_a)
     .def(CONTRACT_BOX_METHOD(CtcNoVisible, VOID_CTCNOVISIBLE_CONTRACT_INTERVALVECTOR_REF_CONST));
 }

@@ -12,6 +12,7 @@
 #include <codac2_CtcPolar.h>
 #include <codac2_CtcProj.h>
 #include <codac2_CtcVisible.h>
+#include <codac2_SepVisible.h>
 #include <codac2_Approx.h>
 #include <codac2_cart_prod.h>
 #include <codac2_CtcInter.h>

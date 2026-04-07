@@ -24,6 +24,14 @@ void export_SepVisible(py::module& m, py::class_<SepBase, pySep>& pysep)
     .def(py::init<const IntervalVector&, const Segment&>(),
       "a"_a, "s"_a, 
       SEPVISIBLE_SEPVISIBLE_CONST_INTERVALVECTOR_REF_CONST_SEGMENT_REF)
+
+    .def(py::init<const IntervalVector&, const std::vector<Segment>&>(),
+      "a"_a, "s"_a, 
+      SEPVISIBLE_SEPVISIBLE_CONST_INTERVALVECTOR_REF_CONST_VECTOR_SEGMENT_REF)
+
+    .def(py::init<const IntervalVector&, const Polygon&>(),
+      "a"_a, "p"_a, 
+      SEPVISIBLE_SEPVISIBLE_CONST_INTERVALVECTOR_REF_CONST_POLYGON_REF)
     
     .def("separate", &SepVisible::separate, 
       "x"_a, 
