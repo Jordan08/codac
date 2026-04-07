@@ -27,13 +27,15 @@
     add_compile_definitions(FAST_RELEASE)
     message(STATUS "You are running Codac in fast release mode. (option -DCMAKE_BUILD_TYPE=Release is required)")
   endif()
+  
+  find_package(pybind11)
 
   add_executable(${PROJECT_NAME} main.cpp)
   target_compile_options(${PROJECT_NAME} PUBLIC ${CODAC_CXX_FLAGS})
-  target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${CODAC_INCLUDE_DIRS} ${CODAC_CAPD_INCLUDE_DIR})
+  target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${CODAC_INCLUDE_DIRS} ${CODAC_SYMPY_INCLUDE_DIR})
   target_link_libraries(${PROJECT_NAME} PRIVATE
     ${CODAC_LIBRARIES}
-    ${CODAC_CAPD_LIBRARY}
-    capd::capd
+    ${CODAC_SYMPY_LIBRARY} # linking to the codac-sympy extension
+    pybind11::embed # linking to pybind11
     Ibex::ibex
   )
