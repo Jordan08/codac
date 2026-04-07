@@ -21,152 +21,137 @@
 using namespace std;
 using namespace codac2;
 
-CtcVisible::CtcVisible(const IntervalVector& a, const Segment& s)
-  : Ctc<CtcVisible, IntervalVector>(2), 
-    _a(a), _s(s),
-    _v_e2e1(s[1] - s[0]), 
-    _v_ae1(a - s[0]), 
-    _v_ae2(a - s[1])
-{
-    // Compute orientation (ksi)
-    double det_val = (_a[0].mid() - _s[0][0].mid()) * (_v_e2e1[1].mid()) - 
-                     (_a[1].mid() - _s[0][1].mid()) * (_v_e2e1[0].mid());
-    _k = (det_val > 0) ? 1.0 : -1.0;
-}
-
-void CtcVisible::contract(IntervalVector& x) const
-{
-  IntervalVector x1(x), x2(x), x3(x), x4(x);
-
-  contract_det(x1, _s[0], _v_e2e1, _k);
-  contract_det(x2, _s[0], _v_ae1, _k);
-  contract_det(x3, _s[1], _v_ae2, -_k);
-  contract_aabb(x4);
-
-  x &= (x1 | x2 | x3 | x4);
-}
-
-void CtcVisible::contract_det(IntervalVector& x, const IntervalVector& p, const IntervalVector& v, double sign) const
-{
-  IntervalVector v_xp = x - p;
-  IntervalVector v_fixed = v; 
-  
-  Interval target = (sign > 0) ? Interval(0, oo) : Interval(-oo, 0);
-  
-  DetOp::bwd(target, v_xp, v_fixed);
-  x &= v_xp + p;
-}
-
-void CtcVisible::contract_aabb(IntervalVector& x) const
-{
-  auto contract_1dim = [](double a, Interval& x_val, double c, double d) {
-    double min_cd = std::min(c, d);
-    double max_cd = std::max(c, d);
-
-    // Forward contractions
-    Interval i1 = MinOp::fwd(Interval(a), x_val);
-    Interval i2 = MaxOp::fwd(i1, Interval(min_cd));
-    Interval i3 = MaxOp::fwd(Interval(a), x_val);
-    Interval i4 = MinOp::fwd(i3, Interval(max_cd));
-    Interval i5 = i2 - i4;
-
-    // Top of the DAG
-    if ((i5 &= Interval(0, oo)).is_empty()) {
-        x_val.set_empty();
-        return;
+namespace {
+    // 1. Determinant contraction
+    void core_det(IntervalVector& x, const IntervalVector& p, const IntervalVector& v, const double sign) {
+        IntervalVector v_xp = x - p;
+        IntervalVector v_fixed = v;
+        DetOp::bwd(sign * Interval(0, oo), v_xp, v_fixed);
+        x &= v_xp + p;
     }
 
-    // Backward contractions
-    i2 &= i5 + i4;
-    i4 &= i2 - i5;
+    // 2. AABB Contraction
+    // require_overlap = true  -> CtcNoVisible (Intersection)
+    // require_overlap = false -> CtcVisible   (Union)
+    void core_aabb(IntervalVector& x, const IntervalVector& a, const IntervalVector& e1, const IntervalVector& e2, bool require_overlap) {
+        for(int i = 0; i < 2; ++i) {
+            Interval xi = x[i], ai = Interval(a[i]);
+            Interval obs_min = min(e1[i], e2[i]), obs_max = max(e1[i], e2[i]);
 
-    Interval tmp_max_cd = Interval(max_cd);
-    Interval tmp_min_cd = Interval(min_cd);
-    Interval tmp_a = Interval(a);
+            Interval i1 = min(ai, xi), i2 = max(i1, obs_min);
+            Interval i3 = max(ai, xi), i4 = min(i3, obs_max);
+            Interval i5 = i2 - i4;
 
-    MinOp::bwd(i4, i3, tmp_max_cd);
+            Interval target = require_overlap ? Interval(-oo, 0) : Interval(0, oo);
+            
+            if ((i5 &= target).is_empty()) { x.set_empty(); return; }
 
-    tmp_a = Interval(a); // reset
-    MaxOp::bwd(i3, tmp_a, x_val);
-
-    MaxOp::bwd(i2, i1, tmp_min_cd);
-
-    tmp_a = Interval(a); // reset
-    MinOp::bwd(i1, tmp_a, x_val);
-  };
-
-  // Apply the 1D contraction to each dimension
-  // Note: _a and _s are assumed to be Point-like (degenerate intervals) 
-  // so we use .mid() to get the double values c, d, and a.
-  contract_1dim(_a[0].mid(), x[0], _s[0][0].mid(), _s[1][0].mid());
-  contract_1dim(_a[1].mid(), x[1], _s[0][1].mid(), _s[1][1].mid());
-}
-
-CtcNoVisible::CtcNoVisible(const IntervalVector& a, const Segment& s)
-  : Ctc<CtcNoVisible, IntervalVector>(2), 
-    _a(a), _s(s),
-    _v_e2e1(s[1] - s[0]), 
-    _v_ae1(a - s[0]), 
-    _v_ae2(a - s[1])
-{
-    double det_val = (_a[0].mid() - _s[0][0].mid()) * (_v_e2e1[1].mid()) - 
-                     (_a[1].mid() - _s[0][1].mid()) * (_v_e2e1[0].mid());
-    _k = (det_val > 0) ? 1.0 : -1.0;
-}
-
-void CtcNoVisible::contract(IntervalVector& x) const
-{
-  IntervalVector xi(x);
-  contract_det(xi, _s[0], _v_e2e1, -_k);
-  contract_det(xi, _s[0], _v_ae1, -_k);
-  contract_det(xi, _s[1], _v_ae2, _k);
-  contract_aabb(xi);
-
-  x &= xi;
-}
-
-void CtcNoVisible::contract_det(IntervalVector& x, const IntervalVector& p, const IntervalVector& v, double sign) const
-{
-  IntervalVector v_xp = x - p;
-  IntervalVector v_fixed = v; 
-  Interval target = (sign > 0) ? Interval(0, oo) : Interval(-oo, 0);
-  
-  DetOp::bwd(target, v_xp, v_fixed);
-  x &= v_xp + p;
-}
-
-void CtcNoVisible::contract_aabb(IntervalVector& x) const
-{
-  auto contract_1dim = [](double a, Interval& x_val, double c, double d) {
-    double min_cd = std::min(c, d);
-    double max_cd = std::max(c, d);
-
-    Interval i1 = MinOp::fwd(Interval(a), x_val);
-    Interval i2 = MaxOp::fwd(i1, Interval(min_cd));
-    Interval i3 = MaxOp::fwd(Interval(a), x_val);
-    Interval i4 = MinOp::fwd(i3, Interval(max_cd));
-    Interval i5 = i2 - i4;
-
-    if ((i5 &= Interval(-oo, 0)).is_empty()) {
-        x_val.set_empty();
-        return;
+            i2 &= i5 + i4; i4 &= i2 - i5;
+            Interval t_max = obs_max, t_min = obs_min, t_a = ai;
+            MinOp::bwd(i4, i3, t_max); MaxOp::bwd(i3, t_a, xi);
+            t_a = ai; MaxOp::bwd(i2, i1, t_min); MinOp::bwd(i1, t_a, xi);
+            x[i] &= xi;
+        }
     }
+}
 
-    i2 &= i5 + i4;
-    i4 &= i2 - i5;
+void CtcVisible::init_edge(const Segment& s) {
+  VisibilityEdgeData ed;
+  ed.e1 = IntervalVector(s[0]);
+  ed.e2 = IntervalVector(s[1]);
+  ed.v_e2e1 = ed.e2 - ed.e1;
+  ed.v_ae1 = IntervalVector(_a) - ed.e1;
+  ed.v_ae2 = IntervalVector(_a) - ed.e2;
+  ed.s_box = s.box();
 
-    Interval tmp_max_cd = Interval(max_cd);
-    Interval tmp_min_cd = Interval(min_cd);
-    Interval tmp_a = Interval(a);
+  Interval det_val = (_a[0] - ed.e1[0]) * (ed.v_e2e1[1]) - 
+                    (_a[1] - ed.e1[1]) * (ed.v_e2e1[0]);
 
-    MinOp::bwd(i4, i3, tmp_max_cd);
-    tmp_a = Interval(a); 
-    MaxOp::bwd(i3, tmp_a, x_val);
-    MaxOp::bwd(i2, i1, tmp_min_cd);
-    tmp_a = Interval(a);
-    MinOp::bwd(i1, tmp_a, x_val);
-  };
+  if (det_val.lb() > 0) {
+    ed.k = 1.0;
+  } else if (det_val.ub() < 0) {
+    ed.k = -1.0;
+  } else {
+    ed.k = 0.0; // Edge is collinear with point 'a'
+  }
 
-  contract_1dim(_a[0].mid(), x[0], _s[0][0].mid(), _s[1][0].mid());
-  contract_1dim(_a[1].mid(), x[1], _s[0][1].mid(), _s[1][1].mid());
+  _edges.push_back(ed);
+}
+
+CtcVisible::CtcVisible(const IntervalVector& a, const Segment& s) : Ctc(2), _a(a) { 
+  init_edge(s); 
+}
+
+CtcVisible::CtcVisible(const IntervalVector& a, const std::vector<Segment>& s) : Ctc(2), _a(a) {
+  for(const auto& seg : s) init_edge(seg);
+}
+
+CtcVisible::CtcVisible(const IntervalVector& a, const Polygon& p) : Ctc(2), _a(a) {
+    for(const auto& s : p) init_edge(s);
+}
+
+void CtcVisible::contract(IntervalVector& x) const {
+  for (const auto& ed : _edges) {
+    IntervalVector x1(x), x2(x), x3(x), x4(x);
+    
+    core_det(x1, ed.e1, ed.v_e2e1, ed.k);
+    core_det(x2, ed.e1, ed.v_ae1,  ed.k);
+    core_det(x3, ed.e2, ed.v_ae2,  -ed.k);
+    core_aabb(x4, _a, ed.e1, ed.e2, false); // Visible = Disjoint check
+
+    x &= (x1 | x2 | x3 | x4);
+    if (x.is_empty()) return;
+  }
+}
+
+// CtcNoVisible implementation
+void CtcNoVisible::init_edge(const Segment& s) {
+  VisibilityEdgeData ed;
+  ed.e1 = IntervalVector(s[0]);
+  ed.e2 = IntervalVector(s[1]);
+  ed.v_e2e1 = ed.e2 - ed.e1;
+  ed.v_ae1 = IntervalVector(_a) - ed.e1;
+  ed.v_ae2 = IntervalVector(_a) - ed.e2;
+  ed.s_box = s.box();
+
+  Interval det_val = (_a[0] - ed.e1[0]) * (ed.v_e2e1[1]) - 
+                    (_a[1] - ed.e1[1]) * (ed.v_e2e1[0]);
+
+  if (det_val.lb() > 0) {
+    ed.k = 1.0;
+  } else if (det_val.ub() < 0) {
+    ed.k = -1.0;
+  } else {
+    ed.k = 0.0; // Edge is collinear with point 'a'
+  }
+  
+  _edges.push_back(ed);
+}
+
+CtcNoVisible::CtcNoVisible(const IntervalVector& a, const Segment& s) : Ctc(2), _a(a) { 
+  init_edge(s); 
+}
+
+CtcNoVisible::CtcNoVisible(const IntervalVector& a, const std::vector<Segment>& s) : Ctc(2), _a(a) {
+  for(const auto& seg : s) init_edge(seg);
+}
+
+CtcNoVisible::CtcNoVisible(const IntervalVector& a, const Polygon& p) : Ctc(2), _a(a) {
+  for(const auto& s : p) init_edge(s);
+}
+
+void CtcNoVisible::contract(IntervalVector& x) const {
+    IntervalVector x_total_hidden = IntervalVector::Constant(2, Interval::empty());
+
+    for (const auto& ed : _edges) {
+        IntervalVector xi(x);
+        
+        core_det(xi, ed.e1, ed.v_e2e1, -ed.k);
+        core_det(xi, ed.e1, ed.v_ae1, -ed.k);
+        core_det(xi, ed.e2, ed.v_ae2, ed.k);
+        core_aabb(xi, _a, ed.e1, ed.e2, true); // NoVisible = Overlap check
+
+        x_total_hidden |= xi;
+    }
+    x &= x_total_hidden;
 }

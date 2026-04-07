@@ -10,9 +10,17 @@
 
 #include "codac2_Ctc.h"
 #include "codac2_Segment.h"
+#include "codac2_Polygon.h"
 
 namespace codac2
 {
+  struct VisibilityEdgeData {
+      IntervalVector e1, e2;
+      IntervalVector v_e2e1, v_ae1, v_ae2;
+      IntervalVector s_box;
+      double k;
+  };
+
   class CtcVisible : public Ctc<CtcVisible, IntervalVector>
   {
     public:
@@ -21,40 +29,50 @@ namespace codac2
        */
       CtcVisible(const IntervalVector& a, const Segment& s);
 
+      /**
+       * \brief Constructor for visibility from point 'a' relative to a list of segments 's'.
+       */
+      CtcVisible(const IntervalVector& a, const std::vector<Segment>& s);
+
+      /**
+       * \brief Constructor for visibility from point 'a' relative to polygon 'p'.
+       */
+      CtcVisible(const IntervalVector& a, const Polygon& p);
+
       void contract(IntervalVector& x) const;
 
     private:
       const IntervalVector _a;
-      const Segment _s;
-      
-      // Pre-calculated constants for the obstacle
-      const IntervalVector _e1, _e2;
-      const IntervalVector _v_e2e1; // e2 - e1
-      const IntervalVector _v_ae1;  // a - e1
-      const IntervalVector _v_ae2;  // a - e2
-      const IntervalVector _s_box;  // Bounding box of the segment
-      
-      double _k; // Orientation sign (ksi)
+      std::vector<VisibilityEdgeData> _edges;
 
-      // Internal helpers for the 4 conditions
-      void contract_det(IntervalVector& x, const IntervalVector& p, const IntervalVector& v, double sign) const;
-      void contract_aabb(IntervalVector& x) const;
+      void init_edge(const Segment& s);
   };
 
   class CtcNoVisible : public Ctc<CtcNoVisible, IntervalVector>
   {
     public:
+      /**
+       * \brief Constructor for non-visibility from point 'a' relative to segment 's'.
+       */
       CtcNoVisible(const IntervalVector& a, const Segment& s);
+
+      /**
+       * \brief Constructor for non-visibility from point 'a' relative to a list of segments 's'.
+       */
+      CtcNoVisible(const IntervalVector& a, const std::vector<Segment>& s);
+      
+      /**
+       * \brief Constructor for non-visibility from point 'a' relative to polygon 'p'.
+       */
+      CtcNoVisible(const IntervalVector& a, const Polygon& p);
 
       void contract(IntervalVector& x) const;
 
     private:
-      const IntervalVector _a;
-      const Segment _s;
-      const IntervalVector _v_e2e1, _v_ae1, _v_ae2;
-      double _k;
 
-      void contract_det(IntervalVector& x, const IntervalVector& p, const IntervalVector& v, double sign) const;
-      void contract_aabb(IntervalVector& x) const;
+      const IntervalVector _a;
+      std::vector<VisibilityEdgeData> _edges;
+
+      void init_edge(const Segment& s);
   };
 }

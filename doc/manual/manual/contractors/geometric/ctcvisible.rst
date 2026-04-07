@@ -88,10 +88,62 @@ In this example, we characterize the visible and hidden areas from an observer a
 
   Characterization of the non-visibility area. The points that are visible are out of the non-visibility region and belongs to the blue area. The uncertain region is represented in yellow.
 
-Fake Boundaries
----------------
+Separator on the Visibility Constraint
+---------------------------------------
 
-When implementing visibility over a union of segments (e.g., a non-convex polygon), one must be careful of **fake boundaries**. These occur when the intersection of several visibility contractors creates "uncertain" regions that do not correspond to actual physical visibility limits. For a detailed discussion on handling these in interval analysis, see [Brateau2025]_.
+The visibility constraint can also be used as a separator, which allows us to characterize the set of points that are visible or not visible from an observation point. This is particularly useful for applications such as path planning, where one needs to determine the regions that are accessible or hidden from a certain viewpoint.
+
+.. tabs::
+
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [sepvisible_list-begin]
+      :end-before: [sepvisible_list-end]
+      :dedent: 4
+
+  .. group-tab:: C++
+
+    .. literalinclude:: src.cpp
+      :language: c++
+      :start-after: [sepvisible_list-begin]
+      :end-before: [sepvisible_list-end]
+      :dedent: 4
+
+
+.. figure:: sepvisible_segments.png
+  :width: 400px
+
+  Characterization of the visibility area relative to a list of obstacle segments. The green area is visible from the observation point, while blue area is not visible. The uncertain region is represented in yellow.
+
+.. tabs::
+
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [sepvisible_polygon-begin]
+      :end-before: [sepvisible_polygon-end]
+      :dedent: 4
+
+  .. group-tab:: C++
+
+    .. literalinclude:: src.cpp
+      :language: c++
+      :start-after: [sepvisible_polygon-begin]
+      :end-before: [sepvisible_polygon-end]
+      :dedent: 4
+
+
+.. figure:: sepvisible_polygon.png
+  :width: 400px
+
+  Characterization of the visibility area relative to a polygon obstacle. The green area is visible from the observation point, while blue area is not visible. The uncertain region is represented in yellow.
+
+.. note::
+
+  When implementing visibility over a union of segments, **fake boundaries** are appearing. These occur when the intersection of several visibility contractors creates "uncertain" regions that do not correspond to actual physical visibility limits. This is particularly visible on the two Figures that show a line of yellow boxes in the blue area. For a detailed discussion on handling these in interval analysis, see [Brateau2025]_.
 
 Related content
 ---------------

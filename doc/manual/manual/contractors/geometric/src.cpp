@@ -94,8 +94,8 @@ TEST_CASE("CtcVisible - manual")
   {
     // [ctcvisible-beg]
     Vector a({1, 1});
-    Segment s({{1, 1}, {4, 4}}, {{3, 3}, {2, 2}});
-    CtcVisible ctc(Vector({0.0, 0.0}), Segment({2.0, -1.0}, {2.0, 1.0}));
+    Segment s({1, 4}, {3, 2});
+    CtcVisible ctc(a, s);
     DefaultFigure::pave(
       {{-1,6},{-1,6}},
       CtcNoVisible(a, s),
@@ -107,13 +107,39 @@ TEST_CASE("CtcVisible - manual")
   {
     // [ctcnovisible-beg]
     Vector a({1, 1});
-    Segment s({{1, 1}, {4, 4}}, {{3, 3}, {2, 2}});
-    CtcNoVisible sep(a, s);
+    Segment s({1, 4}, {3, 2});
+    CtcVisible ctc(a, s);
     DefaultFigure::pave(
       {{-1,6},{-1,6}},
       CtcNoVisible(a, s),
       1e-1
     );
     // [ctcnovisible-end]
+  }
+
+  {
+    // [sepvisible_list-begin]
+    Vector a({1, 1});
+    std::vector<Segment> l = {{{1,4}, {2, 3}}, {{2, 3}, {2.5,1}}, {{4, 0.5}, {3.5, -0.5}}};
+    SepVisible sep(a, l);
+    DefaultFigure::pave(
+      {{-1,6},{-1,6}},
+      sep,
+      1e-1
+    );
+    // [sepvisible_list-end]
+  }
+
+  {
+    // [sepvisible_polygon-begin]
+    Vector a({1, 1});
+    Polygon p({{2.5,3}, {2, 2}, {3,1}, {4, 1.5}, {4, 3}});
+    SepVisible sep(a, p);
+    DefaultFigure::pave(
+      {{-1,6},{-1,6}},
+      sep,
+      1e-1
+    );
+    // [sepvisible_polygon-end]
   }
 }

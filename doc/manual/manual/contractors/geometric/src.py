@@ -111,6 +111,28 @@ class TestCtcGeometricManual(unittest.TestCase):
       )
     # [ctcnovisible-end]
 
+    # [sepvisible_list-begin]
+    a = [1, 1]
+    l = [Segment([1,4], [2, 3]), Segment([2, 3], [2.5,1]), Segment([4, 0.5], [3.5, -0.5])]
+    sep = SepVisible(a, l)
+    DefaultFigure.pave(
+        [[-1,6],[-1,6]],
+        sep,
+        0.1
+      )
+    # [sepvisible_list-end]
+
+    # [sepvisible_polygon-begin]
+    a = [1, 1]
+    p = Polygon([[2.5,3], [2, 2], [3,1], [4, 1.5], [4, 3]])
+    sep = SepVisible(a, p)
+    DefaultFigure.pave(
+        [[-1,6],[-1,6]],
+        sep,
+        0.1
+      )
+    # [sepvisible_polygon-end]
+
 
 if __name__ ==  '__main__':
   unittest.main()
