@@ -9,7 +9,7 @@ t0tf = Interval(0,15) # temporal domain [t0,tf]
 # System input
 t = ScalarVar()
 # Input u(.) is given as an analytic trajectory
-u = AnalyticTraj(AnalyticFunction([t],3*(sin(t)^2)+t/100), t0tf).sampled(dt)
+u = AnalyticTraj(AnalyticFunction([t],3*sqr(sin(t))+t/100), t0tf).sampled(dt)
 
 # Implementing manually the evolution function (Eq. (2))
 truth_heading = u.primitive()
