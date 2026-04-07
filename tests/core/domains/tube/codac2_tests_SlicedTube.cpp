@@ -279,7 +279,7 @@ TEST_CASE("SlicedTube")
     SlicedTube x(tdomain, AnalyticFunction(
       {t},
       {
-        sin(sqrt(t)+((t-5)^2)*Interval(-0.01,0.01)),
+        sin(sqrt(t)+(sqr(t-5))*Interval(-0.01,0.01)),
         cos(t)+sin(t/0.2)*Interval(-0.1,0.1)
       }));
     SlicedTube u(tdomain, IntervalVector(2));
@@ -656,7 +656,7 @@ TEST_CASE("SlicedTube")
   {
     auto tdomain = create_tdomain({-20,20},0.05);
     ScalarVar t;
-    AnalyticFunction f({t}, Interval(-1,1)*((t^2)+1));
+    AnalyticFunction f({t}, Interval(-1,1)*(sqr(t)+1));
     SlicedTube<Interval> x(tdomain, f);
     CHECK(x.invert(0., x.tdomain()->t0_tf()) == x.tdomain()->t0_tf());
   }

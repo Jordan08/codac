@@ -244,7 +244,7 @@ class TestSlicedTube(unittest.TestCase):
     x = SlicedTube(tdomain, AnalyticFunction(
       [t],
       [
-        sin(sqrt(t)+((t-5)^2)*Interval(-0.01,0.01)),
+        sin(sqrt(t)+(sqr(t-5))*Interval(-0.01,0.01)),
         cos(t)+sin(t/0.2)*Interval(-0.1,0.1)
       ]))
     u = SlicedTube(tdomain, IntervalVector(2))
@@ -519,7 +519,7 @@ class TestSlicedTube(unittest.TestCase):
 
     tdomain = create_tdomain([-20,20],0.05)
     t = ScalarVar()
-    f = AnalyticFunction([t], Interval(-1,1)*((t^2)+1))
+    f = AnalyticFunction([t], Interval(-1,1)*(sqr(t)+1))
     x = SlicedTube(tdomain, f)
     self.assertTrue(x.invert(0., x.tdomain().t0_tf()) == x.tdomain().t0_tf())
 
