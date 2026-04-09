@@ -82,13 +82,15 @@ obs = []
 t = x_truth.tdomain().lb()
 while t < x_truth.tdomain().ub():
 
+  xt = x_truth(t)
+
   if t-prev_t > time_between_obs:
-    obs_ti = g(t,x_truth(t),M) # computing the observation vector
+    obs_ti = g(t,xt,M) # computing the observation vector
 
     for yi in obs_ti:
       prev_t = yi[0].mid()
-      fig.draw_pie(x_truth(t).subvector(0,1), yi[1]|0., yi[2]+x_truth(t)[2], Color.light_gray())
-      fig.draw_pie(x_truth(t).subvector(0,1), yi[1],    yi[2]+x_truth(t)[2], Color.red())
+      fig.draw_pie(xt.subvector(0,1), yi[1]|0., yi[2]+xt[2], Color.light_gray())
+      fig.draw_pie(xt.subvector(0,1), yi[1],    yi[2]+xt[2], Color.red())
 
     obs.extend(obs_ti)
 

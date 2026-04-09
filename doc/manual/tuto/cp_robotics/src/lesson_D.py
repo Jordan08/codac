@@ -134,5 +134,7 @@ x,v = fixpoint(contractors_list, x,v)
 # [D-q13-end]
 
 # [D-q14-beg]
-
+DefaultFigure.draw_tube(x, ColorMap.blue_tube())
+DefaultFigure.draw_trajectory(truth_x)
+DefaultFigure.draw_tank(truth_x(t0tf.ub()), 1., [Color.dark_gray(),Color.yellow()])
 # [D-q14-end]
