@@ -7,6 +7,7 @@
 
 from codac._core import *
 import sys
+import warnings
 
 
 def codac_error(message):
@@ -120,116 +121,28 @@ class Sep(SepBase):
     return super().copy()
 
 
-class CtcInverse(Ctc_IntervalVector):
+def CtcInverse(f, y, with_centered_form=True):
+  f = AnalyticFunction(f)
 
-  def __init__(self, f, y, with_centered_form=True):
+  if isinstance(f, AnalyticFunction_Scalar):
+    return CtcInverse_Interval(f, y, with_centered_form)
 
-    f = AnalyticFunction(f)
+  if isinstance(f, AnalyticFunction_Vector):
+    return CtcInverse_IntervalVector(f, y, with_centered_form)
 
-    if f.nb_args() > 1:
-      total_var = VectorVar(f.input_size())
-
-      i = 0
-      f_args = []
-      for a in f.args():
-        if a.size() == 1:
-          f_args.append(total_var.get_item_0(i))
-          i = i + 1
-        else:
-          f_args.append(total_var.subvector_0(i, i + a.size() - 1))
-          i = i + a.size()
-
-      g = AnalyticFunction([total_var], f(*f_args))
-      CtcInverse.__init__(self, g, y, with_centered_form)
-
-    else:
-      Ctc_IntervalVector.__init__(self, f.input_size())
-      if isinstance(f, AnalyticFunction_Scalar):
-        if not (
-          isinstance(y, (int, float, Interval))
-          or (isinstance(y, list) and len(y) > 0 and len(y) <= 2 and isinstance(y[0], (int, float)))
-        ):
-          codac_error("CtcInverse: inverse argument 'y' should be a scalar type (float,Interval)")
-        self.c = CtcInverse_Interval(f, Interval(y), with_centered_form)
-      elif isinstance(f, AnalyticFunction_Vector):
-        if not isinstance(y, (Vector, IntervalVector, list, Ctc_IntervalVector, Ctc_IntervalVector_)):
-          codac_error(
-            "CtcInverse: inverse argument 'y' should be a vector type "
-            "(Vector,IntervalVector,Ctc_IntervalVector,Ctc_IntervalVector_)"
-          )
-        if isinstance(y, (Ctc_IntervalVector, Ctc_IntervalVector_)):
-          self.c = CtcInverse_IntervalVector(f, y, with_centered_form)
-        else:
-          self.c = CtcInverse_IntervalVector(f, IntervalVector(y), with_centered_form)
-      else:
-        codac_error("CtcInverse: can only build CtcInverse from scalar or vector functions")
-
-  def contract(self, *x):
-
-    if len(x) == 1:
-      return self.c.contract(x[0])
-
-    total = cart_prod(*x)
-    total = self.c.contract(total)
-    i = 0
-    for xi in x:
-      k = xi.size()
-      if k == 1:
-        xi &= total.get_item_0(i)
-      else:
-        xi &= total.subvector_0(i, i + k - 1)
-      i = i + k
-    return x
-
-  def contract_tube(self, *x):
-
-    if len(x) == 1:
-      return self.c.contract_tube(x[0])
-
-    total = tube_cart_prod(*x)
-    total = self.c.contract_tube(total)
-    i = 0
-    for xi in x:
-      k = xi.size()
-      if k == 1:
-        xi &= total.get_item_0(i)
-      else:
-        xi &= total.subvector_0(i, i + k - 1)
-      i = i + k
-    return x
-
-  def copy(self):
-    return self.c.copy()
-
-  def fnc(self):
-    return self.c.fnc()
+  codac_error("CtcInverse: can only build CtcInverse from scalar or vector functions")
 
 
-class CtcInverseNotIn(Ctc_IntervalVector):
+def CtcInverseNotIn(f, y, with_centered_form=True):
+  f = AnalyticFunction(f)
 
-  def __init__(self, f, y, with_centered_form=True):
-    f = AnalyticFunction(f)
+  if isinstance(f, AnalyticFunction_Scalar):
+    return CtcInverseNotIn_Interval(f, y, with_centered_form)
 
-    Ctc_IntervalVector.__init__(self, f.input_size())
-    if isinstance(f, AnalyticFunction_Scalar):
-      if not (
-        isinstance(y, (int, float, Interval))
-        or (isinstance(y, list) and len(y) > 0 and len(y) <= 2 and isinstance(y[0], (int, float)))
-      ):
-        codac_error("CtcInverseNotIn: inverse argument 'y' should be a scalar type (float,Interval)")
-      self.c = CtcInverseNotIn_Interval(f, Interval(y), with_centered_form)
-    elif isinstance(f, AnalyticFunction_Vector):
-      if not isinstance(y, (Vector, IntervalVector, list)):
-        codac_error("CtcInverseNotIn: inverse argument 'y' should be a vector type (Vector,IntervalVector)")
-      self.c = CtcInverseNotIn_IntervalVector(f, IntervalVector(y), with_centered_form)
-    else:
-      codac_error("CtcInverseNotIn: can only build CtcInverseNotIn from scalar or vector functions")
+  if isinstance(f, AnalyticFunction_Vector):
+    return CtcInverseNotIn_IntervalVector(f, y, with_centered_form)
 
-  def contract(self, x):
-    return self.c.contract(x)
-
-  def copy(self):
-    return self.c.copy()
+  codac_error("CtcInverseNotIn: can only build CtcInverseNotIn from scalar or vector functions")
 
 
 def Approx(x, eps=sys.float_info.epsilon*10):

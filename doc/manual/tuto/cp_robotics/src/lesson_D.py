@@ -74,7 +74,7 @@ ctc_deriv = CtcDeriv()
 
 
 # [D-q7-beg]
-ctc_f.contract_tube(x,v)
+ctc_f.contract(x,v)
 ctc_deriv.contract(x,v)
 # [D-q7-end]
 
@@ -120,7 +120,7 @@ ctc_dist = CtcInverse(f_dist, 0) # also expressed in a implicit form g(x,b,d)=0
 # [D-q13-beg]
 def contractors_list(x,v):
   ctc_deriv.contract(x,v)
-  ctc_f.contract_tube(x,v)
+  ctc_f.contract(x,v)
   for yi in Y: # for each range-only measurement
     ti = yi[1]
     pi = x(ti)

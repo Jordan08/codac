@@ -732,13 +732,13 @@ namespace codac2
       contract((x.slice(it)->codomain())...);
   }
 
-  //template<typename... X>
-  //inline void CtcBase<X...>::contract_tube(SlicedTube<X>&... x) const
-  //{
-  //  auto tdomain = std::get<0>(std::make_tuple(x...));
-  //  for(auto it = tdomain.begin() ; it != tdomain.end() ; it++)
-  //    contract((x.slice(it)->codomain())...);
-  //}
+  template<typename... X>
+  inline void CtcBase<X...>::contract_tube(SlicedTube<X>&... x) const
+  {
+    std::cout << "CtcInverse::contract_tube(...) is deprecated; \
+      use CtcInverse::contract(...) with SlicedTube arguments instead" << std::endl;
+    return contract(x...);
+  }
 }
 
 #include "codac2_SlicedTube_integral_impl.h"
