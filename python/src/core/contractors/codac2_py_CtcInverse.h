@@ -37,11 +37,9 @@ void export_CtcInverse(py::module& m, const std::string& export_name, py::class_
   {
     exported
     .def(py::init(
-        [](const py::object& f, const CtcBase<IntervalVector>& c, bool with_centered_form)
+        [](const AnalyticFunction<T>& f, const CtcBase<IntervalVector>& c, bool with_centered_form)
         {
-          return std::make_unique<C>(
-            cast<AnalyticFunction<T>>(f),
-            c.copy(), with_centered_form);
+          return std::make_unique<C>(f, c.copy(), with_centered_form);
         }
       ),
       CTCINVERSE_YX_CTCINVERSE_CONST_ANALYTICFUNCTION_TYPENAME_EXPRTYPE_Y_TYPE_REF_CONST_C_REF_BOOL_BOOL,
@@ -53,13 +51,9 @@ void export_CtcInverse(py::module& m, const std::string& export_name, py::class_
     .def(CONTRACT_BOX_METHOD(C,
       VOID_CTCINVERSE_YX_CONTRACT_X_REF_VARIADIC_CONST))
     
-    .def("contract_tube", [](const C& c, py::object& x1) -> py::object&
+    .def("contract_tube", [](const C& c, SlicedTube<IntervalVector>& x1) -> SlicedTube<IntervalVector>&
         {
-          if(!is_instance<SlicedTube<IntervalVector>>(x1)) {
-            assert_release("contract_tube: invalid tube type");
-          }
-
-          c.contract_tube(cast<SlicedTube<IntervalVector>>(x1));
+          c.contract_tube(x1);
           return x1;
         },
       VOID_CTCBASE_X_CONTRACT_TUBE_SLICEDTUBE_X_REF_VARIADIC_CONST,

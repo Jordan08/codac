@@ -15,7 +15,6 @@
 #include <codac2_CtcEval.h>
 #include "codac2_py_Ctc.h"
 #include "codac2_py_CtcEval_docs.h" // Generated file from Doxygen XML (doxygen2docstring.py):
-#include "codac2_py_cast.h"
 
 using namespace std;
 using namespace codac2;
@@ -30,22 +29,11 @@ void export_CtcEval(py::module& m)
     .def(py::init<>(),
       CTCEVAL_CTCEVAL)
 
-    .def("contract", [](const CtcEval& ctc, Interval& t, py::object& y, py::object& x, const py::object& v)
-        {
-          if(is_instance<SlicedTube<Interval>>(x)
-            && is_instance<SlicedTube<Interval>>(v)
-            && is_instance<Interval>(y))
-            ctc.contract(t, cast<Interval&>(y), cast<SlicedTube<Interval>>(x), cast<SlicedTube<Interval>>(v));
+    .def("contract", (void (CtcEval::*)(Interval&,Interval&,SlicedTube<Interval>&,const SlicedTube<Interval>&) const)&CtcEval::contract,
+      VOID_CTCEVAL_CONTRACT_INTERVAL_REF_T_REF_SLICEDTUBE_T_REF_CONST_SLICEDTUBE_T_REF_CONST,
+      "t"_a, "y"_a, "x"_a, "v"_a)
 
-          else if(is_instance<SlicedTube<IntervalVector>>(x)
-            && is_instance<SlicedTube<IntervalVector>>(v)
-            && is_instance<IntervalVector>(y))
-            ctc.contract(t, cast<IntervalVector&>(y), cast<SlicedTube<IntervalVector>>(x), cast<SlicedTube<IntervalVector>>(v));
-
-          else {
-            assert_release("contract: invalid input types");
-          }
-        },
+    .def("contract", (void (CtcEval::*)(Interval&,IntervalVector&,SlicedTube<IntervalVector>&,const SlicedTube<IntervalVector>&) const)&CtcEval::contract,
       VOID_CTCEVAL_CONTRACT_INTERVAL_REF_T_REF_SLICEDTUBE_T_REF_CONST_SLICEDTUBE_T_REF_CONST,
       "t"_a, "y"_a, "x"_a, "v"_a)
 
