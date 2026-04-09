@@ -18,9 +18,11 @@
 #include <codac2_Parallelepiped.h>
 #include <codac2_AnalyticFunction.h>
 #include <codac2_analytic_variables.h>
+#include <codac2_analytic_flat_input_layout.h>
 #include "codac2_py_AnalyticFunction_docs.h" // Generated file from Doxygen XML (doxygen2docstring.py)
 #include "codac2_py_AnalyticFunction_impl_docs.h" // Generated file from Doxygen XML (doxygen2docstring.py)
 #include "codac2_py_FunctionBase_docs.h" // Generated file from Doxygen XML (doxygen2docstring.py)
+#include "codac2_py_analytic_flat_input_layout_docs.h" // Generated file from Doxygen XML (doxygen2docstring.py)
 #include "codac2_py_AnalyticExprWrapper.h"
 #include "codac2_py_cast.h"
 
@@ -486,4 +488,12 @@ void export_AnalyticFunction(py::module& m, const std::string& export_name)
         },
       OSTREAM_REF_OPERATOROUT_OSTREAM_REF_CONST_ANALYTICFUNCTION_U_REF)
   ;
+
+
+  m.def("unaryize_function", (AnalyticFunction<ScalarType> (*)(const AnalyticFunction<ScalarType>&))&codac2::unaryize_function,
+    ANALYTICFUNCTION_T_UNARYIZE_FUNCTION_CONST_ANALYTICFUNCTION_T_REF,
+    "f"_a);
+  m.def("unaryize_function", (AnalyticFunction<VectorType> (*)(const AnalyticFunction<VectorType>&))&codac2::unaryize_function,
+    ANALYTICFUNCTION_T_UNARYIZE_FUNCTION_CONST_ANALYTICFUNCTION_T_REF,
+    "f"_a);
 }
