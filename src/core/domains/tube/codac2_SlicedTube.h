@@ -725,12 +725,20 @@ namespace codac2
   // Ctc
 
   template<typename... X>
-  inline void CtcBase<X...>::contract_tube(SlicedTube<X>&... x) const
+  inline void CtcBase<X...>::contract(SlicedTube<X>&... x) const
   {
     auto tdomain = std::get<0>(std::make_tuple(x...));
     for(auto it = tdomain.begin() ; it != tdomain.end() ; it++)
       contract((x.slice(it)->codomain())...);
   }
+
+  //template<typename... X>
+  //inline void CtcBase<X...>::contract_tube(SlicedTube<X>&... x) const
+  //{
+  //  auto tdomain = std::get<0>(std::make_tuple(x...));
+  //  for(auto it = tdomain.begin() ; it != tdomain.end() ; it++)
+  //    contract((x.slice(it)->codomain())...);
+  //}
 }
 
 #include "codac2_SlicedTube_integral_impl.h"
