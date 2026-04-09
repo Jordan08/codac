@@ -15,12 +15,15 @@
 
 namespace codac2
 {
-  template<typename Y,typename X0=IntervalVector,typename... X>
+  template<typename Y_, typename X0=IntervalVector, typename... X>
   class CtcInverseNotIn : public CtcUnion<X0,X...>
   {
     public:
 
-      CtcInverseNotIn(const AnalyticFunction<typename ExprType<Y>::Type>& f, const Y& y, bool with_centered_form = true)
+      using Y = typename Wrapper<Y_>::Domain; // Y_ is a possible Eigen expr. type
+      using OutputType = typename ExprType<Y>::Type;
+
+      CtcInverseNotIn(const AnalyticFunction<OutputType>& f, const Y& y, bool with_centered_form = true)
         : CtcUnion<X0,X...>(f.input_size())
       {
         const bool is_not_in = true;
@@ -35,7 +38,7 @@ namespace codac2
 
       template<typename C>
         requires IsCtcBaseOrPtr<C,Y>
-      CtcInverseNotIn(const AnalyticFunction<typename ExprType<Y>::Type>& f, const C& ctc_compl, bool with_centered_form = true)
+      CtcInverseNotIn(const AnalyticFunction<OutputType>& f, const C& ctc_compl, bool with_centered_form = true)
         : CtcUnion<X0,X...>(f.input_size())
       {
         const bool is_not_in = true;
