@@ -55,6 +55,8 @@ void export_CtcProj(py::module& m, py::class_<CtcBase<IntervalVector>,pyCtcInter
 void export_CtcQInter(py::module& m, py::class_<CtcBase<IntervalVector>,pyCtcIntervalVector>& ctc);
 void export_CtcSegment(py::module& m, py::class_<CtcBase<IntervalVector>,pyCtcIntervalVector>& ctc);
 void export_CtcUnion(py::module& m, py::class_<CtcBase<IntervalVector>,pyCtcIntervalVector>& ctc);
+void export_CtcVisible(py::module& m, py::class_<CtcBase<IntervalVector>,pyCtcIntervalVector>& ctc);
+void export_CtcNoVisible(py::module& m, py::class_<CtcBase<IntervalVector>,pyCtcIntervalVector>& ctc);
 void export_CtcWrapper(py::module& m, py::class_<CtcBase<IntervalVector>,pyCtcIntervalVector>& ctc);
 void export_linear_ctc(py::module& m);
 
@@ -146,6 +148,7 @@ void export_SepProj(py::module& m, py::class_<SepBase,pySep>& sep);
 void export_SepQInter(py::module& m, py::class_<SepBase,pySep>& sep);
 void export_SepTransform(py::module& m, py::class_<SepBase,pySep>& sep);
 void export_SepUnion(py::module& m, py::class_<SepBase,pySep>& sep);
+void export_SepVisible(py::module& m, py::class_<SepBase,pySep>& sep);
 void export_SepWrapper(py::module& m, py::class_<SepBase,pySep>& sep);
 
 // tools
@@ -209,6 +212,8 @@ PYBIND11_MODULE(_core, m)
   export_CtcQInter(m, py_ctc_iv);
   export_CtcSegment(m, py_ctc_iv);
   export_CtcUnion(m, py_ctc_iv);
+  export_CtcVisible(m, py_ctc_iv);
+  export_CtcNoVisible(m, py_ctc_iv);
   export_CtcWrapper(m, py_ctc_iv);
   export_linear_ctc(m);
 
@@ -318,6 +323,7 @@ PYBIND11_MODULE(_core, m)
   export_SepQInter(m,py_sep);
   export_SepTransform(m,py_sep);
   export_SepUnion(m,py_sep);
+  export_SepVisible(m,py_sep);
   export_SepWrapper(m,py_sep);
 
   // tools
