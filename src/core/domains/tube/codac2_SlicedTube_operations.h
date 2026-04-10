@@ -32,7 +32,7 @@ namespace codac2
     for(auto it = y.tdomain()->begin() ; it != y.tdomain()->end() ; it++) \
     { \
       auto sy = y.slice(it); \
-      sy->codomain() = f(sy->codomain(),x2.slice(it)->codomain()); \
+      sy->codomain() = f(x1.slice(it)->codomain(),sy->codomain()); \
     } \
     return y; \
   } \
