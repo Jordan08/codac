@@ -28,7 +28,7 @@ namespace codac2
   #define macro_binary_tube_tube(f) \
   { \
     assert_release(x1.tdomain() == x2.tdomain()); \
-    auto y = x2; \
+    auto y = x1; \
     for(auto it = y.tdomain()->begin() ; it != y.tdomain()->end() ; it++) \
     { \
       auto sy = y.slice(it); \
