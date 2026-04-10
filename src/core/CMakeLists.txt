@@ -41,6 +41,8 @@
     ${CMAKE_CURRENT_SOURCE_DIR}/contractors/codac2_CtcLohner.h
     ${CMAKE_CURRENT_SOURCE_DIR}/contractors/codac2_CtcNot.h
     ${CMAKE_CURRENT_SOURCE_DIR}/contractors/codac2_CtcUnion.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/contractors/codac2_CtcVisible.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/contractors/codac2_CtcVisible.h
     ${CMAKE_CURRENT_SOURCE_DIR}/contractors/codac2_CtcPointCloud.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/contractors/codac2_CtcPointCloud.h
     ${CMAKE_CURRENT_SOURCE_DIR}/contractors/codac2_CtcPolar.cpp
@@ -248,6 +250,7 @@
     ${CMAKE_CURRENT_SOURCE_DIR}/separators/codac2_SepTransform.h
     ${CMAKE_CURRENT_SOURCE_DIR}/separators/codac2_SepUnion.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/separators/codac2_SepUnion.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/separators/codac2_SepVisible.h
     ${CMAKE_CURRENT_SOURCE_DIR}/separators/codac2_SepWrapper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/separators/codac2_SepWrapper.h
 
