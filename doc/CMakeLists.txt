@@ -6,7 +6,7 @@
 
   if(WITH_PYTHON)
     
-    find_package(Doxygen 1.16.1 QUIET)
+    find_package(Doxygen)# 1.16.1 QUIET)
 
     if(NOT DOXYGEN_FOUND)
 
