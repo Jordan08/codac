@@ -1,4 +1,5 @@
-/** * \file codac2_CtcVisible.h
+/** 
+ *  \file codac2_CtcVisible.h
  * ----------------------------------------------------------------------------
  * \date       2026
  * \author     Quentin Brateau
@@ -21,7 +22,17 @@ namespace codac2
       double k;
   };
 
-  class CtcVisible : public Ctc<CtcVisible, IntervalVector>
+  class CtcVisibleBase
+  {
+    protected:
+
+      CtcVisibleBase(const IntervalVector& a, const std::vector<Segment>& edges);
+
+      const IntervalVector _a;
+      std::vector<VisibilityEdgeData> _edges;
+  };
+
+  class CtcVisible : public Ctc<CtcVisible, IntervalVector>, CtcVisibleBase
   {
     public:
       /**
@@ -40,15 +51,9 @@ namespace codac2
       CtcVisible(const IntervalVector& a, const Polygon& p);
 
       void contract(IntervalVector& x) const;
-
-    private:
-      const IntervalVector _a;
-      std::vector<VisibilityEdgeData> _edges;
-
-      void init_edge(const Segment& s);
   };
 
-  class CtcNoVisible : public Ctc<CtcNoVisible, IntervalVector>
+  class CtcNoVisible : public Ctc<CtcNoVisible, IntervalVector>, CtcVisibleBase
   {
     public:
       /**
@@ -67,12 +72,5 @@ namespace codac2
       CtcNoVisible(const IntervalVector& a, const Polygon& p);
 
       void contract(IntervalVector& x) const;
-
-    private:
-
-      const IntervalVector _a;
-      std::vector<VisibilityEdgeData> _edges;
-
-      void init_edge(const Segment& s);
   };
 }
