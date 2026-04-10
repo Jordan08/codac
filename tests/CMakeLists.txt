@@ -136,6 +136,7 @@ endif()
 if (WITH_CAPD)
   list(APPEND SRC_TESTS
     extensions/capd/codac2_tests_capd
+    extensions/capd/codac2_tests_peibos_capd
     ../doc/manual/manual/extensions/capd/src
   )
   set(CODAC_LIBRARIES ${CODAC_LIBRARIES} ${PROJECT_NAME}-capd capd::capd)
