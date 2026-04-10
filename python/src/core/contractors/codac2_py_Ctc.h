@@ -14,6 +14,7 @@
 #include <pybind11/operators.h>
 #include <pybind11/stl.h>
 #include <codac2_Ctc.h>
+#include <codac2_SlicedTube.h>
 #include <codac2_IntervalVector.h>
 #include "codac2_py_matlab.h"
 

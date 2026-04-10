@@ -9,6 +9,7 @@ Contractors, separators
   CtcLohner <dynamic/ctclohner>
   CtcDist <geometric/ctcdist>
   CtcPolar <geometric/ctcpolar>
+  CtcVisible <geometric/ctcvisible>
 
 ..   What are contractors? <http://codac.io>
 ..   The Ctc class <http://codac.io>
