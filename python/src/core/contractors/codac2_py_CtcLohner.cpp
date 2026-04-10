@@ -30,8 +30,14 @@ void export_CtcLohner(py::module& m)
       CTCLOHNER_CTCLOHNER_CONST_ANALYTICFUNCTION_VECTORTYPE_REF_INT_DOUBLE,
       "f"_a, "contractions"_a = 5, "eps"_a = 0.1)
 
-    .def("contract", &CtcLohner::contract,
+    .def("contract",
+        [](const CtcLohner& ctc, SlicedTube<IntervalVector>& x, const TimePropag& t_propa)
+        -> SlicedTube<IntervalVector>&
+        {
+          ctc.contract(x,t_propa);
+          return x;
+        },
       VOID_CTCLOHNER_CONTRACT_SLICEDTUBE_INTERVALVECTOR_REF_TIMEPROPAG_CONST,
-      "tube"_a, "t_propa"_a = TimePropag::FWD_BWD)
+      "x"_a, "t_propa"_a = TimePropag::FWD_BWD);
   ;
 }

@@ -170,7 +170,7 @@ def contractors_list(tube_x12):
 
     tube_x12.set(pi, tj)
 
-  ctc_deriv.contract(tube_x12, tube_v12)
+  tube_x12,tube_v12 = ctc_deriv.contract(tube_x12,tube_v12)
   return tube_x12
 
 tube_x12 = fixpoint(contractors_list, tube_x12)

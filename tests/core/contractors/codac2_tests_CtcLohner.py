@@ -23,7 +23,7 @@ class TestCtcLohner(unittest.TestCase):
     tube = SlicedTube(t,IntervalVector(1))
     tube.set(IntervalVector([[1.5,1.5]]),t_lb)
 
-    ctc.contract(tube, TimePropag.FWD)
+    tube = ctc.contract(tube, TimePropag.FWD)
 
     expected = 1.5 + Interval(0, 0.5) * Interval(1., 2.)
 
@@ -41,7 +41,7 @@ class TestCtcLohner(unittest.TestCase):
     tube = SlicedTube(t,IntervalVector(1))
     tube.set(IntervalVector([2. * atan(exp(-t_lb) * tan(0.5))]),t_lb)
 
-    ctc.contract(tube, TimePropag.FWD)
+    tube = ctc.contract(tube, TimePropag.FWD)
 
     expected = Interval(2. * atan(exp(-t_lb) * tan(0.5))) | Interval(2. * atan(exp(-t_ub) * tan(0.5)))
 
@@ -59,7 +59,7 @@ class TestCtcLohner(unittest.TestCase):
     tube = SlicedTube(t,IntervalVector(1))
     tube.set(IntervalVector([exp(-t_lb)]),t_lb)
 
-    ctc.contract(tube, TimePropag.FWD)
+    tube = ctc.contract(tube, TimePropag.FWD)
 
     expected = IntervalVector([exp(-t_lb)]) | IntervalVector([exp(-t_ub)])
 
@@ -77,7 +77,7 @@ class TestCtcLohner(unittest.TestCase):
     tube = SlicedTube(t,IntervalVector(2))
     tube.set(IntervalVector([exp(0),exp(0)]),t_lb)
 
-    ctc.contract(tube, TimePropag.FWD)
+    tube = ctc.contract(tube, TimePropag.FWD)
 
     expected_0 = IntervalVector([exp(-t_lb),exp(t_lb)])
     self.assertTrue(tube(0.).is_superset(expected_0)) # legacy test
@@ -98,7 +98,7 @@ class TestCtcLohner(unittest.TestCase):
     tube = SlicedTube(t,IntervalVector(2))
     tube.set(IntervalVector([exp(-1.),exp(1.)]),t_ub)
 
-    ctc.contract(tube, TimePropag.BWD)
+    tube = ctc.contract(tube, TimePropag.BWD)
 
     expected_0 = IntervalVector([exp(-t_lb),exp(t_lb)])
     self.assertTrue(tube(0.).is_superset(expected_0)) # legacy test
@@ -119,7 +119,7 @@ class TestCtcLohner(unittest.TestCase):
     tube = SlicedTube(t,IntervalVector(2))
     tube.set(IntervalVector([exp(-0.5),exp(0.5)]), t.t0_tf().mid())
 
-    ctc.contract(tube, TimePropag.FWD_BWD)
+    tube = ctc.contract(tube, TimePropag.FWD_BWD)
 
     expected_0 = IntervalVector([exp(-t_lb),exp(t_lb)])
     self.assertTrue(tube(0.).is_superset(expected_0)) # legacy test
@@ -146,8 +146,8 @@ class TestCtcLohner(unittest.TestCase):
     f = AnalyticFunction([x], [-x[0],-sin(x[1])])
     ctc_lohner = CtcLohner(f)
 
-    ctc_lohner.contract(a)
-    ctc_lohner.contract(b)
+    a = ctc_lohner.contract(a)
+    b = ctc_lohner.contract(b)
 
     # DefaultFigure.plot_tube(a[0])
     # DefaultFigure.plot_tube(b[0],StyleProperties([Color.blue(),Color.blue()]))

@@ -171,7 +171,7 @@ def ctc_all_obs(x):
     x.set(xi,yi[0]) # restriction on the tube x at time ti=yi[0]
 
   x,v = ctc_f.contract(x,v)
-  ctc_deriv.contract(x,v)
+  x,v = ctc_deriv.contract(x,v)
 
   return x
 

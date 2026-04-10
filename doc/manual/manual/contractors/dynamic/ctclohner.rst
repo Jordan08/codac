@@ -31,7 +31,7 @@ This contractor is supposed to yield better results than the Picard contractor, 
 
       var = VectorVar(n) # n is the dimension of the system
       ctc_lohner = CtcLohner(AnalyticFunction([var], [expr1, expr2, ..., exprn]))
-      ctc_lohner.contract(x)
+      x = ctc_lohner.contract(x)
 
     .. code-tab:: c++
 
@@ -80,8 +80,8 @@ The Lohner contractor is used for obtaining a two-dimensional tube, considering 
     ctc_lohner = CtcLohner(f)
 
     # Contracting the tubes
-    ctc_lohner.contract(a)
-    ctc_lohner.contract(b)
+    a = ctc_lohner.contract(a)
+    b = ctc_lohner.contract(b)
 
     # Graphics
     fig1 = Figure2D("Lohner_1",GraphicOutput.VIBES|GraphicOutput.IPE)

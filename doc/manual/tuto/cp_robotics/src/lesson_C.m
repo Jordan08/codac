@@ -182,7 +182,9 @@ function [x,v] = ctc_all_obs(x,v,obs,ctc_plus,ctc_polar,ctc_minus,ctc_constell,c
     x = res_ctc_f{1};
     v = res_ctc_f{2};
 
-    ctc_deriv.contract(x,v);
+    res_ctc_deriv = ctc_deriv.contract(x,v);
+    x = res_ctc_deriv{1};
+    v = res_ctc_deriv{2};
 
 end
 
