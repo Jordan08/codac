@@ -5,9 +5,9 @@ The CtcVisible and CtcNoVisible contractors
 
   Main authors: `Quentin Brateau <https://teusner.github.io/>`_ 
 
-The visibility constraint characterizes the set of points :math:`\mathbf{x} \in \mathbb{R}^2` that are visible from an observation point :math:`\mathbf{a}` given an obstacle segment :math:`[\mathbf{e}_1, \mathbf{e}_2]`. 
+The visibility constraint characterizes the set of points :math:`\mathbf{x} \in \mathbb{R}^2` that are visible from an observation point :math:`\mathbf{a}` given an obstacle segment :math:`[\mathbf{e}_1\mathbf{e}_2]`. 
 
-This constraint is based on the work of **Rémy Guyonneau** (see [Guyonneau2013]_). A point :math:`\mathbf{x}` is considered visible if the segment :math:`[\mathbf{a}, \mathbf{x}]` does not intersect the obstacle segment :math:`[\mathbf{e}_1, \mathbf{e}_2]`. This creates a "shadow cone" originating from :math:`\mathbf{a}`.
+This constraint is based on the work of **Rémy Guyonneau** (see [Guyonneau2013]_). A point :math:`\mathbf{x}` is considered visible if the segment :math:`[\mathbf{a}\mathbf{x}]` does not intersect the obstacle segment :math:`[\mathbf{e}_1\mathbf{e}_2]`. This creates a "shadow cone" originating from :math:`\mathbf{a}`.
 
 .. image:: visibility.png
    :alt: Illustration of the visibility constraint from an observation point [Guyonneau2013]_
@@ -91,7 +91,7 @@ In this example, we characterize the visible and hidden areas from an observer a
 Separator on the Visibility Constraint
 ---------------------------------------
 
-The visibility constraint can also be used as a separator, which allows us to characterize the set of points that are visible or not visible from an observation point. This is particularly useful for applications such as path planning, where one needs to determine the regions that are accessible or hidden from a certain viewpoint.
+The visibility constraint can also be applied as a separator, which allows us to characterize the set of points that are visible or not visible from an observation point. This is particularly useful for applications such as path planning, where one needs to determine the regions that are accessible or hidden from a certain viewpoint.
 
 .. tabs::
 

@@ -99,8 +99,8 @@ TEST_CASE("CtcVisible - manual")
     CtcVisible ctc(a, s);
     DefaultFigure::pave(
       {{-1,6},{-1,6}},
-      CtcNoVisible(a, s),
-      1e-1
+      ctc,
+      0.1
     );
     // [ctcvisible-end]
   }
@@ -109,11 +109,11 @@ TEST_CASE("CtcVisible - manual")
     // [ctcnovisible-beg]
     Vector a({1, 1});
     Segment s({1, 4}, {3, 2});
-    CtcVisible ctc(a, s);
+    CtcNoVisible ctc(a, s);
     DefaultFigure::pave(
       {{-1,6},{-1,6}},
-      CtcNoVisible(a, s),
-      1e-1
+      ctc,
+      0.1
     );
     // [ctcnovisible-end]
   }
