@@ -16,7 +16,6 @@
 #include <codac2_SlicedTube_operations.h>
 #include <codac2_TubeBase.h>
 #include <codac2_SampledTraj.h>
-#include "codac2_py_cast.h"
 #include "codac2_py_matlab.h"
 #include "codac2_py_SlicedTubeBase_docs.h" // Generated file from Doxygen XML (doxygen2docstring.py):
 #include "codac2_py_SlicedTube_docs.h" // Generated file from Doxygen XML (doxygen2docstring.py):
@@ -201,10 +200,9 @@ py::class_<SlicedTube<T>,TubeBase> _export_SlicedTube(py::module& m, const std::
   {
     exported_slicedtube_class
     
-      .def("__call__", [](const SlicedTube<T>& x, const Interval& t, const py::object& v)
+      .def("__call__", [](const SlicedTube<T>& x, const Interval& t, const SlicedTube<T>& v)
           {
-            assert_release(is_instance<SlicedTube<T>>(v));
-            return x(t, cast<SlicedTube<T>>(v));
+            return x(t,v);
           },
         T_SLICEDTUBE_T_OPERATORCALL_CONST_INTERVAL_REF_CONST_SLICEDTUBE_T_REF_CONST,
         "t"_a, "v"_a)
@@ -232,24 +230,20 @@ py::class_<SlicedTube<T>,TubeBase> _export_SlicedTube(py::module& m, const std::
         SLICEDTUBE_T_SLICEDTUBE_T_PRIMITIVE_CONST_T_REF_CONST,
         "x0"_a)
 
-      .def("invert", [](const SlicedTube<T>& x, const T& y, const py::object& v, const Interval& t)
-          {
-            assert_release(is_instance<SlicedTube<T>>(v));
-            return x.invert(y, cast<SlicedTube<T>>(v), t);
-          },
+      .def("invert", (Interval (SlicedTube<T>::*)(const T&,const Interval&) const) &SlicedTube<T>::invert,
+        INTERVAL_SLICEDTUBE_T_INVERT_CONST_T_REF_CONST_INTERVAL_REF_CONST,
+        "y"_a, "t"_a=Interval())
+      
+      .def("invert", (void (SlicedTube<T>::*)(const T&,std::vector<Interval>&,const Interval&) const) &SlicedTube<T>::invert,
+        VOID_SLICEDTUBE_T_INVERT_CONST_T_REF_VECTOR_INTERVAL_REF_CONST_INTERVAL_REF_CONST,
+        "y"_a, "v_t"_a, "t"_a=Interval())
+      
+      .def("invert", (Interval (SlicedTube<T>::*)(const T&,const SlicedTube<T>&,const Interval&) const) &SlicedTube<T>::invert,
         INTERVAL_SLICEDTUBE_T_INVERT_CONST_T_REF_CONST_SLICEDTUBE_T_REF_CONST_INTERVAL_REF_CONST,
         "y"_a, "v"_a, "t"_a=Interval())
-
-      .def("invert", [](const SlicedTube<T>& x, const T& y, py::list& v_t, const py::object& v, const Interval& t)
-          {
-            assert_release(is_instance<SlicedTube<T>>(v));
-            vector<Interval> vector_t;
-            x.invert(y, vector_t, cast<SlicedTube<T>>(v), t);
-            v_t.clear();
-            for(const auto& ti : vector_t)
-              v_t.append(ti);
-          },
-        INTERVAL_SLICEDTUBE_T_INVERT_CONST_T_REF_CONST_SLICEDTUBE_T_REF_CONST_INTERVAL_REF_CONST,
+      
+      .def("invert", (void (SlicedTube<T>::*)(const T&,std::vector<Interval>&,const SlicedTube<T>&,const Interval&) const) &SlicedTube<T>::invert,
+        VOID_SLICEDTUBE_T_INVERT_CONST_T_REF_VECTOR_INTERVAL_REF_CONST_SLICEDTUBE_T_REF_CONST_INTERVAL_REF_CONST,
         "y"_a, "v_t"_a, "v"_a, "t"_a=Interval())
 
     ;

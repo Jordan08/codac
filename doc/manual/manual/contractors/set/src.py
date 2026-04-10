@@ -26,7 +26,7 @@ class TestCtcSetManual(unittest.TestCase):
 
     # [ctcinter-2-beg]
     x = IntervalVector([[-oo,oo],[-oo,oo]])
-    c3.contract(x)
+    x = c3.contract(x)
     # x = [ [-10, 2] ; [0, 2] ]
     # [ctcinter-2-end]
 

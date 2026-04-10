@@ -21,48 +21,53 @@ namespace codac2
 {
   class CtcNot;
   
-  template<typename Y_, typename X0=IntervalVector, typename... X>
-  class CtcInverse : public Ctc<CtcInverse<Y_,X0,X...>,X0,X...>
+  template<typename Y, typename... X>
+    requires (sizeof...(X) > 0)
+  class CtcInverse : public Ctc<CtcInverse<Y,X...>,X...>
   {
     public:
 
-      //using Ctc<CtcInverse<Y,X0,X...>,X0,X...>::contract;
-      using Y = typename Wrapper<Y_>::Domain; // Y_ is a possible Eigen expr. type
-      using OutputType = typename ExprType<Y>::Type;
+      using Ctc<CtcInverse<Y,X...>,X...>::contract;
 
       template<typename C>
         requires IsCtcBaseOrPtr<C,Y>
-      CtcInverse(const AnalyticFunction<OutputType>& f, const C& ctc_y, bool with_centered_form = true, bool is_not_in = false)
-        : Ctc<CtcInverse<Y,X0,X...>,X0,X...>(f.input_size()), _f(f), _ctc_y(ctc_y), _with_centered_form(with_centered_form), _is_not_in(is_not_in)
+      CtcInverse(const AnalyticFunction<typename ExprType<Y>::Type>& f, const C& ctc_y, bool with_centered_form = true, bool is_not_in = false, double freq = 0.)
+        : Ctc<CtcInverse<Y,X...>,X...>(f.args()[0]->size()), _f(f), _ctc_y(ctc_y), _with_centered_form(with_centered_form), _is_not_in(is_not_in), _freq(freq)
       {
         assert_release([&]() { return f.output_size() == size_of(ctc_y); }()
           && "CtcInverse: invalid dimension of image argument ('y' or 'ctc_y')");
       }
 
-      CtcInverse(const AnalyticFunction<OutputType>& f, const Y& y, bool with_centered_form = true, bool is_not_in = false)
-        : CtcInverse(f, CtcWrapper<Y,Y>(y), with_centered_form, is_not_in)
+      CtcInverse(const AnalyticFunction<typename ExprType<Y>::Type>& f, const Y& y, bool with_centered_form = true, bool is_not_in = false, double freq = 0.)
+        : CtcInverse(f, CtcWrapper<Y,Y>(y), with_centered_form, is_not_in, freq)
       { }
 
-      void contract(X0& x0, X&... x) const
+      void contract(X&... x) const
       {
-        return contract_(*_ctc_y.front(), x0, x...);
+        return contract_(*_ctc_y.front(), x...);
       }
 
-      void contract_(const Y& y, X0& x0, X&... x) const
+      void contract_(const Y& y, X&... x) const
       {
-        return contract_(CtcWrapper<Y,Y>(y), x0, x...);
+        return contract_(CtcWrapper<Y,Y>(y), x...);
       }
 
-      void contract_(const CtcBase<Y>& ctc_y, X0& x0, X&... x) const
+      void contract_(const CtcBase<Y>& ctc_y, X&... x) const
       {
+        //using X0b = std::tuple_element_t<0, std::tuple<X...>>;
+        //X0b x0_before = std::get<0>(std::tie(x...));
+//double md = std::get<0>(std::tie(x...)).max_diam();
+bool using_nat = true;//_both || md >= _freq;
+bool using_centered = true;//_both || _both_then_one || md < _freq;
+
         ValuesMap v;
         // Setting user values into a map before the tree evaluation
-        _f.fill_from_args(v, x0, x...);
+        _f.fill_from_args(v, x...);
 
         // Forward/backward algorithm:
 
           // [1/4] Forward evaluation
-          _f.expr()->fwd_eval(v, _f.input_size(), !_with_centered_form);
+          _f.expr()->fwd_eval(v, _f.args().total_size(), !using_centered/*!_with_centered_form*/);
           auto& val_expr = _f.expr()->value(v);
 
           if(_is_not_in && !val_expr.def_domain)
@@ -80,17 +85,22 @@ namespace codac2
           // expression (enabled by default). This step must be processed before the
           // backward part of the FwdBwd algorithm (the .m, .a values must not be
           // changed before the centered evaluation).
-          if(_with_centered_form && val_expr.def_domain && !val_expr.da.is_unbounded() && val_expr.da.size() != 0)
+
+
+          //if(_both || _both_then_one || md < _freq)
+          //  if(_with_centered_form && val_expr.def_domain && !val_expr.da.is_unbounded() && val_expr.da.size() != 0)
+          if(using_centered)
           {
             // todo: the above condition !val_expr.da.is_unbounded() should not be necesary,
             // possible bug in MulOp in case of unbounded domain?
+            using X0 = std::tuple_element_t<0, std::tuple<X...>>;
 
-            if constexpr(sizeof...(X) == 0 && std::is_same_v<X0,IntervalVector>)
+            if constexpr(sizeof...(X) == 1 && std::is_same_v<X0,IntervalVector>)
             {
-              X0 x_mid = X0(x0.mid());
+              X0& x_ = std::get<0>(std::tie(x...));
+              X0 x_mid = X0(x_.mid());
 
               assert(val_expr.a.size() == val_expr.m.size());
-              IntervalVector fm { val_expr.a - val_expr.m };
 
               if constexpr(std::is_same_v<Y,IntervalMatrix>)
               {
@@ -99,9 +109,10 @@ namespace codac2
 
               else
               {
-                IntervalVector p = x0 - x_mid;
+                IntervalVector p = x_ - x_mid;
+                IntervalVector fm { val_expr.a - val_expr.m };
                 MulOp::bwd(fm, val_expr.da, p);
-                x0 &= p + x_mid;
+                x_ &= p + x_mid;
               }
             }
 
@@ -112,18 +123,35 @@ namespace codac2
           }
           
         // [4/4] Backward evaluation
+
+          if(using_nat)
+          {
         _f.expr()->bwd_eval(v); // recursive backward from the root to the leaves
-        _f.intersect_from_args(v, x0, x...); // updating input values
+        _f.intersect_from_args(v, x...); // updating input values
+          }
+
+        /*X0b x0_after = std::get<0>(std::tie(x...));
+        if(x0_after.is_empty())
+          _data.push_back({x0_before.max_diam(), 0.});
+        else
+          _data.push_back({x0_before.max_diam(), x0_before.volume()/x0_after.volume()});*/
+
       }
 
-      const AnalyticFunction<OutputType>& fnc() const
+      const AnalyticFunction<typename ExprType<Y>::Type>& function() const
       {
         return _f;
       }
 
+      //mutable std::vector<std::pair<double,double>> _data;
+
+      double _freq = 0.;
+      bool _both = true;
+      bool _both_then_one = true;
+
     protected:
 
-      const AnalyticFunction<OutputType> _f;
+      const AnalyticFunction<typename ExprType<Y>::Type> _f;
       const Collection<CtcBase<Y>> _ctc_y;
       bool _with_centered_form;
       bool _is_not_in = false;

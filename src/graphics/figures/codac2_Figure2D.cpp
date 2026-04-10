@@ -469,12 +469,12 @@ void draw_tube_common(Figure2D& fig, const SlicedTube<IntervalVector>& x, int ma
     for(auto it = x.tdomain()->rbegin() ; it != x.tdomain()->rend(); )
     {
       auto c = slice_color(tube_t0tf,it);
-      ConvexPolygon p(x.slice(it)->codomain());
+      ConvexPolygon p(x.slice(it)->codomain().subvector(0,1));
       it++;
 
       int j;
       for(j = 0; j < group_size-1 && it != x.tdomain()->rend(); j++,it++)
-        p |= ConvexPolygon(x.slice(it)->codomain());
+        p |= ConvexPolygon(x.slice(it)->codomain().subvector(0,1));
       fig.draw_polygon(p, c);
       if(j != 0)
         it--;

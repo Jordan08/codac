@@ -19,7 +19,6 @@
 #include "codac2_py_Sep.h"
 #include "codac2_py_AnalyticFunction.h"
 #include "codac2_py_CtcInverse.h"
-#include "codac2_py_CtcInverseNotIn.h"
 #include "codac2_py_MatrixBlock.h"
 #include "codac2_py_Slice.h"
 
@@ -194,10 +193,12 @@ PYBIND11_MODULE(_core, m)
   export_CtcIdentity(m, py_ctc_iv);
   export_CtcInnerOuter(m, py_ctc_iv);
   export_CtcInter(m, py_ctc_iv);
-  export_CtcInverse<ScalarType>(m,"CtcInverse_Interval",py_ctc_iv);
-  export_CtcInverse<VectorType>(m,"CtcInverse_IntervalVector",py_ctc_iv);
-  export_CtcInverseNotIn<ScalarType>(m,"CtcInverseNotIn_Interval",py_ctc_iv);
-  export_CtcInverseNotIn<VectorType>(m,"CtcInverseNotIn_IntervalVector",py_ctc_iv);
+
+  export_CtcInverse<CtcInverse<Interval>>(m,"CtcInverse_Interval",py_ctc_iv);
+  export_CtcInverse<CtcInverse<IntervalVector>>(m,"CtcInverse_IntervalVector",py_ctc_iv);
+  export_CtcInverse<CtcInverseNotIn<Interval>>(m,"CtcInverseNotIn_Interval",py_ctc_iv);
+  export_CtcInverse<CtcInverseNotIn<IntervalVector>>(m,"CtcInverseNotIn_IntervalVector",py_ctc_iv);
+
   export_CtcLazy(m, py_ctc_iv);
   export_CtcLohner(m);
   export_CtcNot(m, py_ctc_iv);
