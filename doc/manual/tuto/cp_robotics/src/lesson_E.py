@@ -153,6 +153,7 @@ ctc_deriv = CtcDeriv()
 
 # [E-q13-beg]
 def contractors_list(tube_x12):
+  global tube_v12
   for ti in T:
     tj = ti - 0.01
     pi = tube_x12(tj)
