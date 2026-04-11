@@ -200,14 +200,14 @@ void export_CtcInverse(py::module& m,
         py::handle h = xs[i];
         if(py::isinstance<SlicedTube<Interval>>(h))
         {
-          [maybe_unused]] auto& x = h.cast<SlicedTube<Interval>&>();
+          [[maybe_unused]] auto& x = h.cast<SlicedTube<Interval>&>();
           if(!TDomain::are_same(tdomain, x.tdomain()))
             return false;
           total_size += 1;
         }
         else
         {
-          [maybe_unused]] auto& x = h.cast<SlicedTube<IntervalVector>&>();
+          [[maybe_unused]] auto& x = h.cast<SlicedTube<IntervalVector>&>();
           if(!TDomain::are_same(tdomain, x.tdomain()))
             return false;
           total_size += x.size();
