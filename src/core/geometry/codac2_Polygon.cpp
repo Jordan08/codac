@@ -105,7 +105,7 @@ namespace codac2
           if(edges.size() <= 1)
             return edges;
 
-          size_t ring_begin = 0;
+          [[maybe_unused]] size_t ring_begin = 0;
           for(size_t i = 0; i+1 < edges.size(); ++i)
           {
             if(edges[i][1].intersects(edges[i+1][0]))

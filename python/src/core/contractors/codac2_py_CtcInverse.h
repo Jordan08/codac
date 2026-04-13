@@ -102,7 +102,7 @@ void export_CtcInverse(py::module& m,
     // Detecting whether we are in "domains" mode or "tubes" mode
 
     bool has_domain_args = false;
-    bool has_tube_args = false;
+    [[maybe_unused]] bool has_tube_args = false;
 
     for(size_t i = 0 ; i < xs.size() ; ++i)
     {
@@ -196,22 +196,24 @@ void export_CtcInverse(py::module& m,
     Index total_size = 0;
     for(size_t i = 0 ; i < xs.size() ; ++i)
     {
-      py::handle h = xs[i];
-
-      if(py::isinstance<SlicedTube<Interval>>(h))
-      {
-        auto& x = h.cast<SlicedTube<Interval>&>();
-        assert_release(TDomain::are_same(tdomain, x.tdomain())
-          && "contract(): all SlicedTube arguments must share the same tdomain");
-        total_size += 1;
-      }
-      else
-      {
-        auto& x = h.cast<SlicedTube<IntervalVector>&>();
-        assert_release(TDomain::are_same(tdomain, x.tdomain())
-          && "contract(): all SlicedTube arguments must share the same tdomain");
-        total_size += x.size();
-      }
+      assert_release([&](){
+        py::handle h = xs[i];
+        if(py::isinstance<SlicedTube<Interval>>(h))
+        {
+          [[maybe_unused]] auto& x = h.cast<SlicedTube<Interval>&>();
+          if(!TDomain::are_same(tdomain, x.tdomain()))
+            return false;
+          total_size += 1;
+        }
+        else
+        {
+          [[maybe_unused]] auto& x = h.cast<SlicedTube<IntervalVector>&>();
+          if(!TDomain::are_same(tdomain, x.tdomain()))
+            return false;
+          total_size += x.size();
+        }
+        return true;
+      }() && "contract(): all SlicedTube arguments must share the same tdomain");
     }
 
     assert_release(total_size == as_ctc_base<C>(c).size()

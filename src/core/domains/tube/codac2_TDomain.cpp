@@ -209,6 +209,17 @@ namespace codac2
       else ++it;
     }
   }
+  
+  void TDomain::truncate(const Interval& new_tdomain)
+  {
+    sample(new_tdomain.lb());
+    sample(new_tdomain.ub());
+    this->remove_if(
+      [&new_tdomain](const TSlice& s)
+      {
+        return !s.intersects(new_tdomain);
+      });
+  }
 
   ostream& operator<<(ostream& os, const TDomain& x)
   {

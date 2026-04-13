@@ -105,6 +105,22 @@ namespace codac2
       }
 
       /**
+       * \brief Builds an intersection contractor from a collection of contractors.
+       *
+       * All contractors must act on contracted objects of the same size.
+       *
+       * \param ctcs Collection of contractors sequentially.
+       */
+      CtcInter(const Collection<CtcBase<IntervalVector>>& ctcs)
+        : Ctc<CtcInter<X...>,X...>(ctcs.front()->size()), _ctcs(ctcs)
+      {
+        for(const auto& ci : _ctcs)
+        {
+          assert_release(ci->size() == this->size());
+        }
+      }
+
+      /**
        * \brief Returns the number of stored contractors.
        *
        * \return Size of the internal contractor collection.

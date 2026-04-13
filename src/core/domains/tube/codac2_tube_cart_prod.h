@@ -24,7 +24,7 @@ namespace codac2
     SlicedTube v(tdomain, IntervalVector(s));
 
     for(auto it = tdomain->begin() ; it != tdomain->end() ; it++)
-      v(it)->codomain() = cart_prod(x(it)->codomain()...);
+      v.slice(it)->codomain() = cart_prod(x.slice(it)->codomain()...);
 
     return v;
   }
