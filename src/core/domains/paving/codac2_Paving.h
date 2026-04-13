@@ -75,6 +75,8 @@ namespace codac2
             return n->hull().intersects(intersecting_box);
           });
 
+        if(l.empty())
+          l.push_back(IntervalVector::empty(this->size()));
         return l;
       }
 
