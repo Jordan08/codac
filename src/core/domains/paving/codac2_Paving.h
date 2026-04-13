@@ -154,10 +154,11 @@ namespace codac2
       {
         assert_release(x.size() == this->size());
         
-        if(x.is_empty())
-          return IntervalVector::empty(x.size());
-
         IntervalVector x_ = IntervalVector::empty(x.size());
+
+        if(x.is_empty())
+          return x_;
+
         this->tree()->visit([&]
           (Node_ n)
           {
