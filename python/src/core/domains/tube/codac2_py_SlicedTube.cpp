@@ -171,12 +171,12 @@ py::class_<SlicedTube<T>,TubeBase> _export_SlicedTube(py::module& m, const std::
       "x"_a)
 
     .def(py::self &= py::self,
-      SLICEDTUBE_SLICEDTUBE_T_OPERATORINTEREQ_CONST_SLICEDTUBE_REF,
+      SLICEDTUBE_REF_SLICEDTUBE_T_OPERATORINTEREQ_CONST_SLICEDTUBE_REF,
       "x"_a)
 
     // For MATLAB compatibility
     .def("self_inter", &SlicedTube<T>::operator&=,
-      SLICEDTUBE_SLICEDTUBE_T_OPERATORINTEREQ_CONST_SLICEDTUBE_REF,
+      SLICEDTUBE_REF_SLICEDTUBE_T_OPERATORINTEREQ_CONST_SLICEDTUBE_REF,
       "x"_a)
 
     .def("as_function", &SlicedTube<T>::as_function,
@@ -246,6 +246,8 @@ py::class_<SlicedTube<T>,TubeBase> _export_SlicedTube(py::module& m, const std::
         VOID_SLICEDTUBE_T_INVERT_CONST_T_REF_VECTOR_INTERVAL_REF_CONST_SLICEDTUBE_T_REF_CONST_INTERVAL_REF_CONST,
         "y"_a, "v_t"_a, "v"_a, "t"_a=Interval())
 
+      .def("mid", &SlicedTube<T>::mid,
+        SAMPLEDTRAJ_TYPENAME_SCALAR_T_TYPE_SLICEDTUBE_T_MID_CONST);
     ;
   }
 
@@ -295,27 +297,6 @@ py::class_<SlicedTube<T>,TubeBase> _export_SlicedTube(py::module& m, const std::
         SLICEDTUBE_INTERVALVECTOR_SLICEDTUBE_T_SUBVECTOR_INDEX_INDEX_CONST,
         "i"_a, "j"_a)
     ;
-  }
-
-  if constexpr(std::is_same_v<T,Interval>)
-  {
-    exported_slicedtube_class
-      .def("mid", &SlicedTube<Interval>::mid<double>,
-        AUTO_SLICEDTUBE_T_MID_CONST);
-  }
-
-  if constexpr(std::is_same_v<T,IntervalVector>)
-  {
-    exported_slicedtube_class
-      .def("mid", &SlicedTube<IntervalVector>::mid<Vector>,
-        AUTO_SLICEDTUBE_T_MID_CONST);
-  }
-
-  if constexpr(std::is_same_v<T,IntervalMatrix>)
-  {
-    exported_slicedtube_class
-      .def("mid", &SlicedTube<IntervalMatrix>::mid<Matrix>,
-        AUTO_SLICEDTUBE_T_MID_CONST);
   }
 
   return exported_slicedtube_class;
