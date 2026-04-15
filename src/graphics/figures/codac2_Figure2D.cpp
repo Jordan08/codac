@@ -434,6 +434,11 @@ void Figure2D::plot_trajectory(const SampledTraj<double>& x, const StyleProperti
   display_and_clear();
 }
 
+void Figure2D::plot_trajectory(const AnalyticTraj<ScalarType>& x, const StyleProperties& style)
+{
+  plot_trajectory(x.sampled(_axes[0].limits.diam()/1e4), style);
+}
+
 void Figure2D::plot_trajectories(const SampledTraj<Vector>& x)
 {
   for(const auto& xi : as_scalar_trajs(x))

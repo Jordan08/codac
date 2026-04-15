@@ -203,6 +203,10 @@ void export_Figure2D(py::module& m)
       VOID_FIGURE2D_PLOT_TRAJECTORY_CONST_SAMPLEDTRAJ_DOUBLE_REF_CONST_STYLEPROPERTIES_REF,
       "x"_a, "style"_a=StyleProperties())
 
+    .def("plot_trajectory", (void(Figure2D::*)(const AnalyticTraj<ScalarType>&,const StyleProperties&))&Figure2D::plot_trajectory,
+      VOID_FIGURE2D_PLOT_TRAJECTORY_CONST_ANALYTICTRAJ_SCALARTYPE_REF_CONST_STYLEPROPERTIES_REF,
+      "x"_a, "style"_a=StyleProperties())
+
     .def("plot_trajectories", (void(Figure2D::*)(const SampledTraj<Vector>&))&Figure2D::plot_trajectories,
       VOID_FIGURE2D_PLOT_TRAJECTORIES_CONST_SAMPLEDTRAJ_VECTOR_REF,
       "x"_a)
@@ -408,6 +412,10 @@ void export_Figure2D(py::module& m)
 
     .def_static("plot_trajectory", (void(*)(const SampledTraj<double>&,const StyleProperties&))&DefaultFigure::plot_trajectory,
       STATIC_VOID_DEFAULTFIGURE_PLOT_TRAJECTORY_CONST_SAMPLEDTRAJ_DOUBLE_REF_CONST_STYLEPROPERTIES_REF,
+      "x"_a, "style"_a=StyleProperties())
+
+    .def_static("plot_trajectory", (void(*)(const AnalyticTraj<ScalarType>&,const StyleProperties&))&DefaultFigure::plot_trajectory,
+      STATIC_VOID_DEFAULTFIGURE_PLOT_TRAJECTORY_CONST_ANALYTICTRAJ_SCALARTYPE_REF_CONST_STYLEPROPERTIES_REF
       "x"_a, "style"_a=StyleProperties())
 
     .def_static("plot_trajectories", (void(*)(const SampledTraj<Vector>&,const StyleProperties&))&DefaultFigure::plot_trajectories,
