@@ -335,16 +335,16 @@ def SlicedTube(x, y=None):
 
   y = AnalyticFunction(y) if isinstance(y, _ANALYTIC_FUNCTION_TYPES) else y
 
-  if isinstance(y, (Interval, AnalyticFunction_Scalar, SampledTraj_Scalar)):
+  if isinstance(y, (Interval, AnalyticFunction_Scalar, AnalyticTraj_Scalar, SampledTraj_Scalar)):
     return SlicedTube_Interval(x, y)
 
-  if isinstance(y, (IntervalVector, AnalyticFunction_Vector, SampledTraj_Vector)):
+  if isinstance(y, (IntervalVector, AnalyticFunction_Vector, AnalyticTraj_Vector, SampledTraj_Vector)):
     return SlicedTube_IntervalVector(x, y)
 
-  if isinstance(y, (IntervalMatrix, AnalyticFunction_Matrix, SampledTraj_Matrix)):
+  if isinstance(y, (IntervalMatrix, AnalyticFunction_Matrix, AnalyticTraj_Matrix, SampledTraj_Matrix)):
     return SlicedTube_IntervalMatrix(x, y)
 
-  codac_error("SlicedTube: can only build this tube from an AnalyticFunction_[Scalar/Vector/Matrix]")
+  codac_error("SlicedTube: wrong constructor argument")
 
 
 def fixpoint(contract, *x):

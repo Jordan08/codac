@@ -41,6 +41,10 @@ py::class_<SlicedTube<T>,TubeBase> _export_SlicedTube(py::module& m, const std::
       SLICEDTUBE_T_SLICEDTUBE_CONST_SHARED_PTR_TDOMAIN_REF_CONST_ANALYTICFUNCTION_TYPENAME_EXPRTYPE_T_TYPE_REF,
       "tdomain"_a, "f"_a)
 
+    .def(py::init<const std::shared_ptr<TDomain>&,const AnalyticTraj<typename ExprType<T>::Type>&>(),
+      SLICEDTUBE_T_SLICEDTUBE_CONST_SHARED_PTR_TDOMAIN_REF_CONST_ANALYTICTRAJ_TYPENAME_EXPRTYPE_T_TYPE_REF,
+      "tdomain"_a, "x"_a)
+
     .def(py::init<const std::shared_ptr<TDomain>&,const SampledTraj<typename ExprType<T>::Type::Scalar>&>(),
       SLICEDTUBE_T_SLICEDTUBE_CONST_SHARED_PTR_TDOMAIN_REF_CONST_SAMPLEDTRAJ_V_REF,
       "tdomain"_a, "x"_a)
@@ -107,21 +111,6 @@ py::class_<SlicedTube<T>,TubeBase> _export_SlicedTube(py::module& m, const std::
       PAIR_TT_SLICEDTUBE_T_ENCLOSED_BOUNDS_CONST_INTERVAL_REF_CONST,
       "t"_a)
 
-    .def("invert", (Interval (SlicedTube<T>::*)(const T&,const Interval&) const) &SlicedTube<T>::invert,
-      INTERVAL_SLICEDTUBE_T_INVERT_CONST_T_REF_CONST_INTERVAL_REF_CONST,
-      "y"_a, "t"_a=Interval())
-
-    .def("invert", [](const SlicedTube<T>& x, const T& y, py::list& v_t, const Interval& t)
-        {
-          vector<Interval> vector_t;
-          x.invert(y, vector_t, t);
-          v_t.clear();
-          for(const auto& ti : vector_t)
-            v_t.append(ti);
-        },
-      INTERVAL_SLICEDTUBE_T_INVERT_CONST_T_REF_CONST_SLICEDTUBE_T_REF_CONST_INTERVAL_REF_CONST,
-      "y"_a, "v_t"_a, "t"_a=Interval())
-    
     .def("set", (void (SlicedTube<T>::*)(const T&)) &SlicedTube<T>::set,
       VOID_SLICEDTUBE_T_SET_CONST_T_REF,
       "codomain"_a)
@@ -230,21 +219,65 @@ py::class_<SlicedTube<T>,TubeBase> _export_SlicedTube(py::module& m, const std::
         SLICEDTUBE_T_SLICEDTUBE_T_PRIMITIVE_CONST_T_REF_CONST,
         "x0"_a)
 
+      .def("invert", (Interval (SlicedTube<T>::*)(const T&) const) &SlicedTube<T>::invert,
+        INTERVAL_SLICEDTUBE_T_INVERT_CONST_T_REF_CONST,
+        "y"_a)
+
       .def("invert", (Interval (SlicedTube<T>::*)(const T&,const Interval&) const) &SlicedTube<T>::invert,
         INTERVAL_SLICEDTUBE_T_INVERT_CONST_T_REF_CONST_INTERVAL_REF_CONST,
-        "y"_a, "t"_a=Interval())
+        "y"_a, "t"_a)
+
+      .def("invert", [](const SlicedTube<T>& x, const T& y, py::list& v_t)
+          {
+            vector<Interval> vector_t;
+            x.invert(y, vector_t);
+            v_t.clear();
+            for(const auto& ti : vector_t)
+              v_t.append(ti);
+          },
+        VOID_SLICEDTUBE_T_INVERT_CONST_T_REF_VECTOR_INTERVAL_REF_CONST,
+        "y"_a, "v_t"_a)
       
-      .def("invert", (void (SlicedTube<T>::*)(const T&,std::vector<Interval>&,const Interval&) const) &SlicedTube<T>::invert,
+      .def("invert", [](const SlicedTube<T>& x, const T& y, py::list& v_t, const Interval& t)
+          {
+            vector<Interval> vector_t;
+            x.invert(y, vector_t, t);
+            v_t.clear();
+            for(const auto& ti : vector_t)
+              v_t.append(ti);
+          },
         VOID_SLICEDTUBE_T_INVERT_CONST_T_REF_VECTOR_INTERVAL_REF_CONST_INTERVAL_REF_CONST,
-        "y"_a, "v_t"_a, "t"_a=Interval())
+        "y"_a, "v_t"_a, "t"_a)
+      
+      .def("invert", (Interval (SlicedTube<T>::*)(const T&,const SlicedTube<T>&) const) &SlicedTube<T>::invert,
+        INTERVAL_SLICEDTUBE_T_INVERT_CONST_T_REF_CONST_SLICEDTUBE_T_REF_CONST,
+        "y"_a, "v"_a)
       
       .def("invert", (Interval (SlicedTube<T>::*)(const T&,const SlicedTube<T>&,const Interval&) const) &SlicedTube<T>::invert,
         INTERVAL_SLICEDTUBE_T_INVERT_CONST_T_REF_CONST_SLICEDTUBE_T_REF_CONST_INTERVAL_REF_CONST,
-        "y"_a, "v"_a, "t"_a=Interval())
+        "y"_a, "v"_a, "t"_a)
       
-      .def("invert", (void (SlicedTube<T>::*)(const T&,std::vector<Interval>&,const SlicedTube<T>&,const Interval&) const) &SlicedTube<T>::invert,
+      .def("invert", [](const SlicedTube<T>& x, const T& y, py::list& v_t, const SlicedTube<T>& v)
+          {
+            vector<Interval> vector_t;
+            x.invert(y, vector_t, v);
+            v_t.clear();
+            for(const auto& ti : vector_t)
+              v_t.append(ti);
+          },
+        VOID_SLICEDTUBE_T_INVERT_CONST_T_REF_VECTOR_INTERVAL_REF_CONST_SLICEDTUBE_T_REF_CONST,
+        "y"_a, "v_t"_a, "v"_a)
+      
+      .def("invert", [](const SlicedTube<T>& x, const T& y, py::list& v_t, const SlicedTube<T>& v, const Interval& t)
+          {
+            vector<Interval> vector_t;
+            x.invert(y, vector_t, v, t);
+            v_t.clear();
+            for(const auto& ti : vector_t)
+              v_t.append(ti);
+          },
         VOID_SLICEDTUBE_T_INVERT_CONST_T_REF_VECTOR_INTERVAL_REF_CONST_SLICEDTUBE_T_REF_CONST_INTERVAL_REF_CONST,
-        "y"_a, "v_t"_a, "v"_a, "t"_a=Interval())
+        "y"_a, "v_t"_a, "v"_a, "t"_a)
 
       .def("mid", &SlicedTube<T>::mid,
         SAMPLEDTRAJ_TYPENAME_SCALAR_T_TYPE_SLICEDTUBE_T_MID_CONST);
@@ -305,53 +338,98 @@ py::class_<SlicedTube<T>,TubeBase> _export_SlicedTube(py::module& m, const std::
 template<typename T>
 void add_tube_operators(py::class_<SlicedTube<T>,TubeBase>& pyclass)
 {
+  if constexpr(!FOR_MATLAB)
+  {
+    pyclass
+
+      .def(py::self & py::self,
+        SLICEDTUBE_T_OPERATORINTER_CONST_SLICEDTUBE_T_REF_CONST_SLICEDTUBE_T_REF,
+        py::is_operator())
+
+      .def(py::self &= py::self,
+        SLICEDTUBE_T_REF_OPERATORINTEREQ_SLICEDTUBE_T_REF_CONST_SLICEDTUBE_T_REF,
+        py::is_operator())
+
+      .def(py::self | py::self,
+        SLICEDTUBE_T_OPERATORUNION_CONST_SLICEDTUBE_T_REF_CONST_SLICEDTUBE_T_REF,
+        py::is_operator())
+
+      .def(py::self |= py::self,
+        SLICEDTUBE_T_REF_OPERATORUNIONEQ_SLICEDTUBE_T_REF_CONST_SLICEDTUBE_T_REF,
+        py::is_operator())
+    ;
+  }
+
+  if constexpr(FOR_MATLAB)
+  {
+    // For MATLAB compatibility
+    pyclass
+
+      .def("inter", &SlicedTube<T>::operator&,
+        SLICEDTUBE_T_OPERATORINTER_CONST_SLICEDTUBE_T_REF_CONST_SLICEDTUBE_T_REF,
+        py::is_operator())
+
+      .def("self_inter", &SlicedTube<T>::operator&=,
+        SLICEDTUBE_T_REF_OPERATORINTEREQ_SLICEDTUBE_T_REF_CONST_SLICEDTUBE_T_REF,
+        py::is_operator())
+
+      .def("union", &SlicedTube<T>::operator|,
+        SLICEDTUBE_T_OPERATORUNION_CONST_SLICEDTUBE_T_REF_CONST_SLICEDTUBE_T_REF,
+        py::is_operator())
+
+      .def("self_union", &SlicedTube<T>::operator|=,
+        SLICEDTUBE_T_REF_OPERATORUNIONEQ_SLICEDTUBE_T_REF_CONST_SLICEDTUBE_T_REF,
+        py::is_operator())
+    ;
+  }
+
   pyclass
 
-    .def("__add__", [](py::object& x1) { return cast<SlicedTube<T>>(x1); },
+    .def("__add__", (const SlicedTube<T>&(*)(const SlicedTube<T>&)) &codac2::operator+,
       CONST_SLICEDTUBE_T_REF_OPERATORPLUS_CONST_SLICEDTUBE_T_REF,
       py::is_operator())
 
-    .def("__add__", [](py::object& x1, py::object& x2) { return cast<SlicedTube<T>>(x1)+cast<SlicedTube<T>>(x2); },
+    .def("__add__", (SlicedTube<T>(*)(const SlicedTube<T>&,const SlicedTube<T>&)) &codac2::operator+,
       SLICEDTUBE_T_OPERATORPLUS_CONST_SLICEDTUBE_T_REF_CONST_SLICEDTUBE_T_REF,
       py::is_operator())
 
-    .def("__add__", [](py::object& x1, const T& x2) { return cast<SlicedTube<T>>(x1)+x2; },
+    .def("__add__", (SlicedTube<T>(*)(const SlicedTube<T>&,const T&)) &codac2::operator+,
       SLICEDTUBE_T_OPERATORPLUS_CONST_SLICEDTUBE_T_REF_CONST_Q_REF,
       py::is_operator())
 
-    .def("__radd__", [](py::object& x2, const T& x1) { return x1+cast<SlicedTube<T>>(x2); },
+    .def("__radd__", (SlicedTube<T>(*)(const T&,const SlicedTube<T>&)) &codac2::operator+,
       SLICEDTUBE_T_OPERATORPLUS_CONST_Q_REF_CONST_SLICEDTUBE_T_REF,
       py::is_operator())
 
-    .def("__sub__", [](py::object& x1) { return -cast<SlicedTube<T>>(x1); },
+    .def("__sub__", (SlicedTube<T>(*)(const SlicedTube<T>&)) &codac2::operator-,
       SLICEDTUBE_T_OPERATORMINUS_CONST_SLICEDTUBE_T_REF,
       py::is_operator())
 
-    .def("__sub__", [](py::object& x1, py::object& x2) { return cast<SlicedTube<T>>(x1)-cast<SlicedTube<T>>(x2); },
+    .def("__sub__", (SlicedTube<T>(*)(const SlicedTube<T>&,const SlicedTube<T>&)) &codac2::operator-,
       SLICEDTUBE_T_OPERATORMINUS_CONST_SLICEDTUBE_T_REF_CONST_SLICEDTUBE_T_REF,
       py::is_operator())
 
-    .def("__sub__", [](py::object& x1, const T& x2) { return cast<SlicedTube<T>>(x1)-x2; },
+    .def("__sub__", (SlicedTube<T>(*)(const SlicedTube<T>&,const T&)) &codac2::operator-,
       SLICEDTUBE_T_OPERATORMINUS_CONST_SLICEDTUBE_T_REF_CONST_Q_REF,
       py::is_operator())
 
-    .def("__rsub__", [](py::object& x2, const T& x1) { return x1-cast<SlicedTube<T>>(x2); },
+    .def("__rsub__", (SlicedTube<T>(*)(const T&,const SlicedTube<T>&)) &codac2::operator-,
       SLICEDTUBE_T_OPERATORMINUS_CONST_Q_REF_CONST_SLICEDTUBE_T_REF,
       py::is_operator())
 
-    .def("__mul__", [](py::object& x1, const Interval& x2) { return x2*cast<SlicedTube<T>>(x1); },
+    .def("__mul__", (SlicedTube<T>(*)(const SlicedTube<T>&,const SlicedTube<T>&)) &codac2::operator*,
       SLICEDTUBE_T_OPERATORMUL_CONST_SLICEDTUBE_T_REF_CONST_INTERVAL_REF,
       py::is_operator())
 
-    .def("__rmul__", [](py::object& x2, const Interval& x1) { return x1*cast<SlicedTube<T>>(x2); },
+    .def("__rmul__", (SlicedTube<T>(*)(const Interval&,const SlicedTube<T>&)) &codac2::operator*,
       SLICEDTUBE_T_OPERATORMUL_CONST_INTERVAL_REF_CONST_SLICEDTUBE_T_REF,
       py::is_operator())
 
-    .def("__mul__", [](const Interval& x1, py::object& x2) { return x1*cast<SlicedTube<T>>(x2); },
+    .def("__mul__", (SlicedTube<T>(*)(const Interval&,const SlicedTube<T>&)) &codac2::operator*,
       SLICEDTUBE_T_OPERATORMUL_CONST_INTERVAL_REF_CONST_SLICEDTUBE_T_REF,
       py::is_operator())
 
-    .def("__truediv__", [](py::object& x1, const Interval& x2) { return cast<SlicedTube<T>>(x1)/x2; },
+    .def("__truediv__", (SlicedTube<T>(*)(const SlicedTube<T>&,const Interval&)) &codac2::operator/,
       SLICEDTUBE_T_OPERATORDIV_CONST_SLICEDTUBE_T_REF_CONST_Q_REF,
       py::is_operator())
   ;
@@ -367,6 +445,14 @@ void export_SlicedTube(py::module& m)
   add_tube_operators<Interval>(py_SlicedTube_Interval);
 
   py_SlicedTube_Interval
+
+    .def(py::self | py::self,
+      SLICEDTUBE_T_OPERATORMUL_CONST_SLICEDTUBE_T_REF_CONST_SLICEDTUBE_T_REF,
+      py::is_operator())
+
+    .def(py::self & py::self,
+      SLICEDTUBE_T_OPERATORMUL_CONST_SLICEDTUBE_T_REF_CONST_SLICEDTUBE_T_REF,
+      py::is_operator())
 
     .def(py::self * py::self,
       SLICEDTUBE_T_OPERATORMUL_CONST_SLICEDTUBE_T_REF_CONST_SLICEDTUBE_T_REF,
@@ -527,181 +613,3 @@ void export_SlicedTube(py::module& m)
 
   ;
 }
-
-
-
-#if 0
-
-// Keeping the following just in case...
-// Equivalent to the previous block of code, but using py::object for tubes
-
-void export_SlicedTube(py::module& m)
-{
-  auto py_SlicedTube_Interval = _export_SlicedTube<Interval>(m, "SlicedTube_Interval");
-  auto py_SlicedTube_IntervalVector = _export_SlicedTube<IntervalVector>(m, "SlicedTube_IntervalVector");
-  auto py_SlicedTube_IntervalMatrix = _export_SlicedTube<IntervalMatrix>(m, "SlicedTube_IntervalMatrix");
-
-  add_tube_operators<Interval>(py_SlicedTube_Interval);
-
-  py_SlicedTube_Interval
-
-    .def(py::self * py::self,
-      SLICEDTUBE_T_OPERATORMUL_CONST_SLICEDTUBE_T_REF_CONST_SLICEDTUBE_T_REF,
-      py::is_operator())
-
-    .def(py::self / py::self,
-      SLICEDTUBE_T_OPERATORDIV_CONST_SLICEDTUBE_T_REF_CONST_SLICEDTUBE_T_REF,
-      py::is_operator())
-
-    .def(double() / py::self,
-      SLICEDTUBE_T_OPERATORDIV_CONST_Q_REF_CONST_SLICEDTUBE_T_REF,
-      py::is_operator())
-  ;
-
-  add_tube_operators<IntervalMatrix>(py_SlicedTube_IntervalMatrix);
-  add_tube_operators<IntervalVector>(py_SlicedTube_IntervalVector);
-  py_SlicedTube_IntervalMatrix
-
-    .def("__mul__", [](py::object& x1, py::object& x2) { return cast<SlicedTube<IntervalMatrix>>(x1)*cast<SlicedTube<IntervalVector>>(x2); },
-      SLICEDTUBE_INTERVALVECTOR_OPERATORMUL_CONST_SLICEDTUBE_INTERVALMATRIX_REF_CONST_SLICEDTUBE_INTERVALVECTOR_REF,
-      py::is_operator())
-
-    .def("__mul__", [](py::object& x1, py::object& x2) { return cast<SlicedTube<IntervalMatrix>>(x1)*cast<SlicedTube<IntervalMatrix>>(x2); },
-      SLICEDTUBE_T_OPERATORMUL_CONST_SLICEDTUBE_T_REF_CONST_SLICEDTUBE_T_REF,
-      py::is_operator())
-
-  ;
-
-  m
-
-    .def("sqr", [](py::object& x1) { return codac2::sqr(cast<SlicedTube<Interval>>(x1)); },
-      SLICEDTUBE_INTERVAL_SQR_CONST_SLICEDTUBE_INTERVAL_REF,
-      "x1"_a, py::is_operator())
-
-    .def("sqrt", [](py::object& x1) { return codac2::sqrt(cast<SlicedTube<Interval>>(x1)); },
-      SLICEDTUBE_INTERVAL_SQRT_CONST_SLICEDTUBE_INTERVAL_REF,
-      "x1"_a, py::is_operator())
-
-    .def("pow", [](py::object& x1, const Interval& x2) { return codac2::pow(cast<SlicedTube<Interval>>(x1),x2); },
-      SLICEDTUBE_INTERVAL_POW_CONST_SLICEDTUBE_INTERVAL_REF_CONST_INTERVAL_REF,
-      "x1"_a, "x2"_a, py::is_operator())
-
-    //.def("root", (SlicedTube<Interval> (*)(const SlicedTube<Interval>&,int)) &codac2::root,
-    //  SAMPLEDTRAJ_DOUBLE_ROOT_CONST_SAMPLEDTRAJ_DOUBLE_REF_INT,
-    //  "x1"_a, "x2"_a, py::is_operator())
-
-    .def("exp", [](py::object& x1) { return codac2::exp(cast<SlicedTube<Interval>>(x1)); },
-      SLICEDTUBE_INTERVAL_EXP_CONST_SLICEDTUBE_INTERVAL_REF,
-      "x1"_a, py::is_operator())
-
-    .def("log", [](py::object& x1) { return codac2::log(cast<SlicedTube<Interval>>(x1)); },
-      SLICEDTUBE_INTERVAL_LOG_CONST_SLICEDTUBE_INTERVAL_REF,
-      "x1"_a, py::is_operator())
-
-    .def("cos", [](py::object& x1) { return codac2::cos(cast<SlicedTube<Interval>>(x1)); },
-      SLICEDTUBE_INTERVAL_COS_CONST_SLICEDTUBE_INTERVAL_REF,
-      "x1"_a, py::is_operator())
-
-    .def("sin", [](py::object& x1) { return codac2::sin(cast<SlicedTube<Interval>>(x1)); },
-      SLICEDTUBE_INTERVAL_SIN_CONST_SLICEDTUBE_INTERVAL_REF,
-      "x1"_a, py::is_operator())
-
-    .def("tan", [](py::object& x1) { return codac2::tan(cast<SlicedTube<Interval>>(x1)); },
-      SLICEDTUBE_INTERVAL_TAN_CONST_SLICEDTUBE_INTERVAL_REF,
-      "x1"_a, py::is_operator())
-
-    .def("acos", [](py::object& x1) { return codac2::acos(cast<SlicedTube<Interval>>(x1)); },
-      SLICEDTUBE_INTERVAL_ACOS_CONST_SLICEDTUBE_INTERVAL_REF,
-      "x1"_a, py::is_operator())
-
-    .def("asin", [](py::object& x1) { return codac2::asin(cast<SlicedTube<Interval>>(x1)); },
-      SLICEDTUBE_INTERVAL_ASIN_CONST_SLICEDTUBE_INTERVAL_REF,
-      "x1"_a, py::is_operator())
-
-    .def("atan", [](py::object& x1) { return codac2::atan(cast<SlicedTube<Interval>>(x1)); },
-      SLICEDTUBE_INTERVAL_ATAN_CONST_SLICEDTUBE_INTERVAL_REF,
-      "x1"_a, py::is_operator())
-
-    .def("atan2", [](py::object& x1, py::object& x2) { return codac2::atan2(cast<SlicedTube<Interval>>(x1),cast<SlicedTube<Interval>>(x2)); },
-      SLICEDTUBE_INTERVAL_ATAN2_CONST_SLICEDTUBE_INTERVAL_REF_CONST_SLICEDTUBE_INTERVAL_REF,
-      "x1"_a, "x2"_a, py::is_operator())
-
-    .def("atan2", [](py::object& x1, const Interval& x2) { return codac2::atan2(cast<SlicedTube<Interval>>(x1),x2); },
-      SLICEDTUBE_INTERVAL_ATAN2_CONST_SLICEDTUBE_INTERVAL_REF_CONST_INTERVAL_REF,
-      "x1"_a, "x2"_a, py::is_operator())
-
-    .def("atan2", [](const Interval& x1, py::object& x2) { return codac2::atan2(x1,cast<SlicedTube<Interval>>(x2)); },
-      SLICEDTUBE_INTERVAL_ATAN2_CONST_INTERVAL_REF_CONST_SLICEDTUBE_INTERVAL_REF,
-      "x1"_a, "x2"_a, py::is_operator())
-
-    .def("cosh", [](py::object& x1) { return codac2::cosh(cast<SlicedTube<Interval>>(x1)); },
-      SLICEDTUBE_INTERVAL_COSH_CONST_SLICEDTUBE_INTERVAL_REF,
-      "x1"_a, py::is_operator())
-
-    .def("sinh", [](py::object& x1) { return codac2::sinh(cast<SlicedTube<Interval>>(x1)); },
-      SLICEDTUBE_INTERVAL_SINH_CONST_SLICEDTUBE_INTERVAL_REF,
-      "x1"_a, py::is_operator())
-
-    .def("tanh", [](py::object& x1) { return codac2::tanh(cast<SlicedTube<Interval>>(x1)); },
-      SLICEDTUBE_INTERVAL_TANH_CONST_SLICEDTUBE_INTERVAL_REF,
-      "x1"_a, py::is_operator())
-
-    .def("acosh", [](py::object& x1) { return codac2::acosh(cast<SlicedTube<Interval>>(x1)); },
-      SLICEDTUBE_INTERVAL_ACOSH_CONST_SLICEDTUBE_INTERVAL_REF,
-      "x1"_a, py::is_operator())
-
-    .def("asinh", [](py::object& x1) { return codac2::asinh(cast<SlicedTube<Interval>>(x1)); },
-      SLICEDTUBE_INTERVAL_ASINH_CONST_SLICEDTUBE_INTERVAL_REF,
-      "x1"_a, py::is_operator())
-
-    .def("atanh", [](py::object& x1) { return codac2::atanh(cast<SlicedTube<Interval>>(x1)); },
-      SLICEDTUBE_INTERVAL_ATANH_CONST_SLICEDTUBE_INTERVAL_REF,
-      "x1"_a, py::is_operator())
-
-    .def("abs", [](py::object& x1) { return codac2::abs(cast<SlicedTube<Interval>>(x1)); },
-      SLICEDTUBE_INTERVAL_ABS_CONST_SLICEDTUBE_INTERVAL_REF,
-      "x1"_a, py::is_operator())
-
-    .def("min", [](py::object& x1, py::object& x2) { return codac2::min(cast<SlicedTube<Interval>>(x1),cast<SlicedTube<Interval>>(x2)); },
-      SLICEDTUBE_INTERVAL_MIN_CONST_SLICEDTUBE_INTERVAL_REF_CONST_SLICEDTUBE_INTERVAL_REF,
-      "x1"_a, "x2"_a, py::is_operator())
-
-    .def("min", [](py::object& x1, const Interval& x2) { return codac2::min(cast<SlicedTube<Interval>>(x1),x2); },
-      SLICEDTUBE_INTERVAL_MIN_CONST_SLICEDTUBE_INTERVAL_REF_CONST_INTERVAL_REF,
-      "x1"_a, "x2"_a, py::is_operator())
-
-    .def("min", [](const Interval& x1, py::object& x2) { return codac2::min(x1,cast<SlicedTube<Interval>>(x2)); },
-      SLICEDTUBE_INTERVAL_MIN_CONST_INTERVAL_REF_CONST_SLICEDTUBE_INTERVAL_REF,
-      "x1"_a, "x2"_a, py::is_operator())
-
-    .def("max", [](py::object& x1, py::object& x2) { return codac2::max(cast<SlicedTube<Interval>>(x1),cast<SlicedTube<Interval>>(x2)); },
-      SLICEDTUBE_INTERVAL_MAX_CONST_SLICEDTUBE_INTERVAL_REF_CONST_SLICEDTUBE_INTERVAL_REF,
-      "x1"_a, "x2"_a, py::is_operator())
-
-    .def("max", [](py::object& x1, const Interval& x2) { return codac2::max(cast<SlicedTube<Interval>>(x1),x2); },
-      SLICEDTUBE_INTERVAL_MAX_CONST_SLICEDTUBE_INTERVAL_REF_CONST_INTERVAL_REF,
-      "x1"_a, "x2"_a, py::is_operator())
-
-    .def("max", [](const Interval& x1, py::object& x2) { return codac2::max(x1,cast<SlicedTube<Interval>>(x2)); },
-      SLICEDTUBE_INTERVAL_MAX_CONST_INTERVAL_REF_CONST_SLICEDTUBE_INTERVAL_REF,
-      "x1"_a, "x2"_a, py::is_operator())
-
-    .def("sign", [](py::object& x1) { return codac2::sign(cast<SlicedTube<Interval>>(x1)); },
-      SLICEDTUBE_INTERVAL_SIGN_CONST_SLICEDTUBE_INTERVAL_REF,
-      "x1"_a, py::is_operator())
-
-    .def("integer", [](py::object& x1) { return codac2::integer(cast<SlicedTube<Interval>>(x1)); },
-      SLICEDTUBE_INTERVAL_INTEGER_CONST_SLICEDTUBE_INTERVAL_REF,
-      "x1"_a, py::is_operator())
-
-    .def("floor", [](py::object& x1) { return codac2::floor(cast<SlicedTube<Interval>>(x1)); },
-      SLICEDTUBE_INTERVAL_FLOOR_CONST_SLICEDTUBE_INTERVAL_REF,
-      "x1"_a, py::is_operator())
-
-    .def("ceil", [](py::object& x1) { return codac2::ceil(cast<SlicedTube<Interval>>(x1)); },
-      SLICEDTUBE_INTERVAL_CEIL_CONST_SLICEDTUBE_INTERVAL_REF,
-      "x1"_a, py::is_operator())
-
-  ;
-}
-#endif

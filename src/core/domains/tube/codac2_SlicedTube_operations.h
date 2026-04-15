@@ -80,6 +80,12 @@ namespace codac2
     return x1; \
   } \
 
+  template<typename T>
+  inline T operator_tube_union(const T& x1, const T& x2) { return x1 | x2; }
+
+  template<typename T>
+  inline T operator_tube_intersection(const T& x1, const T& x2) { return x1 & x2; }
+
   template<typename T,typename X1,typename X2>
   inline T operator_tube_add(const X1& x1, const X2& x2) { return x1 + x2; }
 
@@ -103,6 +109,44 @@ namespace codac2
 
   template<typename T,typename X1>
   inline T operator_tube_div_scal(const X1& x1, const Interval& x2) { return x1 / x2; }
+
+  /**
+   * \brief Operates |=
+   * \param x1
+   * \param x2
+   * \return updated output
+   */
+  template<typename T>
+  inline SlicedTube<T>& operator|=(SlicedTube<T>& x1, const SlicedTube<T>& x2)
+    macro_member_binary_tube_tube(operator_tube_union<T>);
+
+  /** \brief \f$[x_1](\cdot)\scup[x_2](\cdot)\f$
+    * \param x1
+    * \param x2
+    * \return tube output
+    */
+  template<typename T>
+  inline SlicedTube<T> operator|(const SlicedTube<T>& x1, const SlicedTube<T>& x2)
+    macro_binary_tube_tube(operator_tube_union<T>);
+
+  /**
+   * \brief Operates &=
+   * \param x1
+   * \param x2
+   * \return updated output
+   */
+  template<typename T>
+  inline SlicedTube<T>& operator&=(SlicedTube<T>& x1, const SlicedTube<T>& x2)
+    macro_member_binary_tube_tube(operator_tube_intersection<T>);
+
+  /** \brief \f$[x_1](\cdot)\cap[x_2](\cdot)\f$
+    * \param x1
+    * \param x2
+    * \return tube output
+    */
+  template<typename T>
+  inline SlicedTube<T> operator&(const SlicedTube<T>& x1, const SlicedTube<T>& x2)
+    macro_binary_tube_tube(operator_tube_intersection<T>);
 
   /** \brief \f$x1(\cdot)\f$
     * \param x1

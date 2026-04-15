@@ -14,6 +14,7 @@
 #include "codac2_Tube_operator.h"
 #include "codac2_CtcDeriv.h"
 #include "codac2_Scalar.h"
+#include "codac2_AnalyticTraj.h"
 
 namespace codac2
 {
@@ -78,22 +79,42 @@ namespace codac2
       }
 
       /**
-       * \brief Creates a sliced tube from a sampled trajectory
+       * \brief Creates a sliced tube by evaluating an analytic trajectory on each temporal slice
        *
-       * \tparam V sampled value type
+       * The function is evaluated on each temporal interval of the associated
+       * ``TDomain``.
+       *
        * \param tdomain shared temporal domain of the tube
-       * \param f sampled trajectory evaluated on each temporal slice
+       * \param x analytic trajectory
        */
-      template<typename V>
-        requires std::is_same_v<typename Wrapper<V>::Domain,T>
       explicit SlicedTube(const std::shared_ptr<TDomain>& tdomain,
-        const SampledTraj<V>& f)
+        const AnalyticTraj<typename ExprType<T>::Type>& x)
         : SlicedTubeBase(tdomain)
       {
         for(auto it = _tdomain->begin(); it != _tdomain->end(); ++it)
           it->_slices.insert({
             this,
-            std::make_shared<Slice<T>>(*this, it, f((Interval)*it))
+            std::make_shared<Slice<T>>(*this, it, x.eval((Interval)*it))
+          });
+      }
+
+      /**
+       * \brief Creates a sliced tube from a sampled trajectory
+       *
+       * \tparam V sampled value type
+       * \param tdomain shared temporal domain of the tube
+       * \param x sampled trajectory evaluated on each temporal slice
+       */
+      template<typename V>
+        requires std::is_same_v<typename Wrapper<V>::Domain,T>
+      explicit SlicedTube(const std::shared_ptr<TDomain>& tdomain,
+        const SampledTraj<V>& x)
+        : SlicedTubeBase(tdomain)
+      {
+        for(auto it = _tdomain->begin(); it != _tdomain->end(); ++it)
+          it->_slices.insert({
+            this,
+            std::make_shared<Slice<T>>(*this, it, x((Interval)*it))
           });
       }
 
@@ -656,6 +677,12 @@ namespace codac2
         };
       }
 
+      // Inversion related methods
+
+      /**
+       * \defgroup codac2_slicedtube_inversion Inversion of sliced tubes
+       */
+
       template<typename Func>
       Interval invert_common(const T& y, const Interval& t, const Func& apply_invert) const
       {
@@ -728,15 +755,29 @@ namespace codac2
       }
 
       /**
-       * \brief Returns the interval inversion \f$[x]^{-1}([y])\f$
+       * \brief Returns the interval inversion \f$[x]^{-1}([y])\f$.
        *
-       * \note If the inversion results in several pre-images, their union is returned
+       * If the inversion results in several pre-images, their union is returned.
        *
        * \param y interval codomain
-       * \param t optional temporal domain on which the inversion will be performed
        * \return the hull of \f$[x]^{-1}([y])\f$
        */
-      Interval invert(const T& y, const Interval& t = Interval()) const
+      Interval invert(const T& y) const
+      {
+        return invert(y,t0_tf());
+      }
+
+      /**
+       * \ingroup codac2_slicedtube_inversion
+       * \brief Returns the interval inversion \f$[x]^{-1}([y])\f$.
+       *
+       * If the inversion results in several pre-images, their union is returned.
+       *
+       * \param y interval codomain
+       * \param t (optional) temporal domain on which the inversion will be performed
+       * \return the hull of \f$[x]^{-1}([y])\f$
+       */
+      Interval invert(const T& y, const Interval& t) const
       {
         return invert_common(y, t,
           [this,&y](auto it, const Interval& t_) {
@@ -745,14 +786,27 @@ namespace codac2
       }
 
       /**
-       * \brief Computes the set of continuous values of the inversion \f$[x]^{-1}([y])\f$
+       * \brief Computes the set of continuous values of the inversion \f$[x]^{-1}([y])\f$.
        *
        * \param y interval codomain
        * \param v_t vector of the sub-tdomains \f$[t_k]\f$ for which
        *            \f$\forall t\in[t_k] \mid x(t)\in[y], x(\cdot)\in[x](\cdot)\f$
-       * \param t optional temporal domain on which the inversion will be performed
        */
-      void invert(const T& y, std::vector<Interval> &v_t, const Interval& t = Interval()) const
+      void invert(const T& y, std::vector<Interval> &v_t) const
+      {
+        invert(y,v_t,t0_tf());
+      }
+
+      /**
+       * \ingroup codac2_slicedtube_inversion
+       * \brief Computes the set of continuous values of the inversion \f$[x]^{-1}([y])\f$.
+       *
+       * \param y interval codomain
+       * \param v_t vector of the sub-tdomains \f$[t_k]\f$ for which
+       *            \f$\forall t\in[t_k] \mid x(t)\in[y], x(\cdot)\in[x](\cdot)\f$
+       * \param t (optional) temporal domain on which the inversion will be performed
+       */
+      void invert(const T& y, std::vector<Interval> &v_t, const Interval& t) const
       {
         return invert_common_subsets(y, v_t, t,
           [this,&y](auto it, const Interval& t_) {
@@ -761,17 +815,34 @@ namespace codac2
       }
 
       /**
-       * \brief Returns the optimal interval inversion \f$[x]^{-1}([y])\f$
+       * \brief Returns the optimal interval inversion \f$[x]^{-1}([y])\f$.
        *
-       * \note The knowledge of the derivative tube \f$[v](\cdot)\f$ allows a finer inversion
-       * \note If the inversion results in several pre-images, their union is returned
+       * The knowledge of the derivative tube \f$[v](\cdot)\f$ allows a finer inversion.
+       * If the inversion results in several pre-images, their union is returned.
        *
        * \param y interval codomain
        * \param v derivative tube such that \f$\dot{x}(\cdot)\in[v](\cdot)\f$
-       * \param t optional temporal domain on which the inversion will be performed
        * \return hull of \f$[x]^{-1}([y])\f$
        */
-      Interval invert(const T& y, const SlicedTube<T>& v, const Interval& t = Interval()) const
+      Interval invert(const T& y, const SlicedTube<T>& v) const
+        requires (std::is_same_v<T,Interval> || std::is_same_v<T,IntervalVector>)
+      {
+        return invert(y,v,t0_tf());
+      }
+
+      /**
+       * \ingroup codac2_slicedtube_inversion
+       * \brief Returns the optimal interval inversion \f$[x]^{-1}([y])\f$.
+       *
+       * The knowledge of the derivative tube \f$[v](\cdot)\f$ allows a finer inversion.
+       * If the inversion results in several pre-images, their union is returned.
+       *
+       * \param y interval codomain
+       * \param v derivative tube such that \f$\dot{x}(\cdot)\in[v](\cdot)\f$
+       * \param t (optional) temporal domain on which the inversion will be performed
+       * \return hull of \f$[x]^{-1}([y])\f$
+       */
+      Interval invert(const T& y, const SlicedTube<T>& v, const Interval& t) const
         requires (std::is_same_v<T,Interval> || std::is_same_v<T,IntervalVector>)
       {
         return invert_common(y, t,
@@ -781,17 +852,34 @@ namespace codac2
       }
 
       /**
-       * \brief Computes the set of continuous values of the optimal inversion \f$[x]^{-1}([y])\f$
+       * \brief Computes the set of continuous values of the optimal inversion \f$[x]^{-1}([y])\f$.
        *
-       * \note The knowledge of the derivative tube \f$[v](\cdot)\f$ allows finer inversions
+       * The knowledge of the derivative tube \f$[v](\cdot)\f$ allows finer inversions.
        *
        * \param y interval codomain
        * \param v_t vector of the sub-tdomains \f$[t_k]\f$ for which
-       *            \f$\exists t\in[t_k] \mid x(t)\in[y], x(\cdot)\in[x](\cdot), \dot{x}(\cdot)\in[v](\cdot)\f$
+       *            \f$\forall t\in[t_k] \mid x(t)\in[y], x(\cdot)\in[x](\cdot), \dot{x}(\cdot)\in[v](\cdot)\f$
        * \param v derivative tube such that \f$\dot{x}(\cdot)\in[v](\cdot)\f$
-       * \param t optional temporal domain on which the inversion will be performed
        */
-      void invert(const T& y, std::vector<Interval> &v_t, const SlicedTube<T>& v, const Interval& t = Interval()) const
+      void invert(const T& y, std::vector<Interval> &v_t, const SlicedTube<T>& v) const
+        requires (std::is_same_v<T,Interval> || std::is_same_v<T,IntervalVector>)
+      {
+        invert(y,v_t,v,t0_tf());
+      }
+
+      /**
+       * \ingroup codac2_slicedtube_inversion
+       * \brief Computes the set of continuous values of the optimal inversion \f$[x]^{-1}([y])\f$.
+       *
+       * The knowledge of the derivative tube \f$[v](\cdot)\f$ allows finer inversions.
+       *
+       * \param y interval codomain
+       * \param v_t vector of the sub-tdomains \f$[t_k]\f$ for which
+       *            \f$\forall t\in[t_k] \mid x(t)\in[y], x(\cdot)\in[x](\cdot), \dot{x}(\cdot)\in[v](\cdot)\f$
+       * \param v derivative tube such that \f$\dot{x}(\cdot)\in[v](\cdot)\f$
+       * \param t (optional) temporal domain on which the inversion will be performed
+       */
+      void invert(const T& y, std::vector<Interval> &v_t, const SlicedTube<T>& v, const Interval& t) const
         requires (std::is_same_v<T,Interval> || std::is_same_v<T,IntervalVector>)
       {
         return invert_common_subsets(y, v_t, t,
@@ -803,90 +891,115 @@ namespace codac2
       // Integral related methods
 
       /**
-       * \brief Returns an enclosure of the integral of this tube from \f$t_0\f$ to \f$[t]\f$
+       * \defgroup codac2_slicedtube_integrals Integration and primitive operations on sliced tubes
+       * \brief The following methods are valid for tubes defined for ``Interval`` or
+       * ``IntervalVector`` codomains. The returned values are integral enclosures of
+       * same type (respectively, ``Interval`` or ``IntervalVector``).
+       */
+
+      /**
+       * \ingroup codac2_slicedtube_integrals
+       * \brief Returns an enclosure of the integrals of this tube from \f$t_0\f$ to \f$[t]\f$.
        *
        * This method computes an enclosure of
        * \f[
-       *   \left\{ \int_{t_0}^{\tau} x(s)\,ds \;\middle|\; \tau\in[t] \right\}.
+       *   \left\{ \int_{t_0}^{\tau} [x](s)\,ds \;\middle|\; \tau\in[t] \right\}.
        * \f]
        *
        * It is obtained from ``partial_integral(t)`` by taking the hull between
        * the lower bound of the lower enclosure and the upper bound of the upper
        * enclosure.
        *
-       * \param t temporal interval
-       * \return enclosure of the partial integral of this tube over ``t``
+       * \param t temporal interval \f$[t]\f$
+       * \return enclosure of the integrals of this tube over ``t``
        */
       T integral(const Interval& t) const;
 
       /**
-       * \brief Returns an enclosure of the integral of this tube between \f$[t_1]\f$ and \f$[t_2]\f$
+       * \ingroup codac2_slicedtube_integrals
+       * \brief Returns an enclosure of the integrals of this tube between the
+       * time intervals\f$[t_1]\f$ and \f$[t_2]\f$.
        *
        * This method computes an enclosure of
        * \f[
-       *   \left\{ \int_{\tau_1}^{\tau_2} x(s)\,ds
+       *   \left\{ \int_{\tau_1}^{\tau_2} [x](s)\,ds
        *   \;\middle|\; \tau_1\in[t_1],\ \tau_2\in[t_2] \right\}.
        * \f]
        *
        * The result is obtained by subtracting the partial integral enclosures at
        * ``t1`` and ``t2``.
        *
-       * \param t1 first temporal interval
-       * \param t2 second temporal interval
-       * \return enclosure of the integral of this tube between ``t1`` and ``t2``
+       * \param t1 first temporal interval \f$[t_1]\f$
+       * \param t2 second temporal interval \f$[t_2]\f$
+       * \return enclosure of the integrals of this tube between ``t1`` and ``t2``
        */
       T integral(const Interval& t1, const Interval& t2) const;
 
       /**
-       * \brief Returns lower and upper enclosures of the primitive of this tube over \f$[t]\f$
+       * \ingroup codac2_slicedtube_integrals
+       * \brief Returns lower and upper enclosures of the integrals of this tube
+       * \f$[x](\cdot)=[x^-(\cdot),x^+(\cdot)]\f$ from \f$t_0\f$ to \f$[t]\f$.
        *
-       * This method returns a pair ``(p⁻,p⁺)`` such that, for every
-       * \f$\tau\in[t]\f$,
+       * This method returns a pair \f$([p^-],[p^+])\f$ such that:
        * \f[
-       *   \int_{t_0}^{\tau} x(s)\,ds \in [\,p^-,\,p^+\,].
+       *   [p^-]\supset
+       *        \left\{ \int_{t_0}^{\tau} x^-(s)\,ds
+       *        \;\middle|\; \tau\in[t]
+       *        \right\}
+       *   \mathrm{~~and~~}
+       *   [p^+]\supset
+       *        \left\{\int_{t_0}^{\tau} x^+(s)\,ds
+       *        \;\middle|\; \tau\in[t]
+       *        \right\}.
        * \f]
-       *
-       * More precisely:
-       * - ``first`` encloses the lower bounds of the partial integrals,
-       * - ``second`` encloses the upper bounds of the partial integrals.
        *
        * This representation preserves more information than ``integral(t)``,
        * which only returns the hull of these partial integral bounds.
        *
-       * \param t temporal interval
+       * \param t temporal interval \f$[t]\f$
        * \return pair of lower and upper partial integral enclosures over ``t``
        */
       std::pair<T,T> partial_integral(const Interval& t) const;
 
       /**
-       * \brief Returns lower and upper enclosures of the primitive increment between \f$[t_1]\f$ and \f$[t_2]\f$
+       * \ingroup codac2_slicedtube_integrals
+       * \brief Returns lower and upper enclosures of the integrals of this tube
+       * \f$[x](\cdot)=[x^-(\cdot),x^+(\cdot)]\f$ between \f$[t_1]\f$ and \f$[t_2]\f$.
        *
        * This method returns a pair obtained by subtracting the partial integral
-       * enclosures at ``t1`` from those at ``t2``.
-       *
-       * It provides lower and upper enclosures of
+       * enclosures at ``t1`` from those at ``t2``. The returned pair \f$([p^-],[p^+])\f$
+       * is such that:
        * \f[
-       *   \int_{\tau_1}^{\tau_2} x(s)\,ds,
-       *   \qquad \tau_1\in[t_1],\ \tau_2\in[t_2].
+       *   [p^-]\supset
+       *        \left\{ \int_{\tau_1}^{\tau_2} x^-(s)\,ds
+       *        \;\middle|\; \tau_1\in[t_1],\ \tau_2\in[t_2]
+       *        \right\},
+       * \f]
+       * and
+       * \f[
+       *   [p^+]\supset
+       *        \left\{\int_{\tau_1}^{\tau_2} x^+(s)\,ds
+       *        \;\middle|\; \tau_1\in[t_1],\ \tau_2\in[t_2]
+       *        \right\}.
        * \f]
        *
-       * \param t1 first temporal interval
-       * \param t2 second temporal interval
-       * \return pair of lower and upper enclosures of the integral increment
+       * \param t1 first temporal interval \f$[t_1]\f$
+       * \param t2 second temporal interval \f$[t_2]\f$
+       * \return pair of lower and upper enclosures of the integrals
        */
       std::pair<T,T> partial_integral(const Interval& t1, const Interval& t2) const;
 
       /**
-       * \brief Returns a primitive of this tube with zero initial condition
+       * \ingroup codac2_slicedtube_integrals
+       * \brief Returns a primitive of this tube with zero initial condition.
        *
        * This is a shorthand for ``primitive(x0)`` with \f$x_0 = 0\f$.
        *
-       * The returned tube ``p`` is defined on the same temporal domain and
-       * satisfies the derivative relation
+       * In other words, the returned tube encloses solutions of
        * \f[
        *   \dot{p}(\cdot) \in [x](\cdot),
+       *   \qquad p(t_0)=0.
        * \f]
-       * together with the initial condition \f$p(t_0)=0\f$.
        *
        * \return primitive tube with zero initial condition
        */
@@ -898,11 +1011,12 @@ namespace codac2
       }
 
       /**
+       * \ingroup codac2_slicedtube_integrals
        * \brief Returns a primitive of this tube with prescribed initial condition
        *
        * This method constructs a tube ``p`` on the same temporal domain as this
        * tube, imposes the initial condition \f$p(t_0)=x_0\f$, and contracts
-       * ``p`` with ``*this`` through the derivative relation using ``CtcDeriv``.
+       * ``p`` with this tube through the derivative relation using ``CtcDeriv``.
        *
        * In other words, the returned tube encloses solutions of
        * \f[
