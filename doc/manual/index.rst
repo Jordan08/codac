@@ -401,6 +401,7 @@ Development
    manual/introduction/index.rst
    manual/installation/index.rst
    manual/intervals/index.rst
+   manual/tubes/index.rst
    manual/linear/index.rst
    manual/functions/index.rst
    manual/contractors/index.rst
