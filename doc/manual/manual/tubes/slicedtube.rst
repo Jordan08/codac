@@ -1,4 +1,4 @@
-.. _sec-domains-slicedtube:
+.. _sec-domains-tubes-slicedtube:
 
 The SlicedTube class
 ====================
@@ -35,55 +35,19 @@ A sliced tube can be created from:
 
   .. group-tab:: Python
 
-    .. code-block:: py
-
-      td = create_tdomain([0,10], 0.1, True)
-
-      # Sliced tube from interval-type codomains
-      x = SlicedTube(td, Interval(-1,1))
-      y = SlicedTube(td, IntervalVector(2))
-      z = SlicedTube(td, IntervalMatrix(2,2))
-
-      # From an analytic function
-      t = ScalarVar()
-      f = AnalyticFunction([t], sin(t))
-      xf = SlicedTube(td, f)
-
-      # From an analytic trajectory or sampled trajectory
-      at = AnalyticTraj(AnalyticFunction([t],cos(t)), [0,10])
-      st = AnalyticTraj(AnalyticFunction([t],cos(t)+t/10), [0,10]).sampled(1e-2)
-      xu = SlicedTube(td,at) | SlicedTube(td,st) # union (hull) of tubes
-
-      fig.plot_tube(xf, [Color.dark_blue(),Color.light_gray()])
-      fig.plot_tube(xu, [Color.dark_blue(),Color.light_gray()])
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [slicedtube-class-1-beg]
+      :end-before: [slicedtube-class-1-end]
+      :dedent: 4
 
   .. group-tab:: C++
 
-    .. code-block:: c++
-
-      auto td = create_tdomain({0,10}, 0.1, true);
-
-      // Sliced tube from interval-type codomains
-      SlicedTube x(td, Interval(-1,1)); // x has type SlicedTube<Interval>
-      SlicedTube y(td, IntervalVector(2)); // y has type SlicedTube<IntervalVector>
-      SlicedTube z(td, IntervalMatrix(2,2)); // z has type SlicedTube<IntervalMatrix>
-
-      // Explicit template notation remains possible:
-      SlicedTube<Interval> x2(td, Interval(-1,1));
-
-      // From an analytic function
-      ScalarVar t;
-      AnalyticFunction f({t}, sin(t));
-      SlicedTube xf(td, f);
-      // xf has type SlicedTube<Interval> because f outputs scalar values
-
-      // From an analytic trajectory or sampled trajectory
-      AnalyticTraj at(AnalyticFunction({t},cos(t)), {0,10});
-      AnalyticTraj st(AnalyticFunction({t},cos(t)+t/10), {0,10}).sampled(1e-2);
-      auto xu = SlicedTube(td,at) | SlicedTube(td,st); // union (hull) of tubes
-
-      fig.plot_tube(xf, {Color::dark_blue(),Color::light_gray()});
-      fig.plot_tube(xu, {Color::dark_blue(),Color::light_gray()});
+    .. literalinclude:: src.cpp
+      :language: c++
+      :start-after: [slicedtube-class-1-beg]
+      :end-before: [slicedtube-class-1-end]
+      :dedent: 4
 
 
 .. figure:: interval_trajs.png
@@ -120,35 +84,19 @@ The class also defines custom iterators so that iterating on a ``SlicedTube`` yi
 
   .. group-tab:: Python
 
-    .. code-block:: py
-
-      td = create_tdomain([0,3])
-      x = SlicedTube(td, IntervalVector(2))
-      x.set([[1,5],[-oo,2]], [0,1])
-      x.set([[2,8],[-oo,3]], [1,2])
-      x.set([[6,9],[-oo,4]], [2,3])
-
-      s0 = x.first_slice()
-      s1 = s0.next_slice()
-
-      for s in x:
-        print(s.t0_tf(), s.codomain())
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [slicedtube-class-2-beg]
+      :end-before: [slicedtube-class-2-end]
+      :dedent: 4
 
   .. group-tab:: C++
 
-    .. code-block:: c++
-
-      auto td = create_tdomain({0,3});
-      SlicedTube x(td, IntervalVector(2));
-      x.set({{1,5},{-oo,2}}, {0,1});
-      x.set({{2,8},{-oo,3}}, {1,2});
-      x.set({{6,9},{-oo,4}}, {2,3});
-
-      auto s0 = x.first_slice();
-      auto s1 = s0->next_slice();
-
-      for(const auto& s : x)
-        std::cout << s.t0_tf() << " -> " << s.codomain() << std::endl;
+    .. literalinclude:: src.cpp
+      :language: c++
+      :start-after: [slicedtube-class-2-beg]
+      :end-before: [slicedtube-class-2-end]
+      :dedent: 4
 
 
 Setting values and refining the partition
@@ -172,41 +120,19 @@ For example, setting a value at one scalar time creates an explicit gate if nece
 
   .. group-tab:: Python
 
-    .. code-block:: py
-
-      td = create_tdomain([0,2], 1.0, False) # False: without gates
-
-      x = SlicedTube(td, Interval(0,1))
-      v = SlicedTube(td, Interval(-1,1))
-
-      print(x)            # outputs [0,2]↦[0,1], 2 slices
-      print(v)            # outputs [0,2]↦[0,1], 2 slices
-
-      td.nb_tslices()     # 2: [0,1],[1,2]
-      x.set([0.5,1], 1.3) # local update, will refine the partition at t=1.3
-      td.nb_tslices()     # now 4: [0,1],[1,1.3],[1.3],[1.3,2]
-
-      print(x)            # outputs [0,2]↦[-1,1], 4 slices
-      print(v)            # outputs [0,2]↦[-1,1], 4 slices (v is also impacted by x.set(..))
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [tdomain-class-4-beg]
+      :end-before: [tdomain-class-4-end]
+      :dedent: 4
 
   .. group-tab:: C++
 
-    .. code-block:: c++
-
-      auto td = create_tdomain({0,2}, 1.0, false); // false: without gates
-
-      SlicedTube x(td, Interval(0,1));
-      SlicedTube v(td, Interval(-1,1));
-
-      cout << x << endl;   // outputs [0,2]↦[0,1], 2 slices
-      cout << v << endl;   // outputs [0,2]↦[0,1], 2 slices
-
-      td->nb_tslices();    // 2: [0,1],[1,2]
-      x.set({0.5,1}, 1.3); // local update, will refine the partition at t=1.3
-      td->nb_tslices();    // now 4: [0,1],[1,1.3],[1.3],[1.3,2]
-
-      cout << x << endl;   // outputs [0,2]↦[-1,1], 4 slices
-      cout << v << endl;   // outputs [0,2]↦[-1,1], 4 slices (v is also impacted by x.set(..))
+    .. literalinclude:: src.cpp
+      :language: c++
+      :start-after: [tdomain-class-4-beg]
+      :end-before: [tdomain-class-4-end]
+      :dedent: 4
 
 
 Evaluation
@@ -220,45 +146,19 @@ When a derivative tube ``v`` is available, the overload ``x(t,v)`` uses per-slic
 
   .. group-tab:: Python
 
-    .. code-block:: py
-
-      td = create_tdomain([0,3], 1.0, False)
-      x = SlicedTube(td, Interval())
-
-      x.set([1,5], [0,1])
-      x.set([2,8], [1,2])
-      x.set([6,9], [2,3])
-
-      x(0.5)      # [1,5]
-      x(1.5)      # [2,8]
-      x([0,3])    # [1,9]
-      x(-1.0)     # [-oo,oo]
-
-      # No explicit gates: boundary values come from adjacent-slice intersections
-      x(1.0)      # [2,5]
-      x(2.0)      # [6,8]
-      x(3.0)      # [6,9]
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [slicedtube-class-4-beg]
+      :end-before: [slicedtube-class-4-end]
+      :dedent: 4
 
   .. group-tab:: C++
 
-    .. code-block:: c++
-
-      auto td = create_tdomain({0,3}, 1.0, false);
-      SlicedTube x(td, Interval());
-
-      x.set({1,5}, {0,1});
-      x.set({2,8}, {1,2});
-      x.set({6,9}, {2,3});
-
-      Interval y0 = x(0.5);   // [1,5]
-      Interval y1 = x(1.5);   // [2,8]
-      Interval y2 = x({0,3}); // [1,9]
-      Interval y3 = x(-1.0);  // [-oo,oo]
-
-      // No explicit gates: boundary values come from adjacent-slice intersections
-      Interval y4 = x(1.0);   // [2,5]
-      Interval y5 = x(2.0);   // [6,8]
-      Interval y6 = x(3.0);   // [6,9]
+    .. literalinclude:: src.cpp
+      :language: c++
+      :start-after: [slicedtube-class-4-beg]
+      :end-before: [slicedtube-class-4-end]
+      :dedent: 4
 
 
 Inversion
@@ -296,29 +196,20 @@ The following example computes the different connected components of the inversi
 
   .. group-tab:: Python
 
-    .. code-block:: py
-
-      v_t = []
-      y = Interval(0,0.2)
-      x.invert(y,v_t)
-
-      for t in v_t:
-        z = cart_prod(t,y)
-        DefaultFigure.draw_box(z, Color.red())
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [slicedtube-class-5-beg]
+      :end-before: [slicedtube-class-5-end]
+      :dedent: 4
 
   .. group-tab:: C++
 
-    .. code-block:: c++
+    .. literalinclude:: src.cpp
+      :language: c++
+      :start-after: [slicedtube-class-5-beg]
+      :end-before: [slicedtube-class-5-end]
+      :dedent: 4
 
-      std::vector<Interval> v_t;
-      Interval y(0,0.2);
-      x.invert(y, v_t);
-
-      for(const auto& t : v_t)
-      {
-        IntervalVector z = cart_prod(t,y);
-        DefaultFigure::draw_box(z, Color::red());
-      }
 
 .. figure:: inversion_example.png
   :width: 70%
@@ -327,6 +218,60 @@ The following example computes the different connected components of the inversi
 
 .. doxygengroup:: codac2_slicedtube_inversion
   :project: codac
+
+
+Tube operations
+---------------
+
+Standard pointwise operations are available on sliced tubes and are applied slice by slice.
+
+For two tubes, binary operators require both operands to share the same :class:`~codac.TDomain`. This makes tube expressions easy to combine once the tubes have been built on a common temporal support.
+
+The following operators are available:
+
+* union and intersection: ``|`` and ``&``,
+* arithmetic operations: ``+``, ``-``, ``*``, ``/``,
+* in-place variants: ``|=``, ``&=``, ``+=``, ``-=``, ``*=``, ``/=``.
+
+For scalar interval tubes, several usual nonlinear functions are also provided, including ``sqr``, ``sqrt``, ``pow``, ``exp``, ``log``, ``sin``, ``cos``, ``tan``, ``atan2``, ``abs``, ``min``, ``max``, ``sign``, ``floor`` and ``ceil``.
+
+.. tabs::
+
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [slicedtube-class-6-beg]
+      :end-before: [slicedtube-class-6-end]
+      :dedent: 4
+
+  .. group-tab:: C++
+
+    .. literalinclude:: src.cpp
+      :language: c++
+      :start-after: [slicedtube-class-6-beg]
+      :end-before: [slicedtube-class-6-end]
+      :dedent: 4
+
+For vector-valued codomains, pointwise arithmetic is also available. In particular, the product of a matrix tube and a vector tube returns a vector tube.
+
+.. tabs::
+
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [slicedtube-class-7-beg]
+      :end-before: [slicedtube-class-7-end]
+      :dedent: 4
+
+  .. group-tab:: C++
+
+    .. literalinclude:: src.cpp
+      :language: c++
+      :start-after: [slicedtube-class-7-beg]
+      :end-before: [slicedtube-class-7-end]
+      :dedent: 4
 
 
 Integration and primitives
@@ -339,7 +284,7 @@ Reliable integral computations are available on tubes.
   
   Hatched part depicts :math:`\int_{a}^{b}x^-(\tau)d\tau`, the lower bound of :math:`\int_{a}^{b}[x](\tau)d\tau`.
 
-The computation is reliable because it stands on the tube's slices. The result is an outer approximation of the integral of the tube represented by these slices:
+The computation is reliable even for tubes defined from analytic functions, because it stands on the tube's slices that are reliable enclosures. The result is an outer approximation of the integral of the tube represented by these slices:
 
 .. figure:: tube_lb_integral_slices.png
   :width: 70%
@@ -357,32 +302,24 @@ Inflation, extraction, and algebraic helpers
 A sliced tube can be inflated either by a constant radius or by a time-varying
 sampled radius. Inflation is performed in place.
 
-
 .. tabs::
 
   .. group-tab:: Python
 
-    .. code-block:: py
-
-      x.inflate(0.2) # constant inflation
-
-      rad = SampledTraj()
-      rad.set(0.1, 0.0)
-      rad.set(0.3, 1.0)
-      rad.set(0.2, 2.0)
-      x.inflate(rad) # time-varying inflation radius
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [slicedtube-class-8-beg]
+      :end-before: [slicedtube-class-8-end]
+      :dedent: 4
 
   .. group-tab:: C++
 
-    .. code-block:: c++
+    .. literalinclude:: src.cpp
+      :language: c++
+      :start-after: [slicedtube-class-8-beg]
+      :end-before: [slicedtube-class-8-end]
+      :dedent: 4
 
-      x.inflate(0.2); # constant inflation
-      
-      SampledTraj<double> rad;
-      rad.set(0.1, 0.0);
-      rad.set(0.3, 1.0);
-      rad.set(0.2, 2.0);
-      x.inflate(rad); # time-varying inflation radius
 
 For vector-valued tubes, the API also provides convenient extraction operators:
 
@@ -396,19 +333,19 @@ The extracted tubes keep the same temporal partition as the original one.
 
   .. group-tab:: Python
 
-    .. code-block:: py
-
-      # Component and subvector extraction
-      x0 = x[0]
-      x12 = x.subvector(1,2)
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [slicedtube-class-9-beg]
+      :end-before: [slicedtube-class-9-end]
+      :dedent: 4
 
   .. group-tab:: C++
 
-    .. code-block:: c++
-
-      // Component and subvector extraction
-      auto x0 = x[0];              // type: SlicedTube<Interval>
-      auto x12 = x.subvector(1,2); // type: SlicedTube<IntervalVector>
+    .. literalinclude:: src.cpp
+      :language: c++
+      :start-after: [slicedtube-class-9-beg]
+      :end-before: [slicedtube-class-9-end]
+      :dedent: 4
 
 
 Involving a tube in an analytic expression

@@ -1,4 +1,4 @@
-.. _sec-domains-tdomain:
+.. _sec-domains-tubes-tdomain:
 
 The TDomain class
 =================
@@ -32,21 +32,20 @@ The following examples show the expected structures for the sampled cases above,
 
   .. group-tab:: Python
 
-    .. code-block:: py
-
-      td0 = create_tdomain()                  # one unbounded slice [-oo,oo]
-      td1 = create_tdomain([0,1])             # one slice [0,1]
-      td2 = create_tdomain([0,1], 0.5, False) # [0,0.5],[0.5,1]
-      td3 = create_tdomain([0,1], 0.5, True)  # [0],[0,0.5],[0.5],[0.5,1],[1]
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [tdomain-class-1-beg]
+      :end-before: [tdomain-class-1-end]
+      :dedent: 4
 
   .. group-tab:: C++
 
-    .. code-block:: c++
+    .. literalinclude:: src.cpp
+      :language: c++
+      :start-after: [tdomain-class-1-beg]
+      :end-before: [tdomain-class-1-end]
+      :dedent: 4
 
-      auto td0 = create_tdomain();                  // one unbounded slice [-oo,oo]
-      auto td1 = create_tdomain({0,1});             // one slice [0,1]
-      auto td2 = create_tdomain({0,1}, 0.5, false); // [0,0.5],[0.5,1]
-      auto td3 = create_tdomain({0,1}, 0.5, true);  // [0],[0,0.5],[0.5],[0.5,1],[1]
 
 Inspecting the partition
 ------------------------
@@ -63,35 +62,19 @@ A temporal domain exposes:
 
   .. group-tab:: Python
 
-    .. code-block:: py
-
-      td = create_tdomain([0,1], 0.5, True)
-
-      td.t0_tf()      # [0,1]
-      td.nb_tslices() # 5
-      td.nb_tubes()   # 0 initially
-      
-      td.tslice(0.0)  # [0]
-      td.tslice(0.1)  # [0,0.5]
-      td.tslice(0.5)  # [0.5]
-      td.tslice(0.6)  # [0.5,1]
-      td.tslice(1.0)  # [1]
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [tdomain-class-2-beg]
+      :end-before: [tdomain-class-2-end]
+      :dedent: 4
 
   .. group-tab:: C++
 
-    .. code-block:: c++
-
-      auto td = create_tdomain({0,1}, 0.5, true); // returns a std::shared_ptr<TDomain>
-
-      Interval dom = td->t0_tf();  // [0,1]
-      size_t n = td->nb_tslices(); // 5
-      size_t m = td->nb_tubes();   // 0 initially
-
-      auto it = td->tslice(0.0);   // [0]
-      auto it = td->tslice(0.1);   // [0,0.5]
-      auto it = td->tslice(0.5);   // [0.5]
-      auto it = td->tslice(0.6);   // [0.5,1]
-      auto it = td->tslice(1.0);   // [1]
+    .. literalinclude:: src.cpp
+      :language: c++
+      :start-after: [tdomain-class-2-beg]
+      :end-before: [tdomain-class-2-end]
+      :dedent: 4
 
 
 Note that ``tslice(t)`` returns the gate when ``t`` matches an explicit gate, and
@@ -115,19 +98,19 @@ Sampling can occur:
 
   .. group-tab:: Python
 
-    .. code-block:: py
-
-      td = create_tdomain()
-      td.sample(1.0, False) # [-oo,1][1,oo]
-      td.sample(10.0, True) # [-oo,1],[1,10],[10],[10,oo]
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [tdomain-class-3-beg]
+      :end-before: [tdomain-class-3-end]
+      :dedent: 4
 
   .. group-tab:: C++
 
-    .. code-block:: c++
-
-      auto td = create_tdomain(); // returns a std::shared_ptr<TDomain>
-      td->sample(1., false); // [-oo,1],[1,oo]
-      td->sample(10., true); // [-oo,1],[1,10],[10],[10,oo]
+    .. literalinclude:: src.cpp
+      :language: c++
+      :start-after: [tdomain-class-3-beg]
+      :end-before: [tdomain-class-3-end]
+      :dedent: 4
 
 One important implementation detail is that refinement preserves the attached tubes by cloning the
 corresponding slice objects onto the new temporal elements. The new slices are then reattached to
@@ -145,41 +128,19 @@ The following code illustrates this effect:
 
   .. group-tab:: Python
 
-    .. code-block:: py
-
-      td = create_tdomain([0,2], 1.0, False) # False: without gates
-
-      x = SlicedTube(td, Interval(0,1))
-      v = SlicedTube(td, Interval(-1,1))
-
-      print(x)            # outputs [0,2]↦[0,1], 2 slices
-      print(v)            # outputs [0,2]↦[0,1], 2 slices
-
-      td.nb_tslices()     # 2: [0,1],[1,2]
-      x.set([0.5,1], 1.3) # local update, will refine the partition at t=1.3
-      td.nb_tslices()     # now 4: [0,1],[1,1.3],[1.3],[1.3,2]
-
-      print(x)            # outputs [0,2]↦[-1,1], 4 slices
-      print(v)            # outputs [0,2]↦[-1,1], 4 slices (v is also impacted by x.set(..))
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [tdomain-class-4-beg]
+      :end-before: [tdomain-class-4-end]
+      :dedent: 4
 
   .. group-tab:: C++
 
-    .. code-block:: c++
-
-      auto td = create_tdomain({0,2}, 1.0, false); // false: without gates
-
-      SlicedTube x(td, Interval(0,1));
-      SlicedTube v(td, Interval(-1,1));
-
-      cout << x << endl;   // outputs [0,2]↦[0,1], 2 slices
-      cout << v << endl;   // outputs [0,2]↦[0,1], 2 slices
-
-      td->nb_tslices();    // 2: [0,1],[1,2]
-      x.set({0.5,1}, 1.3); // local update, will refine the partition at t=1.3
-      td->nb_tslices();    // now 4: [0,1],[1,1.3],[1.3],[1.3,2]
-
-      cout << x << endl;   // outputs [0,2]↦[-1,1], 4 slices
-      cout << v << endl;   // outputs [0,2]↦[-1,1], 4 slices (v is also impacted by x.set(..))
+    .. literalinclude:: src.cpp
+      :language: c++
+      :start-after: [tdomain-class-4-beg]
+      :end-before: [tdomain-class-4-end]
+      :dedent: 4
 
 .. note::
 
@@ -213,26 +174,16 @@ attached tubes, and the number of attached tubes can be queried with
 
   .. group-tab:: Python
 
-    .. code-block:: py
-
-      td = create_tdomain([0,3], 1.0, False)
-      x = SlicedTube(td, Interval(0,1))
-
-      td.nb_tubes()      # 1
-      td.truncate([0.5,2.5])
-
-      print(td.t0_tf())  # [0.5,2.5]
-      print(x)           # x now uses the truncated shared partition
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [tdomain-class-5-beg]
+      :end-before: [tdomain-class-5-end]
+      :dedent: 4
 
   .. group-tab:: C++
 
-    .. code-block:: c++
-
-      auto td = create_tdomain({0,3}, 1.0, false);
-      SlicedTube<Interval> x(td, Interval(0,1));
-
-      std::cout << td->nb_tubes() << std::endl; // 1
-      td->truncate({0.5,2.5});
-
-      std::cout << td->t0_tf() << std::endl;    // [0.5,2.5]
-      std::cout << x << std::endl;              // x now uses the truncated shared partition
+    .. literalinclude:: src.cpp
+      :language: c++
+      :start-after: [tdomain-class-5-beg]
+      :end-before: [tdomain-class-5-end]
+      :dedent: 4

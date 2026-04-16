@@ -34,6 +34,7 @@ The library naturally provides and primarily uses:
 * ``SlicedTube<IntervalMatrix>``.
 
 These are the most common tube types in practice. In Python and Matlab, only these standard sliced-tube classes are currently exposed through the bindings.
+In C++, instantiations such as ``SlicedTube<ConvexPolygon>`` are allowed, provided the required tube operations are available for that domain.
 
 This chapter documents the *sliced tube* implementation currently available in Codac. In this implementation, a tube is represented over an explicit temporal partition stored in a :class:`~codac.TDomain`. Each temporal element is a :class:`~codac.TSlice`, and each application-level value over one temporal element is represented by a :class:`~codac.Slice`. The main user-facing object is therefore a :class:`~codac.SlicedTube`.
 
@@ -42,7 +43,7 @@ This chapter documents the *sliced tube* implementation currently available in C
   
   An example of sliced tube :math:`[x](\cdot)`, as implemented in Codac. The tube is made as a list of interval or box slices. In practice, the sampling :math:`\delta` is not necessarily constant.
 
-Compared with the previous Codac v1 implementation, these tubes are not only functions of time: they are also shared data structures built on a common temporal partition. Refining the time partition of one tube may therefore update the internal slice structure of all tubes attached to the same :class:`~codac.TDomain`. This design is central to the current implementation. It simplifies the user experience: a temporal modification applied to one tube is implicitly propagated to the others, so multi-tube operations such as arithmetic combinations or contractions can still be performed easily on a consistent shared time basis.
+Compared with the previous Codac v1 implementation, these tubes are not only functions of time: they also have shared data structures built on a common temporal partition. Refining the time partition of one tube may therefore update the internal slice structure of all tubes attached to the same :class:`~codac.TDomain`. This design is central to the current implementation. It simplifies the user experience: a temporal modification applied to one tube is implicitly propagated to the others, so multi-tube operations such as arithmetic combinations or contractions can still be performed easily on a consistent shared time basis.
 
 Conceptually, the data model is:
 
