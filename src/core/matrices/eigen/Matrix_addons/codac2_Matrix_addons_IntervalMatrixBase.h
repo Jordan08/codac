@@ -339,7 +339,7 @@ inline auto bisect(Index i, float ratio = 0.49) const
  */
 template<int R=RowsAtCompileTime,int C=ColsAtCompileTime>
   requires IsIntervalDomain<Scalar>
-inline auto bisect_largest(float ratio = 0.49, const std::vector<Index>& among_indices = {}) const
+inline auto bisect_largest(double ratio = 0.49, const std::vector<Index>& among_indices = {}) const
 {
   return bisect(this->max_diam_index(among_indices), ratio);
 }

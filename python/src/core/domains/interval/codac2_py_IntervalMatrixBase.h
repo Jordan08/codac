@@ -199,7 +199,7 @@ void export_IntervalMatrixBase(py::module& m, py::class_<S>& pyclass)
           return x.bisect_largest(ratio,
             among_indices.empty() ? among_indices : matlab::convert_indices(among_indices));
         },
-      MATRIX_ADDONS_INTERVALMATRIXBASE_AUTO_BISECT_LARGEST_FLOAT_CONST_VECTOR_INDEX_REF_CONST,
+      MATRIX_ADDONS_INTERVALMATRIXBASE_AUTO_BISECT_LARGEST_DOUBLE_CONST_VECTOR_INDEX_REF_CONST,
       "ratio"_a = 0.49, "among_indices"_a=std::vector<Index_type>())
     ;
 
