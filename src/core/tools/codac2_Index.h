@@ -8,8 +8,10 @@
  */
 
 #pragma once
+#include <cstddef>
 
 namespace codac2
 {
-  using Index = Eigen::Index;
+  // The Index type is the same as for Eigen
+  using Index = std::ptrdiff_t;
 }
