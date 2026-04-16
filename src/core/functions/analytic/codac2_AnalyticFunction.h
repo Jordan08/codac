@@ -256,7 +256,7 @@ namespace codac2
         os << "(";
         for(size_t i = 0 ; i < f.args().size() ; i++)
           os << (i!=0 ? "," : "") << f.args()[i]->name();
-        os << ") ↦ " << f.expr()->str();
+        os << ") -> " << f.expr()->str();
         return os;
       }
 

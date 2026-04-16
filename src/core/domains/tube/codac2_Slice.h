@@ -546,7 +546,7 @@ namespace codac2
       friend inline std::ostream& operator<<(std::ostream& os, const Slice& x)
       {
         os << x.t0_tf()
-           << "↦" << x.codomain()
+           << "->" << x.codomain()
            << std::flush;
         return os;
       }

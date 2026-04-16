@@ -402,7 +402,7 @@ namespace codac2
   template<typename T>
   inline std::ostream& operator<<(std::ostream& os, const SampledTraj<T>& x)
   {
-    os << "SampledTraj. " << x.tdomain() << "↦";
+    os << "SampledTraj. " << x.tdomain() << "->";
     if constexpr(std::is_same_v<T,Vector>)
     {
       os << "[";

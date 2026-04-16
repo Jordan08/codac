@@ -656,7 +656,7 @@ namespace codac2
       friend inline std::ostream& operator<<(std::ostream& os, const SlicedTube<T>& x)
       {
         os << x.t0_tf()
-           << "↦" << (x.is_empty() ? x.empty_value() : x.codomain())
+           << "->" << (x.is_empty() ? x.empty_value() : x.codomain())
            << ", " << x.nb_slices()
            << " slice" << (x.nb_slices() > 1 ? "s" : "")
            << std::flush;
