@@ -9,6 +9,11 @@ from codac._core import *
 import sys
 import warnings
 
+try:
+  import numpy as _np
+except ImportError:
+  _np = None
+
 
 def codac_error(message):
   print(f'''
@@ -39,6 +44,12 @@ _ANALYTIC_TRAJ_TYPES = (
   AnalyticTraj_Scalar,
   AnalyticTraj_Vector,
   AnalyticTraj_Matrix,
+)
+
+_SAMPLED_TRAJ_TYPES = (
+  SampledTraj_Scalar,
+  SampledTraj_Vector,
+  SampledTraj_Matrix,
 )
 
 def _is_scalar_expr_like(x):
@@ -305,6 +316,58 @@ def traj_cart_prod(*x):
   if not isinstance(x, tuple):
     return traj_cart_prod_list([x])
   return traj_cart_prod_list([*x])
+
+
+def _sampled_traj_type_and_value(x):
+  if isinstance(x, (int, float)):
+    return SampledTraj_Scalar, float
+
+  if isinstance(x, Vector) \
+      or (_np is not None and isinstance(x, _np.ndarray) and x.ndim == 1) \
+      or (isinstance(x, (list, tuple)) and (len(x) == 0 or not isinstance(x[0], (list, tuple)))):
+    return SampledTraj_Vector, lambda y: y if isinstance(y, Vector) else Vector(y)
+
+  if isinstance(x, Matrix) \
+      or (_np is not None and isinstance(x, _np.ndarray) and x.ndim == 2) \
+      or (isinstance(x, (list, tuple)) and len(x) > 0 and isinstance(x[0], (list, tuple))):
+    return SampledTraj_Matrix, lambda y: y if isinstance(y, Matrix) else Matrix(y)
+
+  return None, None
+
+
+def SampledTraj(x=None, y=None):
+  if y is None:
+    if x is None:
+      codac_error("SampledTraj: unable to deduce the trajectory type from an empty constructor")
+
+    for cls in _SAMPLED_TRAJ_TYPES:
+      if isinstance(x, cls):
+        return cls(dict(x))
+
+    if isinstance(x, dict):
+      if not x:
+        codac_error("SampledTraj: unable to deduce the trajectory type from an empty map")
+      cls, cast = _sampled_traj_type_and_value(next(iter(x.values())))
+      if cls is None:
+        codac_error("SampledTraj: wrong constructor argument")
+      return cls({float(t): cast(v) for t, v in x.items()})
+
+    codac_error("SampledTraj: wrong constructor argument")
+
+  if len(y) == 0:
+    codac_error("SampledTraj: unable to deduce the trajectory type from empty samples")
+
+  cls, cast = _sampled_traj_type_and_value(y[0])
+  if cls is None:
+    codac_error("SampledTraj: unable to deduce the trajectory type from the provided samples")
+
+  if cls is SampledTraj_Scalar:
+    return cls(list(x), [float(v) for v in y])
+
+  if cls is SampledTraj_Vector and _np is not None and isinstance(x, _np.ndarray) and isinstance(y, _np.ndarray):
+    return cls(x, y)
+
+  return cls({float(t): cast(v) for t, v in zip(x, y)})
 
 
 def AnalyticTraj(f, t):
