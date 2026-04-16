@@ -53,7 +53,7 @@ namespace codac2
     macro_unary_tube(atan)
 
   SlicedTube<Interval> atan2(const SlicedTube<Interval>& x1, const SlicedTube<Interval>& x2)
-    macro_binary_tube_tube(atan2)
+    macro_binary_tube_tube(atan2,x1)
 
   SlicedTube<Interval> atan2(const SlicedTube<Interval>& x1, const Interval& x2)
     macro_binary_tube_real(atan2)
@@ -83,7 +83,7 @@ namespace codac2
     macro_unary_tube(abs)
 
   SlicedTube<Interval> min(const SlicedTube<Interval>& x1, const SlicedTube<Interval>& x2)
-    macro_binary_tube_tube(min)
+    macro_binary_tube_tube(min,x1)
 
   SlicedTube<Interval> min(const SlicedTube<Interval>& x1, const Interval& x2)
     macro_binary_tube_real(min)
@@ -92,7 +92,7 @@ namespace codac2
     macro_binary_real_tube(min)
 
   SlicedTube<Interval> max(const SlicedTube<Interval>& x1, const SlicedTube<Interval>& x2)
-    macro_binary_tube_tube(max)
+    macro_binary_tube_tube(max,x1)
 
   SlicedTube<Interval> max(const SlicedTube<Interval>& x1, const Interval& x2)
     macro_binary_tube_real(max)

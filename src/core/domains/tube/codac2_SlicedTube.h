@@ -87,8 +87,10 @@ namespace codac2
        * \param tdomain shared temporal domain of the tube
        * \param x analytic trajectory
        */
+      template<typename V>
+        requires std::is_same_v<typename ExprType<T>::Type,V>
       explicit SlicedTube(const std::shared_ptr<TDomain>& tdomain,
-        const AnalyticTraj<typename ExprType<T>::Type>& x)
+        const AnalyticTraj<V>& x)
         : SlicedTubeBase(tdomain)
       {
         for(auto it = _tdomain->begin(); it != _tdomain->end(); ++it)
@@ -755,7 +757,7 @@ namespace codac2
       }
 
       /**
-       * \brief Returns the interval inversion \f$[x]^{-1}([y])\f$.
+       * \brief Returns the interval inversion \f$\left[[x]^{-1}([y])\right]\f$.
        *
        * If the inversion results in several pre-images, their union is returned.
        *
@@ -769,7 +771,7 @@ namespace codac2
 
       /**
        * \ingroup codac2_slicedtube_inversion
-       * \brief Returns the interval inversion \f$[x]^{-1}([y])\f$.
+       * \brief Returns the interval inversion \f$\left[[x]^{-1}([y])\right]\f$.
        *
        * If the inversion results in several pre-images, their union is returned.
        *
@@ -815,7 +817,7 @@ namespace codac2
       }
 
       /**
-       * \brief Returns the optimal interval inversion \f$[x]^{-1}([y])\f$.
+       * \brief Returns the optimal interval inversion \f$\left[[x]^{-1}([y])\right]\f$.
        *
        * The knowledge of the derivative tube \f$[v](\cdot)\f$ allows a finer inversion.
        * If the inversion results in several pre-images, their union is returned.
@@ -832,7 +834,7 @@ namespace codac2
 
       /**
        * \ingroup codac2_slicedtube_inversion
-       * \brief Returns the optimal interval inversion \f$[x]^{-1}([y])\f$.
+       * \brief Returns the optimal interval inversion \f$\left[[x]^{-1}([y])\right]\f$.
        *
        * The knowledge of the derivative tube \f$[v](\cdot)\f$ allows a finer inversion.
        * If the inversion results in several pre-images, their union is returned.
@@ -1237,6 +1239,10 @@ namespace codac2
   
   template<typename T>
   SlicedTube(const std::shared_ptr<TDomain>& tdomain, const SampledTraj<T>& f) -> 
+    SlicedTube<typename Wrapper<T>::Domain>;
+  
+  template<typename T>
+  SlicedTube(const std::shared_ptr<TDomain>& tdomain, const AnalyticTraj<T>& f) -> 
     SlicedTube<typename Wrapper<T>::Domain>;
 
 
