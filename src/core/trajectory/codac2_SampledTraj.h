@@ -453,3 +453,5 @@ namespace codac2
     return v;
   }
 }
+
+#include "codac2_TrajBase_impl.h"

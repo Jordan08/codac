@@ -44,5 +44,3 @@ namespace codac2
       SampledTraj<T> primitive(double dt) const;
   };
 }
-
-#include "codac2_TrajBase_impl.h"

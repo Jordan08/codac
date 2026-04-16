@@ -89,3 +89,5 @@ namespace codac2
       Interval _tdomain;
   };
 }
+
+#include "codac2_TrajBase_impl.h"
