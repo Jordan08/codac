@@ -11,6 +11,5 @@
 
 namespace codac2
 {
-  // The Index type is the same as for Eigen
-  typedef long int Index;
+  using Index = Eigen::Index;
 }
