@@ -55,7 +55,8 @@
     domains/zonotope/codac2_py_Parallelepiped.cpp
     domains/zonotope/codac2_py_Zonotope.cpp
     domains/tube/codac2_py_Slice.h
-    domains/tube/codac2_py_SlicedTube.cpp
+    domains/tube/codac2_py_SlicedTube.h
+    domains/tube/codac2_py_SlicedTube_operations.cpp
     domains/tube/codac2_py_TDomain.cpp
     domains/tube/codac2_py_TimePropag.cpp
     domains/tube/codac2_py_TSlice.cpp

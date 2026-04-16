@@ -53,6 +53,7 @@ list(APPEND SRC_TESTS # listing files without extension
   core/domains/interval/codac2_tests_Interval_operations
   core/domains/interval/codac2_tests_IntervalMatrix
   core/domains/interval/codac2_tests_IntervalVector
+  ../doc/manual/manual/intervals/src
   core/domains/zonotope/codac2_tests_Parallelepiped
   core/domains/zonotope/codac2_tests_Parallelepiped_eval
   core/domains/tube/codac2_tests_TDomain
@@ -60,7 +61,7 @@ list(APPEND SRC_TESTS # listing files without extension
   core/domains/tube/codac2_tests_Slice_polygon
   core/domains/tube/codac2_tests_SlicedTube
   core/domains/tube/codac2_tests_SlicedTube_integral
-  ../doc/manual/manual/intervals/src
+  ../doc/manual/manual/tubes/src
 
   core/functions/analytic/codac2_tests_AnalyticFunction
   ../doc/manual/manual/functions/analytic/src

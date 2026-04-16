@@ -213,10 +213,9 @@ User manual
       * The class SetMembershipFunction
       * Extension to custom expressions
 
-* Tubes
-   * What is a tube?
-   * Temporal domains
-   * The Tube classes
+* :ref:`sec-domains-tubes`
+   * :ref:`sec-domains-tubes-tdomain`
+   * :ref:`sec-domains-tubes-slicedtube`
    * The Trajectory classes
    * Increasing performances using views
 
@@ -401,6 +400,7 @@ Development
    manual/introduction/index.rst
    manual/installation/index.rst
    manual/intervals/index.rst
+   manual/tubes/index.rst
    manual/linear/index.rst
    manual/functions/index.rst
    manual/contractors/index.rst

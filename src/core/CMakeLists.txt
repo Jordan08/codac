@@ -61,6 +61,7 @@
 
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/codac2_BoolInterval.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/codac2_Domain.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/codac2_Scalar.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/codac2_Wrapper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/ellipsoid/codac2_Ellipsoid.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/ellipsoid/codac2_Ellipsoid_checks.cpp
@@ -283,6 +284,7 @@
     ${CMAKE_CURRENT_SOURCE_DIR}/trajectory/codac2_traj_cart_prod.h
     ${CMAKE_CURRENT_SOURCE_DIR}/trajectory/codac2_Traj_operator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/trajectory/codac2_TrajBase.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/trajectory/codac2_TrajBase_impl.h
   )
 
 ################################################################################
