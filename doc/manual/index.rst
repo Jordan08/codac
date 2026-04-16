@@ -213,10 +213,9 @@ User manual
       * The class SetMembershipFunction
       * Extension to custom expressions
 
-* Tubes
-   * What is a tube?
-   * Temporal domains
-   * The Tube classes
+* :ref:`sec-domains-tubes`
+   * :ref:`sec-domains-tubes-tdomain`
+   * :ref:`sec-domains-tubes-slicedtube`
    * The Trajectory classes
    * Increasing performances using views
 
