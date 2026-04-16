@@ -417,7 +417,7 @@ TEST_CASE("SlicedTube")
   {
     ScalarVar t;
     AnalyticFunction f { {t}, cos(t) };
-    AnalyticTraj analytic_traj(f, {-PI,PI});
+    AnalyticTraj analytic_traj({-PI,PI},f);
     auto sampled_traj = analytic_traj.sampled(1e-2);
     auto tdomain = create_tdomain({-PI,PI},1e-2,false);
     SlicedTube<Interval> tube(tdomain, sampled_traj);
@@ -437,7 +437,7 @@ TEST_CASE("SlicedTube")
       vec(2*cos(t),sin(2*t))
     };
 
-    auto analytic_traj = AnalyticTraj(f, {0,5});
+    auto analytic_traj = AnalyticTraj({0,5},f);
     auto sampled_traj = analytic_traj.sampled(1e-2);
     auto tdomain = create_tdomain({0,5},1e-3,false);
     SlicedTube<IntervalVector> tube(tdomain, sampled_traj);

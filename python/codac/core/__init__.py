@@ -370,17 +370,26 @@ def SampledTraj(x=None, y=None):
   return cls({float(t): cast(v) for t, v in zip(x, y)})
 
 
-def AnalyticTraj(f, t):
+def AnalyticTraj(t,f):
+
+  if isinstance(t, _ANALYTIC_FUNCTION_TYPES) and not isinstance(f, _ANALYTIC_FUNCTION_TYPES):
+    warnings.warn(
+      "AnalyticTraj(f,t) is deprecated; use AnalyticTraj(t,f) instead.",
+      FutureWarning,
+      stacklevel=2
+    )
+    t,f = f,t
+
   f = AnalyticFunction(f)
 
   if isinstance(f, AnalyticFunction_Scalar):
-    return AnalyticTraj_Scalar(f, t)
+    return AnalyticTraj_Scalar(t,f)
 
   if isinstance(f, AnalyticFunction_Vector):
-    return AnalyticTraj_Vector(f, t)
+    return AnalyticTraj_Vector(t,f)
 
   if isinstance(f, AnalyticFunction_Matrix):
-    return AnalyticTraj_Matrix(f, t)
+    return AnalyticTraj_Matrix(t,f)
 
   codac_error("AnalyticTraj: can only build this trajectory from an AnalyticFunction_[Scalar/Vector/Matrix]")
 

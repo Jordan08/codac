@@ -98,8 +98,8 @@ class TestTubeManual(unittest.TestCase):
     xf = SlicedTube(td, f)
 
     # From an analytic trajectory or sampled trajectory
-    at = AnalyticTraj(AnalyticFunction([t],cos(t)), [0,10])
-    st = AnalyticTraj(AnalyticFunction([t],cos(t)+t/10), [0,10]).sampled(1e-2)
+    at = AnalyticTraj([0,10], AnalyticFunction([t],cos(t)))
+    st = AnalyticTraj([0,10], AnalyticFunction([t],cos(t)+t/10)).sampled(1e-2)
     xu = SlicedTube(td,at) | SlicedTube(td,st) # union (hull) of tubes
 
     fig.plot_tube(xf, [Color.dark_blue(),Color.light_gray()])
@@ -144,10 +144,10 @@ class TestTubeManual(unittest.TestCase):
 
     t = ScalarVar()
 
-    z1 = AnalyticTraj(AnalyticFunction([t],cos(t)), T)
-    z2 = AnalyticTraj(AnalyticFunction([t],cos(t)+t/10), T)
-    z3 = AnalyticTraj(AnalyticFunction([t],sin(t)+t/10), T)
-    z4 = AnalyticTraj(AnalyticFunction([t],sin(t)), T).sampled(1e-2)
+    z1 = AnalyticTraj(T, AnalyticFunction([t],cos(t)))
+    z2 = AnalyticTraj(T, AnalyticFunction([t],cos(t)+t/10))
+    z3 = AnalyticTraj(T, AnalyticFunction([t],sin(t)+t/10))
+    z4 = AnalyticTraj(T, AnalyticFunction([t],sin(t))).sampled(1e-2)
 
     x1 = SlicedTube(td, z1)
     x2 = SlicedTube(td, z2)

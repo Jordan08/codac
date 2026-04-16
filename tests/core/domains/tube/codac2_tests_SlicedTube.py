@@ -321,7 +321,7 @@ class TestSlicedTube(unittest.TestCase):
 
     t = ScalarVar()
     f = AnalyticFunction([t], cos(t))
-    analytic_traj = AnalyticTraj(f, [-PI,PI])
+    analytic_traj = AnalyticTraj([-PI,PI],f)
     sampled_traj = analytic_traj.sampled(1e-2)
     tdomain = create_tdomain([-PI,PI],1e-2,False)
     tube = SlicedTube(tdomain, sampled_traj)
@@ -342,7 +342,7 @@ class TestSlicedTube(unittest.TestCase):
       vec(2*cos(t),sin(2*t))
     )
 
-    analytic_traj = AnalyticTraj(f, [0,5])
+    analytic_traj = AnalyticTraj([0,5],f)
     sampled_traj = analytic_traj.sampled(1e-2)
     tdomain = create_tdomain([0,5],1e-3,False)
     tube = SlicedTube(tdomain, sampled_traj)

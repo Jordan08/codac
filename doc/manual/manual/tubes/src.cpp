@@ -118,8 +118,8 @@ TEST_CASE("SlicedTube class - manual")
     // xf has type SlicedTube<Interval> because f outputs scalar values
 
     // From an analytic trajectory or sampled trajectory
-    AnalyticTraj at(AnalyticFunction({t},cos(t)), {0,10});
-    SampledTraj st = AnalyticTraj(AnalyticFunction({t},cos(t)+t/10), {0,10}).sampled(1e-2);
+    AnalyticTraj at({0,10}, AnalyticFunction({t},cos(t)));
+    SampledTraj st = AnalyticTraj({0,10}, AnalyticFunction({t},cos(t)+t/10)).sampled(1e-2);
     auto xu = SlicedTube(td,at) | SlicedTube(td,st); // union (hull) of tubes
 
     fig.plot_tube(xf, {Color::dark_blue(),Color::light_gray()});
@@ -170,10 +170,10 @@ TEST_CASE("SlicedTube class - manual")
 
     ScalarVar t;
 
-    AnalyticTraj z1(AnalyticFunction({t},cos(t)), T);
-    AnalyticTraj z2(AnalyticFunction({t},cos(t)+t/10), T);
-    AnalyticTraj z3(AnalyticFunction({t},sin(t)+t/10), T);
-    SampledTraj z4 = AnalyticTraj(AnalyticFunction({t},sin(t)), T).sampled(1e-2);
+    AnalyticTraj z1(T, AnalyticFunction({t},cos(t)));
+    AnalyticTraj z2(T, AnalyticFunction({t},cos(t)+t/10));
+    AnalyticTraj z3(T, AnalyticFunction({t},sin(t)+t/10));
+    SampledTraj z4 = AnalyticTraj(T, AnalyticFunction({t},sin(t))).sampled(1e-2);
 
     SlicedTube x1(td, z1);
     SlicedTube x2(td, z2);
