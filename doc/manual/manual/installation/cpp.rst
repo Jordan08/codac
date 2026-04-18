@@ -14,6 +14,10 @@ This page describes how to install the C++ library on Linux, Windows, and macOS.
 Linux Installation
 ------------------
 
+.. admonition:: Linux distributions
+   
+  Ubuntu or Debian-like systems are implied in most of the instructions (especially the ``sudo apt`` commands to install packages).
+
 
 .. Install from packages (latest release)
 .. ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -68,7 +72,7 @@ Steps
 
    These prerequisites can be installed directly with the command::
 
-      sudo apt-get install -y g++ gcc cmake git
+      sudo apt-get install -y build-essential cmake git
 
 2. **Install the IBEX dependency**:
    
