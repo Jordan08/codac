@@ -145,7 +145,7 @@ Steps
       cmake ..
       make
 
-   Before executing the example, you will have to launch the VIBes viewer. Then,
+   Before executing the example, you will have to launch the `VIBes viewer <../visualization/vibes.html>`_. Then,
 
    .. code-block:: bash
 
@@ -171,7 +171,7 @@ Using Visual Studio
 
 Download and extract *e.g.* ``codac_standalone_x64_vc17.zip`` (for Visual Studio 2022) from https://github.com/codac-team/codac/releases/latest, open ``example\CMakelists.txt``, choose ``x64-Release`` configuration in Visual Studio (instead of ``x64-Debug``), double-click on ``main.cpp`` in the Solution Explorer and then click on the green Start button, and finally check that the graphical output appears.
 
-Note that in order to obtain graphical outputs, you will have to download and run https://github.com/ENSTABretagneRobotics/VIBES/releases/download/0.2.3/VIBes-0.2.3-win32.exe before running the project.
+Note that in order to obtain graphical outputs, you will have to download and run https://github.com/ENSTABretagneRobotics/VIBES/releases/latest/download/VIBes-viewer_x86.exe before running the project.
 
 
 Install from the sources (latest developments)
@@ -234,7 +234,7 @@ and check that the graphical output appears.
    For macOS 12 Monterey on a Mac with Apple silicon (arm64 processor), use ``codac_standalone_x86_64_monterey.zip`` for a Mac with an Intel processor (x86_64 processor), see https://support.apple.com/en-us/116943.
 
 
-Note that in order to obtain graphical outputs, you will have to download and run https://github.com/ENSTABretagneRobotics/VIBES/releases/download/0.2.3/VIBes-0.2.2-osx.dmg before running the project.
+Note that in order to obtain graphical outputs, you will have to download and run https://github.com/ENSTABretagneRobotics/VIBES/releases/latest/download/VIBes-viewer_x86_64.dmg before running the project.
 
 
 

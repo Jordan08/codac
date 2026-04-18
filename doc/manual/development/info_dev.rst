@@ -135,7 +135,7 @@ If you simply want to use the latest Codac release in Python, you can download t
       cd $HOME/codac/examples/03_sivia
       python main.py
 
-   Note that before executing the example, you will have to launch the VIBes viewer.
+   Note that before executing the example, you will have to launch the `VIBes viewer <../visualization/vibes.html>`_.
    You should obtain a graphical output corresponding to a set inversion.
 
 
