@@ -163,7 +163,11 @@ Install from packages (latest release)
 Using MinGW
 ~~~~~~~~~~~
 
-Check https://community.chocolatey.org/packages/codac.
+.. Check https://community.chocolatey.org/packages/codac.
+
+Install `Chocolatey package manager <https://chocolatey.org/install>`_, run `choco install -y ibex cmake make qtcreator` in PowerShell and then download and extract *e.g.* ``codac_standalone_x64_mingw13.zip`` (for MinGW 13) from https://github.com/codac-team/codac/releases/latest, launch Qt Creator and choose Open Project, open ``example\CMakelists.txt``, ensure Desktop is selected and click Configure Project (might be hidden behind notifications at the bottom-right), wait 10 s then click on the big bottom-left green Run button, and finally check that the graphical output appears.
+
+Note that in order to obtain graphical outputs, you will have to download and run https://github.com/ENSTABretagneRobotics/VIBES/releases/latest/download/VIBes-viewer_x86.exe before running the project.
 
 
 Using Visual Studio
@@ -190,15 +194,16 @@ Optionally, for Python binding (*e.g.* ``choco install python --version=3.10.4``
 
 .. code-block:: bash
 
-  choco install doxygen.install --version=1.16
+  choco install doxygen.install --version=1.16.1
   choco install graphviz
   python -m pip install --upgrade pip
   pip install --upgrade wheel setuptools sphinx sphinx_rtd_theme furo sphinx-math-dollar sphinx_tabs breathe sphinx_togglebutton
 
-The logic to follow will then be similar to Linux (note that for Visual Studio, commands such as ``make install`` need to be replaced with something similar to:
+The logic to follow will then be similar to Linux. You might want to right-click in your desired folder and choose ``Git Bash Here`` to run the commands related to Git and compilation. Note that for Visual Studio, commands such as ``make`` and ``make install`` need to be replaced with something similar to:
 
 .. code-block:: bash
 
+  cmake --build . --config Release
   cmake --build . --config Release --target install
 
 .. warning::
@@ -221,7 +226,7 @@ Install `Homebrew package manager <https://brew.sh/>`_ and then build tools:
   brew install wget autoconf automake libtool
   brew install --cask cmake
 
-Download and extract *e.g.* ``codac_standalone_arm64_monterey.zip`` from `<https://github.com/codac-team/codac/releases/tag/v1.5.6/>`_, then in ``example`` folder run:
+Download and extract *e.g.* ``codac_standalone_arm64_sonoma.zip`` from https://github.com/codac-team/codac/releases/latest, then in ``example`` folder run:
 
 .. code-block:: bash
 
@@ -229,9 +234,9 @@ Download and extract *e.g.* ``codac_standalone_arm64_monterey.zip`` from `<https
 
 and check that the graphical output appears.
 
-.. admonition:: For macOS 12 Monterey
+.. admonition:: Apple silicon vs Intel processors
    
-   For macOS 12 Monterey on a Mac with Apple silicon (arm64 processor), use ``codac_standalone_x86_64_monterey.zip`` for a Mac with an Intel processor (x86_64 processor), see https://support.apple.com/en-us/116943.
+   For *e.g.* macOS 13 Sonoma on a Mac with Apple silicon (arm64 processor), use ``codac_standalone_arm64_sonoma.zip``, while for a Mac with an Intel processor (x86_64 processor) use ``codac_standalone_x86_64_sonoma.zip``, see https://support.apple.com/en-us/116943.
 
 
 Note that in order to obtain graphical outputs, you will have to download and run https://github.com/ENSTABretagneRobotics/VIBES/releases/latest/download/VIBes-viewer_x86_64.dmg before running the project.

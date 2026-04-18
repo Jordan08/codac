@@ -41,8 +41,8 @@ If you simply want to use the latest Codac release in Python, you can download t
 
       sudo apt-get install -y g++ gcc cmake git flex bison
 
-   - a supported version of Python (>=3.6).
-   - a recent `Doxygen <https://www.doxygen.nl>`_ version (for instance, release 1.13.0 or newest). On Linux systems, latest releases are not available as Debian packages, so we advice to install Doxygen from the sources:
+   - a supported version of Python (>=3.8).
+   - a recent `Doxygen <https://www.doxygen.nl>`_ version (for instance, release 1.16.1 or newest). On Linux systems, latest releases are not available as Debian packages, so we advise to install Doxygen from the sources:
 
    .. code-block:: bash
 
