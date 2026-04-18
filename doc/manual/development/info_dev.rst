@@ -8,10 +8,11 @@ Building the Manual with Sphinx
 
 To build this manual using Sphinx, follow these steps:
 
-1. **Requirements**: Install `Sphinx <https://www.sphinx-doc.org/>`_ together with the extensions used by Codac, if they are not already installed.
+1. **Requirements**: Install `Sphinx <https://www.sphinx-doc.org/>`_ together with the extensions used by Codac, if they are not already installed. You will need also the ``dot`` command from `Graphviz <https://graphviz.org/>`_.
 
    .. code-block:: bash
 
+      sudo apt-get install sphinx-common graphviz
       pip install sphinx sphinx_rtd_theme furo sphinx-math-dollar sphinx_tabs breathe sphinx_togglebutton
 
 2. **Building the manual**: After configuring the CMake project, the manual can be build with:
