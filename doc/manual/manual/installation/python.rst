@@ -26,6 +26,7 @@ You can also update and test your Codac Python package:
 * **Testing the installation**: In order to verify that your installation is working properly in Python, you can run:
    .. code-block:: bash
 
+     pip install numpy sympy
      python -m unittest discover codac.tests
 
 
