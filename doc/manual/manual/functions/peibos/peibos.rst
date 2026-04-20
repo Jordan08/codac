@@ -3,6 +3,8 @@
 PEIBOS
 ======
 
+  Main author: `Maël Godard <https://godardma.github.io>`_
+
 The PEIBOS tool provides a way to compute the Parallelepipedic Enclosure of the Image of the BOundary of a Set.
 
 Let us consider an initial set :math:`\mathbb{X}_0 \subset \mathbb{R}^n` with its boundary :math:`\partial \mathbb{X}_0`. 
