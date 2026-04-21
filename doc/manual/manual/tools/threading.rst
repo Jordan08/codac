@@ -27,15 +27,20 @@ In addition, the function ``max_threads`` provides the maximum number of threads
 To use a given number of threads in a function, the setter just needs to be called before running the desired function. An example is provided below
 
 .. tabs::
-
-  .. group-tab:: Python
+  
+  .. code-tab:: py
 
     set_nb_threads(max_threads())  # using as many threads as possible
     PEIBOS(...)
-  .. group-tab:: C++
+
+
+  .. code-tab:: c++
 
     set_nb_threads(max_threads());  // using as many threads as possible
     PEIBOS(...);
+
   .. code-tab:: matlab
 
-    TODO
+    set_nb_threads(max_threads());  % using as many threads as possible
+    PEIBOS(...);  
+    
