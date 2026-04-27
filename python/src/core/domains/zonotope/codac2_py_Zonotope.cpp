@@ -39,8 +39,12 @@ void export_Zonotope(py::module& m)
       ZONOTOPE_ZONOTOPE_PROJ_CONST_VECTOR_INDEX_REF_CONST,
       "indices"_a)
 
-    .def_readwrite("z", &Zonotope::z,
-      VECTOR_ZONOTOPE_Z)
+    .def("__add__", &Zonotope::operator+,
+      ZONOTOPE_ZONOTOPE_OPERATORPLUS_CONST_ZONOTOPE_REF,
+      py::is_operator())
+
+    .def_readwrite("c", &Zonotope::c,
+      VECTOR_ZONOTOPE_C)
 
     .def_readwrite("A", &Zonotope::A,
       MATRIX_ZONOTOPE_A)

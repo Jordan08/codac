@@ -18,11 +18,11 @@ namespace codac2
 {
   /**
    * \class Zonotope
-   * \brief Class representing a zonotope \f$\mathbf{z} + \mathbf{A}\cdot[-1,1]^m\f$
+   * \brief Class representing a zonotope \f$\mathbf{c} + \mathbf{A}\cdot[-1,1]^m\f$
    * 
-   * This class represents a zonotope in n-dimensional space, defined by a center point \f$\mathbf{z}\f$ and a shape matrix \f$\mathbf{A}\f$.
+   * This class represents a zonotope in n-dimensional space, defined by a center point \f$\mathbf{c}\f$ and a shape matrix \f$\mathbf{A}\f$.
    * 
-   * The vector \f$\mathbf{z}\f$ and each column of the matrix \f$\mathbf{A}\f$ must have the same dimension \f$n\f$, but the matrix \f$\mathbf{A}\f$ can have any number of columns \f$m\f$.
+   * The vector \f$\mathbf{c}\f$ and each column of the matrix \f$\mathbf{A}\f$ must have the same dimension \f$n\f$, but the matrix \f$\mathbf{A}\f$ can have any number of columns \f$m\f$.
    */
   class Zonotope
   {
@@ -31,10 +31,10 @@ namespace codac2
       /**
        * \brief Constructs a n-zonotope object with a given center and shape matrix
        * 
-       * \param z Center of the zonotope (n-dimensional vector)
+       * \param c Center of the zonotope (n-dimensional vector)
        * \param A Shape matrix of the zonotope (\f$n\times m\f$ matrix)
        */
-      Zonotope(const Vector& z, const Matrix& A);
+      Zonotope(const Vector& c, const Matrix& A);
 
       /**
        * \brief Computes the axis-aligned bounding box of the zonotope
@@ -53,9 +53,18 @@ namespace codac2
       Zonotope proj(const std::vector<Index>& indices) const;
 
       /**
+       * \brief Computes the Minkowski sum of this Zonotope with another Zonotope
+       * 
+       * \param zonotope The other Zonotope to add to this one
+       * 
+       * \return A new Zonotope object representing the Minkowski sum of the two Zonotopes
+       */
+      Zonotope operator+(const Zonotope& zonotope);
+
+      /**
        * \brief Center of the zonotope
        */
-      Vector z;
+      Vector c;
 
       /**
        * \brief Shape matrix of the zonotope

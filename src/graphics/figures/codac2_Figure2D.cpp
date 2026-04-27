@@ -255,7 +255,7 @@ void Figure2D::draw_zonotope(const Zonotope& z, const StyleProperties& style)
        }
    }
    vector<Vector> vertices;
-   Vector point=z.z;
+   Vector point=z.c;
    // Start from v[1] maximum (and v[0] min for horizontal side)
    for (const auto& a : sides) {
        point+=a.second;
@@ -277,17 +277,17 @@ void Figure2D::draw_zonotope(const Zonotope& z, const StyleProperties& style)
 
 void Figure2D::draw_parallelepiped(const Parallelepiped& p, const StyleProperties& style)
 {
-  assert_release(p.A.is_squared() && p.A.rows() == p.z.size());
-  assert_release(p.z.size() == 2);
+  assert_release(p.A.is_squared() && p.A.rows() == p.c.size());
+  assert_release(p.c.size() == 2);
 
   auto a1 = p.A.col(0), a2 = p.A.col(1);
 
   if (a1.isZero() || a2.isZero())
-      draw_polyline({p.z-a1-a2,p.z+a1+a2}, style);
+      draw_polyline({p.c-a1-a2,p.c+a1+a2}, style);
   else
     draw_polygon({
-        p.z+a1+a2, p.z-a1+a2,
-        p.z-a1-a2, p.z+a1-a2
+        p.c+a1+a2, p.c-a1+a2,
+        p.c-a1-a2, p.c+a1-a2
       }, style);
 }
 

@@ -21,9 +21,9 @@ namespace codac2
   /**
    * \class Parallelepiped
    * 
-   * \brief Class representing a parallelepiped \f$\mathbf{z} + \mathbf{A}\cdot[-1,1]^m\f$
+   * \brief Class representing a parallelepiped \f$\mathbf{c} + \mathbf{A}\cdot[-1,1]^m\f$
    * 
-   * This class represents a parallelepiped in n-dimensional space, defined by a center point \f$\mathbf{z}\f$ and a shape matrix \f$\mathbf{A}\f$.
+   * This class represents a parallelepiped in n-dimensional space, defined by a center point \f$\mathbf{c}\f$ and a shape matrix \f$\mathbf{A}\f$.
    * 
    * A parallelepiped is a special case of a zonotope where the shape matrix \f$\mathbf{A}\f$ has \f$m\f$ columns with \f$m \leqslant n\f$.
    */
@@ -34,10 +34,10 @@ namespace codac2
       /**
        * \brief Constructs a n-parallelepiped object with a given center and shape matrix
        * 
-       * \param z Center of the parallelepiped (n-dimensional vector)
+       * \param c Center of the parallelepiped (n-dimensional vector)
        * \param A Shape matrix of the parallelepiped (\f$n\times m\f$ matrix with \f$m \leqslant n\f$)
        */
-      Parallelepiped(const Vector& z, const Matrix& A);
+      Parallelepiped(const Vector& c, const Matrix& A);
       
       /**
        * \brief Computes the vertices of the parallelepiped
