@@ -35,8 +35,8 @@ void export_Figure3D(py::module& m)
       CONST_STRING_REF_FIGURE3D_NAME_CONST)
 
     .def("draw_axes", &Figure3D::draw_axes,
-      VOID_FIGURE3D_DRAW_AXES_DOUBLE,
-      "size"_a=1.0)
+      VOID_FIGURE3D_DRAW_AXES_DOUBLE_CONST_VECTOR_REF,
+      "size"_a=1.0, "origin"_a=Vector::Zero(3))
 
     // Geometric shapes
     .def("draw_triangle", (void(Figure3D::*)(const Vector &c, const Matrix &A, const Vector &p1, const Vector &p2, const Vector &p3, const StyleProperties &s))&Figure3D::draw_triangle,

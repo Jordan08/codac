@@ -214,10 +214,11 @@ void Figure3D::draw_arrow(const Vector& c, const Matrix &A,
 }
 
 
-void Figure3D::draw_axes(double size)
+void Figure3D::draw_axes(double size, const Vector& origin)
 {
+  assert_release(origin.size()==3);
   const std::string name="axes";
-  Vector z = Vector::zero(3);
+  Vector z = origin;
   // X axis
   Matrix AX = Matrix::Identity(3,3);
   draw_arrow(z,size*AX,StyleProperties(Color::red(),name));

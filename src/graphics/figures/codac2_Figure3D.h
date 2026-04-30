@@ -146,8 +146,9 @@ namespace codac2
        * \brief Draws the (x,y,z) axes on the figure in red, green and blue
        * 
        * \param size Size of the axes
+       * \param origin Origin of the axes
        */
-      void draw_axes(double size = 1.0);
+      void draw_axes(double size = 1.0, const Vector& origin = Vector::Zero(3));
 
       /**
        * \brief Draws a parametric surface
