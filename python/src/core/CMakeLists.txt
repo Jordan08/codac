@@ -29,6 +29,7 @@
     contractors/codac2_py_CtcLazy.cpp
     contractors/codac2_py_CtcLohner.cpp
     contractors/codac2_py_CtcNot.cpp
+    contractors/codac2_py_CtcParallelepiped.cpp
     contractors/codac2_py_CtcPointCloud.cpp
     contractors/codac2_py_CtcPolar.cpp
     contractors/codac2_py_CtcPolygon.cpp

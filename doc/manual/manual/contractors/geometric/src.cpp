@@ -69,6 +69,19 @@ TEST_CASE("CtcDist - manual")
   }
 }
 
+TEST_CASE("CtcParallelepiped - manual")
+{
+  {
+    // [ctcparallelepiped-1-beg]
+    IntervalVector x ({{0,5}, {0,5}});
+    Parallelepiped p (Vector({1.5,2.8}), Matrix({{0.5,0.4},{0,0.2}}));
+    CtcParallelepiped c(p);
+    c.contract(x);
+    // x = [ [0.599999, 2.40001] ; [2.59999, 3] ]
+    // [ctcparallelepiped-1-end]
+  }
+}
+
 TEST_CASE("CtcPolar - manual")
 {
   {

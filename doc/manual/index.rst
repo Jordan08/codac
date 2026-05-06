@@ -246,6 +246,7 @@ User manual
       * :ref:`sec-ctc-dynamic-ctclohner`
    * Geometric contractors
       * :ref:`sec-ctc-geom-ctcdist`
+      * :ref:`sec-ctc-geom-ctcparallelepiped`
       * :ref:`sec-ctc-geom-ctcpolar`
       * :ref:`sec-ctc-geom-ctcvisible`
       * CtcSegment

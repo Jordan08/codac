@@ -39,6 +39,7 @@ list(APPEND SRC_TESTS # listing files without extension
   core/contractors/codac2_tests_CtcInverseNotIn
   core/contractors/codac2_tests_CtcLazy
   core/contractors/codac2_tests_CtcLohner
+  core/contractors/codac2_tests_CtcParallelepiped
   core/contractors/codac2_tests_CtcPolygon
   core/contractors/codac2_tests_CtcSegment
   core/contractors/codac2_tests_CtcVisible

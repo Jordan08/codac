@@ -8,6 +8,7 @@ Contractors, separators
   CtcInverse <analytic/ctcinverse>
   CtcLohner <dynamic/ctclohner>
   CtcDist <geometric/ctcdist>
+  CtcParallelepiped <geometric/ctcparallelepiped>
   CtcPolar <geometric/ctcpolar>
   CtcVisible <geometric/ctcvisible>
 

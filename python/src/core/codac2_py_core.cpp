@@ -49,6 +49,7 @@ void export_CtcInter(py::module& m, py::class_<CtcBase<IntervalVector>,pyCtcInte
 void export_CtcLazy(py::module& m, py::class_<CtcBase<IntervalVector>,pyCtcIntervalVector>& ctc);
 void export_CtcLohner(py::module& m);
 void export_CtcNot(py::module& m, py::class_<CtcBase<IntervalVector>,pyCtcIntervalVector>& ctc);
+void export_CtcParallelepiped(py::module& m, py::class_<CtcBase<IntervalVector>,pyCtcIntervalVector>& ctc);
 void export_CtcPointCloud(py::module& m, py::class_<CtcBase<IntervalVector>,pyCtcIntervalVector>& ctc);
 void export_CtcPolar(py::module& m, py::class_<CtcBase<IntervalVector>,pyCtcIntervalVector>& ctc);
 void export_CtcPolygon(py::module& m, py::class_<CtcBase<IntervalVector>,pyCtcIntervalVector>& ctc);
@@ -210,6 +211,7 @@ PYBIND11_MODULE(_core, m)
   export_CtcLazy(m, py_ctc_iv);
   export_CtcLohner(m);
   export_CtcNot(m, py_ctc_iv);
+  export_CtcParallelepiped(m, py_ctc_iv);
   export_CtcPointCloud(m, py_ctc_iv);
   export_CtcPolar(m, py_ctc_iv);
   export_CtcPolygon(m, py_ctc_iv);
