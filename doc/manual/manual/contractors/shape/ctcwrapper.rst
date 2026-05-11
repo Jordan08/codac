@@ -1,18 +1,21 @@
-.. _sec-ctc-geom-ctcparallelepiped:
+.. _sec-ctc-shape-ctcwrapper:
 
-The CtcParallelpiped contractor
+CtcWrapper
 ===============================
 
   Main author: `Maël Godard <https://godardma.github.io/>`_
 
-.. doxygenclass:: codac2::CtcParallelepiped
-  :project: codac
+The CtcWrapper is a contractor to contract a box with respect to a set represented by a Codac object.
+Currently supported objects are:
+
+- :ref:`IntervalVector <sec-intervals-intervalvector-class>`
+- :ref:`Parallelepiped <subsec-zonotope-parallelepiped>`
+- PavingOut
 
 Methods
 -------
 
-.. doxygenfunction:: codac2::CtcParallelepiped::contract(IntervalVector&) const
-  :project: codac
+Below is an example of the use of the CtcWrapper with a Parallelepiped.
 
 .. tabs::
 
@@ -34,4 +37,4 @@ Methods
 
 .. admonition:: Technical documentation
 
-  See the `C++ API documentation of this class <../../api/html/classcodac2_1_1_ctc_parallelepiped.html>`_.
+  See the `C++ API documentation of this class <../../api/html/classcodac2_1_1_ctc_wrapper.html>`_.

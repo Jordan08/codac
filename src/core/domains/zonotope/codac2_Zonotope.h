@@ -36,6 +36,35 @@ namespace codac2
        */
       Zonotope(const Vector& c, const Matrix& A);
 
+        /**
+        * \brief Constructs an empty n-zonotope
+        * 
+        * \param n Dimension of the zonotope
+        * 
+        * \return A new Zonotope object representing an empty zonotope in n-dimensional space
+        */
+      static Zonotope empty(Index n);
+
+      /**
+       * \brief Checks if the zonotope is empty
+       * 
+       * \return True if the zonotope is empty, false otherwise
+       */
+      bool is_empty() const;
+
+      /**
+       * \brief Sets the zonotope to be empty
+       */
+      void set_empty();
+
+      /**
+       * \brief Outputs the size of the zonotope
+       * 
+       * \return The size of the zonotope, defined as the size of its center vector
+       */
+
+      Index size() const { return c.size(); }
+
       /**
        * \brief Computes the axis-aligned bounding box of the zonotope
        * 
@@ -70,6 +99,19 @@ namespace codac2
        * \brief Shape matrix of the zonotope
        */
       Matrix A;
-      
+
+      /**
+       * \brief Flag indicating whether the zonotope is empty
+       */
+      bool empty_flag = false;
   };
+
+  /**
+   * \brief Stream output operator for ``Zonotope``.
+   *
+   * \param str Output stream.
+   * \param z The zonotope to print.
+   * \return The output stream with the zonotope information.
+   */
+  std::ostream& operator<<(std::ostream& str, const Zonotope& z);
 }

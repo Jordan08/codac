@@ -38,6 +38,14 @@ namespace codac2
        * \param A Shape matrix of the parallelepiped (\f$n\times m\f$ matrix with \f$m \leqslant n\f$)
        */
       Parallelepiped(const Vector& c, const Matrix& A);
+
+      /**
+       * \brief Constructs an empty n-parallelepiped
+       * 
+       * \param n Dimension of the parallelepiped
+       * \return A new Parallelepiped object representing an empty parallelepiped in n-dimensional space
+       */
+      static Parallelepiped empty(Index n);
       
       /**
        * \brief Computes the vertices of the parallelepiped
@@ -64,5 +72,23 @@ namespace codac2
        */
       BoolInterval is_superset(const IntervalVector& x) const;
 
+      /**
+       * \brief Computes the intersection of the parallelepiped with a given box. The matrix A has to be square and invertible.
+       * 
+       * \param x The box to intersect with
+       * 
+       * \return A new Parallelepiped representing the intersection of the original parallelepiped with the box.
+       */
+      Parallelepiped operator&(const IntervalVector& x) const;
   };
+
+  /**
+   * \brief Computes the intersection of a box with a parallelepiped. The matrix A has to be square and invertible.
+   * 
+   * \param x The box to intersect with
+   * \param p The parallelepiped to intersect with
+   * 
+   * \return A new IntervalVector representing the intersection of the box with the parallelepiped.
+   */
+  IntervalVector operator&(const IntervalVector& x, const Parallelepiped& p);
 }

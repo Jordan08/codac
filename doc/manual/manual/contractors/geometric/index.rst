@@ -4,7 +4,6 @@ Geometric contractors
 .. toctree::
 
    ctcdist.rst
-   ctcparallelepiped.rst
    ctcpolar.rst
    ctcvisible.rst
    CtcSegment <http://codac.io>

@@ -40,8 +40,6 @@
     ${CMAKE_CURRENT_SOURCE_DIR}/contractors/codac2_CtcLohner.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/contractors/codac2_CtcLohner.h
     ${CMAKE_CURRENT_SOURCE_DIR}/contractors/codac2_CtcNot.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/contractors/codac2_CtcParallelepiped.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/contractors/codac2_CtcParallelepiped.h
     ${CMAKE_CURRENT_SOURCE_DIR}/contractors/codac2_CtcUnion.h
     ${CMAKE_CURRENT_SOURCE_DIR}/contractors/codac2_CtcVisible.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/contractors/codac2_CtcVisible.h

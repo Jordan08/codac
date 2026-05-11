@@ -65,16 +65,6 @@ class TestCtcGeometricManual(unittest.TestCase):
     #DefaultFigure.draw_circle(b1, y1.lb()); DefaultFigure.draw_circle(b1, y1.ub())
     #DefaultFigure.draw_circle(b2, y2.lb()); DefaultFigure.draw_circle(b2, y2.ub())
 
-  def tests_CtcParallelepiped_manual(test):
-
-    # [ctcparallelepiped-1-beg]
-    x = IntervalVector([[0,5], [0,5]])
-    p = Parallelepiped(Vector([1.5,2.8]), Matrix([[0.5,0.4],[0,0.2]]))
-    c = CtcParallelepiped(p)
-    x = c.contract(x)
-    # x = [ [0.599999, 2.40001] ; [2.59999, 3] ]
-    # [ctcparallelepiped-1-end]
-
   def tests_CtcPolar_manual(test):
 
     # [ctcpolar-1-beg]

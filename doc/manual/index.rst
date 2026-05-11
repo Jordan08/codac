@@ -246,7 +246,6 @@ User manual
       * :ref:`sec-ctc-dynamic-ctclohner`
    * Geometric contractors
       * :ref:`sec-ctc-geom-ctcdist`
-      * :ref:`sec-ctc-geom-ctcparallelepiped`
       * :ref:`sec-ctc-geom-ctcpolar`
       * :ref:`sec-ctc-geom-ctcvisible`
       * CtcSegment
@@ -256,7 +255,7 @@ User manual
       * CtcCross / CtcNoCross
    * Shape contractors
       * CtcCtcBoundary
-      * CtcWrapper
+      * :ref:`sec-ctc-shape-ctcwrapper`
       * CtcImage
       * CtcDiscreteSet
    * Temporal contractors
@@ -318,8 +317,8 @@ User manual
    * :ref:`sec-zonotope`
    * Polyhedron
 
-* :ref:`sec-actions`
-   * :ref:`sec-actions-octasym`
+* :ref:`sec-tools`
+   * :ref:`sec-tools-octasym`
 
 * :ref:`sec-ellipsoids`
    * :ref:`sec-ellipsoids-intro`
