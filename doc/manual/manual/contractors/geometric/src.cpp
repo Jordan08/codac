@@ -9,7 +9,6 @@
 
 #include <catch2/catch_test_macros.hpp>
 #include <codac2_CtcDist.h>
-#include <codac2_CtcParallelepiped.h>
 #include <codac2_CtcPolar.h>
 #include <codac2_CtcProj.h>
 #include <codac2_CtcVisible.h>
