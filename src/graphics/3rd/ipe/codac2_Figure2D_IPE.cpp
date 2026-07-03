@@ -190,6 +190,7 @@ void Figure2D_IPE::clear()
   // clear _color map and layers
   _colors.clear();
   _layers.clear();
+  _items.clear();
 
   init_figure();
 }
