@@ -195,6 +195,9 @@ void Figure2D_IPE::clear()
   init_figure();
 }
 
+void Figure2D_IPE::save(const std::string& filename)
+{}
+
 std::string ipe_str(const Color& c)
 {
   return c.hex_str().substr(1);
