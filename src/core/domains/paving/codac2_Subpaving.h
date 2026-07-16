@@ -77,6 +77,7 @@ namespace codac2
         {
           auto x_boxes = _node_value(xi);
           auto neighb_nodes = this->front()->paving().neighbours(xi, _node_value, node_complementary_value);
+
           std::list<IntervalVector> neighb_boxes;
 
           for(const auto& neighb_ni : neighb_nodes)
