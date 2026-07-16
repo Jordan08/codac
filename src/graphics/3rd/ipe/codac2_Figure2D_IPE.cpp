@@ -12,9 +12,6 @@
 #include "codac2_Figure2D_IPE.h"
 #include "codac2_math.h"
 
-// TO DELETE
-#include <iostream>
-
 using namespace std;
 using namespace codac2;
 
