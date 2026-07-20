@@ -102,7 +102,7 @@ Geometric shapes
 ----------------
 
 All the drawable geometric objects can take a last optionnal argument to set up their stroke color, fill color, line style etc.
-For further details, refer to :ref:`subsec-graphics-colors-styleproperties`. 
+For further details, refer to :ref:`subsec-graphics-colors-style-properties`. 
 
 The geometric shapes that can be drawn and their arguments are listed below :
 
@@ -181,8 +181,8 @@ Trajectories and tubes
 
 
 All the drawable trajectories and tubes can take a last optionnal argument to set up their stroke color, fill color, line style etc.
-For further details, refer to :ref:`subsec-graphics-colors-styleproperties` for constant fill and edge color, 
-and :ref:`subsec-graphics-colors-stylegradientproperties` for the use of a colormap.
+For further details, refer to :ref:`subsec-graphics-colors-style-properties` for constant fill and edge color, 
+and :ref:`subsec-graphics-colors-style-gradient-properties` for the use of a colormap.
 
 The trajectories and tubes that can be drawn are listed below:
 
@@ -215,7 +215,7 @@ Vehicles
 --------
 
 All the drawable vehicles can take a last optionnal argument to set up their stroke color, fill color, line style etc.
-For further details, refer to :ref:`subsec-graphics-colors-styleproperties`. 
+For further details, refer to :ref:`subsec-graphics-colors-style-properties`. 
 
 The vehicles that can be drawn and their arguments are listed below :
 
@@ -238,7 +238,7 @@ Paving
 ------
 
 All the drawable pavings can take a last optionnal argument to set up their style for the inside, boundary and outside boxes.
-For further details, refer to :ref:`subsec-graphics-colors-pavingstyle`. 
+For further details, refer to :ref:`subsec-graphics-colors-paving-style`. 
 
 The paving that can be drawn and their arguments are listed below :
 
@@ -259,7 +259,7 @@ Miscellaneous
 -------------
 
 Other objects can be drawn and can take a last optionnal argument to set up their stroke color, fill color, line style etc.
-For further details, refer to :ref:`subsec-graphics-colors-styleproperties`. 
+For further details, refer to :ref:`subsec-graphics-colors-style-properties`. 
 
 These objects are :
 
