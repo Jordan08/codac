@@ -237,33 +237,39 @@ The vehicles that can be drawn and their arguments are listed below :
 Paving
 ------
 
-All the drawable pavings can take a last optionnal argument to set up their style for the insider, boundary and outside boxes.
-For further details, refer to :ref:`subsec-graphics-colors-styleproperties`. 
+All the drawable pavings can take a last optionnal argument to set up their style for the inside, boundary and outside boxes.
+For further details, refer to :ref:`subsec-graphics-colors-pavingstyle`. 
 
+The paving that can be drawn and their arguments are listed below :
+
+- draw_paving
+
+  - PavingOut | PavingInOut : the paving to draw
+
+- draw_paving
+
+  - PavingOut | PavingInOut : the paving to draw
+  - function(Figure2D,IntervalVector,StyleProperties) : Custom drawing function (for instance, if one wants to draw in polar coordinates)
+
+- draw_subpaving
+
+  - Subpaving : the subpaving to draw
 
 Miscellaneous
 -------------
 
-.. doxygenfunction:: codac2::Figure2D::draw_text(const std::string&, const Vector&, double, const StyleProperties&)
-  :project: codac
+Other objects can be drawn and can take a last optionnal argument to set up their stroke color, fill color, line style etc.
+For further details, refer to :ref:`subsec-graphics-colors-styleproperties`. 
 
-.. doxygenfunction:: codac2::Figure2D::draw_raster(const std::string&, const IntervalVector&, const StyleProperties&)
-  :project: codac
+These objects are :
 
-Paving
-------
+- draw_text
 
-.. doxygenfunction:: codac2::Figure2D::draw_paving(const PavingOut&, const PavingStyle&)
-  :project: codac
+  - string : the text to draw
+  - Vector : the 2D Vector for the position of the top-left corner of the text
+  - float : the scale of the text (VIBes only)
 
-.. doxygenfunction:: codac2::Figure2D::draw_paving(const PavingOut&, const std::function<void(Figure2D&,const IntervalVector&,const StyleProperties&)>&, const PavingStyle&)
-  :project: codac
+- draw_raster
 
-.. doxygenfunction:: codac2::Figure2D::draw_paving(const PavingInOut&, const PavingStyle&)
-  :project: codac
-
-.. doxygenfunction:: codac2::Figure2D::draw_paving(const PavingInOut&, const std::function<void(Figure2D&,const IntervalVector&,const StyleProperties&)>&, const PavingStyle&)
-  :project: codac
-
-.. doxygenfunction:: codac2::Figure2D::draw_subpaving(const Subpaving<P>&, const StyleProperties&)
-  :project: codac
+  - string : The name of the file (the path is relative to the VIBes' server folder)
+  - IntervalVector : The bounding box of the raster

@@ -208,6 +208,7 @@ For more information, see :ref:`subsec-graphics-colors-optional-arguments`.
     fig.draw_box(IntervalVector({{2,5},{2,5}}), StyleProperties(Color().red(), "..", "layer1", "w:0.1", "z:1.5"));
     % Red edge, dotted line, line width of 0.1, z-value of 1.5 and on layer1
 
+.. _subsec-graphics-colors-pavingstyle:
 Paving style
 ------------
 
