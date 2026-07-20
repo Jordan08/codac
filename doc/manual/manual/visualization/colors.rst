@@ -128,7 +128,7 @@ Additionnal methods are available for any useful purpose:
     fig.draw_box(IntervalVector({{2.6,3.1},{2.6,3.1}}),StyleProperties({Color({108,90,78},Model().HSV),Color({108,90,78,20},Model().HSV)}));
 
 
-
+.. _subsec-graphics-colors-styleproperties:
 StyleProperties
 ---------------
 
@@ -299,6 +299,7 @@ You can also create your own color map :
 
 Note that you can add RGB and HSV colors to the same color map. The model of the color map will define the interpolation space.
 
+.. _subsec-graphics-colors-stylegradientproperties:
 StyleGradientProperties
 -----------------------
 
