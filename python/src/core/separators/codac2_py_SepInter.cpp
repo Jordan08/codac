@@ -25,6 +25,17 @@ void export_SepInter(py::module& m, py::class_<SepBase,pySep>& pysep)
   exported
 
     .def(py::init(
+        [](const py::list& l)
+        {
+          Collection<SepBase> l_copy;
+          for(const auto& li : l)
+            l_copy.push_back(li.cast<SepBase&>().copy());
+          return std::make_unique<SepInter>(l_copy);
+        }),
+      SEPINTER_SEPINTER_CONST_COLLECTION_T_REF,
+      "s"_a)
+
+    .def(py::init(
         [](const SepBase& s)
         {
           return std::make_unique<SepInter>(s.copy());
