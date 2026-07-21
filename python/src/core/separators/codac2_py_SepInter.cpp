@@ -47,11 +47,30 @@ void export_SepInter(py::module& m, py::class_<SepBase,pySep>& pysep)
       BOXPAIR_SEPINTER_SEPARATE_CONST_INTERVALVECTOR_REF_CONST,
       "x"_a)
 
-    .def("__iand__", [](SepInter& s1, const SepBase& s2)
-        {
-          s1 &= s2.copy();
-          return s1;
-        },
-      SEPINTER_REF_SEPINTER_OPERATORINTEREQ_CONST_S_REF)
-  ;
+    ;
+
+    if constexpr(!FOR_MATLAB)
+    {
+      exported
+
+      .def("__iand__", [](SepInter& s1, const SepBase& s2)
+          {
+            s1 &= s2.copy();
+            return s1;
+          },
+        SEPINTER_REF_SEPINTER_OPERATORINTEREQ_CONST_S_REF)
+      ;
+    }
+
+    if constexpr(FOR_MATLAB)
+    {
+      exported
+      .def("self_inter", [](SepInter& s1, const SepBase& s2)
+          {
+            s1 &= s2.copy();
+            return s1;
+          },
+        SEPINTER_REF_SEPINTER_OPERATORINTEREQ_CONST_S_REF)    
+      ;
+    }
 }

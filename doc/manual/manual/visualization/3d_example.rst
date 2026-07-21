@@ -18,3 +18,9 @@ Below is an example covering a wide variety of drawing functions, colors, styles
     .. literalinclude:: 3d_example_src/src.cpp
       :language: c++
       :dedent: 0
+      
+  .. group-tab:: Matlab
+
+    .. literalinclude:: 3d_example_src/src.m
+      :language: matlab
+      :dedent: 0
