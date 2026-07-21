@@ -20,6 +20,14 @@ namespace codac2
   {
     public:
 
+      template<typename T>
+      SepUnion(const Collection<T>& c)
+        : Sep<SepUnion>([&c]() {
+          assert_release(!c.empty());
+            return size_of(c.front());
+          }()), _seps(c)
+      { }
+
       template<typename S>
         requires (IsSepBaseOrPtr<S> && !std::is_same_v<SepUnion,S>)
       SepUnion(const S& s)
