@@ -40,8 +40,8 @@ Geometric shapes
   - Sphere
   - Arrow
   - Zonotope
-  - Parallelogram
   - Parallelepiped
+  - Parallelogram
   - Triangle
   - Star-shaped polygon
   - Parametric surface
