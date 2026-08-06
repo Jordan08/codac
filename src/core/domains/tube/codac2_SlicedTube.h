@@ -382,6 +382,7 @@ namespace codac2
       {
         return eval_common(t,
           [this](auto it, const Interval& t_) {
+            (void)this;
             return slice(it)->operator()(t_);
           });
       }
@@ -398,6 +399,7 @@ namespace codac2
       {
         return eval_common(t,
           [this,&v](auto it, const Interval& t_) {
+            (void)this;
             return slice(it)->operator()(t_, *v.slice(it));
           });
       }
@@ -783,6 +785,7 @@ namespace codac2
       {
         return invert_common(y, t,
           [this,&y](auto it, const Interval& t_) {
+            (void)this;
             return slice(it)->invert(y, t_);
           });
       }
@@ -812,6 +815,7 @@ namespace codac2
       {
         return invert_common_subsets(y, v_t, t,
           [this,&y](auto it, const Interval& t_) {
+            (void)this;
             return slice(it)->invert(y, t_);
           });
       }
@@ -849,6 +853,7 @@ namespace codac2
       {
         return invert_common(y, t,
           [this,&v,&y](auto it, const Interval& t_) {
+            (void)this;
             return slice(it)->invert(y, *v.slice(it), t_);
           });
       }
