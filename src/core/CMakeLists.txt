@@ -100,6 +100,14 @@
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/tube/codac2_TubeBase.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/tube/codac2_Tube_operator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/tube/codac2_tube_cart_prod.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/AffineForm/codac2_AffineMain.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/AffineForm/codac2_Affine2_fAF2.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/AffineForm/codac2_Affine2_fAF2.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/AffineForm/codac2_AffineVector.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/AffineForm/codac2_AffineMatrix.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/AffineForm/codac2_AffineVar.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/AffineForm/codac2_AffineVarVector.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/AffineForm/codac2_Affine.h
 
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/codac2_ExprBase.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/codac2_ExprBase.h
@@ -306,6 +314,7 @@
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/ellipsoid
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/interval
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/interval/eigen
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/AffineForm
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/paving
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/zonotope
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/tube

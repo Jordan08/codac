@@ -4,9 +4,9 @@
  *  Implementation of \c AffineMain specializations for the \c AF_fAF2 model.
  *
  * ----------------------------------------------------------------------------
- *  \date       2020
+ *  \date       2026
  *  \author     Jordan Ninin
- *  \copyright  Copyright 2020 Codac Team
+ *  \copyright  Copyright 2026 Codac Team
  *  \license    GNU Lesser General Public License (LGPL)
  */
 
@@ -18,10 +18,14 @@
 #include <cassert>
 
 #include "codac2_AffineMain.h"
+#include "codac2_AffineVar.h"
+#include <climits>
 
 
+const double MAX_DOUBLE = std::numeric_limits<double>::max();
 
 namespace codac2 {
+
 
 
 /**
@@ -44,7 +48,6 @@ AffineMain<AF_fAF2>::AffineMain() :
 
 template<>
 AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator=(const Interval& x) {
-
 	if (x.is_empty()) {
 		_actif = -1;
 		_elt._err = 0.0;
@@ -53,10 +56,12 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator=(const Interval& x) {
 		_elt._err = 0.0;
 	} else if (x.ub()>= oo ) {
 		_actif = -3;
-		_elt._err = x.lb();
+		if (x.lb()>= MAX_DOUBLE) this->_elt._err = MAX_DOUBLE;
+		else this->_elt._err = x.lb();
 	} else if (x.lb()<= -oo ) {
 		_actif = -4;
-		_elt._err = x.ub();
+		if (x.ub()<= -MAX_DOUBLE) this->_elt._err = -MAX_DOUBLE;
+		else this->_elt._err = x.ub();
 	} else  {
 		if (_elt._val==nullptr) { _elt._val = new double[_n+1]; }
 		_elt._val[0] = x.mid();
@@ -73,6 +78,46 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator=(const Interval& x) {
 	}
 	return *this;
 }
+
+
+
+template<>
+AffineVarMain<AF_fAF2>& AffineVarMain<AF_fAF2>::operator=(const Interval& x) {
+	assert(this->_var >= 0 && this->_n > this->_var);
+	if (x.is_empty()) {
+		this->_actif = -1;
+		this->_elt._err = 0.0;
+	} else if (x.ub()>= oo && x.lb()<= -oo ) {
+		this->_actif = -2;
+		this->_elt._err = 0.0;
+	} else if (x.ub()>= oo ) {
+		this->_actif = -3;
+		if (x.lb()>= MAX_DOUBLE) this->_elt._err = MAX_DOUBLE;
+		else this->_elt._err = x.lb();
+	} else if (x.lb()<= -oo ) {
+		this->_actif = -4;
+		if (x.ub()<= -MAX_DOUBLE) this->_elt._err = -MAX_DOUBLE;
+		else this->_elt._err = x.ub();
+	} else  {
+		if (this->_elt._val==nullptr) { this->_elt._val = new double[_n+1]; }
+		this->_elt._val[0] = x.mid();
+		for (int i=1; i<=_n;i++) {
+			this->_elt._val[i] =0;
+		}
+		if ( x.is_degenerated()) {
+			this->_actif = 0;
+			this->_elt._err = 0.0;
+		} else {
+			this->_actif = 1;
+			this->_elt._val[_var+1] = x.rad();
+			this->_elt._err = 0.0;  // uncertainty fully captured in _val[_var+1]
+		}
+	} 
+	return *this;
+}
+
+
+
 
 
 template<>
@@ -100,10 +145,12 @@ AffineMain<AF_fAF2>::AffineMain(int size, int var, const Interval& itv) :
 		_elt._err = 0.0;
 	} else if (itv.ub()>= oo ) {
 		_actif = -3;
-		_elt._err = itv.lb();
+		if (itv.lb()>= MAX_DOUBLE) this->_elt._err = MAX_DOUBLE;
+		else this->_elt._err = itv.lb();
 	} else if (itv.lb()<= -oo ) {
 		_actif = -4;
-		_elt._err = itv.ub();
+		if (itv.ub()<= -MAX_DOUBLE) this->_elt._err = -MAX_DOUBLE;
+		else this->_elt._err = itv.ub();
 	}
 }
 
@@ -140,36 +187,12 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator=(const AffineMain<AF_fAF2>& x
 			for (int i = 0; i <= x.size(); i++) {
 				_elt._val[i] = x._elt._val[i];
 			}
-		}
-	}
-	return *this;
-}
-
-template<>
-AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator=(double d) {
-
-	if (std::fabs(d)<oo) {
-		_actif = 0;
-		if (_elt._val==nullptr) _elt._val = new double[size()+1];
-		_elt._err = 0.0; //abs(d)*AF_EE;
-		_elt._val[0] = d;
-		for (int i = 1; i <= size(); i++){
-			_elt._val[i] = 0.0;
-		}
-	} else {
-		if (d>0) {
-			_actif = -3;
-			_elt._err = d;
 		} else {
-			_actif = -4;
-			_elt._err = d;
+			_n =x.size();
 		}
 	}
 	return *this;
 }
-
-
-
 
 
 template<>
@@ -311,7 +334,7 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator*=(double alpha) {
 			*this = itv()*alpha;
 		}
 	} else {  //scalar alpha
-		*this = itv()* alpha;
+		*this = this->itv()* alpha;
 	}
 	return *this;
 }
@@ -321,7 +344,26 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator*=(double alpha) {
 template<>
 AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator+=(double beta) {
 	if (beta==0) return *this;
-	if ((_actif==1) && (std::fabs(beta)<oo)) {
+
+	if (std::fabs(beta)>=oo) {
+		// Adding a raw +/-oo scalar.
+		// If this affine form currently holds a proper (bounded or degenerate)
+		// value, it becomes the canonical "reaches infinity in that direction"
+		// state, mirroring what operator=(double) already does: a bounded
+		// quantity plus infinity is dominated by that infinity.
+		// Otherwise (already empty, or already an extended/half-infinite
+		// state), we keep the historical convention -- obtained through the
+		// Interval+double operator -- that combining two raw infinities (of
+		// possibly conflicting signs) is undefined and yields the empty set.
+		if (is_actif()) {
+			*this = beta;
+			return *this;
+		}
+		*this = this->itv() + beta;
+		return *this;
+	}
+
+	if (_actif==1) {
 		double temp, ttt, sss, eee;
 		ttt=0.0;
 		sss=0.0;
@@ -339,7 +381,7 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator+=(double beta) {
 		if (!(_elt._err<oo && (std::fabs(_elt._val[0])<oo))) { *this = Interval(); }
 
 	} else {
-		*this = itv()+ beta;
+		*this = this->itv()+ beta;
 	}
 	return *this;
 
@@ -373,7 +415,7 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::inflate(double ddelta) {
 				*this = Interval();
 			}
 		} else {
-			*this = itv()+Interval(-1,1)*ddelta;
+			*this = this->itv()+Interval(-1,1)*ddelta;
 		}
 	}
 	return *this;
@@ -424,7 +466,7 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator+=(const AffineMain<AF_fAF2>& 
 			*this += tmp;
 		} else {
 			if (_n < y.size()) {
-				resize(y.size());
+				this->resize(y.size());
 			}
 			double temp, ttt, sss, eee;
 			ttt=0.0;
@@ -477,7 +519,7 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator*=(const AffineMain<AF_fAF2>& 
 			*this *= tmp;
 		} else 	 {
 			if (_n < y.size()) {
-				resize(y.size());
+				this->resize(y.size());
 			}
 			double Sx, Sy, Sxy, Sz, ttt, sss, ppp, tmp, xVal0, eee;
 			double * xTmp;
@@ -528,7 +570,6 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator*=(const AffineMain<AF_fAF2>& 
 						Sy = 0.0;
 					}
 				}
-
 			}
 
 			xVal0 = _elt._val[0];
@@ -611,7 +652,7 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator*=(const AffineMain<AF_fAF2>& 
 			delete[] xTmp;
 		}
 
-	} else { // y or x is not a valid affine form. So we add y.itv() such as an interval
+	} else { // y or x is not a valid affine form. So we multiply y.itv() such as an interval
 		*this = (itv() * y.itv());
 	}
 

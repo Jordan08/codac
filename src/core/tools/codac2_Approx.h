@@ -18,6 +18,7 @@
 #include "codac2_Matrix.h"
 #include "codac2_IntervalMatrix.h"
 #include "codac2_Polygon.h"
+#include "codac2_AffineMain.h"
 
 namespace codac2
 {
@@ -37,38 +38,48 @@ namespace codac2
         : _x(x.eval()), _eps(eps)
       { }
 
-      friend bool operator==(const T& x1, const Approx<T>& x2)
-      {
-        if constexpr(std::is_same_v<T,double>)
-          return std::fabs(x1-x2._x) < x2._eps;
+      friend bool operator==(const T& x1, const Approx<T>& x2)  {
+    	  if constexpr(std::is_same_v<T,double>) {
+    		  if (std::isnan(x1) && std::isnan(x2._x)) {
+    			  return true;
+    		  } else if (x2._x>=std::numeric_limits<double>::max())  {
+    			  return (x1>=std::numeric_limits<double>::max());
+    		  } else if (x2._x<=-std::numeric_limits<double>::max())  {
+    			  return (x1<=-std::numeric_limits<double>::max());
+    		  }  else if ((x2._x < 1.0) && (x2._x > -1.0)) {
+    			  return std::fabs(x1-x2._x) < x2._eps; //absolute error
+    		  } else {
+    			  return std::fabs(x1-x2._x) < x2._eps*std::max(std::fabs(x1),std::fabs(x2._x)); //relative error
+    		  }
+    	  }
+    	  else if(x1.size() != x2._x.size())
+    		  return false;
 
-        else if(x1.size() != x2._x.size())
-          return false;
+    	  else if(x1 == x2._x)
+    		  return true;
 
-        else if(x1 == x2._x)
-          return true;
+    	  else if constexpr(std::is_same_v<T,Interval>)
+        				{
+    		  if((x1.is_empty() && !x2._x.is_empty()) || (!x1.is_empty() && x2._x.is_empty()))
+    			  return false;
+    		  return (x1.lb() == x2._x.lb() || x1.lb() == Approx<double>(x2._x.lb(),x2._eps))
+    				  && (x1.ub() == x2._x.ub() || x1.ub() == Approx<double>(x2._x.ub(),x2._eps));
+        				}
 
-        else if constexpr(std::is_same_v<T,Interval>)
-        {
-          if((x1.is_empty() && !x2._x.is_empty()) || (!x1.is_empty() && x2._x.is_empty()))
-            return false;
-          return (x1.lb() == x2._x.lb() || x1.lb() == Approx<double>(x2._x.lb(),x2._eps))
-              && (x1.ub() == x2._x.ub() || x1.ub() == Approx<double>(x2._x.ub(),x2._eps));
-        }
-
-        else if constexpr(std::is_same_v<T,Vector>
-          || std::is_same_v<T,IntervalVector>
-          || std::is_same_v<T,Row>
-          || std::is_same_v<T,IntervalRow>
-          || std::is_same_v<T,Matrix>
-          || std::is_same_v<T,IntervalMatrix>)
-        {
-          for(Index i = 0 ; i < x1.rows() ; i++)
-            for(Index j = 0 ; j < x1.cols() ; j++)
-              if(!(x1(i,j) == Approx<typename T::Scalar>(x2._x(i,j), x2._eps)))
-                return false;
-          return true;
-        }
+    	  else if constexpr(std::is_same_v<T,Vector>
+    	  || std::is_same_v<T,IntervalVector>
+    	  || std::is_same_v<T,Row>
+    	  || std::is_same_v<T,IntervalRow>
+    	  || std::is_same_v<T,Matrix>
+    	  || std::is_same_v<T,IntervalMatrix>)
+        				{
+    		  for(Index i = 0 ; i < x1.rows() ; i++)
+    			  for(Index j = 0 ; j < x1.cols() ; j++)
+    				  if(!(x1(i,j) == Approx<typename T::Scalar>(x2._x(i,j), x2._eps)))
+    					  return false;
+    		  return true;
+        		
+      }
 
         else
         {
@@ -188,4 +199,80 @@ namespace codac2
 
   Approx(const Polygon&, double) -> 
     Approx<Polygon>;
+
+
+  /**
+   * \brief \c Approx specialization comparing an \c AffineMain<T> affine form
+   *        to an expected \c Interval.
+   *
+   * The comparison mimics what \c CHECK_affine_eq / \c CHECK_affine_eq2 used
+   * to check by hand:
+   * - both must be empty, or both non-empty,
+   * - if the expected interval is unbounded, the affine form's interval
+   *   enclosure must match it (up to \c Approx<Interval>),
+   * - otherwise, the lower bound, upper bound and midpoint of the affine
+   *   form's interval enclosure must match those of the expected interval
+   *   (up to \c eps), and the sum of the absolute values of all noise
+   *   coefficients (\c val(i) for \c i in [0,size()) ) must match the
+   *   expected radius (up to \c eps). This generalizes \c CHECK_affine_eq
+   *   (1 noise variable) and \c CHECK_affine_eq2 (2 noise variables) to any
+   *   number of noise variables.
+   */
+  template<class T>
+  class Approx<AffineMain<T> >
+  {
+	  private:
+
+		  const Interval _x;
+		  const double _eps;
+	  public:
+
+      explicit Approx(const Interval& x, double eps = DEFAULT_EPS)
+        : _x(x), _eps(eps)
+      { }
+
+      friend bool operator==(const AffineMain<T>& x1, const Approx<AffineMain<T>>& x2)
+      {
+        const Interval& y_expected = x2._x;
+
+        if(y_expected.is_empty())
+          return x1.is_empty();
+
+        if(x1.is_empty())
+          return false;
+
+        if(y_expected.is_unbounded())
+          return x1.is_unbounded() && (x1.itv() == Approx<Interval>(y_expected,x2._eps));
+
+        if(!(x1.itv().lb() == Approx<double>(y_expected.lb(),x2._eps)))
+          return false;
+
+        if(!(x1.itv().ub() == Approx<double>(y_expected.ub(),x2._eps)))
+          return false;
+
+        if(!(x1.itv().mid() == Approx<double>(y_expected.mid(),x2._eps)))
+          return false;
+
+        double sum_val = 0.;
+        for(int i = 0 ; i < x1.size() ; i++)
+          sum_val += std::fabs(x1.val(i));
+
+        return sum_val == Approx<double>(y_expected.rad(),x2._eps);
+      }
+
+      friend bool operator==(const Approx<AffineMain<T>>& x1, const AffineMain<T>& x2)
+      {
+        return x2 == x1;
+      }
+
+      friend std::ostream& operator<<(std::ostream& os, const Approx<AffineMain<T>>& x)
+      {
+        os << "Approx(" << x._x << ")";
+        return os;
+      }
+
+  };
+
+
+
 }

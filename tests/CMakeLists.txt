@@ -23,6 +23,7 @@ list(APPEND SRC_TESTS # listing files without extension
   # 3rd
 
   # Core
+  core/domains/AffineForm/codac2_tests_AffineForm_base
 
   core/3rd/codac2_tests_eigen
 

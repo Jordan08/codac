@@ -15,11 +15,15 @@
 #include "codac2_Interval.h"
 #include <cmath>
 #include <ostream>
+#include <iostream>
+
 
 #include "codac2_Affine2_fAF2.h"
+#include "codac2_matrices.h"
 
 
 namespace codac2 {
+
 
 template<class T> class AffineVarMain;
 template<class T> class AffineMain;
@@ -33,6 +37,54 @@ struct is_ctc< AffineMain<T> > : std::false_type {};
 
 template<class T>
 struct is_sep< AffineMain<T> > : std::false_type {};
+
+} // namespace codac2
+
+/*
+ * The following specializations make ``AffineMain<T>`` usable as an Eigen
+ * Scalar type (as done for ``codac2::Interval`` in codac2_matrices.h), which
+ * is required for ``AffineMainVector<T>``/``AffineMainMatrix<T>`` (Eigen
+ * matrices of AffineMain elements) to compile: without them, generic Eigen
+ * algorithms (e.g. matrix printing, precision handling) instantiate things
+ * like ``log2(NumTraits<AffineMain<T>>::epsilon())`` which do not compile,
+ * since AffineMain<T> has no arithmetic conversion to double.
+ * Every member below is inherited unchanged from ``NumTraits<double>``
+ * (only ``Real``/``Nested``/``Scalar`` are aliased to AffineMain<T>), exactly
+ * like it is done for ``codac2::Interval``.
+ */
+namespace Eigen
+{
+  template<class T>
+  struct NumTraits<codac2::AffineMain<T>>
+   : NumTraits<double> // permits to get the epsilon, dummy_precision, lowest, highest functions
+  {
+    typedef codac2::AffineMain<T> Real;
+    typedef codac2::AffineMain<T> NonInteger;
+    typedef codac2::AffineMain<T> Nested;
+    typedef codac2::AffineMain<T> Scalar;
+    typedef double RealScalar;
+
+    enum {
+      IsComplex = 0,
+      IsInteger = 0,
+      IsSigned = 1,
+      RequireInitialization = 1,
+      ReadCost = 1,
+      AddCost = 3,
+      MulCost = 3
+    };
+  };
+
+  template<class T,typename BinOp>
+  struct ScalarBinaryOpTraits<codac2::AffineMain<T>,double,BinOp>
+  { typedef codac2::AffineMain<T> ReturnType; };
+
+  template<class T,typename BinOp>
+  struct ScalarBinaryOpTraits<double,codac2::AffineMain<T>,BinOp>
+  { typedef codac2::AffineMain<T> ReturnType; };
+}
+
+namespace codac2 {
 
 /**
  * \ingroup arithmetic
@@ -49,16 +101,11 @@ struct is_sep< AffineMain<T> > : std::false_type {};
  */
 
 
-/** \brief Default affine type based on \c AF_Default. */
-typedef AffineMain<AF_Default> Affine2;
-//typedef AffineMain<AF_Other>  Affine3;
-
-
 //=================================================================================================================
 //=================================================================================================================
 //=================================================================================================================
 
-template<class T=AF_Default>
+template<class T>
 class AffineMain  : public DomainInterface<Interval,double>
 {
 
@@ -102,7 +149,7 @@ protected:
 public:
 
 	typedef enum {
-		AF_Default=0, AF_Chebyshev=1, AF_MinRange=2
+		AF_Lin_Default=0, AF_Lin_Chebyshev=1, AF_Lin_MinRange=2
 	} Affine_Mode; // ...etc...
 
 	/**
@@ -110,7 +157,13 @@ public:
 	 *
 	 * \param tt approximation mode (Chebyshev by default)
 	 */
-	static void change_mode(Affine_Mode tt=AF_Default);
+	static void change_mode(Affine_Mode tt=AF_Lin_Default);
+	/**
+	 * \brief Get the linearization mode globally.
+	 *
+	 * \return the approximation mode
+	 */
+	static Affine_Mode get_mode();
 
 	/** \brief Creates an unbounded affine form (like \c Interval()). */
 	AffineMain();
@@ -1002,19 +1055,35 @@ template<class T> bool AffineMain<T>::mode=true;
 template<class T>
 inline void AffineMain<T>::change_mode(Affine_Mode tt) {
 	switch(tt) {
-	case AF_Default:
-	case AF_Chebyshev: {
+	case AF_Lin_Default:
+	case AF_Lin_Chebyshev: {
 		mode =true;
 		break;
 	}
-	case AF_MinRange:
+	case AF_Lin_MinRange:
 		mode =false;
 		break;
+	}
+}
+template<class T>
+inline AffineMain<T>::Affine_Mode AffineMain<T>::get_mode() {
+	if (mode==true) {
+		return AF_Lin_Chebyshev;
+	} else {
+		return AF_Lin_MinRange;
 	}
 }
 
 template<class T>
 inline void AffineMain<T>::compact(){	compact(AF_COMPAC_Tol); }
+
+template<class T>
+inline AffineMain<T>& AffineMain<T>::operator=(double d) {
+	*this = Interval(d);
+	return *this;
+}
+
+
 
 template<class T>
 inline Interval operator&(const AffineMain<T>& x1, const AffineMain<T>& x2) {
@@ -1614,7 +1683,7 @@ inline AffineMain<T>& AffineMain<T>::Ainv_CH(const Interval& itv){
 
 template<class T>
 inline AffineMain<T>& AffineMain<T>::Asqrt_CH(const Interval& itv){
-	Interval itv2 = itv & Interval({0,oo});
+	Interval itv2 = itv & Interval(0,oo);
 	Interval res_itv = sqrt(itv2);;
 
 	// Particular case
@@ -2583,8 +2652,26 @@ inline AffineMain<T>& AffineMain<T>::Aroot(int n, const Interval& itv) {
 		//		y=pow(x,e) |  // the negative part of x should be removed
 		//	    (-pow(-x,e)); // the positive part of x should be removed
 		// BE CAREFULL the result of this union is an INTERVAL, so y lost all its affine form
-		return *this = ((pow(itv & Interval({0,oo}), Interval::one()/n)) | (-pow(-(itv & Interval({-oo,0})),Interval::one()/n)));  // BE CAREFULL the result of this union is an INTERVAL, so y lost all its affine form
+		return *this = ((pow(itv & Interval(0,oo), Interval::one()/n)) | (-pow(-(itv & Interval({-oo,0})),Interval::one()/n)));  // BE CAREFULL the result of this union is an INTERVAL, so y lost all its affine form
 		// BE CAREFULL the result of this union is an INTERVAL, so y lost all its affine form
+	/*
+	 *  TODO check the proposition of GPT-5.3-Codex
+	 * 		// Odd root across zero: use a secant affine model and bound the nonlinearity
+		// with an interval remainder instead of collapsing directly to an interval hull.
+		Interval root_itv = root(itv, n);
+		double alpha = root_itv.diam()/itv.diam();
+		double beta = root_itv.mid() - alpha*itv.mid();
+		Interval rem = root_itv - (alpha*itv + beta);
+		double t1 = std::fabs(rem.lb());
+		double t2 = std::fabs(rem.ub());
+		double ddelta = (t1>t2)? t1 : t2;
+
+		*this *= alpha;
+		*this += beta;
+		this->inflate(ddelta);
+		return *this;
+	 */
+	
 	}
 
 }

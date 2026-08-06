@@ -6,14 +6,17 @@
  * ----------------------------------------------------------------------------
  *  \date       2026
  *  \author     Jordan Ninin
- *  \copyright  Copyright 2020 Codac Team
+ *  \copyright  Copyright 2026 Codac Team
  *  \license    GNU Lesser General Public License (LGPL)
  */
 
 #pragma once
 
 #include <ostream>
+#include "codac2_matrices.h"
 #include "codac2_Vector.h"
+#include "codac2_IntervalVector.h"
+#include "codac2_AffineMain.h"
 
 namespace codac2 {
 
@@ -36,10 +39,23 @@ namespace codac2 {
  */
 
 
-template<class T=AF_Default>
+
+template<class T>
 class AffineMainVector : public Eigen::Matrix<AffineMain<T>, -1, 1> {
 
 public:
+
+	using Base = Eigen::Matrix<AffineMain<T>, -1, 1>;
+
+	// Inherit the constructors and the assignment operators of the Eigen base
+	// class (dynamic size constructor, expression assignment, etc.).
+	// Without these "using" declarations, the derived class only gets the
+	// implicitly-generated default/copy/move constructors and assignment
+	// operators, and every other Eigen::Matrix constructor/assignment
+	// (e.g. AffineMainVector<T>(n) or v = v1+v2) would fail to compile.
+	using Base::Base;
+	using Base::operator=;
+
 	/**
 	 * \brief Returns the interval hull of each affine component.
 	 *
@@ -49,12 +65,26 @@ public:
 	 */
 	IntervalVector itv() const;
 
+protected:
+	friend class Eigen::Matrix< AffineMain<T>,-1,-1>;
+	/**
+	 * \brief Creates a vector of size \p n.
+	 *
+	 * Each component is set to the default (unbounded) affine form, i.e.
+	 * the equivalent of ``Interval()`` (]-oo,+oo[).
+	 *
+	 * \note This constructor hides (replaces) the generic
+	 * ``Eigen::Matrix(int n)`` constructor inherited above via
+	 * ``using Base::Base``. That generic constructor always tries to
+	 * zero-initialize non-interval scalar types through ``init(0.)``,
+	 * which does not compile for ``AffineMain<T>`` since there is no
+	 * implicit conversion from ``double`` to ``AffineMain<T>``.
+	 *
+	 * \param n vector size
+	 */
+	explicit AffineMainVector(int n) : Base(n,1)
+	{ }
 };
-
-
-
-typedef AffineMainVector<AF_Default> Affine2Vector;
-//typedef AffineMainVector<AF_Other> Affine3Vector;
 
 
 

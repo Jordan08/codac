@@ -4,9 +4,9 @@
  *  Core storage and exact floating-point helpers for the AF_fAF2 affine model.
  *
  * ----------------------------------------------------------------------------
- *  \date       2020
+ *  \date       2026
  *  \author     Jordan Ninin
- *  \copyright  Copyright 2020 Codac Team
+ *  \copyright  Copyright 2026 Codac Team
  *  \license    GNU Lesser General Public License (LGPL)
  */
 
@@ -31,17 +31,6 @@
 
 
 namespace codac2 {
-
-class AF_fAF2;
-
-//typedef AF_fAF1  AF_Default;
-typedef AF_fAF2  AF_Default;
-//typedef AF_fAF2_fma  AF_Default;
-//typedef AF_iAF  AF_Default;
-//typedef AF_sAF  AF_Default;
-//typedef AF_No  AF_Default;
-//typedef AF_fAFFullI AF_Default;
-
 
 
 template<class T>  class AffineMain;
