@@ -415,8 +415,7 @@ TEST_CASE("Approx<AffineMain<T>>")
   }
   {
 
-	  AffineVarMainVector<AA> ax(3);
-	  ax.init(Interval(0,1));
+	  AffineVarMainVector<AA> ax(IntervalVector({{0,1},{0,1},{0,1}}));
 	  CHECK(ax[0] == Approx<AffineMain<AA>>(Interval(0,1)));
 	  CHECK(ax[1] == Approx<AffineMain<AA>>(Interval(0,1)));
 	  CHECK(ax[2] == Approx<AffineMain<AA>>(Interval(0,1)));
@@ -424,8 +423,7 @@ TEST_CASE("Approx<AffineMain<T>>")
 
   // simple linear cases: x in [0,1], 1 noise var
   {
-    AffineVarMainVector<AA> ax(1);
-    ax.init(Interval(0,1));
+    AffineVarMainVector<AA> ax(IntervalVector({{0,1}}));
     CHECK(ax[0] == Approx<AffineMain<AA>>(Interval(0,1)));
     CHECK((ax[0]+1.0) == Approx<AffineMain<AA>>(Interval(1,2)));
     CHECK((-ax[0]) == Approx<AffineMain<AA>>(Interval(-1,0)));
@@ -434,8 +432,7 @@ TEST_CASE("Approx<AffineMain<T>>")
 
   // two affine variables summed together (2 noise variables)
   {
-	  AffineVarMainVector<AA> ax(2);
-	  ax.init(Interval(0,1));
+	  AffineVarMainVector<AA> ax(IntervalVector({{0,1},{0,1}}));
 	  AffineMain<AA> y = ax[0] + ax[1];
 	  CHECK(y == Approx<AffineMain<AA>>(Interval(0,2)));
   }

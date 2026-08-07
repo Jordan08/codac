@@ -84,14 +84,33 @@ namespace Eigen
 
   template<class T,typename BinOp>
   struct ScalarBinaryOpTraits<codac2::AffineVarMain<T>,double,BinOp>
-  { typedef codac2::AffineVarMain<T> ReturnType; };
+  { typedef codac2::AffineMain<T> ReturnType; };
 
   template<class T,typename BinOp>
   struct ScalarBinaryOpTraits<double,codac2::AffineVarMain<T>,BinOp>
-  { typedef codac2::AffineVarMain<T> ReturnType; };
+  { typedef codac2::AffineMain<T> ReturnType; };
+
+  template<class T,typename BinOp>
+  struct ScalarBinaryOpTraits<codac2::AffineVarMain<T>,codac2::AffineVarMain<T>,BinOp>
+  { typedef codac2::AffineMain<T> ReturnType; };
+
+  template<class T,typename BinOp>
+  struct ScalarBinaryOpTraits<codac2::AffineVarMain<T>,codac2::AffineMain<T>,BinOp>
+  { typedef codac2::AffineMain<T> ReturnType; };
+
+  template<class T,typename BinOp>
+  struct ScalarBinaryOpTraits<codac2::AffineMain<T>,codac2::AffineVarMain<T>,BinOp>
+  { typedef codac2::AffineMain<T> ReturnType; };
+
+  template<class T,typename BinOp>
+  struct ScalarBinaryOpTraits<codac2::Interval,codac2::AffineVarMain<T>,BinOp>
+  { typedef codac2::AffineMain<T> ReturnType; };
+
+  template<class T,typename BinOp>
+  struct ScalarBinaryOpTraits<codac2::AffineVarMain<T>,codac2::Interval,BinOp>
+  { typedef codac2::AffineMain<T> ReturnType; };
+
 }
-
-
 
 namespace codac2 {
 /**
@@ -110,6 +129,21 @@ class AffineVarMain : public AffineMain<T> {
 
 
 public:
+	/**
+	 * \brief Creates an affine variable by copy.
+	 *
+	 * \param x affine variable to copy
+	 */
+    AffineVarMain(const AffineVarMain<T>& x);
+
+	/**
+	 * \brief Assigns from another affine variable.
+	 *
+	 * \param x affine variable to copy
+	 * \return a reference to this
+	 */
+	AffineVarMain& operator=(const AffineVarMain<T>& x) ;
+
 	/**
 	 * \brief Sets this affine variable from an interval.
 	 *
@@ -131,12 +165,6 @@ protected:
  //  necesary with eigen in AffineVarMainVector
     AffineVarMain() : _var(-1) {};
 
-	/**
-	 * \brief Creates an affine variable by copy.
-	 *
-	 * \param x affine variable to copy
-	 */
-    AffineVarMain(const AffineVarMain<T>& x);
 
 	/**
 	 * \brief Creates an affine variable among a set of variables.
@@ -147,13 +175,6 @@ protected:
 	 */
 	explicit AffineVarMain(int size, int var, const Interval& itv);
 
-	/**
-	 * \brief Assigns from another affine variable.
-	 *
-	 * \param x affine variable to copy
-	 * \return a reference to this
-	 */
-	AffineVarMain& operator=(const AffineVarMain<T>& x) ;
 
 
 /*	AffineVarMain& operator+=(const Vector& x2) 		{codac2_error(" AffineVarMain : operator+= non valid");};

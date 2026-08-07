@@ -82,6 +82,15 @@ namespace Eigen
   template<class T,typename BinOp>
   struct ScalarBinaryOpTraits<double,codac2::AffineMain<T>,BinOp>
   { typedef codac2::AffineMain<T> ReturnType; };
+
+  template<class T,typename BinOp>
+  struct ScalarBinaryOpTraits<codac2::AffineMain<T>,codac2::Interval,BinOp>
+  { typedef codac2::AffineMain<T> ReturnType; };
+
+  template<class T,typename BinOp>
+  struct ScalarBinaryOpTraits<codac2::Interval,codac2::AffineMain<T>,BinOp>
+  { typedef codac2::AffineMain<T> ReturnType; };
+
 }
 
 namespace codac2 {
@@ -179,7 +188,7 @@ public:
 	virtual ~AffineMain() { };
 
 	/** \brief Returns \f$-*\mathrm{this}\f$. */
-	virtual AffineMain operator-() const;
+	AffineMain operator-() const;
 
 	/**
 	 * \brief Tests exact equality with another affine form.

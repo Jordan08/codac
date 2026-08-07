@@ -20,6 +20,7 @@
 
 namespace codac2 {
 
+template<class T>  class AffineVarMainVector;
 /**
  * \ingroup arithmetic
  *
@@ -56,6 +57,21 @@ public:
 	using Base::Base;
 	using Base::operator=;
 
+	AffineMainVector(const AffineVarMainVector<T>& x) : Base(x.size(), 1)
+	{
+		for(Index i = 0; i < x.size(); ++i)
+			(*this)[i] = (x[i]);
+	}
+
+	AffineMainVector& operator=(const AffineVarMainVector<T>& x)
+	{
+		if (this != &x) {
+			this->resize(x.size());
+			for(Index i = 0; i < x.size(); ++i)
+				(*this)[i] = (x[i]);
+		}
+		return *this;
+	}
 	/**
 	 * \brief Returns the interval hull of each affine component.
 	 *
@@ -64,6 +80,8 @@ public:
 	 * \pre (*this) must be nonempty
 	 */
 	IntervalVector itv() const;
+
+	void set_empty();
 
 protected:
 	friend class Eigen::Matrix< AffineMain<T>,-1,-1>;
@@ -98,6 +116,12 @@ IntervalVector AffineMainVector<T>::itv() const {
 	return tmp;
 }
 
+template<class T>
+void AffineMainVector<T>::set_empty() {
+	for (int i = 0; i < this->size(); i++) {
+		((*this)[i]).set_empty();
+	}
+}
 
 /**
  * \brief Stream output operator for ``IntervalVector`` objects.

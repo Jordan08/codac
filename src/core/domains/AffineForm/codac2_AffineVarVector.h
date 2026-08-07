@@ -20,7 +20,6 @@
 
 namespace codac2 {
 
-template<class T>  class AffineVarMainVector;
 
 /**
  * \ingroup arithmetic
@@ -48,7 +47,10 @@ public:
 	// (e.g. AffineMainVector<T>(n) or v = v1+v2) would fail to compile.
 	using Base::Base;
 	using Base::operator=;
-
+	using Base::operator+;
+	using Base::operator-;
+	using Base::operator*;
+	using Base::operator/;
 	/**
 	 * \brief Creates a vector of size \p n.
 	 *
@@ -118,7 +120,7 @@ public:
 	 *
 	 * \note Emptiness is overridden.
 	 */
-	void clear();
+//	void clear();
 
 	/**
 	 * \brief Initializes all components with the same interval value.
@@ -126,8 +128,9 @@ public:
 	 * \note Emptiness is overridden.
 	 * \param x interval value
 	 */
-	void init(const Interval& x);
+//	void init(const Interval& x);
 
+	void set_empty();
 	/**
 	 * \brief Resizes this affine variable vector.
 	 *
@@ -152,6 +155,8 @@ public:
 	AffineVarMainVector<T>& operator=(const IntervalVector& x);
 
 
+	/** \brief Returns \f$-*\mathrm{this}\f$. */
+	AffineMainVector<T> operator-() const;
 
 private:
 /*	void put(int start_index, const AffineMainVector<T>& subvec) {codac2_error(" AffineVarMainVector : operator put non valid");};
@@ -225,7 +230,7 @@ template<class T>
 void AffineVarMainVector<T>::resize(codac2::Index n2) {
 	Index n1 =this->size();
 	if (n2!=n1) {
-		AffineVarMainVector<T>::conservativeResize(n2);
+		Base::conservativeResize(n2);
 		int i=0;
 		for (; i<n1 && i<n2; i++){
 			(*this)[i]=AffineVarMain<T>(n2, i, ((*this)[i]).itv());
@@ -250,18 +255,11 @@ AffineVarMainVector<T>& AffineVarMainVector<T>::operator=(const IntervalVector& 
 
 
 template<class T>
-void AffineVarMainVector<T>::init(const Interval& x) {
+void AffineVarMainVector<T>::set_empty() {
 	for (int i = 0; i < this->size(); i++) {
-		(*this)[i] =  AffineVarMain<T>(this->size(), i, x);
+		((*this)[i]).set_empty();
 	}
 }
-
-
-template<class T>
-inline void AffineVarMainVector<T>::clear() {
-	this->init(Interval::zero());
-}
-
 
 
 template<class T>
@@ -271,6 +269,17 @@ IntervalVector AffineVarMainVector<T>::itv() const {
 		tmp[i] = (*this)[i].itv();
 	}
 	return tmp;
+}
+
+template<typename T>
+AffineMainVector<T> AffineVarMainVector<T>::operator-() const
+{
+  AffineMainVector<T> result(this->size());
+
+  for(Index i = 0; i < this->size(); ++i)
+    result[i] = -((*this)[i]);
+
+  return result;
 }
 
 

@@ -24,6 +24,7 @@ list(APPEND SRC_TESTS # listing files without extension
 
   # Core
   core/domains/AffineForm/codac2_tests_AffineForm_base
+  core/domains/AffineForm/codac2_tests_AffineVector
 
   core/3rd/codac2_tests_eigen
 

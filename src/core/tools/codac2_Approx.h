@@ -19,6 +19,7 @@
 #include "codac2_IntervalMatrix.h"
 #include "codac2_Polygon.h"
 #include "codac2_AffineMain.h"
+#include "codac2_AffineVector.h"
 
 namespace codac2
 {
@@ -273,6 +274,48 @@ namespace codac2
 
   };
 
+  template<class T>
+  class Approx<AffineMainVector<T>>
+  {
+	  private:
+
+		  const IntervalVector _x;
+		  const double _eps;
+	  public:
+
+      explicit Approx(const IntervalVector& x, double eps = DEFAULT_EPS)
+        : _x(x), _eps(eps)
+      { }
+
+      friend bool operator==(const AffineMainVector<T>& x1, const Approx<AffineMainVector<T>>& x2)
+      {
+		const IntervalVector& y_expected = x2._x;
+
+		if(y_expected.is_empty())
+		  return x1.is_empty();
+
+		if(x1.is_empty())
+		  return false;
+
+		for(int i = 0 ; i < x1.size() ; i++)
+		  if(!(x1[i] == Approx<AffineMain<T>>(y_expected[i],x2._eps)))
+			return false;
+
+		return true;
+      }
+
+      friend bool operator==(const Approx<AffineMainVector<T>>& x1, const AffineMainVector<T>& x2)
+      {
+        return x2 == x1;
+      }
+
+      friend std::ostream& operator<<(std::ostream& os, const Approx<AffineMainVector<T>>& x)
+      {
+        os << "Approx(" << x._x << ")";
+        return os;
+      }
+
+  };
 
 
 }
