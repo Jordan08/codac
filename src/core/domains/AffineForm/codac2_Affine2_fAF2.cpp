@@ -22,7 +22,6 @@
 #include <climits>
 
 
-const double MAX_DOUBLE = std::numeric_limits<double>::max();
 
 namespace codac2 {
 
@@ -30,17 +29,17 @@ namespace codac2 {
 
 /**
  * Code for the particular case:
- * if the affine form is actif, _actif=1  and _n is the size of the affine form
- * if the set is degenerate, _actif = 0 and itv().diam()< AF_EC
- * if the set is empty, _actif = -1
- * if the set is ]-oo,+oo[, _actif = -2 and _err = ]-oo,+oo[
- * if the set is [a, +oo[ , _actif = -3 and _err = [a, +oo[
- * if the set is ]-oo, a] , _actif = -4 and _err = ]-oo, a]
+ * if the affine form is actif, _status=1  and _n is the size of the affine form
+ * if the set is degenerate, _status = 0 and itv().diam()< AF_EC
+ * if the set is empty, _status = -1
+ * if the set is ]-oo,+oo[, _status = -2 and _err = ]-oo,+oo[
+ * if the set is [a, +oo[ , _status = -3 and _err = [a, +oo[
+ * if the set is ]-oo, a] , _status = -4 and _err = ]-oo, a]
  *
  */
 template<>
 AffineMain<AF_fAF2>::AffineMain() :
-		 _actif (-2     ),
+		 _status (AffineStatus::AllReals     ),
 		 _n		(0		),
 		 _elt	(nullptr	,oo)	{
  }
@@ -49,19 +48,23 @@ AffineMain<AF_fAF2>::AffineMain() :
 template<>
 AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator=(const Interval& x) {
 	if (x.is_empty()) {
-		_actif = -1;
+		_status = AffineStatus::Empty;
 		_elt._err = 0.0;
 	} else if (x.ub()>= oo && x.lb()<= -oo ) {
-		_actif = -2;
+		_status = AffineStatus::AllReals;
 		_elt._err = 0.0;
 	} else if (x.ub()>= oo ) {
-		_actif = -3;
-		if (x.lb()>= MAX_DOUBLE) this->_elt._err = MAX_DOUBLE;
-		else this->_elt._err = x.lb();
+		_status = AffineStatus::UpperUnbounded;
+		if (x.lb()>= std::numeric_limits<double>::max())
+			this->_elt._err = std::numeric_limits<double>::max();
+		else
+			this->_elt._err = x.lb();
 	} else if (x.lb()<= -oo ) {
-		_actif = -4;
-		if (x.ub()<= -MAX_DOUBLE) this->_elt._err = -MAX_DOUBLE;
-		else this->_elt._err = x.ub();
+		_status = AffineStatus::LowerUnbounded;
+		if (x.ub()<= -std::numeric_limits<double>::max())
+			this->_elt._err = -std::numeric_limits<double>::max();
+		else
+			this->_elt._err = x.ub();
 	} else  {
 		if (_elt._val==nullptr) { _elt._val = new double[_n+1]; }
 		_elt._val[0] = x.mid();
@@ -69,10 +72,10 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator=(const Interval& x) {
 			_elt._val[i] =0;
 		}
 		if ( x.is_degenerated()) {
-			_actif=0;
+			_status=AffineStatus::Degenerate;
 			_elt._err	= 0;
 		} else {
-			_actif = 1;
+			_status = AffineStatus::Active;
 			_elt._err	= x.rad();
 		}
 	}
@@ -83,20 +86,22 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator=(const Interval& x) {
 
 template<>
 AffineVarMain<AF_fAF2>& AffineVarMain<AF_fAF2>::operator=(const Interval& x) {
-	assert(this->_var >= 0 && this->_n > this->_var);
+	assert(_n > 0);
+	assert(_var >= 0);
+	assert(_var < _n);
 	if (x.is_empty()) {
-		this->_actif = -1;
+		this->_status = AffineStatus::Empty;
 		this->_elt._err = 0.0;
 	} else if (x.ub()>= oo && x.lb()<= -oo ) {
-		this->_actif = -2;
+		this->_status = AffineStatus::AllReals;
 		this->_elt._err = 0.0;
 	} else if (x.ub()>= oo ) {
-		this->_actif = -3;
-		if (x.lb()>= MAX_DOUBLE) this->_elt._err = MAX_DOUBLE;
+		this->_status = AffineStatus::UpperUnbounded;
+		if (x.lb()>= std::numeric_limits<double>::max()) this->_elt._err = std::numeric_limits<double>::max();
 		else this->_elt._err = x.lb();
 	} else if (x.lb()<= -oo ) {
-		this->_actif = -4;
-		if (x.ub()<= -MAX_DOUBLE) this->_elt._err = -MAX_DOUBLE;
+		this->_status = AffineStatus::LowerUnbounded;
+		if (x.ub()<= -std::numeric_limits<double>::max()) this->_elt._err = -std::numeric_limits<double>::max();
 		else this->_elt._err = x.ub();
 	} else  {
 		if (this->_elt._val==nullptr) { this->_elt._val = new double[_n+1]; }
@@ -105,10 +110,10 @@ AffineVarMain<AF_fAF2>& AffineVarMain<AF_fAF2>::operator=(const Interval& x) {
 			this->_elt._val[i] =0;
 		}
 		if ( x.is_degenerated()) {
-			this->_actif = 0;
+			this->_status = AffineStatus::Degenerate;
 			this->_elt._err = 0.0;
 		} else {
-			this->_actif = 1;
+			this->_status = AffineStatus::Active;
 			this->_elt._val[_var+1] = x.rad();
 			this->_elt._err = 0.0;  // uncertainty fully captured in _val[_var+1]
 		}
@@ -122,11 +127,11 @@ AffineVarMain<AF_fAF2>& AffineVarMain<AF_fAF2>::operator=(const Interval& x) {
 
 template<>
 AffineMain<AF_fAF2>::AffineMain(int size, int var, const Interval& itv) :
-			_actif	(0),
+			_status	(AffineStatus::Degenerate),
 			_n 		(size),
 			_elt	(nullptr,0.0)
 {
-	assert((size>=0) && (var>=0) && (var<=size));
+	assert((((size>=0) && (var>=0))||itv.is_empty()) && (var<size));
 	if (!(itv.is_unbounded()||itv.is_empty())) {
 		_elt._val	=new double[size + 1];
 		_elt._val[0] = itv.mid();
@@ -134,23 +139,27 @@ AffineMain<AF_fAF2>::AffineMain(int size, int var, const Interval& itv) :
 			_elt._val[i] = 0.0;
 		}
 		if (! itv.is_degenerated()) {
-			_actif =1;
+			_status = AffineStatus::Active;
 			_elt._val[var+1] = itv.rad();
 		}
 	} else if (itv.is_empty()) {
-		_actif = -1;
+		_status =AffineStatus::Empty;
 		_elt._err = 0.0;
 	} else if (itv.ub()>= oo && itv.lb()<= -oo ) {
-		_actif = -2;
+		_status = AffineStatus::AllReals;
 		_elt._err = 0.0;
 	} else if (itv.ub()>= oo ) {
-		_actif = -3;
-		if (itv.lb()>= MAX_DOUBLE) this->_elt._err = MAX_DOUBLE;
-		else this->_elt._err = itv.lb();
+		_status = AffineStatus::UpperUnbounded;
+		if (itv.lb()>= std::numeric_limits<double>::max())
+			this->_elt._err = std::numeric_limits<double>::max();
+		else
+			this->_elt._err = itv.lb();
 	} else if (itv.lb()<= -oo ) {
-		_actif = -4;
-		if (itv.ub()<= -MAX_DOUBLE) this->_elt._err = -MAX_DOUBLE;
-		else this->_elt._err = itv.ub();
+		_status = AffineStatus::LowerUnbounded;
+		if (itv.ub()<= -std::numeric_limits<double>::max())
+			this->_elt._err = -std::numeric_limits<double>::max();
+		else
+			this->_elt._err = itv.ub();
 	}
 }
 
@@ -158,12 +167,12 @@ AffineMain<AF_fAF2>::AffineMain(int size, int var, const Interval& itv) :
 
 template<>
 AffineMain<AF_fAF2>::AffineMain(const AffineMain<AF_fAF2>& x) :
-		_actif	(x._actif),
-		_n		(x.size()),
+		_status	(x._status),
+		_n		(x._n),
 		_elt	(nullptr	,x._elt._err ) {
-	if (x.is_actif()) {
-		_elt._val =new double[x.size() + 1];
-		for (int i = 0; i <= x.size(); i++){
+	if (x.is_active()) {
+		_elt._val =new double[x._n + 1];
+		for (int i = 0; i <= x._n; i++){
 			_elt._val[i] = x._elt._val[i];
 		}
 	}
@@ -172,38 +181,53 @@ AffineMain<AF_fAF2>::AffineMain(const AffineMain<AF_fAF2>& x) :
 
 
 template<>
-AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator=(const AffineMain<AF_fAF2>& x) {
-	if (this != &x) {
-		_elt._err = x._elt._err;
-		_actif = x._actif;
-		if (x.is_actif()) {
-			if (_n == x.size()) {
-				if (_elt._val==nullptr) { _elt._val = new double[x.size()+1]; }
-			} else {
-				_n =x._n;
-				if (_elt._val!=nullptr) { delete[] _elt._val; }
-				_elt._val = new double[x.size()+1];
-			}
-			for (int i = 0; i <= x.size(); i++) {
-				_elt._val[i] = x._elt._val[i];
-			}
-		} else {
-			_n =x.size();
-		}
-	}
-	return *this;
+AffineMain<AF_fAF2>&
+AffineMain<AF_fAF2>::operator=(const AffineMain<AF_fAF2>& x)
+{
+  if (this == &x) {
+    return *this;
+  }
+
+  _status = x._status;
+  _elt._err = x._elt._err;
+
+  if (!x.is_active()) {
+    // An inactive affine form has no usable coefficient representation.
+    // Releasing the old storage prevents _n from becoming inconsistent
+    // with the actual allocation capacity.
+    delete[] _elt._val;
+    _elt._val = nullptr;
+    _n = x._n;
+    return *this;
+  }
+
+  if (_elt._val == nullptr || _n != x._n) {
+    // Allocate before releasing the current storage so that the destination
+    // remains unchanged if allocation throws.
+    double* new_values = new double[x._n + 1];
+
+    delete[] _elt._val;
+    _elt._val = new_values;
+    _n = x._n;
+  }
+
+  for (int i = 0; i <= x._n; ++i) {
+    _elt._val[i] = x._elt._val[i];
+  }
+
+  return *this;
 }
 
 
 template<>
 double AffineMain<AF_fAF2>::val(int i) const{
-	assert(is_actif() &&(0<=i) && (i<size()));
+	assert(is_active() &&(0<=i) && (i<size()));
 	return _elt._val[i+1];
 }
 
 template<>
 double AffineMain<AF_fAF2>::err() const{
-	assert(is_actif() );
+	assert(is_active() );
 	return _elt._err;
 }
 
@@ -211,28 +235,28 @@ double AffineMain<AF_fAF2>::err() const{
 template<>
 const Interval AffineMain<AF_fAF2>::itv() const {
 
-	switch(_actif) {
-	case -1 : {
+	switch(_status) {
+	case AffineStatus::Empty : {
 		return Interval::empty();
 		break;
 	}
-	case -2 : {
+	case AffineStatus::AllReals : {
 		return Interval();
 		break;
 	}
-	case -3 : {
+	case AffineStatus::UpperUnbounded : {
 		return Interval(_elt._err,oo);
 		break;
 	}
-	case -4: {
+	case AffineStatus::LowerUnbounded: {
 		return Interval(-oo,_elt._err);
 		break;
 	}
-	case 0: {
+	case AffineStatus::Degenerate: {
 		return Interval(_elt._val[0]);
 		break;
 	}
-	default: { // _actif==1
+	default: { // _status== AffineStatus::Active
 		Interval res(_elt._val[0]);
 		Interval pmOne(-1.0, 1.0);
 		for (int i = 1; i <= size(); i++){
@@ -249,7 +273,7 @@ const Interval AffineMain<AF_fAF2>::itv() const {
 
 template<>
 double AffineMain<AF_fAF2>::mid() const{
-	return (is_actif())? _elt._val[0] : itv().mid();
+	return (is_active())? _elt._val[0] : itv().mid();
 }
 
 
@@ -257,33 +281,33 @@ double AffineMain<AF_fAF2>::mid() const{
 
 /**
  * Code for the particular case:
- * if the affine form is actif, _actif=1  and _n is the size of the affine form
- * if the set is degenerate, _actif = 0 and itv().diam()< AF_EC
- * if the set is empty, _actif = -1
- * if the set is ]-oo,+oo[, _actif = -2 and _err =]-oo,+oo[
- * if the set is [a, +oo[ , _actif = -3 and _err = [a, +oo[
- * if the set is ]-oo, a] , _actif = -4 and _err = ]-oo, a]
+ * if the affine form is actif, _status=1  and _n is the size of the affine form
+ * if the set is degenerate, _status = 0 and itv().diam()< AF_EC
+ * if the set is empty, _status = -1
+ * if the set is ]-oo,+oo[, _status = -2 and _err =]-oo,+oo[
+ * if the set is [a, +oo[ , _status = -3 and _err = [a, +oo[
+ * if the set is ]-oo, a] , _status = -4 and _err = ]-oo, a]
  *
  */
 
 template<>
 AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::Aneg() {
-	switch(_actif) {
-	case -3 : {
+	switch(_status) {
+	case AffineStatus::UpperUnbounded : {
 		_elt._err = -_elt._err;
-		_actif    = -4;
+		_status    = AffineStatus::LowerUnbounded;
 		break;
 	}
-	case -4 : {
+	case AffineStatus::LowerUnbounded : {
 		_elt._err = -_elt._err;
-		_actif    = -3;
+		_status    = AffineStatus::UpperUnbounded;
 		break;
 	}
-	case 0 :{
+	case AffineStatus::Degenerate :{
 		_elt._val[0] = (-_elt._val[0]);
 		break;
 	}
-	case 1 : {
+	case AffineStatus::Active : {
 		for (int i = 0; i <= size(); i++) {
 			_elt._val[i] = (-_elt._val[i]);
 		}
@@ -301,9 +325,9 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::Aneg() {
 
 template<>
 AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator*=(double alpha) {
-	if (_actif==1) {  // multiply by a scalar alpha
+	if (_status==AffineStatus::Active) {  // multiply by a scalar alpha
 		if (alpha==0.0) {
-			_actif = 0;
+			_status = AffineStatus::Degenerate;
 			for (int i=0; i<=_n;i++) {
 				_elt._val[i]=0;
 			}
@@ -355,7 +379,7 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator+=(double beta) {
 		// state), we keep the historical convention -- obtained through the
 		// Interval+double operator -- that combining two raw infinities (of
 		// possibly conflicting signs) is undefined and yields the empty set.
-		if (is_actif()) {
+		if (is_active()) {
 			*this = beta;
 			return *this;
 		}
@@ -363,7 +387,7 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator+=(double beta) {
 		return *this;
 	}
 
-	if (_actif==1) {
+	if (_status==AffineStatus::Active) {
 		double temp, ttt, sss, eee;
 		ttt=0.0;
 		sss=0.0;
@@ -394,9 +418,9 @@ template<>
 AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::inflate(double ddelta) {
 	assert(ddelta>=0);
 	if (ddelta>0) {
-		if (is_actif()) {
+		if (is_active()) {
 			if ((ddelta)<oo) {
-				_actif=1;
+				_status=AffineStatus::Active;
 				double temp, ttt, sss, eee;
 				ttt=0.0;
 				sss=0.0;
@@ -426,7 +450,15 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::inflate(double ddelta) {
 template<>
 void AffineMain<AF_fAF2>::resize(int n) {
 	assert(n>=1);
-	if (n>_n) {
+	if(n == _n)	return;
+
+	if (_elt._val==nullptr) {
+		_n = n;
+		_elt._val = new double[n+1];
+		for (int i=0;i<=n;i++) {
+			_elt._val[i] = 0;
+		}
+	} else {
 		double * tmp= new double[n+1];
 		int i=0;
 		for (;i<=_n;i++) {
@@ -438,16 +470,8 @@ void AffineMain<AF_fAF2>::resize(int n) {
 		_n = n;
 		delete[] _elt._val;
 		_elt._val = tmp;
-	} else if (n<_n) {
-		double * tmp= new double[n+1];
-		int i=0;
-		for (;i<=n;i++) {
-			tmp[i] = _elt._val[i];
-		}
-		_n = n;
-		delete[] _elt._val;
-		_elt._val = tmp;
 	}
+	return;
 }
 
 
@@ -457,7 +481,7 @@ void AffineMain<AF_fAF2>::resize(int n) {
 template<>
 AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator+=(const AffineMain<AF_fAF2>& y) {
 
-	if (is_actif() && y.is_actif()) {
+	if (is_active() && y.is_active()) {
 		if (y.is_degenerated()) {
 			*this += y._elt._val[0];
 		} else if (is_degenerated()) {
@@ -510,7 +534,7 @@ puter Society.
 template<>
 AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator*=(const AffineMain<AF_fAF2>& y) {
 
-	if (is_actif() && (y.is_actif())) {
+	if (is_active() && (y.is_active())) {
 		if (y.is_degenerated()) {
 			*this *= y._elt._val[0];
 		}	else if (is_degenerated()) {
@@ -527,48 +551,33 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator*=(const AffineMain<AF_fAF2>& 
 			xTmp = new double[_n + 1];
 			Sx=0.0; Sy=0.0; Sxy=0.0; Sz=0.0; ttt=0.0; sss=0.0; ppp=0.0; tmp=0.0; xVal0=0.0; eee=0.0;
 
+			// These accumulators may later be multiplied by quantities at the
+			// opposite scale. Do not discard them using an absolute threshold.
+			// For example, 1e-300 * 1e300 contributes at order one.
 			for (int i = 1; i <= _n; i++) {
-				ppp=0;
-				if (i<=y.size()) {
-					eee = _elt.twoProd(_elt._val[i],y._elt._val[i], &ppp);
+				ppp = 0.0;
+
+				if (i <= y.size()) {
+					eee = _elt.twoProd(_elt._val[i], y._elt._val[i], &ppp);
 					ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
 
-					eee = _elt.twoSum(Sz,ppp, &tmp);
+					eee = _elt.twoSum(Sz, ppp, &tmp);
 					ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
 					Sz = tmp;
 
-					if (std::fabs(Sz) < AF_EC) {
-						sss = (1+2*AF_EM)*(sss+ std::fabs(Sz));
-						Sz = 0.0;
-					}
-
-					eee = _elt.twoSum(Sxy,std::fabs(ppp), &tmp);
+					eee = _elt.twoSum(Sxy, std::fabs(ppp), &tmp);
 					ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
 					Sxy = tmp;
-
-					if (std::fabs(Sxy) < AF_EC) {
-						sss = (1+2*AF_EM)*(sss+ std::fabs(Sxy));
-						Sxy = 0.0;
-					}
 				}
-				eee = _elt.twoSum(Sx,std::fabs(_elt._val[i]), &tmp);
+
+				eee = _elt.twoSum(Sx, std::fabs(_elt._val[i]), &tmp);
 				ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
 				Sx = tmp;
 
-				if (std::fabs(Sx) < AF_EC) {
-					sss = (1+2*AF_EM)*(sss+ std::fabs(Sx));
-					Sx = 0.0;
-				}
-
-				if (i<=y.size()) {
-					eee = _elt.twoSum(Sy,std::fabs(y._elt._val[i]), &tmp);
+				if (i <= y.size()) {
+					eee = _elt.twoSum(Sy, std::fabs(y._elt._val[i]), &tmp);
 					ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
 					Sy = tmp;
-
-					if (std::fabs(Sy) < AF_EC) {
-						sss = (1+2*AF_EM)*(sss+ std::fabs(Sy));
-						Sy = 0.0;
-					}
 				}
 			}
 
@@ -664,7 +673,7 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator*=(const AffineMain<AF_fAF2>& 
 
 template<>
 AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator*=(const Interval& y) {
-	if (	(!is_actif())||
+	if (	(!is_active())||
 			y.is_empty()||
 			y.is_unbounded() ) {
 		*this = itv()*y;
@@ -687,7 +696,7 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator*=(const Interval& y) {
 template<>
 AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::Asqr(const Interval& itv) {
 
-	if (	(!is_actif())||
+	if (	(!is_active())||
 			itv.is_empty()||
 			itv.is_unbounded()||
 			(itv.diam() < AF_EC)  ) {
@@ -791,23 +800,36 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::Asqr(const Interval& itv) {
 
 
 template<>
-void AffineMain<AF_fAF2>::compact(double tol){
-	for (int i=1;i<=_n;i++) {
-		if (std::fabs(_elt._val[i])<tol) {
-			double temp=0.0;
-			double sss=0.0;
-			double eee = _elt.twoSum(_elt._err,std::fabs(_elt._val[i]), &temp);
-			double ttt = (1+2*AF_EM)*(std::fabs(eee));
-			if (std::fabs(temp)<AF_EC) {
-				sss = (1+2*AF_EM)*(std::fabs(temp));
-				temp =0;
-			}
-//			_elt._err = (1+2*AF_EM)*(temp+ (AF_EE*(AF_EM*ttt)));;
-			_elt._err = (1+2*AF_EM)*( temp + (AF_EE*(ttt) + AF_EE*sss) );
+void AffineMain<AF_fAF2>::compact(double tol)
+{
+  // Empty and unbounded affine forms have no coefficient representation.
+  // Their logical dimension may nevertheless be non-zero, so iterating up
+  // to _n would dereference a null _elt._val pointer.
+  if (!is_active() || _elt._val == nullptr) {
+    return;
+  }
 
-			_elt._val[i] =0;
-		}
-	}
+  // A negative or non-finite threshold has no meaningful compacting
+  // semantics. Keep the form unchanged rather than modifying its remainder.
+  if (!std::isfinite(tol) || tol < 0.0) {
+    return;
+  }
+  	for (int i=1;i<=_n;i++) {
+  		if (std::fabs(_elt._val[i])<tol) {
+  			double temp=0.0;
+  			double sss=0.0;
+  			double eee = _elt.twoSum(_elt._err,std::fabs(_elt._val[i]), &temp);
+  			double ttt = (1+2*AF_EM)*(std::fabs(eee));
+  			if (std::fabs(temp)<AF_EC) {
+  				sss = (1+2*AF_EM)*(std::fabs(temp));
+  				temp =0;
+  			}
+  //			_elt._err = (1+2*AF_EM)*(temp+ (AF_EE*(AF_EM*ttt)));;
+  			_elt._err = (1+2*AF_EM)*( temp + (AF_EE*(ttt) + AF_EE*sss) );
+  
+  			_elt._val[i] =0;
+  		}
+  	}
 }
 
 

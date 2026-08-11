@@ -14,10 +14,11 @@
 
 
 #include "codac2_AffineMain.h"
-#include "codac2_AffineVector.h"
-#include "codac2_AffineMatrix.h"
 #include "codac2_AffineVar.h"
+#include "codac2_AffineVector.h"
 #include "codac2_AffineVarVector.h"
+#include "codac2_AffineRow.h"
+#include "codac2_AffineMatrix.h"
 
 namespace codac2 {
 
@@ -33,6 +34,7 @@ namespace codac2 {
 	typedef AffineMain<AF_Default> 			Affine2;
 	typedef AffineVarMainVector<AF_Default>	Affine2Variables;
 	typedef AffineMainVector<AF_Default> 	Affine2Vector;
+	typedef AffineMainRow<AF_Default> 		Affine2Row;
 	typedef AffineMainMatrix<AF_Default> 	Affine2Matrix;
 
 } // namespace codac2

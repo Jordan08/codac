@@ -1,5 +1,8 @@
 /**
  *  \file codac2_AffineMatrix.h
+ *
+ *  Dynamic-size matrix wrapper for affine forms.
+ *
  * ----------------------------------------------------------------------------
  *  \date       2026
  *  \author     Jordan Ninin
@@ -7,32 +10,36 @@
  *  \license    GNU Lesser General Public License (LGPL)
  */
 
+
 #pragma once
 
+#include <ostream>
 #include "codac2_matrices.h"
 #include "codac2_Vector.h"
-#include "codac2_AffineMain.h"
+
 
 namespace codac2
 {
   /**
-   * \brief Alias for a dynamic-size matrix of intervals.
+   * \brief Alias for a dynamic-size matrix of affine forms.
    *
-   * Represents a matrix with a dynamic number of rows and columns,
-   * where each element is an Interval object.
-   *
-   * This type alias is based on Eigen's matrix template and corresponds to ``Eigen::Matrix<Interval,-1,-1>``.
+   * This alias corresponds to ``Eigen::Matrix<AffineMain<T>,-1,-1>``.
    */
   template<class T>
-  using AffineMainMatrix = Eigen::Matrix<AffineMain<T>,-1,-1>;
+  using AffineMainMatrix = Eigen::Matrix< AffineMain<T>,-1,-1>;
+
 
   /**
-   * \brief Stream output operator for ``IntervalMatrix`` objects.
+   * \brief Streams out an affine matrix.
    *
-   * \param os The output stream to write to.
-   * \param x The interval matrix whose contents are to be printed.
-   * \return A reference to the modified output stream.
+   * Prints ``[ empty RxC mat ]`` for empty matrices, otherwise uses
+   * ``codac_matrix_fmt()`` for Eigen-style formatting.
+   *
+   * \param os output stream
+   * \param x affine matrix to print
+   * \return a reference to the updated stream
    */
+
   template<class T>
   inline std::ostream& operator<<(std::ostream& os, const AffineMainMatrix<T>& x)
   {

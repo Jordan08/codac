@@ -104,6 +104,7 @@
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/AffineForm/codac2_Affine2_fAF2.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/AffineForm/codac2_Affine2_fAF2.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/AffineForm/codac2_AffineVector.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/AffineForm/codac2_AffineRow.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/AffineForm/codac2_AffineMatrix.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/AffineForm/codac2_AffineVar.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/AffineForm/codac2_AffineVarVector.h

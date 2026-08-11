@@ -12,13 +12,11 @@
 
 #pragma once
 
-#include <cmath>
-#include <ostream>
 #include <cassert>
+#include <cstddef>
+#include <type_traits>
 
-#include "codac2_IntervalVector.h"
 #include "codac2_AffineMain.h"
-#include "codac2_AffineVector.h"
 
 // Déclaration anticipée de la fonction interne d'Eigen qui construit
 // par défaut chaque élément lors de l'allocation d'un Eigen::Matrix
@@ -44,6 +42,9 @@ struct is_ctc< AffineVarMain<T> > : std::false_type {};
 
 template<class T>
 struct is_sep< AffineVarMain<T> > : std::false_type {};
+
+template<class T>
+struct is_affine_based< AffineVarMain<T> > : std::true_type {};
 
 } // namespace codac2
 
@@ -128,6 +129,28 @@ template<class T>
 class AffineVarMain : public AffineMain<T> {
 
 
+private:
+	friend class Eigen::Matrix< AffineVarMain<T>,-1,1>;
+	friend class AffineVarMainVector<T>;
+	friend AffineVarMain<T>* Eigen::internal::default_construct_elements_of_array<AffineVarMain<T>>(AffineVarMain<T>*, std::size_t); //  <-- pour garder AffineVarMain() en protected
+
+    int _var;
+
+protected:
+	// Eigen first creates unbound placeholders. AffineVarMainVector then
+	// contextualizes each placeholder through copy assignment. An unbound
+	// object must never be assigned an Interval directly.
+    AffineVarMain() : AffineMain<T>(), _var(-1) {}
+
+	/**
+	 * \brief Creates an affine variable among a set of variables.
+	 *
+	 * \param size total number of variables
+	 * \param var index of the variable represented by this instance
+	 * \param itv initial interval value
+	 */
+	explicit AffineVarMain(int size, int var, const Interval& itv);
+
 public:
 	/**
 	 * \brief Creates an affine variable by copy.
@@ -151,80 +174,63 @@ public:
 	 * \return a reference to this
 	 */
 	AffineVarMain& operator=(const Interval& itv);
+	AffineVarMain& operator=(double d);
 
 
-private:
+	// Une variable déclarée ne doit pas être mutée en place : cela casserait la
+	// cohérence entre _var et le contexte (taille totale de variables) dans
+	// lequel elle a été créée. Toute opération arithmétique doit repasser par
+	// une AffineMain<T> ordinaire (voir operator+, operator-, etc. libres).
+	AffineVarMain& operator=(const AffineMain<T>&) = delete;
 
-protected:
-	friend class Eigen::Matrix< AffineVarMain<T>,-1,1>;
-	friend class AffineVarMainVector<T>;
-	friend AffineVarMain<T>* Eigen::internal::default_construct_elements_of_array<AffineVarMain<T>>(AffineVarMain<T>*, std::size_t); //  <-- pour garder AffineVarMain() en protected
+	AffineVarMain& operator+=(double) = delete;
+	AffineVarMain& operator+=(const Interval&) = delete;
+	AffineVarMain& operator+=(const AffineMain<T>&) = delete;
 
-    int _var;
+	AffineVarMain& operator-=(double) = delete;
+	AffineVarMain& operator-=(const Interval&) = delete;
+	AffineVarMain& operator-=(const AffineMain<T>&) = delete;
 
- //  necesary with eigen in AffineVarMainVector
-    AffineVarMain() : _var(-1) {};
+	AffineVarMain& operator*=(double) = delete;
+	AffineVarMain& operator*=(const Interval&) = delete;
+	AffineVarMain& operator*=(const AffineMain<T>&) = delete;
 
+	AffineVarMain& operator/=(double) = delete;
+	AffineVarMain& operator/=(const Interval&) = delete;
+	AffineVarMain& operator/=(const AffineMain<T>&) = delete;
 
-	/**
-	 * \brief Creates an affine variable among a set of variables.
-	 *
-	 * \param size total number of variables
-	 * \param var index of the variable represented by this instance
-	 * \param itv initial interval value
-	 */
-	explicit AffineVarMain(int size, int var, const Interval& itv);
+	template<typename OtherDerived>
+	AffineVarMain& operator+=(const Eigen::EigenBase<OtherDerived>&) = delete;
+	template<typename OtherDerived>
+	AffineVarMain& operator-=(const Eigen::EigenBase<OtherDerived>&) = delete;
+	template<typename OtherDerived>
+	AffineVarMain& operator*=(const Eigen::EigenBase<OtherDerived>&) = delete;
+	template<typename OtherDerived>
+	AffineVarMain& operator/=(const Eigen::EigenBase<OtherDerived>&) = delete;
 
-
-
-/*	AffineVarMain& operator+=(const Vector& x2) 		{codac2_error(" AffineVarMain : operator+= non valid");};
-	AffineVarMain& operator+=(const Interval& x2) 		{codac2_error(" AffineVarMain : operator+= non valid");};
-	AffineVarMain& operator+=(const AffineMain<T>& x2)	{codac2_error(" AffineVarMain : operator+= non valid");};
-	AffineVarMain& operator-=(const Vector& x2) 		{codac2_error(" AffineVarMain : operator-= non valid");};
-	AffineVarMain& operator-=(const Interval& x2) 		{codac2_error(" AffineVarMain : operator-= non valid");};
-	AffineVarMain& operator-=(const AffineMain<T>& x2) 	{codac2_error(" AffineVarMain : operator-= non valid");};
-	AffineVarMain& operator*=(double d) 				{codac2_error(" AffineVarMain : operator*= non valid");};
-	AffineVarMain& operator*=(const Interval& x1) 		{codac2_error(" AffineVarMain : operator*= non valid");};
-	AffineVarMain& operator*=(const AffineMain<T>& x1) 	{codac2_error(" AffineVarMain : operator*= non valid");};
-
-	AffineVarMain&  Asqr(const Interval& itv)  	{codac2_error(" AffineVarMain : operator Asqr non valid");};
-	AffineVarMain&  Aneg()  					{codac2_error(" AffineVarMain : operator Aneg non valid");};
-	AffineVarMain&  Ainv(const Interval& itv)  	{codac2_error(" AffineVarMain : operator Ainv non valid");};
-	AffineVarMain&  Asqrt(const Interval& itv) 	{codac2_error(" AffineVarMain : operator non Asqrt valid");};
-	AffineVarMain&  Aexp(const Interval& itv)  	{codac2_error(" AffineVarMain : operator Aexp non valid");};
-	AffineVarMain&  Alog(const Interval& itv)  	{codac2_error(" AffineVarMain : operator Alog non valid");};
-	AffineVarMain&  Apow(int n, const Interval& itv)  	{codac2_error(" AffineVarMain : operator Apow non valid");};
-	AffineVarMain&  Apow(double d, const Interval& itv)	{codac2_error(" AffineVarMain : operator Apow non valid");};
-	AffineVarMain&  Apow(const Interval &y, const Interval& itvx)  {codac2_error(" AffineVarMain : operator Apow non valid");};
-	AffineVarMain&  Aroot(int n, const Interval& itv)  	{codac2_error(" AffineVarMain : operator Aroot non valid");};
-	AffineVarMain&  Acos(const Interval& itv)  	{codac2_error(" AffineVarMain : operator Acos non valid");};
-	AffineVarMain&  Asin(const Interval& itv)  	{codac2_error(" AffineVarMain : operator Asin non valid");};
-	AffineVarMain&  Atan(const Interval& itv)  	{codac2_error(" AffineVarMain : operator Atan non valid");};
-	AffineVarMain&  Aacos(const Interval& itv)  {codac2_error(" AffineVarMain : operator Aacos non valid");};
-	AffineVarMain&  Aasin(const Interval& itv)  {codac2_error(" AffineVarMain : operator Aasin non valid");};
-	AffineVarMain&  Aatan(const Interval& itv)  {codac2_error(" AffineVarMain : operator Aatan non valid");};
-	AffineVarMain&  Acosh(const Interval& itv)  {codac2_error(" AffineVarMain : operator Acosh non valid");};
-	AffineVarMain&  Asinh(const Interval& itv)  {codac2_error(" AffineVarMain : operator Asinh non valid");};
-	AffineVarMain&  Atanh(const Interval& itv)  {codac2_error(" AffineVarMain : operator Atanh non valid");};
-	AffineVarMain&  Aabs(const Interval& itv)  	{codac2_error(" AffineVarMain : operator Aabs non valid");};
-	AffineVarMain&  Ainv_CH(const Interval& itv) {codac2_error(" AffineVarMain : operator Ainv_CH non valid");};
-	AffineVarMain&  Asqrt_CH(const Interval& itv){codac2_error(" AffineVarMain : operator Asqrt_CH non valid");};
-	AffineVarMain&  Aexp_CH(const Interval& itv) {codac2_error(" AffineVarMain : operator Aexp_CH non valid");};
-	AffineVarMain&  Alog_CH(const Interval& itv) {codac2_error(" AffineVarMain : operator Alog_CH non valid");};
-	AffineVarMain&  Ainv_MR(const Interval& itv) {codac2_error(" AffineVarMain : operator Ainv_CH non valid");};
-	AffineVarMain&  Asqrt_MR(const Interval& itv){codac2_error(" AffineVarMain : operator Asqrt_MR non valid");};
-	AffineVarMain&  Aexp_MR(const Interval& itv) {codac2_error(" AffineVarMain : operator Aexp_MR non valid");};
-	AffineVarMain&  Alog_MR(const Interval& itv) {codac2_error(" AffineVarMain : operator Alog_MR non valid");};
-*/
+    /**
+     * \brief Provides an empty Affine Form
+     *
+     * \return an empty set
+     */
+    static AffineVarMain<T> empty();
 };
 
+template<class T>
+inline AffineVarMain<T> AffineVarMain<T>::empty()
+{
+	AffineVarMain<T> result(0,-1,Interval::empty());;
+	return result;
+}
 
 
 template<class T>
 AffineVarMain<T>::AffineVarMain(int size, int var1, const Interval& itv) :
 		AffineMain<T>(size, var1, itv),
 		_var		(var1) {
-	assert((size>var1)&&(var1>=0));
+	assert(size > 0|| itv.is_empty());
+	assert(_var >= 0 || itv.is_empty());
+	assert(_var < size);
 }
 
 
@@ -237,10 +243,33 @@ AffineVarMain<T>::AffineVarMain(const AffineVarMain<T>& x) :
 
 template<class T>
 AffineVarMain<T>& AffineVarMain<T>::operator=(const AffineVarMain<T>& x) {
-	if (this != &x) {
+	if (this == &x) {
+		return *this;
+	}
+
+	if (_var < 0) {
+		// Eigen placeholder: acquire the complete variable identity once.
 		AffineMain<T>::operator=(x);
 		_var = x._var;
+		return *this;
 	}
+
+	if (x._var == _var && x.size() == this->size()) {
+		// Same affine context and same dedicated noise symbol.
+		AffineMain<T>::operator=(x);
+		return *this;
+	}
+
+	// Assigning a different affine variable must not overwrite the destination
+	// identity. Rebuild the destination from the certified interval enclosure,
+	// which gives it its own noise symbol and avoids duplicated or out-of-range
+	// symbol indices inside an AffineVarMainVector.
+	return (*this = x.itv());
+}
+
+template<class T>
+inline AffineVarMain<T>& AffineVarMain<T>::operator=(double d) {
+	*this = Interval(d);
 	return *this;
 }
 

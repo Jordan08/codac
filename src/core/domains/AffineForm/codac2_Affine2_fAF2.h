@@ -14,21 +14,14 @@
 #pragma once
 
 #include "codac2_math.h"
+#include <utility>
 
-#ifndef _MSC_VER
-	#ifdef __FP_FAST_FMA
-		#define codac2_FMA
-	#endif
-	#ifdef FP_FAST_FMA
-		#define codac2_FMA
-	#endif
 
+#if (defined(__GNUC__) || defined(__clang__)) && (defined(__x86_64__) || defined(__i386__))
+	#define CODAC_FMA_RUNTIME() __builtin_cpu_supports("fma")
 #else
-#if (_MSC_VER >= 1800)
-	#define codac2_FMA
+	#define CODAC_FMA_RUNTIME() false
 #endif
-#endif
-
 
 namespace codac2 {
 
@@ -73,10 +66,34 @@ private:
 	AF_fAF2(double * val, double err);
 
 public:
+
+	AF_fAF2(const AF_fAF2&) = delete;
+	AF_fAF2& operator=(const AF_fAF2&) = delete;
+	AF_fAF2(AF_fAF2&& other) noexcept;
+	AF_fAF2& operator=(AF_fAF2&& other) noexcept;
+
 	/** \brief Destroys the affine core. */
-	virtual ~AF_fAF2();
+	~AF_fAF2();
 
 };
+
+inline AF_fAF2::AF_fAF2(AF_fAF2&& other) noexcept
+  : _val(std::exchange(other._val, nullptr)),
+    _err(other._err)
+{
+}
+
+inline AF_fAF2& AF_fAF2::operator=(AF_fAF2&& other) noexcept
+{
+  if(this != &other)
+  {
+    delete[] _val;
+    _val = std::exchange(other._val, nullptr);
+    _err = other._err;
+  }
+
+  return *this;
+}
 
 
 inline AF_fAF2::AF_fAF2(double * val, double err) :
@@ -106,26 +123,27 @@ inline void AF_fAF2::Split(double x, int sp, double *x_high, double *x_low)
 
 inline double AF_fAF2::twoProd(double x, double y, double *r_1)
 {
-#ifdef codac2_FMA
-	*r_1 = (x * y);
-	return std::fma(x,y,-(*r_1));
-#else
+	if (CODAC_FMA_RUNTIME()) {
+		*r_1 = (x * y);
+		return std::fma(x,y,-(*r_1));
 
-	int SHIFT_POW = 27; //  53 / 2 for double precision.
-	double x_high, x_low;
-	double y_high, y_low;
-	double t_1;
-	double t_2;
-	double t_3;
-	Split(x, SHIFT_POW, &x_high, &x_low);
-	Split(y, SHIFT_POW, &y_high, &y_low);
-	*r_1 = (x * y);
-	t_1 = (-*r_1 + x_high * y_high);
-	t_2 =   (t_1 + x_high * y_low );
-	t_3 =	(t_2 + x_low  * y_high);
-	return  (t_3 + x_low  * y_low );
+	} else {
 
-#endif
+		int SHIFT_POW = 27; //  53 / 2 for double precision.
+		double x_high, x_low;
+		double y_high, y_low;
+		double t_1;
+		double t_2;
+		double t_3;
+		Split(x, SHIFT_POW, &x_high, &x_low);
+		Split(y, SHIFT_POW, &y_high, &y_low);
+		*r_1 = (x * y);
+		t_1 = (-*r_1 + x_high * y_high);
+		t_2 =   (t_1 + x_high * y_low );
+		t_3 =	(t_2 + x_low  * y_high);
+		return  (t_3 + x_low  * y_low );
+
+	}
 
 }
 

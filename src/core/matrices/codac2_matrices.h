@@ -33,6 +33,9 @@ namespace Eigen
   concept IsIntervalDomain = codac2::is_interval_based<Scalar>::value;
 //    concept IsIntervalDomain = std::is_same_v<Scalar,codac2::Interval>;
 
+  template<typename Scalar>
+  concept IsAffineDomain = codac2::is_affine_based<Scalar>::value;
+
 }
 
 #define EIGEN_MATRIXBASE_PLUGIN "codac2_MatrixBase_addons_include.h"
