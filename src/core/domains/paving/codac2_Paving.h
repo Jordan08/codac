@@ -38,8 +38,10 @@ namespace codac2
         assert_release(n > 0);
       }
 
+//      Paving(const IntervalVector& x)
+//        : _tree(std::make_shared<PavingNode<P>>(*static_cast<P*>(this), x))
+//      { }
       Paving(const IntervalVector& x)
-        : _tree(std::make_shared<PavingNode<P>>(*static_cast<P*>(this), x))
       { }
 
       inline Index size() const
@@ -127,6 +129,12 @@ namespace codac2
     protected:
 
       friend class PavingNode<P>;
+
+      inline void init_tree(const IntervalVector& x)
+      {
+        _tree = std::make_shared<PavingNode<P>>(*static_cast<P*>(this), x);
+      }
+
 
       inline static NodeTuple_ init_tuple(const IntervalVector& x)
       {

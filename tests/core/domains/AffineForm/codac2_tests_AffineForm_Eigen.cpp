@@ -39,6 +39,12 @@ void check_point(const Affine& actual, double expected)
     CHECK(actual == Approx<Affine>(Interval(expected)));
 }
 
+void check_interval(const Affine& actual, const Interval expected)
+{
+    CAPTURE(actual.itv(), expected);
+    CHECK(actual == Approx<Affine>(expected));
+}
+
 void check_interval_enclosure(
     const Affine& actual,
     const Interval& expected)
@@ -482,23 +488,41 @@ TEST_CASE("Eigen affine compound assignment")
     check_point(value[0], 1.0);
     check_point(value[2], 3.0);
 
-    value += 3.0;
+    value.array() += 3.0;
     check_point(value[0], 4.0);
     check_point(value[2], 6.0);
 
-    value -= 5;
+    value.array() -= 5;
     check_point(value[0], -1.0);
     check_point(value[2], 1.0);
 
-    value *= 2.0;
+    value.array() *= 2.0;
     check_point(value[0], -2.0);
     check_point(value[2], 2.0);
 
-    value /= 2.0;
+    value.array() /= 2.0;
     check_point(value[0], -1.0);
     check_point(value[2], 1.0);
 }
 
+TEST_CASE("Eigen affineVar compound assignment")
+{
+    const AffineVarVector value_variables(
+        IntervalVector({{1,2}, {-2,5}, {3,6}}));
+    AffineVector value(value_variables);
+
+
+    value -= value_variables;
+    check_point(value[0], 0);
+    check_point(value[1], 0);
+    check_point(value[2], 0);
+
+    value += value_variables;
+    check_interval(value[0], value_variables[0].itv());
+    check_interval(value[1], value_variables[1].itv());
+    check_interval(value[2], value_variables[2].itv());
+
+}
 
 // ============================================================================
 // Scalar compound assignments on all supported Eigen/CODAC containers
@@ -515,22 +539,22 @@ TEST_CASE("Eigen scalar compound assignments - IntervalVector",
 {
     IntervalVector value({{1.0}, {-2.0}, {4.0}});
 
-    value += 2.0;
+    value.array() += 2.0;
     CHECK(value[0] == Interval(3.0));
     CHECK(value[1] == Interval(0.0));
     CHECK(value[2] == Interval(6.0));
 
-    value -= 2.0;
+    value.array() -= 2.0;
     CHECK(value[0] == Interval(1.0));
     CHECK(value[1] == Interval(-2.0));
     CHECK(value[2] == Interval(4.0));
 
-    value *= 2.0;
+    value.array() *= 2.0;
     CHECK(value[0] == Interval(2.0));
     CHECK(value[1] == Interval(-4.0));
     CHECK(value[2] == Interval(8.0));
 
-    value /= 2.0;
+    value.array() /= 2.0;
     CHECK(value[0] == Interval(1.0));
     CHECK(value[1] == Interval(-2.0));
     CHECK(value[2] == Interval(4.0));
@@ -544,22 +568,22 @@ TEST_CASE("Eigen scalar compound assignments - IntervalRow",
     value[1] = Interval(-2.0);
     value[2] = Interval(4.0);
 
-    value += 2.0;
+    value.array() += 2.0;
     CHECK(value[0] == Interval(3.0));
     CHECK(value[1] == Interval(0.0));
     CHECK(value[2] == Interval(6.0));
 
-    value -= 2.0;
+    value.array() -= 2.0;
     CHECK(value[0] == Interval(1.0));
     CHECK(value[1] == Interval(-2.0));
     CHECK(value[2] == Interval(4.0));
 
-    value *= 2.0;
+    value.array() *= 2.0;
     CHECK(value[0] == Interval(2.0));
     CHECK(value[1] == Interval(-4.0));
     CHECK(value[2] == Interval(8.0));
 
-    value /= 2.0;
+    value.array() /= 2.0;
     CHECK(value[0] == Interval(1.0));
     CHECK(value[1] == Interval(-2.0));
     CHECK(value[2] == Interval(4.0));
@@ -572,22 +596,22 @@ TEST_CASE("Eigen scalar compound assignments - IntervalMatrix",
     value << Interval(1.0), Interval(-2.0), Interval(3.0),
              Interval(4.0), Interval(5.0), Interval(-6.0);
 
-    value += 2.0;
+    value.array() += 2.0;
     CHECK(value(0, 0) == Interval(3.0));
     CHECK(value(0, 1) == Interval(0.0));
     CHECK(value(1, 2) == Interval(-4.0));
 
-    value -= 2.0;
+    value.array() -= 2.0;
     CHECK(value(0, 0) == Interval(1.0));
     CHECK(value(0, 1) == Interval(-2.0));
     CHECK(value(1, 2) == Interval(-6.0));
 
-    value *= 2.0;
+    value.array() *= 2.0;
     CHECK(value(0, 0) == Interval(2.0));
     CHECK(value(0, 1) == Interval(-4.0));
     CHECK(value(1, 2) == Interval(-12.0));
 
-    value /= 2.0;
+    value.array() /= 2.0;
     CHECK(value(0, 0) == Interval(1.0));
     CHECK(value(0, 1) == Interval(-2.0));
     CHECK(value(1, 2) == Interval(-6.0));
@@ -601,22 +625,22 @@ TEST_CASE("Eigen scalar compound assignments - AffineVector",
     value[1] = Interval(-2.0);
     value[2] = Interval(4.0);
 
-    value += 2.0;
+    value.array() += 2.0;
     check_point(value[0], 3.0);
     check_point(value[1], 0.0);
     check_point(value[2], 6.0);
 
-    value -= 2.0;
+    value.array() -= 2.0;
     check_point(value[0], 1.0);
     check_point(value[1], -2.0);
     check_point(value[2], 4.0);
 
-    value *= 2.0;
+    value.array() *= 2.0;
     check_point(value[0], 2.0);
     check_point(value[1], -4.0);
     check_point(value[2], 8.0);
 
-    value /= 2.0;
+    value.array() /= 2.0;
     check_point(value[0], 1.0);
     check_point(value[1], -2.0);
     check_point(value[2], 4.0);
@@ -630,22 +654,22 @@ TEST_CASE("Eigen scalar compound assignments - AffineRow",
     value[1] = Interval(-2.0);
     value[2] = Interval(4.0);
 
-    value += 2.0;
+    value.array() += 2.0;
     check_point(value[0], 3.0);
     check_point(value[1], 0.0);
     check_point(value[2], 6.0);
 
-    value -= 2.0;
+    value.array() -= 2.0;
     check_point(value[0], 1.0);
     check_point(value[1], -2.0);
     check_point(value[2], 4.0);
 
-    value *= 2.0;
+    value.array() *= 2.0;
     check_point(value[0], 2.0);
     check_point(value[1], -4.0);
     check_point(value[2], 8.0);
 
-    value /= 2.0;
+    value.array() /= 2.0;
     check_point(value[0], 1.0);
     check_point(value[1], -2.0);
     check_point(value[2], 4.0);
@@ -659,22 +683,22 @@ TEST_CASE("Eigen scalar compound assignments - AffineMatrix",
              Interval(4.0), Interval(5.0), Interval(-6.0)}});
     value = m;
 
-    value += 2.0;
+    value.array() += 2.0;
     check_point(value(0, 0), 3.0);
     check_point(value(0, 1), 0.0);
     check_point(value(1, 2), -4.0);
 
-    value -= 2.0;
+    value.array() -= 2.0;
     check_point(value(0, 0), 1.0);
     check_point(value(0, 1), -2.0);
     check_point(value(1, 2), -6.0);
 
-    value *= 2.0;
+    value.array() *= 2.0;
     check_point(value(0, 0), 2.0);
     check_point(value(0, 1), -4.0);
     check_point(value(1, 2), -12.0);
 
-    value /= 2.0;
+    value.array() /= 2.0;
     check_point(value(0, 0), 1.0);
     check_point(value(0, 1), -2.0);
     check_point(value(1, 2), -6.0);
@@ -688,22 +712,22 @@ TEST_CASE("Eigen scalar compound assignments - fixed-size Affine types",
     IntervalVector v({ Interval(1.0), Interval(-2.0), Interval(4.0)});
 	vector = v;
 
-    vector += 2.0;
+    vector.array() += 2.0;
     check_point(vector[0], 3.0);
     check_point(vector[1], 0.0);
     check_point(vector[2], 6.0);
 
-    vector -= 2.0;
+    vector.array() -= 2.0;
     check_point(vector[0], 1.0);
     check_point(vector[1], -2.0);
     check_point(vector[2], 4.0);
 
-    vector *= 2.0;
+    vector.array() *= 2.0;
     check_point(vector[0], 2.0);
     check_point(vector[1], -4.0);
     check_point(vector[2], 8.0);
 
-    vector /= 2.0;
+    vector.array() /= 2.0;
     check_point(vector[0], 1.0);
     check_point(vector[1], -2.0);
     check_point(vector[2], 4.0);
@@ -712,22 +736,22 @@ TEST_CASE("Eigen scalar compound assignments - fixed-size Affine types",
     IntervalVector vv({ Interval(1.0), Interval(-2.0), Interval(4.0)});
     row = vv.transpose();
 
-    row += 2.0;
+    row.array() += 2.0;
     check_point(row[0], 3.0);
     check_point(row[1], 0.0);
     check_point(row[2], 6.0);
 
-    row -= 2.0;
+    row.array() -= 2.0;
     check_point(row[0], 1.0);
     check_point(row[1], -2.0);
     check_point(row[2], 4.0);
 
-    row *= 2.0;
+    row.array() *= 2.0;
     check_point(row[0], 2.0);
     check_point(row[1], -4.0);
     check_point(row[2], 8.0);
 
-    row /= 2.0;
+    row.array() /= 2.0;
     check_point(row[0], 1.0);
     check_point(row[1], -2.0);
     check_point(row[2], 4.0);
@@ -737,22 +761,22 @@ TEST_CASE("Eigen scalar compound assignments - fixed-size Affine types",
               {Interval(4.0), Interval(5.0), Interval(-6.0)}});
     matrix = mm;
 
-    matrix += 2.0;
+    matrix.array() += 2.0;
     check_point(matrix(0, 0), 3.0);
     check_point(matrix(0, 1), 0.0);
     check_point(matrix(1, 2), -4.0);
 
-    matrix -= 2.0;
+    matrix.array() -= 2.0;
     check_point(matrix(0, 0), 1.0);
     check_point(matrix(0, 1), -2.0);
     check_point(matrix(1, 2), -6.0);
 
-    matrix *= 2.0;
+    matrix.array() *= 2.0;
     check_point(matrix(0, 0), 2.0);
     check_point(matrix(0, 1), -4.0);
     check_point(matrix(1, 2), -12.0);
 
-    matrix /= 2.0;
+    matrix.array() /= 2.0;
     check_point(matrix(0, 0), 1.0);
     check_point(matrix(0, 1), -2.0);
     check_point(matrix(1, 2), -6.0);
@@ -766,22 +790,22 @@ TEST_CASE("Eigen scalar compound assignments - fixed-size Interval types",
 
     vector = v;
 
-    vector += 2.0;
+    vector.array() += 2.0;
     CHECK(vector[0] == Interval(3.0));
     CHECK(vector[1] == Interval(0.0));
     CHECK(vector[2] == Interval(6.0));
 
-    vector -= 2.0;
+    vector.array() -= 2.0;
     CHECK(vector[0] == Interval(1.0));
     CHECK(vector[1] == Interval(-2.0));
     CHECK(vector[2] == Interval(4.0));
 
-    vector *= 2.0;
+    vector.array() *= 2.0;
     CHECK(vector[0] == Interval(2.0));
     CHECK(vector[1] == Interval(-4.0));
     CHECK(vector[2] == Interval(8.0));
 
-    vector /= 2.0;
+    vector.array() /= 2.0;
     CHECK(vector[0] == Interval(1.0));
     CHECK(vector[1] == Interval(-2.0));
     CHECK(vector[2] == Interval(4.0));
@@ -790,22 +814,22 @@ TEST_CASE("Eigen scalar compound assignments - fixed-size Interval types",
     IntervalVector vv({Interval(1.0), Interval(-2.0), Interval(4.0)});
     row = vv.transpose();
 
-    row += 2.0;
+    row.array() += 2.0;
     CHECK(row[0] == Interval(3.0));
     CHECK(row[1] == Interval(0.0));
     CHECK(row[2] == Interval(6.0));
 
-    row -= 2.0;
+    row.array() -= 2.0;
     CHECK(row[0] == Interval(1.0));
     CHECK(row[1] == Interval(-2.0));
     CHECK(row[2] == Interval(4.0));
 
-    row *= 2.0;
+    row.array() *= 2.0;
     CHECK(row[0] == Interval(2.0));
     CHECK(row[1] == Interval(-4.0));
     CHECK(row[2] == Interval(8.0));
 
-    row /= 2.0;
+    row.array() /= 2.0;
     CHECK(row[0] == Interval(1.0));
     CHECK(row[1] == Interval(-2.0));
     CHECK(row[2] == Interval(4.0));
@@ -815,22 +839,22 @@ TEST_CASE("Eigen scalar compound assignments - fixed-size Interval types",
               Interval(4.0), Interval(5.0), Interval(-6.0)}});
     matrix = mm;
 
-    matrix += 2.0;
+    matrix.array() += 2.0;
     CHECK(matrix(0, 0) == Interval(3.0));
     CHECK(matrix(0, 1) == Interval(0.0));
     CHECK(matrix(1, 2) == Interval(-4.0));
 
-    matrix -= 2.0;
+    matrix.array() -= 2.0;
     CHECK(matrix(0, 0) == Interval(1.0));
     CHECK(matrix(0, 1) == Interval(-2.0));
     CHECK(matrix(1, 2) == Interval(-6.0));
 
-    matrix *= 2.0;
+    matrix.array() *= 2.0;
     CHECK(matrix(0, 0) == Interval(2.0));
     CHECK(matrix(0, 1) == Interval(-4.0));
     CHECK(matrix(1, 2) == Interval(-12.0));
 
-    matrix /= 2.0;
+    matrix.array() /= 2.0;
     CHECK(matrix(0, 0) == Interval(1.0));
     CHECK(matrix(0, 1) == Interval(-2.0));
     CHECK(matrix(1, 2) == Interval(-6.0));

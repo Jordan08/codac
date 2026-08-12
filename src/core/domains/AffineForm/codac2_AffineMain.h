@@ -180,7 +180,7 @@ public:
 	/** \brief Creates an unbounded affine form (like \c Interval()). */
 	AffineMain();
 
-	explicit AffineMain(double value);
+	AffineMain(double value);
 	AffineMain(const Interval& itv);
 	operator Interval() const;
 
@@ -1188,14 +1188,14 @@ template<class T>
 AffineMain<T>::AffineMain(double d) : AffineMain() {
 	*this = Interval(d);
  }
+
 template<class T>
 AffineMain<T>::AffineMain(const Interval& x) : AffineMain() {
 	*this = x;
  }
 
 template<typename AF>
-AffineMain<AF>::operator Interval() const
-{
+AffineMain<AF>::operator Interval() const {
     return itv();
 }
 
@@ -3234,13 +3234,7 @@ inline AffineMain<T>& AffineMain<T>::Asqrt_MR(const Interval& itv) {
 
 		double alpha, beta, ddelta, t1, t2;
 		Interval dmm(0.0), TEMP1(0.0), TEMP2(0.0), band(0.0), itv2;
-		//if ((itv.ub() == POS_INFINITY) || (itv.ub()<0) ) {
-		//	_err = sqrt(itv);
-		//	_actif = false;
-		//	delete[] _val;
-		//	_val = NULL;
-		//}
-		//else {
+
 		if (itv.lb()<0) {
 			itv2 = Interval(0.0,itv.ub());
 		} else {
@@ -3347,14 +3341,6 @@ AffineMain<T>& AffineMain<T>::Alog_MR(const Interval& itv) {
 
 		double alpha, beta, ddelta, t1, t2;
 		Interval dmm(0.0), TEMP1(0.0), TEMP2(0.0), band(0.0), itv2;
-
-		//if ((itv.lb()<= 0) ||(itv.ub()==POS_INFINITY) ) {
-		//	_err = log(itv);
-		//	_actif = false;
-		//	delete[] _val;
-		//	_val = NULL;
-		//}
-		//else {
 
 		dmm = res_itv;
 		if (itv.diam()< AF_EC) {

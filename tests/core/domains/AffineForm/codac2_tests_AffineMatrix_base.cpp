@@ -17,19 +17,7 @@ using MatrixAA = AffineMainMatrix<AF_Default>;
 using VectorAA = AffineMainVector<AF_Default>;
 using VarVectorAA = AffineVarMainVector<AF_Default>;
 
-inline void check_matrix_encloses(
-    const MatrixAA& actual,
-    const Eigen::Matrix<Interval, -1, -1>& expected)
-{
-  REQUIRE(actual.rows() == expected.rows());
-  REQUIRE(actual.cols() == expected.cols());
-  for (Eigen::Index i = 0; i < actual.rows(); ++i) {
-    for (Eigen::Index j = 0; j < actual.cols(); ++j) {
-      CAPTURE(i, j, actual(i,j).itv(), expected(i,j));
-      CHECK(actual(i,j).itv().is_superset(expected(i,j)));
-    }
-  }
-}
+
 } // namespace
 
 TEST_CASE("AffineMainMatrix construction, access and assignment")

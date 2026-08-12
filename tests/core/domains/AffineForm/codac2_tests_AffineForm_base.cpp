@@ -569,7 +569,7 @@ TEST_CASE("AffineForm operations")
 	  );
 
 	  static_assert(
-	    !std::is_convertible_v<
+	    std::is_convertible_v<
 	      double,
 	      AffineMain<AF_Default>>
 	  );

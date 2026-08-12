@@ -15,7 +15,7 @@
 
 
 template<typename U = Scalar, typename OtherDerived>
-  requires IsIntervalDomain<U>
+  requires IsAffineDomain<U>
 	&& (IsIntervalDomain<OtherDerived> ||std::is_arithmetic_v<OtherDerived>)
 	&& requires(U& x, const OtherDerived& d) { x *= d; }
 inline Derived& operator*=(const OtherDerived& d)
@@ -27,7 +27,7 @@ inline Derived& operator*=(const OtherDerived& d)
 }
 
 template<typename U = Scalar, typename OtherDerived>
-  requires IsIntervalDomain<U>
+  requires IsAffineDomain<U>
 	&& (IsIntervalDomain<OtherDerived> ||std::is_arithmetic_v<OtherDerived>)
 	&& requires(U& x, const OtherDerived& d) { x /= d; }
 inline Derived& operator/=(OtherDerived d)
@@ -39,7 +39,7 @@ inline Derived& operator/=(OtherDerived d)
 }
 
 template<typename U = Scalar, typename OtherDerived>
-  requires  IsIntervalDomain<U>
+  requires  IsAffineDomain<U>
 	&& (IsIntervalDomain<OtherDerived> ||std::is_arithmetic_v<OtherDerived>)
 	&& requires(U& x, const OtherDerived& d) { x += d; }
 inline Derived& operator+=(const OtherDerived& d)
@@ -51,7 +51,7 @@ inline Derived& operator+=(const OtherDerived& d)
 }
 
 template<typename U = Scalar, typename OtherDerived>
-  requires  IsIntervalDomain<U>
+  requires  IsAffineDomain<U>
 	&& (IsIntervalDomain<OtherDerived> ||std::is_arithmetic_v<OtherDerived>)
 	&& requires(U& x, const OtherDerived& d) { x -= d; }
 inline Derived& operator-=(const OtherDerived& d)
