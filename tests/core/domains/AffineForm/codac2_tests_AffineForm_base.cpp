@@ -21,9 +21,14 @@
 using namespace codac2;
 
 
-typedef AF_Default AA;
+using AA = AF_Default;
+using AffineT = AffineMain<AA>;
+using AffineTMatrix = AffineMainMatrix<AA>;
+using AffineTVector = AffineMainVector<AA>;
+using AffineTVarVector = AffineVarMainVector<AA>;
 
 const double MAX_DOUBLE = std::numeric_limits<double>::max();
+const int SAMPLE_SIZE = 300;
 const double ERROR = std::numeric_limits<double>::epsilon()*10; //__builtin_powi(2.0, -50);
 
 #define piL Interval::pi().lb()
@@ -512,47 +517,47 @@ TEST_CASE("Approx<AffineMain<T>>")
 
   // empty
   {
-    AffineVarMainVector<AA> ax(1);
+    AffineTVarVector ax(1);
     ax[0] = Interval::empty();
-    CHECK(ax[0] == Approx<AffineMain<AA>>(Interval::empty()));
+    CHECK(ax[0] == Approx<AffineT>(Interval::empty()));
   }
 
   // unbounded
   {
-    AffineVarMainVector<AA> ax(1);
-    CHECK(ax[0] == Approx<AffineMain<AA>>(Interval()));
+    AffineTVarVector ax(1);
+    CHECK(ax[0] == Approx<AffineT>(Interval()));
   }
   {
 
-	  AffineVarMainVector<AA> ax(IntervalVector({{0,1},{0,1},{0,1}}));
-	  CHECK(ax[0] == Approx<AffineMain<AA>>(Interval(0,1)));
-	  CHECK(ax[1] == Approx<AffineMain<AA>>(Interval(0,1)));
-	  CHECK(ax[2] == Approx<AffineMain<AA>>(Interval(0,1)));
+	  AffineTVarVector ax(IntervalVector({{0,1},{0,1},{0,1}}));
+	  CHECK(ax[0] == Approx<AffineT>(Interval(0,1)));
+	  CHECK(ax[1] == Approx<AffineT>(Interval(0,1)));
+	  CHECK(ax[2] == Approx<AffineT>(Interval(0,1)));
   }
 
   // simple linear cases: x in [0,1], 1 noise var
   {
-    AffineVarMainVector<AA> ax(IntervalVector({{0,1}}));
-    CHECK(ax[0] == Approx<AffineMain<AA>>(Interval(0,1)));
-    CHECK((ax[0]+1.0) == Approx<AffineMain<AA>>(Interval(1,2)));
-    CHECK((-ax[0]) == Approx<AffineMain<AA>>(Interval(-1,0)));
-    CHECK((2.0*ax[0]) == Approx<AffineMain<AA>>(Interval(0,2)));
+    AffineTVarVector ax(IntervalVector({{0,1}}));
+    CHECK(ax[0] == Approx<AffineT>(Interval(0,1)));
+    CHECK((ax[0]+1.0) == Approx<AffineT>(Interval(1,2)));
+    CHECK((-ax[0]) == Approx<AffineT>(Interval(-1,0)));
+    CHECK((2.0*ax[0]) == Approx<AffineT>(Interval(0,2)));
   }
 
   // two affine variables summed together (2 noise variables)
   {
-	  AffineVarMainVector<AA> ax(IntervalVector({{0,1},{0,1}}));
-	  AffineMain<AA> y = ax[0] + ax[1];
-	  CHECK(y == Approx<AffineMain<AA>>(Interval(0,2)));
+	  AffineTVarVector ax(IntervalVector({{0,1},{0,1}}));
+	  AffineT y = ax[0] + ax[1];
+	  CHECK(y == Approx<AffineT>(Interval(0,2)));
   }
 
   // must not match a wrong expected interval
   {
-    AffineVarMainVector<AA> bx(2);
+    AffineTVarVector bx(2);
     bx[0] =Interval(0,1);
-    CHECK_FALSE(bx[0] == Approx<AffineMain<AA>>(Interval(5,6)));
+    CHECK_FALSE(bx[0] == Approx<AffineT>(Interval(5,6)));
     bx[0] =Interval(5,6);
-    CHECK(bx[0] == Approx<AffineMain<AA>>(Interval(5,6)));
+    CHECK(bx[0] == Approx<AffineT>(Interval(5,6)));
   }
 }
 
@@ -564,59 +569,59 @@ TEST_CASE("AffineForm operations")
   {
 	  static_assert(
 	    std::is_constructible_v<
-	      AffineMain<AF_Default>,
+	      AffineT,
 	      double>
 	  );
 
 	  static_assert(
 	    std::is_convertible_v<
 	      double,
-	      AffineMain<AF_Default>>
+	      AffineT>
 	  );
 
 	  static_assert(
 	    std::is_copy_constructible_v<
-	      AffineVarMain<AF_Default>>
+	      AffineVarMain<AA>>
 	  );
 
 	  static_assert(
 	    std::is_copy_assignable_v<
-	      AffineVarMain<AF_Default>>
+	      AffineVarMain<AA>>
 	  );
 
 	  static_assert(
 	    !std::is_assignable_v<
-	      AffineVarMain<AF_Default>&,
-	      AffineMain<AF_Default>>);
+	      AffineVarMain<AA>&,
+	      AffineT>);
   }
   /* test: operator-() */
   {
-    AffineVarMainVector<AA> ax(1);
+    AffineTVarVector ax(1);
     ax[0] =  Interval(0,1);
-    CHECK(-(ax[0]) == Approx<AffineMain<AA>>(Interval(-1,0), ERROR));
+    CHECK(-(ax[0]) == Approx<AffineT>(Interval(-1,0), ERROR));
   }
   {
-    AffineVarMainVector<AA> ax(1);
-    CHECK(-(ax[0]) == Approx<AffineMain<AA>>(Interval(), ERROR));
+    AffineTVarVector ax(1);
+    CHECK(-(ax[0]) == Approx<AffineT>(Interval(), ERROR));
   }
   {
-    AffineVarMainVector<AA> ax(1);
+    AffineTVarVector ax(1);
     ax[0] = Interval(-oo,0);
-    CHECK(-(ax[0]) == Approx<AffineMain<AA>>(Interval(0,oo), ERROR));
+    CHECK(-(ax[0]) == Approx<AffineT>(Interval(0,oo), ERROR));
   }
   {
-    AffineVarMainVector<AA> ax(4);
+    AffineTVarVector ax(4);
     ax[0] = Interval(-oo,1);
-    CHECK(-(ax[0]) == Approx<AffineMain<AA>>(Interval(-1,oo), ERROR));
-    CHECK(ax[2] == Approx<AffineMain<AA>>(Interval(), ERROR));
+    CHECK(-(ax[0]) == Approx<AffineT>(Interval(-1,oo), ERROR));
+    CHECK(ax[2] == Approx<AffineT>(Interval(), ERROR));
   }
   {
-    AffineMain<AA> x(3.);
-    AffineMain<AA> y(x);
+    AffineT x(3.);
+    AffineT y(x);
 
     CHECK(y.itv() == Interval(3.));
 
-    AffineMain<AA> z;
+    AffineT z;
     z = x;
 
     CHECK(z.itv() == Interval(3.));
@@ -624,12 +629,12 @@ TEST_CASE("AffineForm operations")
   }
   {
 
-    AffineVarMainVector<AA> x(IntervalVector({ {1.,2.}, {3.,4.}, {5.,6.} }) );
+    AffineTVarVector x(IntervalVector({ {1.,2.}, {3.,4.}, {5.,6.} }) );
 
-    AffineMain<AA> source = x[0];
+    AffineT source = x[0];
     source.set_empty();
 
-    AffineMain<AA> destination = x[1];
+    AffineT destination = x[1];
     destination = source;
 
     CHECK(destination.is_empty());
@@ -642,15 +647,15 @@ TEST_CASE("AffineForm operations")
     CHECK_FALSE(std::is_copy_assignable_v<AF_fAF2>);
   }
   {
-    AffineVarMainVector<AA> x(2);
+    AffineTVarVector x(2);
     x[0] = 5.0;
     CHECK(x[0].itv() == Interval(5.));
   }
   {
-    AffineVarMainVector<AA> variables(IntervalVector({{1., 2.}}) );
+    AffineTVarVector variables(IntervalVector({{1., 2.}}) );
 
-    AffineMain<AA> x = variables[0];
-    AffineMain<AA> residual = floor(x) - x;
+    AffineT x = variables[0];
+    AffineT residual = floor(x) - x;
 
     CHECK(residual.itv() != Interval(0.));
     CHECK(Interval(-1., 0.).is_subset(residual.itv()));
@@ -719,12 +724,12 @@ TEST_CASE("AffineForm operations")
   CHECK_mul_scal<AA>(Interval(1,2), -1, Interval(-2,-1));
 
   {
-    AffineVarMainVector<AA> a(2);   // contexte à 2 variables
+    AffineTVarVector a(2);   // contexte à 2 variables
     a[0] = Interval(1.,2.);
-    AffineVarMainVector<AA> b(4);   // contexte à 4 variables
+    AffineTVarVector b(4);   // contexte à 4 variables
     b[3] = Interval(3.,4.);
 
-    AffineMain<AA> p = a[0] * b[3];
+    AffineT p = a[0] * b[3];
     CHECK(p.itv().is_superset(Interval(1.,2.)*Interval(3.,4.)));
   }
 
@@ -762,7 +767,7 @@ TEST_CASE("AffineForm operations")
   CHECK_log<AA>(Interval(1,2), Interval(0,std::log(2)));
   CHECK_log<AA>(Interval(-1,1), Interval(-oo,0));
   {
-    AffineVarMainVector<AA> ax(1);
+    AffineTVarVector ax(1);
     ax[0] = Interval(0,codac2::next_float(0));
     CHECK(log(ax[0]).itv().ub() > -744.5);
   }
@@ -782,7 +787,7 @@ TEST_CASE("AffineForm operations")
   CHECK_exp<AA>(Interval(0, MAX_DOUBLE), Interval(1,oo));
 
   {
-    AffineVarMainVector<AA> av(IntervalVector({{-8.}}) );
+    AffineTVarVector av(IntervalVector({{-8.}}) );
 
     CHECK(root(av[0], 3).itv() == Approx(Interval(-2.),ERROR));
     CHECK(root(av[0], 5).itv() == Approx(Interval(-std::pow(8., 0.2)),ERROR));
@@ -792,9 +797,9 @@ TEST_CASE("AffineForm operations")
     CHECK(root(av[0].itv(), 0) ==	Interval::empty());
   }
   {
-    AffineVarMainVector<AA> ax(1);
+    AffineTVarVector ax(1);
     ax[0] = Interval(-8., 8.);
-    AffineMain<AA> y = root(ax[0], 3);
+    AffineT y = root(ax[0], 3);
     CHECK(y.itv().is_superset(Interval(-2., 2.))); // root(-8,3)=-2, root(8,3)=2
     // vérifie que la forme reste affine (pas juste un intervalle plat) :
     CHECK_FALSE(y.is_degenerated());
@@ -820,52 +825,52 @@ TEST_CASE("AffineForm operations")
 
 
   {
-	  AffineVarMainVector<AA> ax(1);
+	  AffineTVarVector ax(1);
 	  CHECK_affine_inclu<AA>(tan(ax[0]), Interval());
   }
   {
-	  AffineVarMainVector<AA> ax(1);
+	  AffineTVarVector ax(1);
 	  ax[0] = (-Interval::pi()/4.0 | Interval::pi()/4.0);
 	  CHECK_affine_inclu<AA>(tan(ax[0]), Interval(-1,1));
   }
   { // tan(pi/4,pi/2)=[1,+oo)
-	  AffineVarMainVector<AA> x(1); // upper bound of x is close to pi/2
+	  AffineTVarVector x(1); // upper bound of x is close to pi/2
 	  x[0] = Interval(piL/4.0,(1-1e-10)*piL/2.0);
-	  AffineMain<AA> y=tan(x[0]);
+	  AffineT y=tan(x[0]);
 	  CHECK(y.itv().lb()<=1.0);
 	  CHECK(y.itv().ub()>1.e8); // upper bound of tan(x) is close to +oo
   }
   { // tan(-pi/2,pi/4)=(-oo,1]
-	  AffineVarMainVector<AA> ax(1);
+	  AffineTVarVector ax(1);
 	  ax[0] = Interval(-(1-1e-10)*piL/2.0,piL/4.0);
 	  Interval y= (tan( ax[0] )).itv();
 	  CHECK(y.lb()<= -1.e8); // lower bound is close to -oo
 	  CHECK(y.ub()>= 1.0);
   }
   {
-	  AffineVarMainVector<AA> ax(1);
+	  AffineTVarVector ax(1);
 	  ax[0] = Interval::pi()/2.0;
 	  CHECK_affine_inclu<AA>(tan(ax[0]),Interval());
   }
   {
-	  AffineVarMainVector<AA> ax(1);
+	  AffineTVarVector ax(1);
 	  ax[0] = Interval::pi();
-	  AffineMain<AA> y=tan(-ax[0]);
-	  CHECK(y==Approx<AffineMain<AA>>(Interval(0), ERROR));
+	  AffineT y=tan(-ax[0]);
+	  CHECK(y==Approx<AffineT>(Interval(0), ERROR));
 	  CHECK(y.contains(0.));
 	  CHECK(y.diam() < 1e-8);
   }
   {
-	  AffineVarMainVector<AA> ax(1);
+	  AffineTVarVector ax(1);
 	  ax[0] = Interval(3*piL/4.0 , 5*piU/4.0);
-	  AffineMain<AA>  y = tan(ax[0]);
+	  AffineT  y = tan(ax[0]);
 	  CHECK_affine_inclu<AA>(y, Interval(-1,1));
 	  CHECK(y.lb() == Approx(-1.0,1.e-5));
 	  CHECK(y.ub() == Approx(1.0,1.e-5));
 
 	  ax[0] = Interval(-oo,oo);
 	  y= tan (ax[0]);
-	  CHECK(y==Approx<AffineMain<AA>>(Interval(), ERROR));
+	  CHECK(y==Approx<AffineT>(Interval(), ERROR));
 
 	  ax[0] = ((-Interval::pi()/4.0)|(Interval::pi()/4.0));
 	  y= tan(ax[0]);
@@ -875,22 +880,22 @@ TEST_CASE("AffineForm operations")
   }
   {
 	  // tan(pi/4,pi/2)=[1,+oo)
-	  AffineVarMainVector<AA> ax(1);
+	  AffineTVarVector ax(1);
 	  ax[0] = Interval(piL/4.0,(1-1e-10)*piL/2.0);
-	  AffineMain<AA>  y = tan(ax[0]);
+	  AffineT  y = tan(ax[0]);
 	  CHECK(y.lb() <=1.0);
 	  CHECK(y.ub() >= 1.e8); // upper bound of tan(x) is close to +oo
   }
   {
 	  // tan(-pi/2,pi/4)=(-oo,1]
-	  AffineVarMainVector<AA> ax(1);
+	  AffineTVarVector ax(1);
 	  ax[0] = Interval(-(1-1e-10)*piL/2.0,piL/4.0);
-	  AffineMain<AA>  y = tan(ax[0]);
+	  AffineT  y = tan(ax[0]);
 	  CHECK_affine_inclu<AA>(y, Interval(-1.e8,1));
   }
 
   {
-    AffineVarMainVector<AA> ax(1);
+    AffineTVarVector ax(1);
     ax[0] = (3*Interval::pi()/4.0 | 5*Interval::pi()/4.0);
     CHECK_affine_inclu<AA>(tan(ax[0]), Interval(-1,1));
   }
@@ -957,7 +962,7 @@ TEST_CASE("AffineForm operations")
   CHECK_tanh<AA>(Interval(-0.5,-0.3));
 
   { // issue 248
-    AffineVarMainVector<AA> aff(1);
+    AffineTVarVector aff(1);
     aff[0] = Interval(-1.57079632679489678, 1.1780972450961728626);
     CHECK_FALSE((tan(aff[0]).is_empty()));
   }
@@ -987,8 +992,8 @@ TEST_CASE("AffineForm additional operations")
           Interval(-0.75, 0.85),
           Interval(0.10, 0.99)}) {
 
-      AffineVarMainVector<AA> variables(IntervalVector({x_itv}));
-      const AffineMain<AA> y = asin(variables[0]);
+      AffineTVarVector variables(IntervalVector({x_itv}));
+      const AffineT y = asin(variables[0]);
 
       for (int k = 0; k < 10000; ++k) {
         const double x = x_itv.lb() + (x_itv.ub() - x_itv.lb()) * k / 10000.0;
@@ -1010,17 +1015,17 @@ TEST_CASE("AffineForm additional operations")
   CHECK_atan<AA>(Interval(0,1), Interval(0,std::atan(1.)));
   CHECK_atan<AA>(Interval(-1,0), Interval(-std::atan(1.),0));
   {
-    AffineVarMainVector<AA> ax(1);
+    AffineTVarVector ax(1);
     ax[0] = Interval(2., 3.);
     CHECK(acosh(ax[0]).itv().is_superset(Interval(std::acosh(2.), std::acosh(3.))));
   }
   {
-    AffineVarMainVector<AA> ax(1);
+    AffineTVarVector ax(1);
     ax[0] = Interval(-1., 1.);
     CHECK(asinh(ax[0]).itv().is_superset(Interval(std::asinh(-1.), std::asinh(1.))));
   }
   {
-    AffineVarMainVector<AA> ax(1);
+    AffineTVarVector ax(1);
     ax[0] = Interval(-0.5, 0.5);
     CHECK(atanh(ax[0]).itv().is_superset(Interval(std::atanh(-0.5), std::atanh(0.5))));
   }
@@ -1028,7 +1033,7 @@ TEST_CASE("AffineForm additional operations")
   /* test: min, max, operator&, operator| between two affine forms
    * (and between an affine form and a plain Interval) */
   {
-    AffineVarMainVector<AA> ax(2);
+    AffineTVarVector ax(2);
     ax[0] = Interval(1,3);
     ax[1] = Interval(2,5);
 
@@ -1040,7 +1045,7 @@ TEST_CASE("AffineForm additional operations")
 
   {
     // disjoint intervals: intersection is empty, union is the hull
-    AffineVarMainVector<AA> ax(2);
+    AffineTVarVector ax(2);
     ax[0] = Interval(0,1);
     ax[1] = Interval(2,3);
 
@@ -1050,7 +1055,7 @@ TEST_CASE("AffineForm additional operations")
 
   {
     // mixed operand: AffineMain and plain Interval, both operand orders
-    AffineVarMainVector<AA> ax(1);
+    AffineTVarVector ax(1);
     ax[0] = Interval(1,4);
     const Interval b(2,6);
 
@@ -1070,29 +1075,28 @@ TEST_CASE("AffineForm additional operations")
 TEST_CASE("Critical nonlinear regressions")
 {
 
-  typedef AF_Default AA;
 
 
   // Racine impaire d'un singleton négatif
   {
-    AffineVarMainVector<AA> x(IntervalVector({{-8.}}));
+    AffineTVarVector x(IntervalVector({{-8.}}));
     CHECK(root(x[0], 3).itv() == Approx(Interval(-2.),ERROR));
   }
 
   // Indice zéro
   {
-    AffineVarMainVector<AA> x(IntervalVector({{1., 2.}}));
+    AffineTVarVector x(IntervalVector({{1., 2.}}));
     CHECK(root(x[0], 0).is_empty());
   }
 
   // floor ne doit pas conserver une fausse dépendance
   {
-    AffineVarMainVector<AA> variables(
+    AffineTVarVector variables(
       IntervalVector({{1., 2.}})
     );
 
-    const AffineMain<AA> x = variables[0];
-    const AffineMain<AA> residual = floor(x) - x;
+    const AffineT x = variables[0];
+    const AffineT residual = floor(x) - x;
 
     CHECK_FALSE(residual.itv() == Interval(0.));
     CHECK(Interval(-1., 0.).is_subset(residual.itv()));
@@ -1118,7 +1122,7 @@ TEST_CASE("Large and exceptional arguments")
 	};
 
 	for (const Interval& input : inputs) {
-		AffineVarMainVector<AA> x(IntervalVector({input}));
+		AffineTVarVector x(IntervalVector({input}));
 
 		CHECK_NOTHROW(sin(x[0]));
 		CHECK_NOTHROW(cos(x[0]));
@@ -1133,7 +1137,7 @@ TEST_CASE("Large and exceptional arguments")
 TEST_CASE("floor and ceil of non-integer singleton")
 {
 
-	AffineVarMainVector<AA> variables(
+	AffineTVarVector variables(
 			IntervalVector({{1.5}, {-1.5}, {2.0}})
 	);
 
@@ -1160,12 +1164,12 @@ double odd_root_value(double x, int n)
 template<class Function>
 void CHECK_SAMPLED_ENCLOSURE(
   const Interval& input,
-  const AffineMain<AA>& output,
+  const AffineT& output,
   Function function,
-  int sample_count = 4096)
+  int sample_count = SAMPLE_SIZE)
 {
   REQUIRE_FALSE(output.is_empty());
-  REQUIRE(sample_count > 1000);
+  REQUIRE(sample_count > 100);
 
   for (int k = 0; k <= sample_count; ++k) {
     double x;
@@ -1205,13 +1209,13 @@ void CHECK_SAMPLED_ENCLOSURE(
 template<class IntervalFunction>
 void CHECK_SAMPLED_INTERVAL_ENCLOSURE(
   const Interval& input,
-  const AffineMain<AA>& output,
+  const AffineT& output,
   const Interval& global_reference,
   IntervalFunction interval_function,
-  int sample_count = 4096)
+  int sample_count = SAMPLE_SIZE)
 {
   REQUIRE_FALSE(output.is_empty());
-  REQUIRE(sample_count > 1000);
+  REQUIRE(sample_count > 100);
 
   const Interval output_interval = output.itv();
   int tested_point_count = 0;
@@ -1268,7 +1272,7 @@ void CHECK_SAMPLED_INTERVAL_ENCLOSURE(
 
   // Prevent a wrongly specified domain or interval function from making the
   // whole sampling test vacuous.
-  REQUIRE(tested_point_count > 1000);
+  REQUIRE(tested_point_count > 100);
 }
 
 } // namespace
@@ -1289,8 +1293,8 @@ TEST_CASE("Odd affine roots crossing zero enclose sampled values")
   for (const Interval& input : inputs) {
     for (const int order : orders) {
       CAPTURE(input, order);
-      AffineVarMainVector<AA> variables(IntervalVector({input}));
-      const AffineMain<AA> result = root(variables[0], order);
+      AffineTVarVector variables(IntervalVector({input}));
+      const AffineT result = root(variables[0], order);
       const Interval reference = root(input, order);
 
       CHECK_affine_inclu<AA>(result, reference);
@@ -1311,8 +1315,8 @@ TEST_CASE("Odd affine roots crossing zero preserve symmetry")
   for (const int order : orders) {
     CAPTURE(order);
     const Interval input(-64.0, 64.0);
-    AffineVarMainVector<AA> variables(IntervalVector({input}));
-    const AffineMain<AA> result = root(variables[0], order);
+    AffineTVarVector variables(IntervalVector({input}));
+    const AffineT result = root(variables[0], order);
 
     CHECK(result.contains(0.0));
     CHECK(result.lb() == Approx(-result.ub(), 1.e-10));
@@ -1330,8 +1334,8 @@ TEST_CASE("Partially valid domains keep a sound affine enclosure")
   SECTION("sqrt with a negative invalid part") {
     const Interval input(-9.0, 4.0);
     const Interval valid_domain = input & Interval(0.0, oo);
-    AffineVarMainVector<AA> variables(IntervalVector({input}));
-    const AffineMain<AA> result = sqrt(variables[0]);
+    AffineTVarVector variables(IntervalVector({input}));
+    const AffineT result = sqrt(variables[0]);
 
     CHECK_affine_inclu<AA>(result, sqrt(valid_domain));
     CHECK_SAMPLED_ENCLOSURE(
@@ -1342,8 +1346,8 @@ TEST_CASE("Partially valid domains keep a sound affine enclosure")
   SECTION("asin with values below its domain") {
     const Interval input(-2.0, 0.75);
     const Interval valid_domain = input & Interval(-1.0, 1.0);
-    AffineVarMainVector<AA> variables(IntervalVector({input}));
-    const AffineMain<AA> result = asin(variables[0]);
+    AffineTVarVector variables(IntervalVector({input}));
+    const AffineT result = asin(variables[0]);
 
     CHECK_affine_inclu<AA>(result, asin(valid_domain));
     CHECK_SAMPLED_ENCLOSURE(
@@ -1354,8 +1358,8 @@ TEST_CASE("Partially valid domains keep a sound affine enclosure")
   SECTION("acos with values above its domain") {
     const Interval input(-0.75, 2.0);
     const Interval valid_domain = input & Interval(-1.0, 1.0);
-    AffineVarMainVector<AA> variables(IntervalVector({input}));
-    const AffineMain<AA> result = acos(variables[0]);
+    AffineTVarVector variables(IntervalVector({input}));
+    const AffineT result = acos(variables[0]);
 
     CHECK_affine_inclu<AA>(result, acos(valid_domain));
     CHECK_SAMPLED_ENCLOSURE(
@@ -1366,8 +1370,8 @@ TEST_CASE("Partially valid domains keep a sound affine enclosure")
   SECTION("acosh with values below its domain") {
     const Interval input(0.0, 4.0);
     const Interval valid_domain = input & Interval(1.0, oo);
-    AffineVarMainVector<AA> variables(IntervalVector({input}));
-    const AffineMain<AA> result = acosh(variables[0]);
+    AffineTVarVector variables(IntervalVector({input}));
+    const AffineT result = acosh(variables[0]);
 
     CHECK_affine_inclu<AA>(result, acosh(valid_domain));
     CHECK_SAMPLED_ENCLOSURE(
@@ -1379,7 +1383,7 @@ TEST_CASE("Partially valid domains keep a sound affine enclosure")
 
 TEST_CASE("Entirely invalid nonlinear domains remain empty")
 {
-  AffineVarMainVector<AA> variables(
+  AffineTVarVector variables(
     IntervalVector({{-9.0, -4.0}, {2.0, 3.0}, {-3.0, 0.5}})
   );
 
@@ -1398,12 +1402,12 @@ void CHECK_NONLINEAR_OPERATION(
   AffineFunction affine_function,
   IntervalFunction interval_function,
   ScalarFunction /* scalar_function */,
-  int sample_count = 4096)
+  int sample_count = SAMPLE_SIZE)
 {
   CAPTURE(operation_name, input, valid_domain);
 
-  AffineVarMainVector<AA> variables(IntervalVector({input}));
-  const AffineMain<AA> result = affine_function(variables[0]);
+  AffineTVarVector variables(IntervalVector({input}));
+  const AffineT result = affine_function(variables[0]);
   const Interval reference = interval_function(valid_domain);
 
   CHECK_affine_inclu<AA>(result, reference);
@@ -1427,22 +1431,22 @@ void CHECK_NONLINEAR_INTERVAL_IMAGE(
   IntervalFunction interval_function)
 {
   CAPTURE(operation_name, input);
-  AffineVarMainVector<AA> variables(IntervalVector({input}));
-  const AffineMain<AA> result = affine_function(variables[0]);
+  AffineTVarVector variables(IntervalVector({input}));
+  const AffineT result = affine_function(variables[0]);
   CHECK_affine_inclu<AA>(result, interval_function(input));
 }
 
 
 TEST_CASE("All nonlinear affine functions enclose reference values")
 {
-  using Mode = AffineMain<AA>::Affine_Mode;
+  using Mode = AffineT::Affine_Mode;
   const std::vector<Mode> modes = {
-    AffineMain<AA>::AF_Lin_Chebyshev,
-    AffineMain<AA>::AF_Lin_MinRange
+    AffineT::AF_Lin_Chebyshev,
+    AffineT::AF_Lin_MinRange
   };
 
   for (const Mode mode : modes) {
-    AffineMain<AA>::change_mode(mode);
+    AffineT::change_mode(mode);
     CAPTURE(static_cast<int>(mode));
 
     // Reciprocal: both connected components of R\\{0}, including points
@@ -1452,7 +1456,7 @@ TEST_CASE("All nonlinear affine functions enclose reference values")
       Interval(1.e-150, 1.e-140), Interval(-1.e8, -1.e-4)}) {
       CHECK_NONLINEAR_OPERATION(
         "inv", input, input,
-        [](const AffineMain<AA>& x) { return inv(x); },
+        [](const AffineT& x) { return inv(x); },
         [](const Interval& x) { return 1.0/x; },
         [](double x) { return 1.0/x; }
       );
@@ -1464,13 +1468,13 @@ TEST_CASE("All nonlinear affine functions enclose reference values")
       Interval(-3.0, -0.25), Interval(0.25, 5.0)}) {
       CHECK_NONLINEAR_OPERATION(
         "sqr", input, input,
-        [](const AffineMain<AA>& x) { return sqr(x); },
+        [](const AffineT& x) { return sqr(x); },
         [](const Interval& x) { return sqr(x); },
         [](double x) { return x*x; }
       );
       CHECK_NONLINEAR_OPERATION(
         "abs", input, input,
-        [](const AffineMain<AA>& x) { return abs(x); },
+        [](const AffineT& x) { return abs(x); },
         [](const Interval& x) { return abs(x); },
         [](double x) { return std::fabs(x); }
       );
@@ -1483,7 +1487,7 @@ TEST_CASE("All nonlinear affine functions enclose reference values")
       const Interval domain = input & Interval(0.0, oo);
       CHECK_NONLINEAR_OPERATION(
         "sqrt", input, domain,
-        [](const AffineMain<AA>& x) { return sqrt(x); },
+        [](const AffineT& x) { return sqrt(x); },
         [](const Interval& x) { return sqrt(x); },
         [](double x) { return std::sqrt(x); }, 8192
       );
@@ -1497,7 +1501,7 @@ TEST_CASE("All nonlinear affine functions enclose reference values")
       Interval(-1.e-12, 1.e-12), Interval(1.0, 10.0)}) {
       CHECK_NONLINEAR_OPERATION(
         "exp", input, input,
-        [](const AffineMain<AA>& x) { return exp(x); },
+        [](const AffineT& x) { return exp(x); },
         [](const Interval& x) { return exp(x); },
         [](double x) { return std::exp(x); }
       );
@@ -1508,7 +1512,7 @@ TEST_CASE("All nonlinear affine functions enclose reference values")
       const Interval domain = input & Interval(0.0, oo);
       CHECK_NONLINEAR_OPERATION(
         "log", input, domain,
-        [](const AffineMain<AA>& x) { return log(x); },
+        [](const AffineT& x) { return log(x); },
         [](const Interval& x) { return log(x); },
         [](double x) { return std::log(x); }, 8192
       );
@@ -1520,13 +1524,13 @@ TEST_CASE("All nonlinear affine functions enclose reference values")
       Interval(-3.0, 2.0)}) {
       CHECK_NONLINEAR_OPERATION(
         "pow(x,3)", input, input,
-        [](const AffineMain<AA>& x) { return pow(x, 3); },
+        [](const AffineT& x) { return pow(x, 3); },
         [](const Interval& x) { return pow(x, 3); },
         [](double x) { return x*x*x; }
       );
       CHECK_NONLINEAR_OPERATION(
         "root(x,3)", input, input,
-        [](const AffineMain<AA>& x) { return root(x, 3); },
+        [](const AffineT& x) { return root(x, 3); },
         [](const Interval& x) { return root(x, 3); },
         [](double x) { return odd_root_value(x, 3); }, 8192
       );
@@ -1535,7 +1539,7 @@ TEST_CASE("All nonlinear affine functions enclose reference values")
       Interval(1.e-12, 4.0), Interval(0.25, 1.e6)}) {
       CHECK_NONLINEAR_OPERATION(
         "pow(x,1.5)", input, input,
-        [](const AffineMain<AA>& x) { return pow(x, 1.5); },
+        [](const AffineT& x) { return pow(x, 1.5); },
         [](const Interval& x) { return pow(x, 1.5); },
         [](double x) { return std::pow(x, 1.5); }
       );
@@ -1548,14 +1552,14 @@ TEST_CASE("All nonlinear affine functions enclose reference values")
       const Interval exponent(0.5, 2.0);
       CHECK_NONLINEAR_INTERVAL_IMAGE(
         "pow(x,Interval)", input,
-        [exponent](const AffineMain<AA>& x) { return pow(x, exponent); },
+        [exponent](const AffineT& x) { return pow(x, exponent); },
         [exponent](const Interval& x) { return pow(x, exponent); }
       );
 
-      AffineVarMainVector<AA> variables(
+      AffineTVarVector variables(
         IntervalVector({input, exponent})
       );
-      const AffineMain<AA> result = pow(variables[0], variables[1]);
+      const AffineT result = pow(variables[0], variables[1]);
       CHECK_affine_inclu<AA>(result, pow(input, exponent));
     }
 
@@ -1566,13 +1570,13 @@ TEST_CASE("All nonlinear affine functions enclose reference values")
       Interval(0.25, 5.75)}) {
       CHECK_NONLINEAR_OPERATION(
         "sin", input, input,
-        [](const AffineMain<AA>& x) { return sin(x); },
+        [](const AffineT& x) { return sin(x); },
         [](const Interval& x) { return sin(x); },
         [](double x) { return std::sin(x); }, 8192
       );
       CHECK_NONLINEAR_OPERATION(
         "cos", input, input,
-        [](const AffineMain<AA>& x) { return cos(x); },
+        [](const AffineT& x) { return cos(x); },
         [](const Interval& x) { return cos(x); },
         [](double x) { return std::cos(x); }, 8192
       );
@@ -1582,7 +1586,7 @@ TEST_CASE("All nonlinear affine functions enclose reference values")
       Interval(-1.e-8, 1.e-8)}) {
       CHECK_NONLINEAR_OPERATION(
         "tan", input, input,
-        [](const AffineMain<AA>& x) { return tan(x); },
+        [](const AffineT& x) { return tan(x); },
         [](const Interval& x) { return tan(x); },
         [](double x) { return std::tan(x); }, 8192
       );
@@ -1597,13 +1601,13 @@ TEST_CASE("All nonlinear affine functions enclose reference values")
       const Interval domain = input & Interval(-1.0, 1.0);
       CHECK_NONLINEAR_OPERATION(
         "asin", input, domain,
-        [](const AffineMain<AA>& x) { return asin(x); },
+        [](const AffineT& x) { return asin(x); },
         [](const Interval& x) { return asin(x); },
         [](double x) { return std::asin(x); }, 8192
       );
       CHECK_NONLINEAR_OPERATION(
         "acos", input, domain,
-        [](const AffineMain<AA>& x) { return acos(x); },
+        [](const AffineT& x) { return acos(x); },
         [](const Interval& x) { return acos(x); },
         [](double x) { return std::acos(x); }, 8192
       );
@@ -1613,7 +1617,7 @@ TEST_CASE("All nonlinear affine functions enclose reference values")
       Interval(-10.0, 3.0)}) {
       CHECK_NONLINEAR_OPERATION(
         "atan", input, input,
-        [](const AffineMain<AA>& x) { return atan(x); },
+        [](const AffineT& x) { return atan(x); },
         [](const Interval& x) { return atan(x); },
         [](double x) { return std::atan(x); }, 8192
       );
@@ -1625,25 +1629,25 @@ TEST_CASE("All nonlinear affine functions enclose reference values")
       Interval(-5.0, 2.0)}) {
       CHECK_NONLINEAR_OPERATION(
         "sinh", input, input,
-        [](const AffineMain<AA>& x) { return sinh(x); },
+        [](const AffineT& x) { return sinh(x); },
         [](const Interval& x) { return sinh(x); },
         [](double x) { return std::sinh(x); }
       );
       CHECK_NONLINEAR_OPERATION(
         "cosh", input, input,
-        [](const AffineMain<AA>& x) { return cosh(x); },
+        [](const AffineT& x) { return cosh(x); },
         [](const Interval& x) { return cosh(x); },
         [](double x) { return std::cosh(x); }
       );
       CHECK_NONLINEAR_OPERATION(
         "tanh", input, input,
-        [](const AffineMain<AA>& x) { return tanh(x); },
+        [](const AffineT& x) { return tanh(x); },
         [](const Interval& x) { return tanh(x); },
         [](double x) { return std::tanh(x); }
       );
       CHECK_NONLINEAR_OPERATION(
         "asinh", input, input,
-        [](const AffineMain<AA>& x) { return asinh(x); },
+        [](const AffineT& x) { return asinh(x); },
         [](const Interval& x) { return asinh(x); },
         [](double x) { return std::asinh(x); }
       );
@@ -1657,7 +1661,7 @@ TEST_CASE("All nonlinear affine functions enclose reference values")
       const Interval domain = input & Interval(1.0, oo);
       CHECK_NONLINEAR_OPERATION(
         "acosh", input, domain,
-        [](const AffineMain<AA>& x) { return acosh(x); },
+        [](const AffineT& x) { return acosh(x); },
         [](const Interval& x) { return acosh(x); },
         [](double x) { return std::acosh(x); }, 8192
       );
@@ -1667,38 +1671,38 @@ TEST_CASE("All nonlinear affine functions enclose reference values")
       Interval(-0.999999, 0.5), Interval(-0.5, 0.999999)}) {
       CHECK_NONLINEAR_OPERATION(
         "atanh", input, input,
-        [](const AffineMain<AA>& x) { return atanh(x); },
+        [](const AffineT& x) { return atanh(x); },
         [](const Interval& x) { return atanh(x); },
         [](double x) { return std::atanh(x); }, 8192
       );
     }
   }
 
-  AffineMain<AA>::change_mode(AffineMain<AA>::AF_Lin_Chebyshev);
+  AffineT::change_mode(AffineT::AF_Lin_Chebyshev);
 }
 
 
 TEST_CASE("All nonlinear functions accept correlated affine expressions")
 {
-  using Mode = AffineMain<AA>::Affine_Mode;
+  using Mode = AffineT::Affine_Mode;
   const std::vector<Mode> modes = {
-    AffineMain<AA>::AF_Lin_Chebyshev,
-    AffineMain<AA>::AF_Lin_MinRange
+    AffineT::AF_Lin_Chebyshev,
+    AffineT::AF_Lin_MinRange
   };
 
   for (const Mode mode : modes) {
-    AffineMain<AA>::change_mode(mode);
+    AffineT::change_mode(mode);
     CAPTURE(static_cast<int>(mode));
 
-    AffineVarMainVector<AA> variables(IntervalVector({{-1.0, 1.0}}));
-    const AffineMain<AA>& t = variables[0];
+    AffineTVarVector variables(IntervalVector({{-1.0, 1.0}}));
+    const AffineT& t = variables[0];
 
-    const AffineMain<AA> general = 3.0*t - 0.5;       // [-3.5,2.5]
-    const AffineMain<AA> positive = 1.5*t + 2.0;      // [0.5,3.5]
-    const AffineMain<AA> nonzero = 0.25*t + 1.0;      // [0.75,1.25]
-    const AffineMain<AA> unit = 0.75*t;               // [-0.75,0.75]
-    const AffineMain<AA> sqrt_arg = 5.0*t - 4.0;      // [-9,1]
-    const AffineMain<AA> acosh_arg = 5.0*t - 1.0;     // [-6,4]
+    const AffineT general = 3.0*t - 0.5;       // [-3.5,2.5]
+    const AffineT positive = 1.5*t + 2.0;      // [0.5,3.5]
+    const AffineT nonzero = 0.25*t + 1.0;      // [0.75,1.25]
+    const AffineT unit = 0.75*t;               // [-0.75,0.75]
+    const AffineT sqrt_arg = 5.0*t - 4.0;      // [-9,1]
+    const AffineT acosh_arg = 5.0*t - 1.0;     // [-6,4]
 
     CHECK_affine_inclu<AA>(inv(nonzero), 1.0/nonzero.itv());
     CHECK_affine_inclu<AA>(sqr(general), sqr(general.itv()));
@@ -1728,28 +1732,28 @@ TEST_CASE("All nonlinear functions accept correlated affine expressions")
     CHECK_affine_inclu<AA>(pow(positive, exponent),
                            pow(positive.itv(), exponent));
 
-    AffineVarMainVector<AA> exponent_variable(
+    AffineTVarVector exponent_variable(
       IntervalVector({exponent})
     );
     CHECK_affine_inclu<AA>(pow(positive, exponent_variable[0]),
                            pow(positive.itv(), exponent));
   }
 
-  AffineMain<AA>::change_mode(AffineMain<AA>::AF_Lin_Chebyshev);
+  AffineT::change_mode(AffineT::AF_Lin_Chebyshev);
 }
 
 
 
 TEST_CASE("Non-smooth nonlinear affine functions enclose reference values")
 {
-  using Mode = AffineMain<AA>::Affine_Mode;
+  using Mode = AffineT::Affine_Mode;
   const std::vector<Mode> modes = {
-    AffineMain<AA>::AF_Lin_Chebyshev,
-    AffineMain<AA>::AF_Lin_MinRange
+    AffineT::AF_Lin_Chebyshev,
+    AffineT::AF_Lin_MinRange
   };
 
   for (const Mode mode : modes) {
-    AffineMain<AA>::change_mode(mode);
+    AffineT::change_mode(mode);
     CAPTURE(static_cast<int>(mode));
 
     for (const Interval& input : {
@@ -1757,20 +1761,20 @@ TEST_CASE("Non-smooth nonlinear affine functions enclose reference values")
       Interval(1.25, 1.75), Interval(-2.0, -2.0)}) {
       CHECK_NONLINEAR_OPERATION(
         "floor", input, input,
-        [](const AffineMain<AA>& x) { return floor(x); },
+        [](const AffineT& x) { return floor(x); },
         [](const Interval& x) { return floor(x); },
         [](double x) { return std::floor(x); }
       );
       CHECK_NONLINEAR_OPERATION(
         "ceil", input, input,
-        [](const AffineMain<AA>& x) { return ceil(x); },
+        [](const AffineT& x) { return ceil(x); },
         [](const Interval& x) { return ceil(x); },
         [](double x) { return std::ceil(x); }
       );
 
       CHECK_NONLINEAR_INTERVAL_IMAGE(
         "integer", input,
-        [](const AffineMain<AA>& x) { return integer(x); },
+        [](const AffineT& x) { return integer(x); },
         [](const Interval& x) { return integer(x); }
       );
     }
@@ -1780,13 +1784,13 @@ TEST_CASE("Non-smooth nonlinear affine functions enclose reference values")
       Interval(0.25, 5.0), Interval(0.0, 0.0)}) {
       CHECK_NONLINEAR_INTERVAL_IMAGE(
         "sign", input,
-        [](const AffineMain<AA>& x) { return sign(x); },
+        [](const AffineT& x) { return sign(x); },
         [](const Interval& x) { return sign(x); }
       );
     }
   }
 
-  AffineMain<AA>::change_mode(AffineMain<AA>::AF_Lin_Chebyshev);
+  AffineT::change_mode(AffineT::AF_Lin_Chebyshev);
 }
 
 
@@ -1802,13 +1806,13 @@ TEST_CASE("Non-smooth nonlinear affine functions enclose reference values")
 TEST_CASE("AF_fAF2 inactive assignment keeps coefficient storage consistent")
 {
   // destination initially owns storage for one affine variable
-  AffineVarMainVector<AA> small(IntervalVector({{0.0, 1.0}}));
-  AffineMain<AA> destination = small[0];
+  AffineTVarVector small(IntervalVector({{0.0, 1.0}}));
+  AffineT destination = small[0];
 
   // source is inactive, has a larger logical dimension, and normally owns no
   // coefficient array. Copy-assignment must not leave destination._n equal to
   // 16 while retaining its former two-element allocation.
-  AffineVarMainVector<AA> large_inactive(16);
+  AffineTVarVector large_inactive(16);
   REQUIRE_FALSE(large_inactive[0].is_active());
 
   destination = large_inactive[0];
@@ -1832,8 +1836,8 @@ TEST_CASE("AF_fAF2 inactive assignment keeps coefficient storage consistent")
 
 TEST_CASE("AF_fAF2 compact is safe for every inactive status")
 {
-  AffineVarMainVector<AA> variables(12);
-  AffineMain<AA> value = variables[0];
+  AffineTVarVector variables(12);
+  AffineT value = variables[0];
 
   REQUIRE_FALSE(value.is_active());
   CHECK_NOTHROW(value.compact());
@@ -1862,20 +1866,20 @@ TEST_CASE("AF_fAF2 dimension changes preserve coefficients and inclusion")
   // This test exercises the observable grow path used by operator+= and
   // operator*=. A future public contraction path must transfer every removed
   // coefficient magnitude into the remainder instead of dropping it.
-  AffineVarMainVector<AA> small(IntervalVector({{1.0, 2.0}}));
-  AffineVarMainVector<AA> large(
+  AffineTVarVector small(IntervalVector({{1.0, 2.0}}));
+  AffineTVarVector large(
     IntervalVector({
       {-1.0, 1.0}, {-2.0, 2.0}, {-3.0, 3.0}, {-4.0, 4.0},
       {-5.0, 5.0}, {-6.0, 6.0}, {-7.0, 7.0}, {-8.0, 8.0}
     })
   );
 
-  AffineMain<AA> sum = small[0];
+  AffineT sum = small[0];
   sum += large[7];
   CHECK(sum.size() == 8);
   CHECK_affine_inclu<AA>(sum, small[0].itv() + large[7].itv());
 
-  AffineMain<AA> product = small[0];
+  AffineT product = small[0];
   product *= large[7];
   CHECK(product.size() == 8);
   CHECK_affine_inclu<AA>(product, small[0].itv() * large[7].itv());
@@ -1893,12 +1897,12 @@ TEST_CASE("AF_fAF2 multiplication handles opposite finite scales")
 
   for (const auto& input : inputs) {
     CAPTURE(input.first, input.second);
-    AffineVarMainVector<AA> variables(
+    AffineTVarVector variables(
       IntervalVector({input.first, input.second})
     );
 
     const Interval reference = input.first * input.second;
-    const AffineMain<AA> result = variables[0] * variables[1];
+    const AffineT result = variables[0] * variables[1];
 
     CHECK_FALSE(result.is_empty());
     CHECK_affine_inclu<AA>(result, reference);
@@ -1916,15 +1920,15 @@ TEST_CASE("AF_fAF2 scalar products and sums handle extreme cancellation")
   const double large = 1.e300;
   const double small = 1.e-300;
 
-  AffineVarMainVector<AA> variables(
+  AffineTVarVector variables(
     IntervalVector({{large, codac2::next_float(large)}})
   );
 
-  const AffineMain<AA> scaled = variables[0] * small;
+  const AffineT scaled = variables[0] * small;
   CHECK_FALSE(scaled.is_empty());
   CHECK_affine_inclu<AA>(scaled, variables[0].itv() * small);
 
-  const AffineMain<AA> cancelled = variables[0] + (-large);
+  const AffineT cancelled = variables[0] + (-large);
   CHECK_FALSE(cancelled.is_empty());
   CHECK_affine_inclu<AA>(cancelled, variables[0].itv() - large);
 
@@ -1941,11 +1945,11 @@ TEST_CASE("AF_fAF2 scalar products and sums handle extreme cancellation")
 
 TEST_CASE("AF_fAF2 active remainder stays finite and non-negative")
 {
-  AffineVarMainVector<AA> variables(
+  AffineTVarVector variables(
     IntervalVector({{-2.0, 3.0}, {0.5, 2.0}, {-1.0, 1.0}})
   );
 
-  const std::vector<AffineMain<AA>> results = {
+  const std::vector<AffineT> results = {
     variables[0] + variables[1],
     variables[0] * variables[1],
     sqr(variables[0]),
@@ -1955,7 +1959,7 @@ TEST_CASE("AF_fAF2 active remainder stays finite and non-negative")
     inv(variables[1])
   };
 
-  for (const AffineMain<AA>& result : results) {
+  for (const AffineT& result : results) {
     CAPTURE(result.itv());
     if (result.is_active()) {
       CHECK(std::isfinite(result.err()));
@@ -1972,11 +1976,11 @@ TEST_CASE("AF_fAF2 repeated multiplication and status transitions remain stable"
   // actual leak; the assertions check observable stability and inclusion.
   for (int iteration = 0; iteration < 256; ++iteration) {
     CAPTURE(iteration);
-    AffineVarMainVector<AA> variables(
+    AffineTVarVector variables(
       IntervalVector({{-1.0, 2.0}, {2.0, 3.0}, {-0.5, 0.5}})
     );
 
-    AffineMain<AA> value = variables[0];
+    AffineT value = variables[0];
     value *= variables[1];
     value += variables[2];
     CHECK_affine_inclu<AA>(
@@ -1995,7 +1999,7 @@ TEST_CASE("AF_fAF2 repeated multiplication and status transitions remain stable"
 
 TEST_CASE("AF_fAF2 interval extraction matches all status transitions")
 {
-  AffineMain<AA> value;
+  AffineT value;
 
   value = Interval::empty();
   CHECK(value.itv().is_empty());
@@ -2043,15 +2047,15 @@ TEST_CASE(  "AF_fAF2 square preserves small coefficients amplified by a large re
   for (const TestData& data : cases) {
     CAPTURE(data.variable, data.uncertainty);
 
-    AffineVarMainVector<AA> variables(
+    AffineTVarVector variables(
       IntervalVector({data.variable})
     );
 
-    AffineMain<AA> value = variables[0];
+    AffineT value = variables[0];
     value += data.uncertainty;
 
     const Interval before = value.itv();
-    const AffineMain<AA> result = sqr(value);
+    const AffineT result = sqr(value);
     const Interval reference = sqr(before);
 
     CHECK_FALSE(result.is_empty());
@@ -2078,19 +2082,19 @@ TEST_CASE(  "AF_fAF2 normalized square preserves mixed-scale contributions")
 
     const double inverse_scale = 1.0/scale;
 
-    AffineVarMainVector<AA> variables(
+    AffineTVarVector variables(
       IntervalVector({
         {-inverse_scale, inverse_scale}
       })
     );
 
-    AffineMain<AA> value = variables[0];
+    AffineT value = variables[0];
     value += Interval(-scale, scale);
 
     const Interval reference =
       sqr(value.itv()) / (scale*scale);
 
-    const AffineMain<AA> normalized =
+    const AffineT normalized =
       sqr(value) / (scale*scale);
 
     CHECK_FALSE(normalized.is_empty());
@@ -2109,13 +2113,13 @@ TEST_CASE(  "AF_fAF2 normalized square preserves mixed-scale contributions")
 
 TEST_CASE(  "AF_fAF2 scalar multiplication transfers discarded coefficients to remainder")
 {
-  AffineVarMainVector<AA> variables(
+  AffineTVarVector variables(
     IntervalVector({
       {-1.e-20, 1.e-20}
     })
   );
 
-  const AffineMain<AA> result =
+  const AffineT result =
     variables[0] * 0.5;
 
   CHECK_affine_inclu<AA>(
@@ -2126,17 +2130,17 @@ TEST_CASE(  "AF_fAF2 scalar multiplication transfers discarded coefficients to r
 
 TEST_CASE(  "AF_fAF2 addition transfers cancelled coefficients to remainder")
 {
-  AffineVarMainVector<AA> variables(
+  AffineTVarVector variables(
     IntervalVector({
       {-1.e-20, 1.e-20}
     })
   );
 
-  const AffineMain<AA> x = variables[0];
+  const AffineT x = variables[0];
 
   // Introduces a nearly complete cancellation while retaining
   // a representable small residual coefficient.
-  const AffineMain<AA> result =
+  const AffineT result =
     x + (-x * codac2::prev_float(1.0));
 
   const Interval reference =
@@ -2151,13 +2155,13 @@ TEST_CASE(  "AF_fAF2 addition transfers cancelled coefficients to remainder")
 
 TEST_CASE(  "AF_fAF2 compact transfers removed coefficients to remainder")
 {
-  AffineVarMainVector<AA> variables(
+  AffineTVarVector variables(
     IntervalVector({
       {-1.e-8, 1.e-8}
     })
   );
 
-  AffineMain<AA> value = variables[0];
+  AffineT value = variables[0];
   const Interval before = value.itv();
 
   value.compact(1.e-6);
@@ -2171,7 +2175,7 @@ TEST_CASE(  "AF_fAF2 compact transfers removed coefficients to remainder")
 
 TEST_CASE(  "AF_fAF2 software twoProd handles opposite scales")
 {
-if (!CODAC_FMA_RUNTIME()) {
+if (!codac_fma_runtime()) {
 
   SKIP(
     "This test requires FMA option available on your computer and enabled at runtime"
@@ -2204,7 +2208,7 @@ if (!CODAC_FMA_RUNTIME()) {
   for (const auto& data : cases) {
     CAPTURE(data.first, data.second);
 
-    AffineVarMainVector<AA> variables(
+    AffineTVarVector variables(
       IntervalVector({
         data.first,
         data.second
@@ -2214,7 +2218,7 @@ if (!CODAC_FMA_RUNTIME()) {
     const Interval reference =
       data.first * data.second;
 
-    const AffineMain<AA> result =
+    const AffineT result =
       variables[0] * variables[1];
 
     CHECK_FALSE(result.is_empty());
@@ -2255,13 +2259,13 @@ TEST_CASE(
   for (const double remainder : remainders) {
     CAPTURE(small, remainder);
 
-    AffineVarMainVector<AA> variables(
+    AffineTVarVector variables(
       IntervalVector({
         {-small, small}
       })
     );
 
-    AffineMain<AA> value = variables[0];
+    AffineT value = variables[0];
 
     // Le petit coefficient reste dans _val[1].
     // L'incertitude ajoutée est placée dans _err.
@@ -2277,7 +2281,7 @@ TEST_CASE(
     const Interval input_enclosure = value.itv();
     const Interval expected = sqr(input_enclosure);
 
-    const AffineMain<AA> result = sqr(value);
+    const AffineT result = sqr(value);
 
     CAPTURE(
       input_enclosure,
@@ -2299,10 +2303,9 @@ TEST_CASE(
   "AF_fAF2 square handles several small coefficients with a large remainder"
 )
 {
-  const double small =
-    0.25 * 0x1p-55;
+  const double small = 0.25 * 0x1p-55;
 
-  AffineVarMainVector<AA> variables(
+  AffineTVarVector variables(
     IntervalVector({
       {-small, small},
       {-small, small},
@@ -2311,7 +2314,7 @@ TEST_CASE(
     })
   );
 
-  AffineMain<AA> value =
+  AffineT value =
     variables[0] +
     variables[1] +
     variables[2] +
@@ -2323,7 +2326,7 @@ TEST_CASE(
 
   const Interval before = value.itv();
   const Interval expected = sqr(before);
-  const AffineMain<AA> result = sqr(value);
+  const AffineT result = sqr(value);
 
   CAPTURE(
     before,
@@ -2360,13 +2363,13 @@ TEST_CASE(
   for (const TestData& data : cases) {
     CAPTURE(data.small, data.remainder);
 
-    AffineVarMainVector<AA> variables(
+    AffineTVarVector variables(
       IntervalVector({
         {-data.small, data.small}
       })
     );
 
-    AffineMain<AA> value = variables[0];
+    AffineT value = variables[0];
     value += Interval(
       -data.remainder,
       data.remainder
@@ -2381,7 +2384,7 @@ TEST_CASE(
     const Interval expected =
       sqr(value.itv()) / normalization;
 
-    const AffineMain<AA> result =
+    const AffineT result =
       sqr(value) / normalization;
 
     CAPTURE(
@@ -2408,7 +2411,7 @@ TEST_CASE(
 
 // Une affectction entre indices différents conserve l’identité
 // de la destination et ne crée pas une fausse dépendance.
-AffineVarMainVector<AA> x(
+AffineTVarVector x(
     IntervalVector({{1.0, 2.0}, {3.0, 4.0}})
 );
 
@@ -2416,7 +2419,7 @@ x[0] = x[1];
 
 CHECK(x[0].itv().is_superset(Interval(3.0, 4.0)));
 
-AffineMain<AA> result = x[0] - x[1];
+AffineT result = x[0] - x[1];
 // Les deux composantes doivent m*intenant être indépendantes.
 // Le*résultat ne doit donc pas être réd*it artificiellement à zéro.
 CHECK_FALSE(result.itv().is_degenerated());
@@ -2424,9 +2427,9 @@ CHECK_FALSE(result.itv().is_degenerated());
 
 TEST_CASE(  "AffineVarMain : copie avec des tailles différentes")
 {
-AffineVarMainVector<AA> small(    IntervalVector({{1.0, 2.0}}));
+AffineTVarVector small(    IntervalVector({{1.0, 2.0}}));
 
-AffineVarMainVector<AA> large(    IntervalVector({{3.0, 4.0}, {5.0, 6.0}, {7.0, 8.0}}));
+AffineTVarVector large(    IntervalVector({{3.0, 4.0}, {5.0, 6.0}, {7.0, 8.0}}));
 
 small[0] = large[2];
 

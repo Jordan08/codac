@@ -1,17 +1,17 @@
 /* ============================================================================
- * I B E X - Example
+ * CODAC - Example
  * ============================================================================
- * Copyright   : ENSTA Bretagne (FRANCE)
+ * Copyright   : ENSTA (Brest, FRANCE)
  * License     : This program can be distributed under the terms of the GNU LGPL.
  *               See the file LICENCE.
  *
  * Author(s)   : Jordan Ninin
- * Created     : June 6, 2020
+ * Created     : 2026
  * ---------------------------------------------------------------------------- */
 
 #include <time.h>
 
-#include <codac>
+#include "codac.h"
 
 using namespace std;
 using namespace codac2;
@@ -30,21 +30,21 @@ int main() {
 		I[1] = Interval(3, 4);
 		I[2] = Interval(5, 7);
 
-		Affine2Variables AF(I);
-		cout << "==  Initialization of the Affine2 Form with 3 epsilons variables: " << endl << AF << endl;
+		AffineVariables AF(I);
+		cout << "==  Initialization of the Affine Form with 3 epsilons variables: " << endl << AF << endl;
 
-		cout << "==  Affine2Variables is the only way to construct an correct Affine2 Form from an Interval: " << endl ;
-		Affine2Variables xx(1);
+		cout << "==  AffineVariables is the only way to construct an correct Affine Form from an Interval: " << endl ;
+		AffineVariables xx(1);
 		xx.init(I[0]);
 		cout<< xx[0] << endl;
 
-		Affine2Variables yy(1);
+		AffineVariables yy(1);
 		yy[0] = I[2];
 		cout<< yy[0] << endl;
 
-		cout << "== Constructor Affine2(Interval& itv) and Constructor Affine2Variables(Affine2& af) is not allowed to avoid misunderstandings or bad use. " << endl ;
-		cout << "== Class Affine2 is used for intermediate result or constant: " << endl ;
-		Affine2 faa;
+		cout << "== Constructor Affine(Interval& itv) and Constructor AffineVariables(Affine& af) is not allowed to avoid misunderstandings or bad use. " << endl ;
+		cout << "== Class Affine is used for intermediate result or constant: " << endl ;
+		Affine faa;
 		faa = I[1];
 		cout << "== Constant faa="<<I[1]<< " : " << faa << endl;
 		faa = AF[0]+AF[1];
@@ -65,25 +65,25 @@ int main() {
 		i2 = Interval(1, 3);
 		fia = i1 * pow(i2, 2) - exp(i1 * i2);
 
-		Affine2Variables dd(2);
-		Affine2Variables  aa(2);
+		AffineVariables dd(2);
+		AffineVariables  aa(2);
 		aa.init(Interval(0,1));
 		aa[0] = i1;
 		aa[1] = i2;
-		Affine2 faa = aa[0] * pow(aa[1], 2) - exp(aa[0] * aa[1]);
+		Affine faa = aa[0] * pow(aa[1], 2) - exp(aa[0] * aa[1]);
 
 		cout << aa[0] << endl;
 		cout << aa[1] << endl;
 		cout << fia << endl;
 		cout << faa << endl;
 
-		Affine2Variables ff(1);
+		AffineVariables ff(1);
 		ff[0] = Interval(0, 1);
 
 		cout << ff[0] << endl;
 		cout << pow(ff[0], 2) << endl;
 
-		Affine2 g;
+		Affine g;
 		cout << g << endl;
 		g = faa;
 		cout << g << endl;
@@ -95,7 +95,7 @@ int main() {
 		faa.err() += Interval(10000);
 		cout << faa.err() << endl;
 		 */
-		Affine2Variables fff(2);
+		AffineVariables fff(2);
 		fff[0] = Interval(0.5, 1);
 		fff[1] = Interval(2, 3);
 		cout << fff << endl;
@@ -207,9 +207,9 @@ int main() {
 		}
 
 		{
-			Affine2 f, z;
-			Affine2Variables x(4);
-			x.init(Interval(3.9, 4.1));  // Initialization with x[i] = Affine2(4,i+1,Interval(3.9, 4.1));
+			Affine f, z;
+			AffineVariables x(4);
+			x.init(Interval(3.9, 4.1));  // Initialization with x[i] = Affine(4,i+1,Interval(3.9, 4.1));
 			start = clock();
 			for (int k = 0; k < n; k++) {
 				f = 0;
@@ -223,7 +223,7 @@ int main() {
 			}
 			endtime = clock();
 			cpuTime = difftime(endtime, start) / CLOCKS_PER_SEC;
-			cout << "Affine2 : CPU-time = " << cpuTime << " seconds" << endl;
+			cout << "Affine : CPU-time = " << cpuTime << " seconds" << endl;
 			cout << "Output : " << f << endl;
 		}
 
@@ -236,7 +236,7 @@ int main() {
 //		Output : -0.153195
 //		Interval : CPU-time = 0.163087 seconds
 //		Output : [-0.1663975282993113, -0.1415123357615466]
-//		Affine2 : CPU-time = 4.75134 seconds
+//		Affine : CPU-time = 4.75134 seconds
 //		Output : [-0.1611323182907459, -0.1460443472713157] : -0.153588 + -0.000750549 eps_0 + -0.00268127 eps_1 + -0.000750549 eps_2 + -0.00268127 eps_3 + 0.000680337 [-1,1]
 //		Affine3 : CPU-time = 105.288 seconds
 //		Output : [-0.1614737468029863, -0.1457536702041349] : -0.153613 + -0.000751076 eps_0 + -0.00268241 eps_1 + -0.000751076 eps_2 + -0.00268241 eps_3 + 3.83015e-06 eps_5399996 + 5.78023e-18 eps_5399997 + 7.65888e-06 eps_5399998 + 3.83015e-06 eps_5399999 + 5.78023e-18 eps_5400000 + 7.65888e-06 eps_5400001 + 3.83015e-06 eps_5400002 + 5.78023e-18 eps_5400003 + 7.65888e-06 eps_5400004 + 3.83015e-06 eps_5400005 + 5.78023e-18 eps_5400006 + 7.65888e-06 eps_5400007 + 5.44129e-18 eps_5400008 + -6.40484e-05 eps_5400009 + 1.2157e-06 eps_5400010 + 3.45426e-18 eps_5400011 + 2.43115e-06 eps_5400012 + 1.2157e-06 eps_5400013 + 3.45426e-18 eps_5400014 + 2.43115e-06 eps_5400015 + 1.2157e-06 eps_5400016 + 3.45426e-18 eps_5400017 + 2.43115e-06 eps_5400018 + 1.72731e-18 eps_5400019 + 1.2157e-06 eps_5400020 + 3.45426e-18 eps_5400021 + 2.43115e-06 eps_5400022 + 3.45462e-18 eps_5400023 + 3.45462e-18 eps_5400024 + -2.01278e-05 eps_5400025 + 1.87494e-05 eps_5400026 + 3.74832e-05 eps_5400027 + 1.87494e-05 eps_5400028 + 3.74832e-05 eps_5400029 + 1.87494e-05 eps_5400030 + 3.74832e-05 eps_5400031 + 9.98474e-18 eps_5400032 + 1.87494e-05 eps_5400033 + 3.74832e-05 eps_5400034 + 1.66413e-17 eps_5400035 + -0.00031525 eps_5400036 + 1.21046e-05 eps_5400037 + 2.41687e-05 eps_5400038 + 1.20746e-05 eps_5400039 + 1.82223e-17 eps_5400040 + 2.41447e-05 eps_5400041 + 1.21046e-05 eps_5400042 + 2.41687e-05 eps_5400043 + 9.65316e-18 eps_5400044 + 1.20746e-05 eps_5400045 + 1.82223e-17 eps_5400046 + 2.41447e-05 eps_5400047 + 8.57686e-18 eps_5400048 + -0.000163172 eps_5400049 + 6.07154e-17[-1,1]
@@ -248,7 +248,7 @@ int main() {
 //		Output : -0.153195
 //		Interval : CPU-time = 0.164941 seconds
 //		Output : [-0.1663975282993113, -0.1415123357615466]
-//		Affine2 : CPU-time = 0.892618 seconds
+//		Affine : CPU-time = 0.892618 seconds
 //		Output : [-0.1611323182907459, -0.1460443472713157] : -0.153588 + -0.000750549 eps_0 + -0.00268127 eps_1 + -0.000750549 eps_2 + -0.00268127 eps_3 + 0.000680337 [-1,1]
 //		Affine3 : CPU-time = 9.95956 seconds
 //		Output : [-0.1614737468029863, -0.1457536702041349] : -0.153613 + -0.000751076 eps_0 + -0.00268241 eps_1 + -0.000751076 eps_2 + -0.00268241 eps_3 + 3.83015e-06 eps_5399996 + 5.78023e-18 eps_5399997 + 7.65888e-06 eps_5399998 + 3.83015e-06 eps_5399999 + 5.78023e-18 eps_5400000 + 7.65888e-06 eps_5400001 + 3.83015e-06 eps_5400002 + 5.78023e-18 eps_5400003 + 7.65888e-06 eps_5400004 + 3.83015e-06 eps_5400005 + 5.78023e-18 eps_5400006 + 7.65888e-06 eps_5400007 + 5.44129e-18 eps_5400008 + -6.40484e-05 eps_5400009 + 1.2157e-06 eps_5400010 + 3.45426e-18 eps_5400011 + 2.43115e-06 eps_5400012 + 1.2157e-06 eps_5400013 + 3.45426e-18 eps_5400014 + 2.43115e-06 eps_5400015 + 1.2157e-06 eps_5400016 + 3.45426e-18 eps_5400017 + 2.43115e-06 eps_5400018 + 1.72731e-18 eps_5400019 + 1.2157e-06 eps_5400020 + 3.45426e-18 eps_5400021 + 2.43115e-06 eps_5400022 + 3.45462e-18 eps_5400023 + 3.45462e-18 eps_5400024 + -2.01278e-05 eps_5400025 + 1.87494e-05 eps_5400026 + 3.74832e-05 eps_5400027 + 1.87494e-05 eps_5400028 + 3.74832e-05 eps_5400029 + 1.87494e-05 eps_5400030 + 3.74832e-05 eps_5400031 + 9.98474e-18 eps_5400032 + 1.87494e-05 eps_5400033 + 3.74832e-05 eps_5400034 + 1.66413e-17 eps_5400035 + -0.00031525 eps_5400036 + 1.21046e-05 eps_5400037 + 2.41687e-05 eps_5400038 + 1.20746e-05 eps_5400039 + 1.82223e-17 eps_5400040 + 2.41447e-05 eps_5400041 + 1.21046e-05 eps_5400042 + 2.41687e-05 eps_5400043 + 9.65316e-18 eps_5400044 + 1.20746e-05 eps_5400045 + 1.82223e-17 eps_5400046 + 2.41447e-05 eps_5400047 + 8.57686e-18 eps_5400048 + -0.000163172 eps_5400049 + 6.07154e-17[-1,1]
@@ -262,7 +262,7 @@ int main() {
 //		Output : -0.153195
 //		Interval : CPU-time = 0.585353 seconds
 //		Output : [-0.1663975282993113, -0.1415123357615466]
-//		Affine2 : CPU-time = 8.00415 seconds
+//		Affine : CPU-time = 8.00415 seconds
 //		Output : [-0.1611323182907459, -0.1460443472713157] : -0.153588 + -0.000750549 eps_0 + -0.00268127 eps_1 + -0.000750549 eps_2 + -0.00268127 eps_3 + 0.000680337 [-1,1]
 //		Affine3 : CPU-time = 99.003 seconds
 //		Output : [-0.1614737468029863, -0.1457536702041349] : -0.153613 + -0.000751076 eps_0 + -0.00268241 eps_1 + -0.000751076 eps_2 + -0.00268241 eps_3 + 3.83015e-06 eps_53999996 + 5.78023e-18 eps_53999997 + 7.65888e-06 eps_53999998 + 3.83015e-06 eps_53999999 + 5.78023e-18 eps_54000000 + 7.65888e-06 eps_54000001 + 3.83015e-06 eps_54000002 + 5.78023e-18 eps_54000003 + 7.65888e-06 eps_54000004 + 3.83015e-06 eps_54000005 + 5.78023e-18 eps_54000006 + 7.65888e-06 eps_54000007 + 5.44129e-18 eps_54000008 + -6.40484e-05 eps_54000009 + 1.2157e-06 eps_54000010 + 3.45426e-18 eps_54000011 + 2.43115e-06 eps_54000012 + 1.2157e-06 eps_54000013 + 3.45426e-18 eps_54000014 + 2.43115e-06 eps_54000015 + 1.2157e-06 eps_54000016 + 3.45426e-18 eps_54000017 + 2.43115e-06 eps_54000018 + 1.72731e-18 eps_54000019 + 1.2157e-06 eps_54000020 + 3.45426e-18 eps_54000021 + 2.43115e-06 eps_54000022 + 3.45462e-18 eps_54000023 + 3.45462e-18 eps_54000024 + -2.01278e-05 eps_54000025 + 1.87494e-05 eps_54000026 + 3.74832e-05 eps_54000027 + 1.87494e-05 eps_54000028 + 3.74832e-05 eps_54000029 + 1.87494e-05 eps_54000030 + 3.74832e-05 eps_54000031 + 9.98474e-18 eps_54000032 + 1.87494e-05 eps_54000033 + 3.74832e-05 eps_54000034 + 1.66413e-17 eps_54000035 + -0.00031525 eps_54000036 + 1.21046e-05 eps_54000037 + 2.41687e-05 eps_54000038 + 1.20746e-05 eps_54000039 + 1.82223e-17 eps_54000040 + 2.41447e-05 eps_54000041 + 1.21046e-05 eps_54000042 + 2.41687e-05 eps_54000043 + 9.65316e-18 eps_54000044 + 1.20746e-05 eps_54000045 + 1.82223e-17 eps_54000046 + 2.41447e-05 eps_54000047 + 8.57686e-18 eps_54000048 + -0.000163172 eps_54000049 + 6.07154e-17[-1,1]
@@ -280,13 +280,13 @@ int main() {
 ==========================================
 ==========================================
 TEST 1: Definitions
-==  Initialization of the Affine2 Form with 3 epsilons variables:
+==  Initialization of the Affine Form with 3 epsilons variables:
 ([1, 2] : 1.5 + 0.5 eps_0 + 0 eps_1 + 0 eps_2 + 0 [-1,1]  ; [1, 3] : 2 + 0 eps_0 + 1 eps_1 + 0 eps_2 + 0 [-1,1]  ; [1, 2] : 1.5 + 0 eps_0 + 0 eps_1 + 0.5 eps_2 + 0 [-1,1] )
-==  Affine2Variables is the only way to construct an correct Affine2 Form from an Interval:
+==  AffineVariables is the only way to construct an correct Affine Form from an Interval:
 [1, 3] : 2 + 1 eps_0 + 0 [-1,1]
 [1, 3] : 2 + 1 eps_0 + 0 [-1,1]
-==  Constructor Affine2(Interval& itv) and Constructor Affine2Variables(Affine2& af) is not allowed to avoid misunderstandings or bad use.
-==  Affine2 is used for intermediate result or constant:
+==  Constructor Affine(Interval& itv) and Constructor AffineVariables(Affine& af) is not allowed to avoid misunderstandings or bad use.
+==  Affine is used for intermediate result or constant:
 == Constant faa=[1, 3] : [1, 3] : 2 + 1 [-1,1]
 == faa=AF[0]+AF[1] : [2, 5] : 3.5 + 0.5 eps_0 + 1 eps_1 + 0 eps_2 + 0 [-1,1]
 == faa=faa+2*faa : [6, 15] : 10.5 + 1.5 eps_0 + 3 eps_1 + 0 eps_2 + 0 [-1,1]
@@ -294,19 +294,19 @@ TEST 1: Definitions
 == Using Eval function : myf:(x[2],y)->(((x(1)*x(2)^2)-exp((x(1)*x(2))))+y)
 == Interval results using interval computation of the function:
 [-401.4287934927352, 17.28171817154096]
-== Affine2 results using Affine2 computation of the function:
+== Affine results using Affine computation of the function:
 [-390.4287934927361, 274.6849531133789] : -57.8719 + -77.8921 eps_0 + -114.213 eps_1 + 0.5 eps_2 + 139.952 [-1,1]
-== Interval results using Affine2 computation of the function:
+== Interval results using Affine computation of the function:
 [-390.428793492736, 17.28171817154096]
 == You can get in the same time Interval and Affine result with one evaluation :
 [-390.428793492736, 17.28171817154096]
 [-390.4287934927361, 274.6849531133789] : -57.8719 + -77.8921 eps_0 + -114.213 eps_1 + 0.5 eps_2 + 139.952 [-1,1]
 
-==  Validation of the enclosure the Affine2 form : ok?  inf 1  /  sup 1
+==  Validation of the enclosure the Affine form : ok?  inf 1  /  sup 1
 ==========================================
 ==========================================
 == In the same way, you can use Affine3Variables, Affine3 and Affine3Eval.
-== Affine2 has a static internal structure to improve computation performance.
+== Affine has a static internal structure to improve computation performance.
 == Affine3 has a dynamic internal structure to use it with the DynIbex project.
 ==========================================
 ==========================================
@@ -315,7 +315,7 @@ TEST 1: Definitions
 ==  Affine3Variables is the only way to construct an correct Affine3 Form from an Interval:
 [1, 3] : 2 + 1 eps_0 + 0[-1,1]
 [1, 3] : 2 + 1 eps_0 + 0[-1,1]
-==  Constructor Affine3(Interval& itv) and Constructor Affine3Variables(Affine2& af) is not allowed to avoid misunderstandings or bad use.
+==  Constructor Affine3(Interval& itv) and Constructor Affine3Variables(Affine& af) is not allowed to avoid misunderstandings or bad use.
 ==  Affine3 is used for intermediate result or constant:
 == Constant faa=[1, 3] : [1, 3] : 2 + 1 eps_50 + 0[-1,1]
 == faa=AF[0]+AF[1] : [2, 5] : 3.5 + 0.5 eps_0 + 1 eps_1 + 0[-1,1]
@@ -395,7 +395,7 @@ double : CPU-time = 3.00001e-06 seconds
 Output : -0.153195
 Interval : CPU-time = 0.0219041 seconds
 Output : [-0.1663975282993113, -0.1415123357615466]
-Affine2 : CPU-time = 0.28383 seconds
+Affine : CPU-time = 0.28383 seconds
 Output : [-0.1611323182907459, -0.1460443472713157] : -0.153588 + -0.000750549 eps_0 + -0.00268127 eps_1 + -0.000750549 eps_2 + -0.00268127 eps_3 + 0.000680337 [-1,1]
 Affine3 : CPU-time = 1.01594 seconds
 Output : [-0.1614737468029863, -0.1457536702041349] : -0.153613 + -0.000751076 eps_0 + -0.00268241 eps_1 + -0.000751076 eps_2 + -0.00268241 eps_3 + 3.83015e-06 eps_540019 + 5.78023e-18 eps_540020 + 7.65888e-06 eps_540021 + 3.83015e-06 eps_540022 + 5.78023e-18 eps_540023 + 7.65888e-06 eps_540024 + 3.83015e-06 eps_540025 + 5.78023e-18 eps_540026 + 7.65888e-06 eps_540027 + 3.83015e-06 eps_540028 + 5.78023e-18 eps_540029 + 7.65888e-06 eps_540030 + 5.44129e-18 eps_540031 + -6.40484e-05 eps_540032 + 1.2157e-06 eps_540033 + 3.45426e-18 eps_540034 + 2.43115e-06 eps_540035 + 1.2157e-06 eps_540036 + 3.45426e-18 eps_540037 + 2.43115e-06 eps_540038 + 1.2157e-06 eps_540039 + 3.45426e-18 eps_540040 + 2.43115e-06 eps_540041 + 1.72731e-18 eps_540042 + 1.2157e-06 eps_540043 + 3.45426e-18 eps_540044 + 2.43115e-06 eps_540045 + 3.45462e-18 eps_540046 + 3.45462e-18 eps_540047 + -2.01278e-05 eps_540048 + 1.87494e-05 eps_540049 + 3.74832e-05 eps_540050 + 1.87494e-05 eps_540051 + 3.74832e-05 eps_540052 + 1.87494e-05 eps_540053 + 3.74832e-05 eps_540054 + 9.98474e-18 eps_540055 + 1.87494e-05 eps_540056 + 3.74832e-05 eps_540057 + 1.66413e-17 eps_540058 + -0.00031525 eps_540059 + 1.21046e-05 eps_540060 + 2.41687e-05 eps_540061 + 1.20746e-05 eps_540062 + 1.82223e-17 eps_540063 + 2.41447e-05 eps_540064 + 1.21046e-05 eps_540065 + 2.41687e-05 eps_540066 + 9.65316e-18 eps_540067 + 1.20746e-05 eps_540068 + 1.82223e-17 eps_540069 + 2.41447e-05 eps_540070 + 8.57686e-18 eps_540071 + -0.000163172 eps_540072 + 6.07154e-17[-1,1]

@@ -1,6 +1,6 @@
 /**
  * \file codac2_tests_AffineEigen.cpp
- * \brief Unit tests for Eigen operations applied to affine forms.
+ * \brief Unit tests for Eigen operations applied to Affine forms.
  */
 
 #include <catch2/catch_test_macros.hpp>
@@ -22,40 +22,40 @@ using namespace codac2;
 namespace {
 
 using Model = AF_Default;
-using Affine = AffineMain<Model>;
-using AffineMatrix = AffineMainMatrix<Model>;
-using AffineVector = AffineMainVector<Model>;
-using AffineVarVector = AffineVarMainVector<Model>;
-using AffineRow = AffineMainRow<Model>;
+using AffineT = AffineMain<Model>;
+using AffineTMatrix = AffineMainMatrix<Model>;
+using AffineTVector = AffineMainVector<Model>;
+using AffineTVarVector = AffineVarMainVector<Model>;
+using AffineTRow = AffineMainRow<Model>;
 
-using DynamicAffineMatrix =  Eigen::Matrix<Affine, Eigen::Dynamic, Eigen::Dynamic>;
-using FixedAffineMatrix =    Eigen::Matrix<Affine, 2, 3>;
-using FixedAffineVector =    Eigen::Matrix<Affine, 3, 1>;
-using FixedAffineRow =       Eigen::Matrix<Affine, 1, 3>;
+using DynamicAffineTMatrix =  Eigen::Matrix<AffineT, Eigen::Dynamic, Eigen::Dynamic>;
+using FixedAffineTMatrix =    Eigen::Matrix<AffineT, 2, 3>;
+using FixedAffineTVector =    Eigen::Matrix<AffineT, 3, 1>;
+using FixedAffineTRow =       Eigen::Matrix<AffineT, 1, 3>;
 
-void check_point(const Affine& actual, double expected)
+void check_point(const AffineT& actual, double expected)
 {
     CAPTURE(actual.itv(), expected);
-    CHECK(actual == Approx<Affine>(Interval(expected)));
+    CHECK(actual == Approx<AffineT>(Interval(expected)));
 }
 
-void check_interval(const Affine& actual, const Interval expected)
+void check_interval(const AffineT& actual, const Interval expected)
 {
     CAPTURE(actual.itv(), expected);
-    CHECK(actual == Approx<Affine>(expected));
+    CHECK(actual == Approx<AffineT>(expected));
 }
 
 void check_interval_enclosure(
-    const Affine& actual,
+    const AffineT& actual,
     const Interval& expected)
 {
     CAPTURE(actual.itv(), expected);
     CHECK(actual.itv().is_superset(expected));
 }
 
-AffineMatrix make_point_matrix_3x4()
+AffineTMatrix make_point_matrix_3x4()
 {
-    AffineMatrix matrix(3, 4);
+    AffineTMatrix matrix(3, 4);
     matrix(0, 0) = Interval(1.0);  matrix(0, 1) = Interval(2.0);
     matrix(0, 2) = Interval(3.0);  matrix(0, 3) = Interval(4.0);
     matrix(1, 0) = Interval(5.0);  matrix(1, 1) = Interval(6.0);
@@ -65,16 +65,16 @@ AffineMatrix make_point_matrix_3x4()
     return matrix;
 }
 
-AffineVector make_point_vector_5()
+AffineTVector make_point_vector_5()
 {
-    const AffineVarVector variables(
+    const AffineTVarVector variables(
         IntervalVector({{1}, {2}, {3}, {4}, {5}}));
-    return AffineVector(variables);
+    return AffineTVector(variables);
 }
 
-AffineVarVector make_variable_vector_5()
+AffineTVarVector make_variable_vector_5()
 {
-    return AffineVarVector(IntervalVector({
+    return AffineTVarVector(IntervalVector({
         {-2.0, -1.0},
         {0.0, 2.0},
         {3.0, 4.0},
@@ -85,13 +85,13 @@ AffineVarVector make_variable_vector_5()
 
 } // namespace
 
-static_assert(std::same_as<typename AffineMatrix::Scalar, Affine>);
-static_assert(std::same_as<typename AffineVector::Scalar, Affine>);
-static_assert(std::same_as<typename AffineRow::Scalar, Affine>);
-static_assert(AffineVector::ColsAtCompileTime == 1);
-static_assert(AffineRow::RowsAtCompileTime == 1);
+static_assert(std::same_as<typename AffineTMatrix::Scalar, AffineT>);
+static_assert(std::same_as<typename AffineTVector::Scalar, AffineT>);
+static_assert(std::same_as<typename AffineTRow::Scalar, AffineT>);
+static_assert(AffineTVector::ColsAtCompileTime == 1);
+static_assert(AffineTRow::RowsAtCompileTime == 1);
 
-// AffineVarMain deliberately deletes scalar compound assignments.
+// AffineTVarMain deliberately deletes scalar compound assignments.
 // Keep this assertion here so that this API contract is explicit and
 // cannot accidentally become enabled by the Eigen plugin.
 template<class T> concept has_scalar_plus_eq  = requires(T& v, double d) { v += d; };
@@ -99,9 +99,9 @@ template<class T> concept has_scalar_minus_eq = requires(T& v, double d) { v -= 
 template<class T> concept has_scalar_times_eq = requires(T& v, double d) { v *= d; };
 template<class T> concept has_scalar_div_eq   = requires(T& v, double d) { v /= d; };
 
-TEST_CASE("Eigen affine matrix dimensions and coefficient access")
+TEST_CASE("Eigen AffineT matrix dimensions and coefficient access")
 {
-    AffineMatrix matrix = make_point_matrix_3x4();
+    AffineTMatrix matrix = make_point_matrix_3x4();
 
     CHECK(matrix.rows() == 3);
     CHECK(matrix.cols() == 4);
@@ -115,9 +115,9 @@ TEST_CASE("Eigen affine matrix dimensions and coefficient access")
     check_point(matrix(1, 1), -6.0);
 }
 
-TEST_CASE("Eigen affine vector indexing")
+TEST_CASE("Eigen AffineT vector indexing")
 {
-    AffineVector vector = make_point_vector_5();
+    AffineTVector vector = make_point_vector_5();
 
     CHECK(vector.rows() == 5);
     CHECK(vector.cols() == 1);
@@ -131,17 +131,17 @@ TEST_CASE("Eigen affine vector indexing")
     check_point(vector[3], -4.0);
 }
 
-TEST_CASE("Eigen affine matrix row and column views")
+TEST_CASE("Eigen AffineT matrix row and column views")
 {
-    AffineMatrix matrix = make_point_matrix_3x4();
+    AffineTMatrix matrix = make_point_matrix_3x4();
 
-    const AffineVector column = matrix.col(2);
+    const AffineTVector column = matrix.col(2);
     REQUIRE(column.size() == 3);
     check_point(column[0], 3.0);
     check_point(column[1], 7.0);
     check_point(column[2], 11.0);
 
-    const AffineRow row = matrix.row(1);
+    const AffineTRow row = matrix.row(1);
     REQUIRE(row.size() == 4);
     check_point(row[0], 5.0);
     check_point(row[1], 6.0);
@@ -149,23 +149,23 @@ TEST_CASE("Eigen affine matrix row and column views")
     check_point(row[3], 8.0);
 }
 
-TEST_CASE("Eigen affine row and column assignments")
+TEST_CASE("Eigen AffineT row and column assignments")
 {
-    AffineMatrix matrix(3, 3);
+    AffineTMatrix matrix(3, 3);
     matrix.setZero();
 
-    const AffineVarVector column_variables(
+    const AffineTVarVector column_variables(
         IntervalVector({{1}, {2}, {3}}));
-    const AffineVector column(column_variables);
+    const AffineTVector column(column_variables);
     matrix.col(1) = column;
 
     check_point(matrix(0, 1), 1.0);
     check_point(matrix(1, 1), 2.0);
     check_point(matrix(2, 1), 3.0);
 
-    const AffineVarVector row_variables(
+    const AffineTVarVector row_variables(
         IntervalVector({{4}, {5}, {6}}));
-    const AffineRow row = AffineVector(row_variables).transpose();
+    const AffineTRow row = AffineTVector(row_variables).transpose();
     matrix.row(2) = row;
 
     check_point(matrix(2, 0), 4.0);
@@ -173,12 +173,12 @@ TEST_CASE("Eigen affine row and column assignments")
     check_point(matrix(2, 2), 6.0);
 }
 
-TEST_CASE("Eigen AffineVarMainVector assignment to matrix column")
+TEST_CASE("Eigen AffineTVarMainVector assignment to matrix column")
 {
-    AffineMatrix matrix(3, 2);
+    AffineTMatrix matrix(3, 2);
     matrix.setZero();
 
-    const AffineVarVector variables(
+    const AffineTVarVector variables(
         IntervalVector({{-2.0, 1.0}, {3.0, 4.0}, {5.0, 7.0}}));
 
     matrix.col(0) = variables;
@@ -187,10 +187,10 @@ TEST_CASE("Eigen AffineVarMainVector assignment to matrix column")
         CHECK(matrix(i, 0).itv() == variables[i].itv());
 }
 
-TEST_CASE("Eigen affine block extraction")
+TEST_CASE("Eigen AffineT block extraction")
 {
-    const AffineMatrix matrix = make_point_matrix_3x4();
-    const AffineMatrix block = matrix.block(1, 1, 2, 3);
+    const AffineTMatrix matrix = make_point_matrix_3x4();
+    const AffineTMatrix block = matrix.block(1, 1, 2, 3);
 
     REQUIRE(block.rows() == 2);
     REQUIRE(block.cols() == 3);
@@ -201,12 +201,12 @@ TEST_CASE("Eigen affine block extraction")
     check_point(block(1, 2), 12.0);
 }
 
-TEST_CASE("Eigen affine block assignment")
+TEST_CASE("Eigen AffineT block assignment")
 {
-    AffineMatrix matrix(4, 5);
+    AffineTMatrix matrix(4, 5);
     matrix.setZero();
 
-    AffineMatrix block(2, 3);
+    AffineTMatrix block(2, 3);
     block(0, 0) = Interval(1.0); block(0, 1) = Interval(2.0); block(0, 2) = Interval(3.0);
     block(1, 0) = Interval(4.0); block(1, 1) = Interval(5.0); block(1, 2) = Interval(6.0);
 
@@ -220,12 +220,12 @@ TEST_CASE("Eigen affine block assignment")
     check_point(matrix(3, 4), 0.0);
 }
 
-TEST_CASE("Eigen affine top bottom left and right corners")
+TEST_CASE("Eigen AffineT top bottom left and right corners")
 {
-    const AffineMatrix matrix = make_point_matrix_3x4();
+    const AffineTMatrix matrix = make_point_matrix_3x4();
 
-    const AffineMatrix top_left = matrix.topLeftCorner(2, 2);
-    const AffineMatrix bottom_right = matrix.bottomRightCorner(2, 2);
+    const AffineTMatrix top_left = matrix.topLeftCorner(2, 2);
+    const AffineTMatrix bottom_right = matrix.bottomRightCorner(2, 2);
 
     check_point(top_left(0, 0), 1.0);
     check_point(top_left(1, 1), 6.0);
@@ -233,30 +233,30 @@ TEST_CASE("Eigen affine top bottom left and right corners")
     check_point(bottom_right(1, 1), 12.0);
 }
 
-TEST_CASE("Eigen affine middle rows and columns")
+TEST_CASE("Eigen AffineT middle rows and columns")
 {
-    const AffineMatrix matrix = make_point_matrix_3x4();
+    const AffineTMatrix matrix = make_point_matrix_3x4();
 
-    const AffineMatrix middle_columns = matrix.middleCols(1, 2);
+    const AffineTMatrix middle_columns = matrix.middleCols(1, 2);
     REQUIRE(middle_columns.rows() == 3);
     REQUIRE(middle_columns.cols() == 2);
     check_point(middle_columns(0, 0), 2.0);
     check_point(middle_columns(2, 1), 11.0);
 
-    const AffineMatrix middle_rows = matrix.middleRows(1, 2);
+    const AffineTMatrix middle_rows = matrix.middleRows(1, 2);
     REQUIRE(middle_rows.rows() == 2);
     REQUIRE(middle_rows.cols() == 4);
     check_point(middle_rows(0, 0), 5.0);
     check_point(middle_rows(1, 3), 12.0);
 }
 
-TEST_CASE("Eigen affine vector segment head and tail")
+TEST_CASE("Eigen AffineT vector segment head and tail")
 {
-    AffineVector vector = make_point_vector_5();
+    AffineTVector vector = make_point_vector_5();
 
-    const AffineVector segment = vector.segment(1, 3);
-    const AffineVector head = vector.head(2);
-    const AffineVector tail = vector.tail(2);
+    const AffineTVector segment = vector.segment(1, 3);
+    const AffineTVector head = vector.head(2);
+    const AffineTVector tail = vector.tail(2);
 
     REQUIRE(segment.size() == 3);
     check_point(segment[0], 2.0);
@@ -269,10 +269,10 @@ TEST_CASE("Eigen affine vector segment head and tail")
     check_point(tail[1], 5.0);
 }
 
-TEST_CASE("Eigen AffineVarMainVector segment conversion")
+TEST_CASE("Eigen AffineTVarMainVector segment conversion")
 {
-    const AffineVarVector variables = make_variable_vector_5();
-    const AffineVector segment = variables.segment(1, 3);
+    const AffineTVarVector variables = make_variable_vector_5();
+    const AffineTVector segment = variables.segment(1, 3);
 
     REQUIRE(segment.size() == 3);
     CHECK(segment[0].itv() == variables[1].itv());
@@ -280,14 +280,14 @@ TEST_CASE("Eigen AffineVarMainVector segment conversion")
     CHECK(segment[2].itv() == variables[3].itv());
 }
 
-TEST_CASE("Eigen affine segment assignment")
+TEST_CASE("Eigen AffineT segment assignment")
 {
-    AffineVector vector(6);
+    AffineTVector vector(6);
     vector.setZero();
 
-    const AffineVarVector source_variables(
+    const AffineTVarVector source_variables(
         IntervalVector({{2}, {4}, {6}}));
-    const AffineVector source(source_variables);
+    const AffineTVector source(source_variables);
     vector.segment(2, 3) = source;
 
     check_point(vector[0], 0.0);
@@ -298,10 +298,10 @@ TEST_CASE("Eigen affine segment assignment")
     check_point(vector[5], 0.0);
 }
 
-TEST_CASE("Eigen affine transpose")
+TEST_CASE("Eigen AffineT transpose")
 {
-    const AffineMatrix matrix = make_point_matrix_3x4();
-    const AffineMatrix transpose = matrix.transpose();
+    const AffineTMatrix matrix = make_point_matrix_3x4();
+    const AffineTMatrix transpose = matrix.transpose();
 
     REQUIRE(transpose.rows() == 4);
     REQUIRE(transpose.cols() == 3);
@@ -311,10 +311,10 @@ TEST_CASE("Eigen affine transpose")
     check_point(transpose(3, 2), 12.0);
 }
 
-TEST_CASE("Eigen affine vector transpose to row")
+TEST_CASE("Eigen AffineT vector transpose to row")
 {
-    const AffineVector vector = make_point_vector_5();
-    const AffineRow row = vector.transpose();
+    const AffineTVector vector = make_point_vector_5();
+    const AffineTRow row = vector.transpose();
 
     REQUIRE(row.rows() == 1);
     REQUIRE(row.cols() == 5);
@@ -322,9 +322,9 @@ TEST_CASE("Eigen affine vector transpose to row")
     check_point(row[4], 5.0);
 }
 
-TEST_CASE("Eigen affine in-place transpose for square matrix")
+TEST_CASE("Eigen AffineT in-place transpose for square matrix")
 {
-    AffineMatrix matrix(3, 3);
+    AffineTMatrix matrix(3, 3);
     matrix(0, 0) = Interval(1.0); matrix(0, 1) = Interval(2.0); matrix(0, 2) = Interval(3.0);
     matrix(1, 0) = Interval(4.0); matrix(1, 1) = Interval(5.0); matrix(1, 2) = Interval(6.0);
     matrix(2, 0) = Interval(7.0); matrix(2, 1) = Interval(8.0); matrix(2, 2) = Interval(9.0);
@@ -336,28 +336,28 @@ TEST_CASE("Eigen affine in-place transpose for square matrix")
     check_point(matrix(2, 1), 6.0);
 }
 
-TEST_CASE("Eigen affine diagonal extraction")
+TEST_CASE("Eigen AffineT diagonal extraction")
 {
-    AffineMatrix matrix(3, 3);
+    AffineTMatrix matrix(3, 3);
     matrix(0, 0) = Interval(1.0); matrix(0, 1) = Interval(2.0); matrix(0, 2) = Interval(3.0);
     matrix(1, 0) = Interval(4.0); matrix(1, 1) = Interval(5.0); matrix(1, 2) = Interval(6.0);
     matrix(2, 0) = Interval(7.0); matrix(2, 1) = Interval(8.0); matrix(2, 2) = Interval(9.0);
 
-    const AffineVector diagonal = matrix.diagonal();
+    const AffineTVector diagonal = matrix.diagonal();
     REQUIRE(diagonal.size() == 3);
     check_point(diagonal[0], 1.0);
     check_point(diagonal[1], 5.0);
     check_point(diagonal[2], 9.0);
 }
 
-TEST_CASE("Eigen affine diagonal assignment")
+TEST_CASE("Eigen AffineT diagonal assignment")
 {
-    AffineMatrix matrix(3, 3);
+    AffineTMatrix matrix(3, 3);
     matrix.setZero();
 
-    const AffineVarVector diagonal_variables(
+    const AffineTVarVector diagonal_variables(
         IntervalVector({{2}, {4}, {6}}));
-    const AffineVector diagonal(diagonal_variables);
+    const AffineTVector diagonal(diagonal_variables);
     matrix.diagonal() = diagonal;
 
     check_point(matrix(0, 0), 2.0);
@@ -366,9 +366,9 @@ TEST_CASE("Eigen affine diagonal assignment")
     check_point(matrix(0, 1), 0.0);
 }
 
-TEST_CASE("Eigen affine setZero setOnes and setConstant")
+TEST_CASE("Eigen AffineT setZero setOnes and setConstant")
 {
-    AffineMatrix matrix(2, 3);
+    AffineTMatrix matrix(2, 3);
 
     matrix.setZero();
     for(Index i = 0; i < matrix.rows(); ++i)
@@ -380,17 +380,17 @@ TEST_CASE("Eigen affine setZero setOnes and setConstant")
         for(Index j = 0; j < matrix.cols(); ++j)
             check_point(matrix(i, j), 1.0);
 
-    matrix.setConstant(Affine(3.5));
+    matrix.setConstant(AffineT(3.5));
     for(Index i = 0; i < matrix.rows(); ++i)
         for(Index j = 0; j < matrix.cols(); ++j)
             check_point(matrix(i, j), 3.5);
 }
 
-TEST_CASE("Eigen affine Zero Ones and Constant factories")
+TEST_CASE("Eigen AffineT Zero Ones and Constant factories")
 {
-    const AffineMatrix zero = AffineMatrix::Zero(2, 2);
-    const AffineMatrix ones = AffineMatrix::Ones(2, 2);
-    const AffineMatrix constant = AffineMatrix::Constant(2, 2, Affine(-3.0));
+    const AffineTMatrix zero = AffineTMatrix::Zero(2, 2);
+    const AffineTMatrix ones = AffineTMatrix::Ones(2, 2);
+    const AffineTMatrix constant = AffineTMatrix::Constant(2, 2, AffineT(-3.0));
 
     for(Index i = 0; i < 2; ++i)
     {
@@ -403,9 +403,9 @@ TEST_CASE("Eigen affine Zero Ones and Constant factories")
     }
 }
 
-TEST_CASE("Eigen affine Identity factory")
+TEST_CASE("Eigen AffineT Identity factory")
 {
-    const AffineMatrix identity = AffineMatrix::Identity(3, 3);
+    const AffineTMatrix identity = AffineTMatrix::Identity(3, 3);
 
     for(Index i = 0; i < identity.rows(); ++i)
     {
@@ -414,9 +414,9 @@ TEST_CASE("Eigen affine Identity factory")
     }
 }
 
-TEST_CASE("Eigen affine resize and conservativeResize")
+TEST_CASE("Eigen AffineT resize and conservativeResize")
 {
-    AffineMatrix matrix(2, 2);
+    AffineTMatrix matrix(2, 2);
     matrix(0, 0) = Interval(1.0); matrix(0, 1) = Interval(2.0);
     matrix(1, 0) = Interval(3.0); matrix(1, 1) = Interval(4.0);
 
@@ -433,14 +433,14 @@ TEST_CASE("Eigen affine resize and conservativeResize")
     CHECK(matrix.cols() == 2);
 }
 
-TEST_CASE("Eigen affine swap")
+TEST_CASE("Eigen AffineT swap")
 {
-    const AffineVarVector lhs_variables(
+    const AffineTVarVector lhs_variables(
         IntervalVector({{1}, {2}, {3}}));
-    const AffineVarVector rhs_variables(
+    const AffineTVarVector rhs_variables(
         IntervalVector({{4}, {5}, {6}}));
-    AffineVector lhs(lhs_variables);
-    AffineVector rhs(rhs_variables);
+    AffineTVector lhs(lhs_variables);
+    AffineTVector rhs(rhs_variables);
 
     lhs.swap(rhs);
 
@@ -450,18 +450,18 @@ TEST_CASE("Eigen affine swap")
     check_point(rhs[2], 3.0);
 }
 
-TEST_CASE("Eigen affine arithmetic expressions")
+TEST_CASE("Eigen AffineT arithmetic expressions")
 {
-    AffineMatrix lhs(2, 2);
-    AffineMatrix rhs(2, 2);
+    AffineTMatrix lhs(2, 2);
+    AffineTMatrix rhs(2, 2);
     lhs(0, 0) = Interval(1.0); lhs(0, 1) = Interval(2.0);
     lhs(1, 0) = Interval(3.0); lhs(1, 1) = Interval(4.0);
     rhs(0, 0) = Interval(5.0); rhs(0, 1) = Interval(6.0);
     rhs(1, 0) = Interval(7.0); rhs(1, 1) = Interval(8.0);
 
-    const AffineMatrix sum = lhs + rhs;
-    const AffineMatrix difference = rhs - lhs;
-    const AffineMatrix expression = 2.0 * lhs - rhs;
+    const AffineTMatrix sum = lhs + rhs;
+    const AffineTMatrix difference = rhs - lhs;
+    const AffineTMatrix expression = 2.0 * lhs - rhs;
 
     check_point(sum(0, 0), 6.0);
     check_point(sum(1, 1), 12.0);
@@ -471,14 +471,14 @@ TEST_CASE("Eigen affine arithmetic expressions")
     check_point(expression(1, 1), 0.0);
 }
 
-TEST_CASE("Eigen affine compound assignment")
+TEST_CASE("Eigen AffineT compound assignment")
 {
-    const AffineVarVector value_variables(
+    const AffineTVarVector value_variables(
         IntervalVector({{1}, {2}, {3}}));
-    const AffineVarVector other_variables(
+    const AffineTVarVector other_variables(
         IntervalVector({{4}, {5}, {6}}));
-    AffineVector value(value_variables);
-    const AffineVector other(other_variables);
+    AffineTVector value(value_variables);
+    const AffineTVector other(other_variables);
 
     value += other;
     check_point(value[0], 5.0);
@@ -505,11 +505,11 @@ TEST_CASE("Eigen affine compound assignment")
     check_point(value[2], 1.0);
 }
 
-TEST_CASE("Eigen affineVar compound assignment")
+TEST_CASE("Eigen AffineTVar compound assignment")
 {
-    const AffineVarVector value_variables(
+    const AffineTVarVector value_variables(
         IntervalVector({{1,2}, {-2,5}, {3,6}}));
-    AffineVector value(value_variables);
+    AffineTVector value(value_variables);
 
 
     value -= value_variables;
@@ -529,8 +529,8 @@ TEST_CASE("Eigen affineVar compound assignment")
 // ============================================================================
 //
 // These tests intentionally exercise +=, -=, *= and /= independently.
-// The existing "Eigen affine compound assignment" test covers the basic
-// AffineVector path; the tests below make sure the Eigen plugin also works
+// The existing "Eigen AffineT compound assignment" test covers the basic
+// AffineTVector path; the tests below make sure the Eigen plugin also works
 // for matrices, rows, interval containers and fixed-size Eigen types.
 //
 
@@ -617,10 +617,10 @@ TEST_CASE("Eigen scalar compound assignments - IntervalMatrix",
     CHECK(value(1, 2) == Interval(-6.0));
 }
 
-TEST_CASE("Eigen scalar compound assignments - AffineVector",
-          "[Eigen][compound-assignment][AffineVector]")
+TEST_CASE("Eigen scalar compound assignments - AffineTVector",
+          "[Eigen][compound-assignment][AffineTVector]")
 {
-    AffineVector value(3);
+    AffineTVector value(3);
     value[0] = Interval(1.0);
     value[1] = Interval(-2.0);
     value[2] = Interval(4.0);
@@ -646,10 +646,10 @@ TEST_CASE("Eigen scalar compound assignments - AffineVector",
     check_point(value[2], 4.0);
 }
 
-TEST_CASE("Eigen scalar compound assignments - AffineRow",
-          "[Eigen][compound-assignment][AffineRow]")
+TEST_CASE("Eigen scalar compound assignments - AffineTRow",
+          "[Eigen][compound-assignment][AffineTRow]")
 {
-    AffineRow value(3);
+    AffineTRow value(3);
     value[0] = Interval(1.0);
     value[1] = Interval(-2.0);
     value[2] = Interval(4.0);
@@ -675,10 +675,10 @@ TEST_CASE("Eigen scalar compound assignments - AffineRow",
     check_point(value[2], 4.0);
 }
 
-TEST_CASE("Eigen scalar compound assignments - AffineMatrix",
-          "[Eigen][compound-assignment][AffineMatrix]")
+TEST_CASE("Eigen scalar compound assignments - AffineTMatrix",
+          "[Eigen][compound-assignment][AffineTMatrix]")
 {
-    AffineMatrix value(2, 3);
+    AffineTMatrix value(2, 3);
     IntervalMatrix m({{ Interval(1.0), Interval(-2.0), Interval(3.0)},{
              Interval(4.0), Interval(5.0), Interval(-6.0)}});
     value = m;
@@ -704,10 +704,10 @@ TEST_CASE("Eigen scalar compound assignments - AffineMatrix",
     check_point(value(1, 2), -6.0);
 }
 
-TEST_CASE("Eigen scalar compound assignments - fixed-size Affine types",
-          "[Eigen][compound-assignment][Affine][fixed-size]")
+TEST_CASE("Eigen scalar compound assignments - fixed-size AffineT types",
+          "[Eigen][compound-assignment][AffineT][fixed-size]")
 {
-    FixedAffineVector vector;
+    FixedAffineTVector vector;
 
     IntervalVector v({ Interval(1.0), Interval(-2.0), Interval(4.0)});
 	vector = v;
@@ -732,7 +732,7 @@ TEST_CASE("Eigen scalar compound assignments - fixed-size Affine types",
     check_point(vector[1], -2.0);
     check_point(vector[2], 4.0);
 
-    FixedAffineRow row;
+    FixedAffineTRow row;
     IntervalVector vv({ Interval(1.0), Interval(-2.0), Interval(4.0)});
     row = vv.transpose();
 
@@ -756,7 +756,7 @@ TEST_CASE("Eigen scalar compound assignments - fixed-size Affine types",
     check_point(row[1], -2.0);
     check_point(row[2], 4.0);
 
-    FixedAffineMatrix matrix;
+    FixedAffineTMatrix matrix;
     IntervalMatrix mm ({{Interval(1.0), Interval(-2.0), Interval(3.0)},
               {Interval(4.0), Interval(5.0), Interval(-6.0)}});
     matrix = mm;
@@ -860,113 +860,113 @@ TEST_CASE("Eigen scalar compound assignments - fixed-size Interval types",
     CHECK(matrix(1, 2) == Interval(-6.0));
 }
 
-TEST_CASE("Eigen scalar compound assignments - AffineVarMainVector are unsupported",
-          "[Eigen][compound-assignment][AffineVarMainVector]")
+TEST_CASE("Eigen scalar compound assignments - AffineTVarMainVector are unsupported",
+          "[Eigen][compound-assignment][AffineTVarMainVector]")
 {
 
 
-	static_assert(!has_scalar_plus_eq<AffineVarVector>);
-	static_assert(!has_scalar_minus_eq<AffineVarVector>);
-	static_assert(!has_scalar_times_eq<AffineVarVector>);
-	static_assert(!has_scalar_div_eq<AffineVarVector>);
+	static_assert(!has_scalar_plus_eq<AffineTVarVector>);
+	static_assert(!has_scalar_minus_eq<AffineTVarVector>);
+	static_assert(!has_scalar_times_eq<AffineTVarVector>);
+	static_assert(!has_scalar_div_eq<AffineTVarVector>);
 }
 
-TEST_CASE("Eigen affine unary minus")
+TEST_CASE("Eigen AffineT unary minus")
 {
-    const AffineVector vector = make_point_vector_5();
-    const AffineVector negative = -vector;
+    const AffineTVector vector = make_point_vector_5();
+    const AffineTVector negative = -vector;
 
     check_point(negative[0], -1.0);
     check_point(negative[2], -3.0);
     check_point(negative[4], -5.0);
 }
 
-TEST_CASE("Eigen affine cwise product")
+TEST_CASE("Eigen AffineT cwise product")
 {
-    const AffineVarVector lhs_variables(
+    const AffineTVarVector lhs_variables(
         IntervalVector({{1}, {-2}, {3}}));
-    const AffineVarVector rhs_variables(
+    const AffineTVarVector rhs_variables(
         IntervalVector({{4}, {5}, {-6}}));
-    const AffineVector lhs(lhs_variables);
-    const AffineVector rhs(rhs_variables);
+    const AffineTVector lhs(lhs_variables);
+    const AffineTVector rhs(rhs_variables);
 
-    const AffineVector result = lhs.cwiseProduct(rhs);
+    const AffineTVector result = lhs.cwiseProduct(rhs);
     check_point(result[0], 4.0);
     check_point(result[1], -10.0);
     check_point(result[2], -18.0);
 }
 
-TEST_CASE("Eigen affine cwise quotient by point affine values")
+TEST_CASE("Eigen AffineT cwise quotient by point AffineT values")
 {
-    const AffineVarVector numerator_variables(
+    const AffineTVarVector numerator_variables(
         IntervalVector({{4}, {-10}, {18}}));
-    const AffineVarVector denominator_variables(
+    const AffineTVarVector denominator_variables(
         IntervalVector({{2}, {5}, {-3}}));
-    const AffineVector numerator(numerator_variables);
-    const AffineVector denominator(denominator_variables);
+    const AffineTVector numerator(numerator_variables);
+    const AffineTVector denominator(denominator_variables);
 
-    const AffineVector result = numerator.cwiseQuotient(denominator);
+    const AffineTVector result = numerator.cwiseQuotient(denominator);
     check_point(result[0], 2.0);
     check_point(result[1], -2.0);
     check_point(result[2], -6.0);
 }
 
-TEST_CASE("Eigen affine matrix product")
+TEST_CASE("Eigen AffineT matrix product")
 {
-    AffineMatrix lhs(2, 3);
-    AffineMatrix rhs(3, 2);
+    AffineTMatrix lhs(2, 3);
+    AffineTMatrix rhs(3, 2);
     lhs(0, 0) = Interval(1.0); lhs(0, 1) = Interval(2.0); lhs(0, 2) = Interval(3.0);
     lhs(1, 0) = Interval(4.0); lhs(1, 1) = Interval(5.0); lhs(1, 2) = Interval(6.0);
     rhs(0, 0) = Interval(7.0);  rhs(0, 1) = Interval(8.0);
     rhs(1, 0) = Interval(9.0);  rhs(1, 1) = Interval(10.0);
     rhs(2, 0) = Interval(11.0); rhs(2, 1) = Interval(12.0);
 
-    const AffineMatrix result = lhs * rhs;
+    const AffineTMatrix result = lhs * rhs;
     check_point(result(0, 0), 58.0);
     check_point(result(0, 1), 64.0);
     check_point(result(1, 0), 139.0);
     check_point(result(1, 1), 154.0);
 }
 
-TEST_CASE("Eigen affine matrix vector product")
+TEST_CASE("Eigen AffineT matrix vector product")
 {
-    AffineMatrix matrix(2, 3);
+    AffineTMatrix matrix(2, 3);
     matrix(0, 0) = Interval(1.0); matrix(0, 1) = Interval(2.0); matrix(0, 2) = Interval(3.0);
     matrix(1, 0) = Interval(4.0); matrix(1, 1) = Interval(5.0); matrix(1, 2) = Interval(6.0);
 
-    const AffineVarVector vector_variables(
+    const AffineTVarVector vector_variables(
         IntervalVector({{2}, {-1}, {3}}));
-    const AffineVector vector(vector_variables);
+    const AffineTVector vector(vector_variables);
 
-    const AffineVector result = matrix * vector;
+    const AffineTVector result = matrix * vector;
     check_point(result[0], 9.0);
     check_point(result[1], 21.0);
 }
 
-TEST_CASE("Eigen real matrix times AffineVarMainVector")
+TEST_CASE("Eigen real matrix times AffineTVarMainVector")
 {
     IntervalMatrix matrix(2,3);
     matrix(0, 0) = Interval(1.0); matrix(0, 1) = Interval(2.0); matrix(0, 2) = Interval(3.0);
     matrix(1, 0) = Interval(4.0); matrix(1, 1) = Interval(5.0); matrix(1, 2) = Interval(6.0);
 
-    const AffineVarVector variables(Vector({2.0, -1.0, 3.0}));
+    const AffineTVarVector variables(Vector({2.0, -1.0, 3.0}));
     const auto result = matrix * variables;
 
-    static_assert(std::same_as<typename decltype(result)::Scalar, Affine>);
+    static_assert(std::same_as<typename decltype(result)::Scalar, AffineT>);
     check_point(result[0], 9.0);
     check_point(result[1], 21.0);
 }
 
-TEST_CASE("Eigen AffineVarMainVector outer product")
+TEST_CASE("Eigen AffineTVarMainVector outer product")
 {
-    const AffineVarVector variables(Vector({2.0, -1.0, 3.0}));
+    const AffineTVarVector variables(Vector({2.0, -1.0, 3.0}));
     IntervalRow row(2);
     row[0] = Interval(4.0);
     row[1] = Interval(-2.0);
 
     const auto result = variables * row;
 
-    static_assert(std::same_as<typename decltype(result)::Scalar, Affine>);
+    static_assert(std::same_as<typename decltype(result)::Scalar, AffineT>);
     REQUIRE(result.rows() == 3);
     REQUIRE(result.cols() == 2);
     check_point(result(0, 0), 8.0);
@@ -975,52 +975,52 @@ TEST_CASE("Eigen AffineVarMainVector outer product")
     check_point(result(2, 1), -6.0);
 }
 
-TEST_CASE("Eigen affine dot product")
+TEST_CASE("Eigen AffineT dot product")
 {
-    AffineVector lhs(3);
-    AffineVector rhs(3);
+    AffineTVector lhs(3);
+    AffineTVector rhs(3);
     lhs[0] = Interval(1.0); lhs[1] = Interval(2.0); lhs[2] = Interval(3.0);
     rhs[0] = Interval(4.0); rhs[1] = Interval(-1.0); rhs[2] = Interval(2.0);
 
-    const Affine result = lhs.dot(rhs);
+    const AffineT result = lhs.dot(rhs);
     check_point(result, 8.0);
 }
 
-TEST_CASE("Eigen affine sum")
+TEST_CASE("Eigen AffineT sum")
 {
-    const AffineVector vector = make_point_vector_5();
-    const Affine result = vector.sum();
+    const AffineTVector vector = make_point_vector_5();
+    const AffineT result = vector.sum();
     check_point(result, 15.0);
 }
 
-TEST_CASE("Eigen affine trace")
+TEST_CASE("Eigen AffineT trace")
 {
-    AffineMatrix matrix(3, 3);
+    AffineTMatrix matrix(3, 3);
     matrix(0, 0) = Interval(1.0); matrix(0, 1) = Interval(2.0); matrix(0, 2) = Interval(3.0);
     matrix(1, 0) = Interval(4.0); matrix(1, 1) = Interval(5.0); matrix(1, 2) = Interval(6.0);
     matrix(2, 0) = Interval(7.0); matrix(2, 1) = Interval(8.0); matrix(2, 2) = Interval(9.0);
 
-    const Affine result = matrix.trace();
+    const AffineT result = matrix.trace();
     check_point(result, 15.0);
 }
 
-TEST_CASE("Eigen affine reverse")
+TEST_CASE("Eigen AffineT reverse")
 {
-    const AffineVector vector = make_point_vector_5();
-    const AffineVector reversed = vector.reverse();
+    const AffineTVector vector = make_point_vector_5();
+    const AffineTVector reversed = vector.reverse();
 
     check_point(reversed[0], 5.0);
     check_point(reversed[1], 4.0);
     check_point(reversed[4], 1.0);
 }
 
-TEST_CASE("Eigen affine replicate")
+TEST_CASE("Eigen AffineT replicate")
 {
-    const AffineVarVector row_variables(
+    const AffineTVarVector row_variables(
         IntervalVector({{1}, {2}}));
-    const AffineRow row = AffineVector(row_variables).transpose();
+    const AffineTRow row = AffineTVector(row_variables).transpose();
 
-    const AffineMatrix replicated = row.replicate(3, 2);
+    const AffineTMatrix replicated = row.replicate(3, 2);
     REQUIRE(replicated.rows() == 3);
     REQUIRE(replicated.cols() == 4);
 
@@ -1030,37 +1030,37 @@ TEST_CASE("Eigen affine replicate")
     check_point(replicated(2, 3), 2.0);
 }
 
-TEST_CASE("Eigen affine fixed-size matrices")
+TEST_CASE("Eigen AffineT fixed-size matrices")
 {
-    FixedAffineMatrix matrix;
+    FixedAffineTMatrix matrix;
     matrix(0, 0) = Interval(1.0); matrix(0, 1) = Interval(2.0); matrix(0, 2) = Interval(3.0);
     matrix(1, 0) = Interval(4.0); matrix(1, 1) = Interval(5.0); matrix(1, 2) = Interval(6.0);
 
-    static_assert(FixedAffineMatrix::RowsAtCompileTime == 2);
-    static_assert(FixedAffineMatrix::ColsAtCompileTime == 3);
+    static_assert(FixedAffineTMatrix::RowsAtCompileTime == 2);
+    static_assert(FixedAffineTMatrix::ColsAtCompileTime == 3);
 
     check_point(matrix(0, 0), 1.0);
     check_point(matrix(1, 2), 6.0);
 
-    const FixedAffineRow row = matrix.row(0);
+    const FixedAffineTRow row = matrix.row(0);
     check_point(row[0], 1.0);
     check_point(row[2], 3.0);
 
-    const FixedAffineVector column = matrix.transpose().col(1);
+    const FixedAffineTVector column = matrix.transpose().col(1);
     check_point(column[0], 4.0);
     check_point(column[2], 6.0);
 }
 
-TEST_CASE("Eigen affine interval-valued block operations")
+TEST_CASE("Eigen AffineT interval-valued block operations")
 {
-    const AffineVarVector variables(
+    const AffineTVarVector variables(
         IntervalVector({{-2.0, 1.0}, {3.0, 5.0}, {-1.0, 4.0}}));
 
-    AffineMatrix matrix(3, 2);
+    AffineTMatrix matrix(3, 2);
     matrix.col(0) = variables;
     matrix.col(1) = -variables;
 
-    const AffineMatrix block = matrix.block(0, 0, 2, 2);
+    const AffineTMatrix block = matrix.block(0, 0, 2, 2);
 
     CHECK(block(0, 0).itv() == variables[0].itv());
     CHECK(block(1, 0).itv() == variables[1].itv());
@@ -1068,29 +1068,29 @@ TEST_CASE("Eigen affine interval-valued block operations")
     CHECK(block(1, 1).itv() == (-variables[1]).itv());
 }
 
-TEST_CASE("Eigen affine interval enclosure through linear expression")
+TEST_CASE("Eigen AffineT interval enclosure through linear expression")
 {
-    const AffineVarVector variables(
+    const AffineTVarVector variables(
         IntervalVector({{-2.0, 1.0}, {3.0, 5.0}, {-1.0, 4.0}}));
-    const AffineVector affine = variables;
+    const AffineTVector AffineT = variables;
 
-    const AffineVector result = 2.0 * affine - affine;
+    const AffineTVector result = 2.0 * AffineT - AffineT;
 
     for(Index i = 0; i < result.size(); ++i)
         check_interval_enclosure(result[i], variables[i].itv());
 }
 
-TEST_CASE("Eigen affine eval materializes expressions")
+TEST_CASE("Eigen AffineT eval materializes expressions")
 {
-    const AffineVarVector lhs_variables(
+    const AffineTVarVector lhs_variables(
         IntervalVector({{1}, {2}, {3}}));
-    const AffineVarVector rhs_variables(
+    const AffineTVarVector rhs_variables(
         IntervalVector({{4}, {5}, {6}}));
-    AffineVector lhs(lhs_variables);
-    AffineVector rhs(rhs_variables);
+    AffineTVector lhs(lhs_variables);
+    AffineTVector rhs(rhs_variables);
 
     const auto expression = lhs + rhs;
-    const AffineVector evaluated = expression.eval();
+    const AffineTVector evaluated = expression.eval();
 
     check_point(evaluated[0], 5.0);
     check_point(evaluated[1], 7.0);
@@ -1099,21 +1099,21 @@ TEST_CASE("Eigen affine eval materializes expressions")
 
 
 // ============================================================================
-// Compound assignments between AffineMain Eigen containers and all
+// Compound assignments between AffineTMain Eigen containers and all
 // compatible CODAC scalar/container types.
 //
-// The left-hand side is always an AffineMainVector or AffineMainMatrix.
+// The left-hand side is always an AffineTMainVector or AffineTMainMatrix.
 // For every compatible right-hand side, +=, -=, *= and /= are exercised
 // independently.
 //
 // Point intervals are used deliberately so that the expected result is
-// exact while still testing the Interval/Affine/AffineVar interoperability.
+// exact while still testing the Interval/AffineT/AffineTVar interoperability.
 // ============================================================================
 
-TEST_CASE("Eigen AffineVector compound assignments with Interval scalar",
-          "[Eigen][compound-assignment][AffineVector][Interval]")
+TEST_CASE("Eigen AffineTVector compound assignments with Interval scalar",
+          "[Eigen][compound-assignment][AffineTVector][Interval]")
 {
-    AffineVector initial(3);
+    AffineTVector initial(3);
     initial[0] = Interval(1.0);
     initial[1] = Interval(2.0);
     initial[2] = Interval(4.0);
@@ -1160,19 +1160,19 @@ TEST_CASE("Eigen AffineVector compound assignments with Interval scalar",
 }
 
 
-TEST_CASE("Eigen AffineVector compound assignments with Affine scalar",
-          "[Eigen][compound-assignment][AffineVector][Affine]")
+TEST_CASE("Eigen AffineTVector compound assignments with AffineT scalar",
+          "[Eigen][compound-assignment][AffineTVector][AffineT]")
 {
-    AffineVarVector initial(3);
+    AffineTVarVector initial(3);
     initial[0] = Interval(1.0);
     initial[1] = Interval(2.0);
     initial[2] = Interval(4.0);
 
-    const Affine scalar =initial[1];
+    const AffineT scalar =initial[1];
 
     SECTION("operator+=")
     {
-        AffineVector value = initial;
+        AffineTVector value = initial;
         value += scalar;
 
         check_point(value[0], 3.0);
@@ -1182,7 +1182,7 @@ TEST_CASE("Eigen AffineVector compound assignments with Affine scalar",
 
     SECTION("operator-=")
     {
-    	AffineVector value = initial;
+    	AffineTVector value = initial;
         value -= scalar;
 
         check_point(value[0], -1.0);
@@ -1192,7 +1192,7 @@ TEST_CASE("Eigen AffineVector compound assignments with Affine scalar",
 
     SECTION("operator*=")
     {
-    	AffineVector value = initial;
+    	AffineTVector value = initial;
         value *= scalar;
 
         check_point(value[0], 2.0);
@@ -1202,7 +1202,7 @@ TEST_CASE("Eigen AffineVector compound assignments with Affine scalar",
 
     SECTION("operator/=")
     {
-    	AffineVector value = initial;
+    	AffineTVector value = initial;
         value /= scalar;
 
         check_point(value[0], 0.5);
@@ -1212,10 +1212,10 @@ TEST_CASE("Eigen AffineVector compound assignments with Affine scalar",
 }
 
 
-TEST_CASE("Eigen AffineVector compound assignments with IntervalVector",
-          "[Eigen][compound-assignment][AffineVector][IntervalVector]")
+TEST_CASE("Eigen AffineTVector compound assignments with IntervalVector",
+          "[Eigen][compound-assignment][AffineTVector][IntervalVector]")
 {
-    AffineVarVector initial(3);
+    AffineTVarVector initial(3);
     initial[0] = Interval(1.0);
     initial[1] = Interval(2.0);
     initial[2] = Interval(4.0);
@@ -1228,7 +1228,7 @@ TEST_CASE("Eigen AffineVector compound assignments with IntervalVector",
 
     SECTION("operator+=")
     {
-    	AffineVector value = initial;
+    	AffineTVector value = initial;
         value += rhs;
 
         check_point(value[0], 3.0);
@@ -1238,7 +1238,7 @@ TEST_CASE("Eigen AffineVector compound assignments with IntervalVector",
 
     SECTION("operator-=")
     {
-    	AffineVector value = initial;
+    	AffineTVector value = initial;
         value -= rhs;
 
         check_point(value[0], -1.0);
@@ -1248,7 +1248,7 @@ TEST_CASE("Eigen AffineVector compound assignments with IntervalVector",
 
 //    SECTION("operator*=")
 //    {
-//    	AffineVector value = initial;
+//    	AffineTVector value = initial;
 //        value *= rhs;
 //
 //        check_point(value[0], 2.0);
@@ -1258,7 +1258,7 @@ TEST_CASE("Eigen AffineVector compound assignments with IntervalVector",
 
 //    SECTION("operator/=")
 //    {
-//    	AffineVector value = initial;
+//    	AffineTVector value = initial;
 //        value /= rhs;
 //
 //        check_point(value[0], 0.5);
@@ -1268,22 +1268,22 @@ TEST_CASE("Eigen AffineVector compound assignments with IntervalVector",
 }
 
 
-TEST_CASE("Eigen AffineVector compound assignments with AffineVector",
-          "[Eigen][compound-assignment][AffineVector][AffineVector]")
+TEST_CASE("Eigen AffineTVector compound assignments with AffineTVector",
+          "[Eigen][compound-assignment][AffineTVector][AffineTVector]")
 {
-    AffineVarVector initial(3);
+    AffineTVarVector initial(3);
     initial[0] = Interval(1.0);
     initial[1] = Interval(2.0);
     initial[2] = Interval(4.0);
 
-    AffineVector rhs(3);
+    AffineTVector rhs(3);
     rhs[0] = Interval(2.0);
     rhs[1] = Interval(3.0);
     rhs[2] = Interval(4.0);
 
     SECTION("operator+=")
     {
-    	AffineVector value = initial;
+    	AffineTVector value = initial;
         value += rhs;
 
         check_point(value[0], 3.0);
@@ -1293,7 +1293,7 @@ TEST_CASE("Eigen AffineVector compound assignments with AffineVector",
 
     SECTION("operator-=")
     {
-    	AffineVector value = initial;
+    	AffineTVector value = initial;
         value -= rhs;
 
         check_point(value[0], -1.0);
@@ -1303,7 +1303,7 @@ TEST_CASE("Eigen AffineVector compound assignments with AffineVector",
 
 //    SECTION("operator*=")
 //    {
-//    	AffineVector value = initial;
+//    	AffineTVector value = initial;
 //        value *= rhs;
 //
 //        check_point(value[0], 2.0);
@@ -1314,7 +1314,7 @@ TEST_CASE("Eigen AffineVector compound assignments with AffineVector",
 //    SECTION("operator/=")
 //    {
 //        auto value = initial;
-//        AffineVector /= rhs;
+//        AffineTVector /= rhs;
 //
 //        check_point(value[0], 0.5);
 //        check_point(value[1], 2.0 / 3.0);
@@ -1323,15 +1323,15 @@ TEST_CASE("Eigen AffineVector compound assignments with AffineVector",
 }
 
 
-TEST_CASE("Eigen AffineVector compound assignments with AffineVarVector",
-          "[Eigen][compound-assignment][AffineVector][AffineVarVector]")
+TEST_CASE("Eigen AffineTVector compound assignments with AffineTVarVector",
+          "[Eigen][compound-assignment][AffineTVector][AffineTVarVector]")
 {
-    AffineVarVector initial(3);
+    AffineTVarVector initial(3);
     initial[0] = Interval(1.0);
     initial[1] = Interval(2.0);
     initial[2] = Interval(4.0);
 
-    const AffineVarVector rhs(
+    const AffineTVarVector rhs(
         IntervalVector({
             {2.0},
             {3.0},
@@ -1340,7 +1340,7 @@ TEST_CASE("Eigen AffineVector compound assignments with AffineVarVector",
 
     SECTION("operator+=")
     {
-    	AffineVector value = initial;
+    	AffineTVector value = initial;
         value += rhs;
 
         check_point(value[0], 3.0);
@@ -1350,7 +1350,7 @@ TEST_CASE("Eigen AffineVector compound assignments with AffineVarVector",
 
     SECTION("operator-=")
     {
-    	AffineVector value = initial;
+    	AffineTVector value = initial;
         value -= rhs;
 
         check_point(value[0], -1.0);
@@ -1360,7 +1360,7 @@ TEST_CASE("Eigen AffineVector compound assignments with AffineVarVector",
 
 //    SECTION("operator*=")
 //    {
-//    	AffineVector value = initial;
+//    	AffineTVector value = initial;
 //        value *= rhs;
 //
 //        check_point(value[0], 2.0);
@@ -1370,7 +1370,7 @@ TEST_CASE("Eigen AffineVector compound assignments with AffineVarVector",
 
 //    SECTION("operator/=")
 //    {
-//    	AffineVector value = initial;
+//    	AffineTVector value = initial;
 //        value /= rhs;
 //
 //        check_point(value[0], 0.5);
@@ -1380,10 +1380,10 @@ TEST_CASE("Eigen AffineVector compound assignments with AffineVarVector",
 }
 
 
-TEST_CASE("Eigen AffineMatrix compound assignments with Interval scalar",
-          "[Eigen][compound-assignment][AffineMatrix][Interval]")
+TEST_CASE("Eigen AffineTMatrix compound assignments with Interval scalar",
+          "[Eigen][compound-assignment][AffineTMatrix][Interval]")
 {
-    AffineMatrix initial(2, 2);
+    AffineTMatrix initial(2, 2);
     initial(0, 0) = Interval(1.0);
     initial(0, 1) = Interval(2.0);
     initial(1, 0) = Interval(3.0);
@@ -1435,16 +1435,16 @@ TEST_CASE("Eigen AffineMatrix compound assignments with Interval scalar",
 }
 
 
-TEST_CASE("Eigen AffineMatrix compound assignments with Affine scalar",
-          "[Eigen][compound-assignment][AffineMatrix][Affine]")
+TEST_CASE("Eigen AffineTMatrix compound assignments with AffineT scalar",
+          "[Eigen][compound-assignment][AffineTMatrix][AffineT]")
 {
-    AffineMatrix initial(2, 2);
+    AffineTMatrix initial(2, 2);
     initial(0, 0) = Interval(1.0);
     initial(0, 1) = Interval(2.0);
     initial(1, 0) = Interval(3.0);
     initial(1, 1) = Interval(4.0);
 
-    Affine scalar;
+    AffineT scalar;
 	scalar =Interval(2.0);
 
     SECTION("operator+=")
@@ -1492,10 +1492,10 @@ TEST_CASE("Eigen AffineMatrix compound assignments with Affine scalar",
     }
 }
 
-TEST_CASE("Eigen AffineMatrix compound assignments with IntervalMatrix",
-          "[Eigen][compound-assignment][AffineMatrix][IntervalMatrix]")
+TEST_CASE("Eigen AffineTMatrix compound assignments with IntervalMatrix",
+          "[Eigen][compound-assignment][AffineTMatrix][IntervalMatrix]")
 {
-    AffineMatrix initial(2, 2);
+    AffineTMatrix initial(2, 2);
     initial(0, 0) = Interval(1.0);
     initial(0, 1) = Interval(2.0);
     initial(1, 0) = Interval(3.0);
@@ -1556,7 +1556,7 @@ TEST_CASE("Eigen AffineMatrix compound assignments with IntervalMatrix",
 
 
 TEST_CASE("Eigen IntervalMatrix compound assignments with IntervalMatrix",
-          "[Eigen][compound-assignment][AffineMatrix][IntervalMatrix]")
+          "[Eigen][compound-assignment][AffineTMatrix][IntervalMatrix]")
 {
     IntervalMatrix initial(2, 2);
     initial(0, 0) = Interval(1.0);
@@ -1618,16 +1618,16 @@ TEST_CASE("Eigen IntervalMatrix compound assignments with IntervalMatrix",
 }
 
 
-TEST_CASE("Eigen AffineMatrix compound assignments with AffineMatrix",
-          "[Eigen][compound-assignment][AffineMatrix][AffineMatrix]")
+TEST_CASE("Eigen AffineTMatrix compound assignments with AffineTMatrix",
+          "[Eigen][compound-assignment][AffineTMatrix][AffineTMatrix]")
 {
-    AffineMatrix initial(2, 2);
+    AffineTMatrix initial(2, 2);
     initial(0, 0) = Interval(1.0);
     initial(0, 1) = Interval(2.0);
     initial(1, 0) = Interval(3.0);
     initial(1, 1) = Interval(4.0);
 
-    AffineMatrix rhs(2, 2);
+    AffineTMatrix rhs(2, 2);
     rhs(0, 0) = Interval(2.0);
     rhs(0, 1) = Interval(3.0);
     rhs(1, 0) = Interval(4.0);

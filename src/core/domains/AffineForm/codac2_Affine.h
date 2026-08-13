@@ -31,11 +31,11 @@ namespace codac2 {
 	//typedef AF_fAFFullI AF_Default;
 
 	/** \brief Default affine type based on \c AF_Default. */
-	typedef AffineMain<AF_Default> 			Affine2;
-	typedef AffineVarMainVector<AF_Default>	Affine2Variables;
-	typedef AffineMainVector<AF_Default> 	Affine2Vector;
-	typedef AffineMainRow<AF_Default> 		Affine2Row;
-	typedef AffineMainMatrix<AF_Default> 	Affine2Matrix;
+	typedef AffineMain<AF_Default> 			Affine;
+	typedef AffineVarMainVector<AF_Default>	AffineVariables;
+	typedef AffineMainVector<AF_Default> 	AffineVector;
+	typedef AffineMainRow<AF_Default> 		AffineRow;
+	typedef AffineMainMatrix<AF_Default> 	AffineMatrix;
 
 } // namespace codac2
 

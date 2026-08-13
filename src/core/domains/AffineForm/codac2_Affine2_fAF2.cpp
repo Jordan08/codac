@@ -66,7 +66,7 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator=(const Interval& x) {
 		else
 			this->_elt._err = x.ub();
 	} else  {
-		if (_elt._val==nullptr) { _elt._val = new double[_n+1]; }
+		if (_elt._val==nullptr) { _elt._val = std::make_unique<double[]>(_n+1); }
 		_elt._val[0] = x.mid();
 		for (int i=1; i<=_n;i++) {
 			_elt._val[i] =0;
@@ -104,7 +104,7 @@ AffineVarMain<AF_fAF2>& AffineVarMain<AF_fAF2>::operator=(const Interval& x) {
 		if (x.ub()<= -std::numeric_limits<double>::max()) this->_elt._err = -std::numeric_limits<double>::max();
 		else this->_elt._err = x.ub();
 	} else  {
-		if (this->_elt._val==nullptr) { this->_elt._val = new double[_n+1]; }
+		if (this->_elt._val==nullptr) { this->_elt._val = std::make_unique<double[]>(_n+1); }
 		this->_elt._val[0] = x.mid();
 		for (int i=1; i<=_n;i++) {
 			this->_elt._val[i] =0;
@@ -133,7 +133,7 @@ AffineMain<AF_fAF2>::AffineMain(int size, int var, const Interval& itv) :
 {
 	assert((((size>=0) && (var>=0))||itv.is_empty()) && (var<size));
 	if (!(itv.is_unbounded()||itv.is_empty())) {
-		_elt._val	=new double[size + 1];
+		_elt._val	=std::make_unique<double[]>(size + 1);
 		_elt._val[0] = itv.mid();
 		for (int i = 1; i <= size; i++){
 			_elt._val[i] = 0.0;
@@ -171,7 +171,7 @@ AffineMain<AF_fAF2>::AffineMain(const AffineMain<AF_fAF2>& x) :
 		_n		(x._n),
 		_elt	(nullptr	,x._elt._err ) {
 	if (x.is_active()) {
-		_elt._val =new double[x._n + 1];
+		_elt._val =std::make_unique<double[]>(x._n + 1);
 		for (int i = 0; i <= x._n; i++){
 			_elt._val[i] = x._elt._val[i];
 		}
@@ -195,19 +195,16 @@ AffineMain<AF_fAF2>::operator=(const AffineMain<AF_fAF2>& x)
     // An inactive affine form has no usable coefficient representation.
     // Releasing the old storage prevents _n from becoming inconsistent
     // with the actual allocation capacity.
-    delete[] _elt._val;
     _elt._val = nullptr;
     _n = x._n;
     return *this;
   }
 
   if (_elt._val == nullptr || _n != x._n) {
-    // Allocate before releasing the current storage so that the destination
-    // remains unchanged if allocation throws.
-    double* new_values = new double[x._n + 1];
-
-    delete[] _elt._val;
-    _elt._val = new_values;
+    // unique_ptr::operator= frees whatever _elt._val previously owned only
+    // after the new array has been successfully allocated, so the
+    // destination is left unchanged if allocation throws.
+    _elt._val = std::make_unique<double[]>(x._n + 1);
     _n = x._n;
   }
 
@@ -454,12 +451,12 @@ void AffineMain<AF_fAF2>::resize(int n) {
 
 	if (_elt._val==nullptr) {
 		_n = n;
-		_elt._val = new double[n+1];
+		_elt._val = std::make_unique<double[]>(n+1);
 		for (int i=0;i<=n;i++) {
 			_elt._val[i] = 0;
 		}
 	} else {
-		double * tmp= new double[n+1];
+		auto tmp = std::make_unique<double[]>(n+1);
 		int i=0;
 		for (;i<=_n;i++) {
 			tmp[i] = _elt._val[i];
@@ -468,8 +465,7 @@ void AffineMain<AF_fAF2>::resize(int n) {
 			tmp[i] = 0;
 		}
 		_n = n;
-		delete[] _elt._val;
-		_elt._val = tmp;
+		_elt._val = std::move(tmp);
 	}
 	return;
 }
@@ -546,9 +542,9 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator*=(const AffineMain<AF_fAF2>& 
 				this->resize(y.size());
 			}
 			double Sx, Sy, Sxy, Sz, ttt, sss, ppp, tmp, xVal0, eee;
-			double * xTmp;
+			std::unique_ptr<double[]> xTmp;
 
-			xTmp = new double[_n + 1];
+			xTmp = std::make_unique<double[]>(_n + 1);
 			Sx=0.0; Sy=0.0; Sxy=0.0; Sz=0.0; ttt=0.0; sss=0.0; ppp=0.0; tmp=0.0; xVal0=0.0; eee=0.0;
 
 			// These accumulators may later be multiplied by quantities at the
@@ -657,8 +653,6 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator*=(const AffineMain<AF_fAF2>& 
 				b &= (std::fabs(_elt._val[i])<oo);
 			}
 			if (!b) *this = Interval();
-
-			delete[] xTmp;
 		}
 
 	} else { // y or x is not a valid affine form. So we multiply y.itv() such as an interval

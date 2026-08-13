@@ -240,6 +240,47 @@ public:
 	bool operator!=(const Interval& x) const ;
 
 	/**
+	 * \brief Comparison (strict less-than) between this and an interval.
+	 *
+	 * The comparison is performed on the interval enclosure of this affine form.
+	 *
+	 * \param x interval to be compared with
+	 * \return interval Boolean result
+	 */
+	BoolInterval operator<(const Interval& x) const;
+
+	/**
+	 * \brief Comparison (strict greater-than) between this and an interval.
+	 *
+	 * The comparison is performed on the interval enclosure of this affine form.
+	 *
+	 * \param x interval to be compared with
+	 * \return interval Boolean result
+	 */
+	BoolInterval operator>(const Interval& x) const;
+
+	/**
+	 * \brief Comparison (strict less-than) between two affine forms.
+	 *
+	 * The comparison is performed on their interval enclosures.
+	 *
+	 * \param x affine form to be compared with
+	 * \return interval Boolean result
+	 */
+	BoolInterval operator<(const AffineMain& x) const;
+
+	/**
+	 * \brief Comparison (strict greater-than) between two affine forms.
+	 *
+	 * The comparison is performed on their interval enclosures.
+	 *
+	 * \param x affine form to be compared with
+	 * \return interval Boolean result
+	 */
+	BoolInterval operator>(const AffineMain& x) const;
+
+
+	/**
 	 * \brief Tests non-equality with an double.
 	 *
 	 * \param x interval to compare with
@@ -695,9 +736,6 @@ private:
 	AffineMain& Aasinh(const Interval& itv);
 	AffineMain& Aatanh(const Interval& itv);
 
-	/** Enforce the certified interval-inclusion postcondition. */
-	AffineMain& ensure_encloses(const Interval& reference);
-
 //	template<class A>   friend AffineMain<A> AffineVarMain<A>::operator-() const ;
 	template<class A>   friend AffineMain<A> operator/(double d, const AffineMain<A>& x);
 	template<class A>	friend AffineMain<A> inv(const AffineMain<A>&  x);
@@ -710,6 +748,8 @@ private:
 	template<class A>	friend AffineMain<A> pow(const AffineMain<A>& x, const Interval &y);
 	template<class A>	friend AffineMain<A> pow(const AffineMain<A>& x, const AffineMain<A>& y);
 	template<class A>	friend AffineMain<A> root(const AffineMain<A>&  x, int n);
+	template<class A>	friend AffineMain<A> pow(double  d, const AffineMain<A>&  x);
+	template<class A>	friend AffineMain<A> pow(const Interval& itv, const AffineMain<A>&  x);
 	template<class A>	friend AffineMain<A> cos(const AffineMain<A>&  x);
 	template<class A>	friend AffineMain<A> sin(const AffineMain<A>&  x);
 	template<class A>	friend AffineMain<A> tan(const AffineMain<A>&  x);
@@ -861,6 +901,15 @@ inline bool AffineMain<T>::overlaps(const Interval &x) const { return this->itv(
 
 template<class T>
 inline bool AffineMain<T>::is_disjoint(const Interval &x) const { return this->itv().is_disjoint(x); }
+
+
+
+template<class T>
+BoolInterval operator<(const Interval& x, const AffineMain<T>& y);
+
+template<class T>
+BoolInterval operator>(const Interval& x, const AffineMain<T>& y);
+
 
 
 /** \brief Returns \f$-x\f$. */
@@ -1266,38 +1315,39 @@ inline bool AffineMain<T>::operator!=(const Interval& x) const {
 }
 
 template<class T>
+inline BoolInterval AffineMain<T>::operator<(const Interval& x) const
+{
+    return this->itv() < x;
+}
+
+template<class T>
+inline BoolInterval AffineMain<T>::operator>(const Interval& x) const
+{
+    return this->itv() > x;
+}
+
+template<class T>
+inline BoolInterval AffineMain<T>::operator<(const AffineMain& x) const
+{
+    return this->itv() < x.itv();
+}
+
+template<class T>
+inline BoolInterval AffineMain<T>::operator>(const AffineMain& x) const
+{
+    return this->itv() > x.itv();
+}
+
+template<class T>
 inline void AffineMain<T>::set_empty(){
 	*this = Interval::empty();
 }
 
-template<class T>
-inline AffineMain<T>& AffineMain<T>::ensure_encloses(const Interval& reference) {
-	if (reference.is_empty()) {
-		if (!is_empty()) *this = reference;
-		return *this;
-	}
-	const Interval enclosure = this->itv();
-	if (enclosure.is_empty() || !enclosure.is_superset(reference)) {
-		*this = reference;
-	}
-	return *this;
-}
-
-//template<class T>
-//inline AffineMain<T>& AffineMain<T>::inflate(double radd){
-//	if (fabs(radd)>= POS_INFINITY) {
-//		*this = Interval::all_reals();
-//	} else {
-//		saxpy(1.0, AffineMain<T>(),0.0, radd, false, false, false, true);
-//	}
-//	return *this;
-//}
 
 template<class T>
 inline int AffineMain<T>::size() const{
 	return _n;
 }
-
 
 template<class T>
 inline bool AffineMain<T>::is_active() const{
@@ -1319,6 +1369,17 @@ template<class T>
 inline bool AffineMain<T>::is_unbounded() const{
 	return ((_status==AffineStatus::AllReals)||(_status==AffineStatus::UpperUnbounded)||(_status==AffineStatus::LowerUnbounded));
 }
+
+template<class T>
+inline BoolInterval operator<(const Interval& x, const AffineMain<T>& y) {
+    return x < y.itv();
+}
+
+template<class T>
+inline BoolInterval operator>(const Interval& x, const AffineMain<T>& y){
+    return x > y.itv();
+}
+
 
 template<class T>
 inline AffineMain<T>& AffineMain<T>::operator-=(double d){
@@ -1492,55 +1553,55 @@ template<class T>
 inline AffineMain<T> inv(const AffineMain<T>& x){
 	AffineMain<T> out(x);
 	out.Ainv(x.itv());
-	return out.ensure_encloses(1.0/x.itv());
+	return out;
 }
 
 template<class T>
 inline AffineMain<T> sqr(const AffineMain<T>& x){
 	AffineMain<T> out(x);
 	out.Asqr(x.itv());
-	return out.ensure_encloses(sqr(x.itv()));
+	return out;
 }
 
 template<class T>
 inline AffineMain<T> sqrt(const AffineMain<T>& x){
 	AffineMain<T> out(x);
 	out.Asqrt(x.itv());
-	return out.ensure_encloses(sqrt(x.itv()));
+	return out;
 }
 
 template<class T>
 inline AffineMain<T> exp(const AffineMain<T>& x){
 	AffineMain<T> out(x);
 	out.Aexp(x.itv());
-	return out.ensure_encloses(exp(x.itv()));
+	return out;
 }
 
 template<class T>
 inline AffineMain<T> log(const AffineMain<T>& x){
 	AffineMain<T> out(x);
 	out.Alog(x.itv());
-	return out.ensure_encloses(log(x.itv()));
+	return out;
 }
 
 template<class T>
 inline AffineMain<T> pow(const AffineMain<T>& x, int n) {
 	AffineMain<T> out(x);
 	out.Apow(n,x.itv());
-	return out.ensure_encloses(pow(x.itv(), n));
+	return out;
 }
 template<class T>
 inline AffineMain<T> pow(const AffineMain<T>& x, double d){
 	AffineMain<T> out(x);
 	out.Apow(d,x.itv());
-	return out.ensure_encloses(pow(x.itv(), d));
+	return out;
 }
 template<class T>
 inline AffineMain<T> pow(const AffineMain<T> &x, const Interval &y){
 	// return exp(y * log(x));
 	AffineMain<T> out(x);
 	out.Apow(y,x.itv());
-	return out.ensure_encloses(pow(x.itv(), y));
+	return out;
 }
 template<class T>
 inline AffineMain<T> pow(const AffineMain<T>& x, const AffineMain<T>& y)
@@ -1551,104 +1612,127 @@ inline AffineMain<T> pow(const AffineMain<T>& x, const AffineMain<T>& y)
   // whenever Apow(const Interval&, const Interval&) can safely preserve it.
   AffineMain<T> out(x);
   out.Apow(y.itv(), x.itv());
-  return out.ensure_encloses(pow(x.itv(), y.itv()));
+  return out;
+}
+template<class T>
+inline AffineMain<T> pow(const Interval& x, const AffineMain<T>& y)
+{
+  // Deliberate design choice: the affine dependency structure of the
+  // exponent y is not preserved. The exponent is evaluated through y.itv()
+  // as an independent interval. The affine structure of the base x is kept
+  // whenever Apow(const Interval&, const Interval&) can safely preserve it.
+  AffineMain<T> out(x);
+  out.Apow(y.itv(), x);
+  return out;
+}
+
+template<class T>
+inline AffineMain<T> pow(double x, const AffineMain<T>& y)
+{
+  // Deliberate design choice: the affine dependency structure of the
+  // exponent y is not preserved. The exponent is evaluated through y.itv()
+  // as an independent interval. The affine structure of the base x is kept
+  // whenever Apow(const Interval&, const Interval&) can safely preserve it.
+  AffineMain<T> out(x);
+  out.Apow(y.itv(), Interval(x));
+  return out;
 }
 
 template<class T>
 inline AffineMain<T> root(const AffineMain<T>& x, int n) {
 	AffineMain<T> out(x);
 	out.Aroot(n,x.itv());
-	return out.ensure_encloses(root(x.itv(), n));
+	return out;
 }
 
 template<class T>
 inline AffineMain<T> cos(const AffineMain<T>& x){
 	AffineMain<T> out(x);
 	out.Acos(x.itv());
-	return out.ensure_encloses(cos(x.itv()));
+	return out;
 }
 
 template<class T>
 inline AffineMain<T> sin(const AffineMain<T>& x){
 	AffineMain<T> out(x);
 	out.Asin(x.itv());
-	return out.ensure_encloses(sin(x.itv()));
+	return out;
 }
 
 template<class T>
 inline AffineMain<T> tan(const AffineMain<T>& x){
 	AffineMain<T> out(x);
 	out.Atan(x.itv());
-	return out.ensure_encloses(tan(x.itv()));
+	return out;
 }
 
 template<class T>
 inline AffineMain<T> acos(const AffineMain<T>& x){
 	AffineMain<T> out(x);
 	out.Aacos(x.itv());
-	return out.ensure_encloses(acos(x.itv()));
+	return out;
 }
 
 template<class T>
 inline AffineMain<T> asin(const AffineMain<T>& x){
 	AffineMain<T> out(x);
 	out.Aasin(x.itv());
-	return out.ensure_encloses(asin(x.itv()));
+	return out;
 }
 
 template<class T>
 inline AffineMain<T> atan(const AffineMain<T>& x){
 	AffineMain<T> out(x);
 	out.Aatan(x.itv());
-	return out.ensure_encloses(atan(x.itv()));
+	return out;
 }
 
 template<class T>
 inline AffineMain<T> cosh(const AffineMain<T>& x){
 	AffineMain<T> out(x);
 	out.Acosh(x.itv());
-	return out.ensure_encloses(cosh(x.itv()));
+	return out;
 }
 
 template<class T>
 inline AffineMain<T> sinh(const AffineMain<T>& x){
 	AffineMain<T> out(x);
 	out.Asinh(x.itv());
-	return out.ensure_encloses(sinh(x.itv()));
+	return out;
 }
 
 template<class T>
 inline AffineMain<T> tanh(const AffineMain<T>& x){
 	AffineMain<T> out(x);
 	out.Atanh(x.itv());
-	return out.ensure_encloses(tanh(x.itv()));
+	return out;
 }
 
 template<class T>
 inline AffineMain<T> acosh(const AffineMain<T>& x){
 	AffineMain<T> out(x);
 	out.Aacosh(x.itv());
-	return out.ensure_encloses(acosh(x.itv()));
+	return out;
 }
 
 template<class T>
 inline AffineMain<T> asinh(const AffineMain<T>& x){
 	AffineMain<T> out(x);
 	out.Aasinh(x.itv());
-	return out.ensure_encloses(asinh(x.itv()));
+	return out;
 }
 
 template<class T>
 inline AffineMain<T> atanh(const AffineMain<T>& x){
 	AffineMain<T> out(x);
 	out.Aatanh(x.itv());
-	return out.ensure_encloses(atanh(x.itv()));
+	return out;
 }
 template<class T>
 inline AffineMain<T> abs(const AffineMain<T> &x){
 	AffineMain<T> out(x);
 	out.Aabs(x.itv());
-	return out.ensure_encloses(abs(x.itv()));
+	return out;
 }
 
 
@@ -2092,7 +2176,7 @@ AffineMain<T>::Apow(const Interval& y, const Interval& itvx)
   this->Alog(itvx);
   *this *= y;
   this->Aexp(y*log(itvx));
-  return ensure_encloses(reference);
+  return *this;
 }
 
 template<class T>

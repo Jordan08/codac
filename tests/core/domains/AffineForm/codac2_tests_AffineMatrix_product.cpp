@@ -1,7 +1,7 @@
 /**
  * \file codac2_tests_AffineMatrix_extended.cpp
- * \brief Extensive unit tests for products involving affine matrices,
- *        affine vectors, affine-variable vectors, and affine rows.
+ * \brief Extensive unit tests for products involving Affine matrices,
+ *        Affine vectors, Affine-variable vectors, and Affine rows.
  */
 
 #include <catch2/catch_test_macros.hpp>
@@ -20,18 +20,18 @@ using namespace codac2;
 namespace {
 
 using Model = AF_Default;
-using Affine = AffineMain<Model>;
-using AffineMatrix = AffineMainMatrix<Model>;
-using AffineVector = AffineMainVector<Model>;
-using AffineVarVector = AffineVarMainVector<Model>;
-using AffineRow = AffineMainRow<Model>;
+using AffineT = AffineMain<Model>;
+using AffineTMatrix = AffineMainMatrix<Model>;
+using AffineTVector = AffineMainVector<Model>;
+using AffineTVarVector = AffineVarMainVector<Model>;
+using AffineTRow = AffineMainRow<Model>;
 using RealMatrix = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>;
 using RealRow = Eigen::Matrix<double, 1, Eigen::Dynamic>;
 using RealVector = Eigen::Matrix<double, Eigen::Dynamic, 1>;
 using IntervalMatrixEigen = Eigen::Matrix<Interval, Eigen::Dynamic, Eigen::Dynamic>;
 using IntervalRowEigen = Eigen::Matrix<Interval, 1, Eigen::Dynamic>;
 
-IntervalMatrixEigen interval_hull(const AffineMatrix& value)
+IntervalMatrixEigen interval_hull(const AffineTMatrix& value)
 {
     IntervalMatrixEigen result(value.rows(), value.cols());
     for(Eigen::Index i = 0; i < value.rows(); ++i)
@@ -40,7 +40,7 @@ IntervalMatrixEigen interval_hull(const AffineMatrix& value)
     return result;
 }
 
-IntervalMatrixEigen interval_hull(const AffineRow& value)
+IntervalMatrixEigen interval_hull(const AffineTRow& value)
 {
     IntervalMatrixEigen result(value.rows(), value.cols());
     for(Eigen::Index j = 0; j < value.cols(); ++j)
@@ -48,7 +48,7 @@ IntervalMatrixEigen interval_hull(const AffineRow& value)
     return result;
 }
 
-IntervalMatrixEigen interval_hull(const AffineVector& value)
+IntervalMatrixEigen interval_hull(const AffineTVector& value)
 {
     IntervalMatrixEigen result(value.rows(), 1);
     for(Eigen::Index i = 0; i < value.rows(); ++i)
@@ -56,7 +56,7 @@ IntervalMatrixEigen interval_hull(const AffineVector& value)
     return result;
 }
 
-IntervalMatrixEigen interval_hull(const AffineVarVector& value)
+IntervalMatrixEigen interval_hull(const AffineTVarVector& value)
 {
     IntervalMatrixEigen result(value.rows(), 1);
     for(Eigen::Index i = 0; i < value.rows(); ++i)
@@ -65,7 +65,7 @@ IntervalMatrixEigen interval_hull(const AffineVarVector& value)
 }
 
 void check_encloses(
-    const AffineMatrix& actual,
+    const AffineTMatrix& actual,
     const IntervalMatrixEigen& expected)
 {
     REQUIRE(actual.rows() == expected.rows());
@@ -82,7 +82,7 @@ void check_encloses(
 }
 
 void check_encloses(
-    const AffineVector& actual,
+    const AffineTVector& actual,
     const IntervalMatrixEigen& expected)
 {
     REQUIRE(expected.cols() == 1);
@@ -96,7 +96,7 @@ void check_encloses(
 }
 
 void check_encloses(
-    const AffineRow& actual,
+    const AffineTRow& actual,
     const IntervalMatrixEigen& expected)
 {
     REQUIRE(expected.rows() == 1);
@@ -109,9 +109,9 @@ void check_encloses(
     }
 }
 
-AffineMatrix make_affine_matrix_2x3()
+AffineTMatrix make_AffineT_matrix_2x3()
 {
-    AffineMatrix value(2, 3);
+    AffineTMatrix value(2, 3);
     value(0, 0) = 1.0;
     value(0, 1) = -2.0;
     value(0, 2) = 3.0;
@@ -141,21 +141,21 @@ IntervalMatrixEigen make_interval_matrix_2x3()
     return value;
 }
 
-AffineVarVector make_variable_vector_3()
+AffineTVarVector make_variable_vector_3()
 {
-    return AffineVarVector(
+    return AffineTVarVector(
         IntervalVector({{1.0, 2.0}, {-1.0, 1.0}, {3.0, 4.0}}));
 }
 
-AffineVector make_affine_vector_3()
+AffineTVector make_AffineT_vector_3()
 {
-    const AffineVarVector variables = make_variable_vector_3();
-    return AffineVector(variables);
+    const AffineTVarVector variables = make_variable_vector_3();
+    return AffineTVector(variables);
 }
 
-AffineRow make_affine_row_3()
+AffineTRow make_AffineT_row_3()
 {
-    AffineRow value(3);
+    AffineTRow value(3);
     value(0) = Interval(1.0, 2.0);
     value(1) = Interval(-1.0, 1.0);
     value(2) = Interval(3.0, 4.0);
@@ -184,13 +184,13 @@ IntervalMatrixEigen multiply_intervals(
 
 } // namespace
 
-TEST_CASE("AffineVarMainVector converts transparently to AffineMainVector")
+TEST_CASE("AffineTVarMainVector converts transparently to AffineTMainVector")
 {
-    const AffineVarVector variables = make_variable_vector_3();
+    const AffineTVarVector variables = make_variable_vector_3();
 
     SECTION("construction")
     {
-        const AffineVector values(variables);
+        const AffineTVector values(variables);
         REQUIRE(values.size() == variables.size());
         for(Eigen::Index i = 0; i < values.size(); ++i)
             CHECK(values(i).itv() == variables(i).itv());
@@ -198,7 +198,7 @@ TEST_CASE("AffineVarMainVector converts transparently to AffineMainVector")
 
     SECTION("assignment")
     {
-        AffineVector values;
+        AffineTVector values;
         values = variables;
         REQUIRE(values.size() == variables.size());
         for(Eigen::Index i = 0; i < values.size(); ++i)
@@ -206,105 +206,105 @@ TEST_CASE("AffineVarMainVector converts transparently to AffineMainVector")
     }
 }
 
-TEST_CASE("Real matrix times AffineMainVector")
+TEST_CASE("Real matrix times AffineTMainVector")
 {
     const RealMatrix matrix = make_real_matrix_2x3();
-    const AffineVector vector = make_affine_vector_3();
+    const AffineTVector vector = make_AffineT_vector_3();
 
-    const AffineVector result = matrix * vector;
+    const AffineTVector result = matrix * vector;
     const IntervalMatrixEigen expected =
         multiply_intervals(matrix.cast<Interval>(), interval_hull(vector));
 
     check_encloses(result, expected);
 }
 
-TEST_CASE("Real matrix times AffineVarMainVector")
+TEST_CASE("Real matrix times AffineTVarMainVector")
 {
     const RealMatrix matrix = make_real_matrix_2x3();
-    const AffineVarVector vector = make_variable_vector_3();
+    const AffineTVarVector vector = make_variable_vector_3();
 
     const auto result = matrix * vector;
-    static_assert(std::same_as<typename decltype(result)::Scalar, Affine>);
+    static_assert(std::same_as<typename decltype(result)::Scalar, AffineT>);
     REQUIRE(result.rows() == 2);
     REQUIRE(result.cols() == 1);
 
     const IntervalMatrixEigen expected =
         multiply_intervals(matrix.cast<Interval>(), interval_hull(vector));
-    check_encloses(AffineVector(result), expected);
+    check_encloses(AffineTVector(result), expected);
 }
 
-TEST_CASE("Interval matrix times AffineMainVector")
+TEST_CASE("Interval matrix times AffineTMainVector")
 {
     const IntervalMatrixEigen matrix = make_interval_matrix_2x3();
-    const AffineVector vector = make_affine_vector_3();
+    const AffineTVector vector = make_AffineT_vector_3();
 
-    const AffineVector result = matrix * vector;
+    const AffineTVector result = matrix * vector;
     const IntervalMatrixEigen expected =
         multiply_intervals(matrix, interval_hull(vector));
 
     check_encloses(result, expected);
 }
 
-TEST_CASE("Interval matrix times AffineVarMainVector")
+TEST_CASE("Interval matrix times AffineTVarMainVector")
 {
     const IntervalMatrixEigen matrix = make_interval_matrix_2x3();
-    const AffineVarVector vector = make_variable_vector_3();
+    const AffineTVarVector vector = make_variable_vector_3();
 
     const auto result = matrix * vector;
-    static_assert(std::same_as<typename decltype(result)::Scalar, Affine>);
+    static_assert(std::same_as<typename decltype(result)::Scalar, AffineT>);
     REQUIRE(result.rows() == 2);
     REQUIRE(result.cols() == 1);
 
     const IntervalMatrixEigen expected =
         multiply_intervals(matrix, interval_hull(vector));
-    check_encloses(AffineVector(result), expected);
+    check_encloses(AffineTVector(result), expected);
 }
 
-TEST_CASE("Affine matrix times AffineMainVector")
+TEST_CASE("AffineT matrix times AffineTMainVector")
 {
-    const AffineMatrix matrix = make_affine_matrix_2x3();
-    const AffineVector vector = make_affine_vector_3();
+    const AffineTMatrix matrix = make_AffineT_matrix_2x3();
+    const AffineTVector vector = make_AffineT_vector_3();
 
-    const AffineVector result = matrix * vector;
+    const AffineTVector result = matrix * vector;
     const IntervalMatrixEigen expected =
         multiply_intervals(interval_hull(matrix), interval_hull(vector));
 
     check_encloses(result, expected);
 }
 
-TEST_CASE("Affine matrix times AffineVarMainVector")
+TEST_CASE("AffineT matrix times AffineTVarMainVector")
 {
-    const AffineMatrix matrix = make_affine_matrix_2x3();
-    const AffineVarVector vector = make_variable_vector_3();
+    const AffineTMatrix matrix = make_AffineT_matrix_2x3();
+    const AffineTVarVector vector = make_variable_vector_3();
 
     const auto result = matrix * vector;
-    static_assert(std::same_as<typename decltype(result)::Scalar, Affine>);
+    static_assert(std::same_as<typename decltype(result)::Scalar, AffineT>);
     REQUIRE(result.rows() == 2);
     REQUIRE(result.cols() == 1);
 
     const IntervalMatrixEigen expected =
         multiply_intervals(interval_hull(matrix), interval_hull(vector));
-    check_encloses(AffineVector(result), expected);
+    check_encloses(AffineTVector(result), expected);
 }
 
-TEST_CASE("Fixed-size real matrix times AffineVarMainVector")
+TEST_CASE("Fixed-size real matrix times AffineTVarMainVector")
 {
     Eigen::Matrix<double, 2, 3> matrix;
     matrix << 1.0, 2.0, 3.0,
               -1.0, 4.0, 0.5;
-    const AffineVarVector vector = make_variable_vector_3();
+    const AffineTVarVector vector = make_variable_vector_3();
 
     const auto result = matrix * vector;
-    static_assert(std::same_as<typename decltype(result)::Scalar, Affine>);
+    static_assert(std::same_as<typename decltype(result)::Scalar, AffineT>);
     static_assert(decltype(result)::RowsAtCompileTime == 2);
     static_assert(decltype(result)::ColsAtCompileTime == 1);
 
     const IntervalMatrixEigen expected =
         multiply_intervals(matrix.cast<Interval>(), interval_hull(vector));
-    check_encloses(AffineVector(result), expected);
+    check_encloses(AffineTVector(result), expected);
 }
 
-TEST_CASE("Fixed-size interval matrix times AffineVarMainVector")
+TEST_CASE("Fixed-size interval matrix times AffineTVarMainVector")
 {
     Eigen::Matrix<Interval, 2, 3> matrix;
     matrix(0, 0) = Interval(1.0);
@@ -313,52 +313,52 @@ TEST_CASE("Fixed-size interval matrix times AffineVarMainVector")
     matrix(1, 0) = Interval(-1.0);
     matrix(1, 1) = Interval(4.0);
     matrix(1, 2) = Interval(0.5);
-    const AffineVarVector vector = make_variable_vector_3();
+    const AffineTVarVector vector = make_variable_vector_3();
 
     const auto result = matrix * vector;
-    static_assert(std::same_as<typename decltype(result)::Scalar, Affine>);
+    static_assert(std::same_as<typename decltype(result)::Scalar, AffineT>);
     static_assert(decltype(result)::RowsAtCompileTime == 2);
     static_assert(decltype(result)::ColsAtCompileTime == 1);
 
     const IntervalMatrixEigen expected =
         multiply_intervals(IntervalMatrixEigen(matrix), interval_hull(vector));
-    check_encloses(AffineVector(result), expected);
+    check_encloses(AffineTVector(result), expected);
 }
 
-TEST_CASE("Fixed-size affine matrix times AffineVarMainVector")
+TEST_CASE("Fixed-size AffineT matrix times AffineTVarMainVector")
 {
-    Eigen::Matrix<Affine, 2, 3> matrix;
+    Eigen::Matrix<AffineT, 2, 3> matrix;
     matrix(0, 0) = 1.0;
     matrix(0, 1) = 2.0;
     matrix(0, 2) = 3.0;
     matrix(1, 0) = -1.0;
     matrix(1, 1) = 4.0;
     matrix(1, 2) = 0.5;
-    const AffineVarVector vector = make_variable_vector_3();
+    const AffineTVarVector vector = make_variable_vector_3();
 
     const auto result = matrix * vector;
-    static_assert(std::same_as<typename decltype(result)::Scalar, Affine>);
+    static_assert(std::same_as<typename decltype(result)::Scalar, AffineT>);
     static_assert(decltype(result)::RowsAtCompileTime == 2);
     static_assert(decltype(result)::ColsAtCompileTime == 1);
 
     check_encloses(
-        AffineVector(result),
-        multiply_intervals(interval_hull(AffineMatrix(matrix)),
+        AffineTVector(result),
+        multiply_intervals(interval_hull(AffineTMatrix(matrix)),
                            interval_hull(vector)));
 }
 
-TEST_CASE("Real matrix expression times AffineVarMainVector")
+TEST_CASE("Real matrix expression times AffineTVarMainVector")
 {
     const RealMatrix a = make_real_matrix_2x3();
     const RealMatrix b = 2.0 * make_real_matrix_2x3();
-    const AffineVarVector vector = make_variable_vector_3();
+    const AffineTVarVector vector = make_variable_vector_3();
 
     SECTION("sum expression")
     {
         const auto result = (a + b) * vector;
         const IntervalMatrixEigen expected = multiply_intervals(
             (a + b).eval().cast<Interval>(), interval_hull(vector));
-        check_encloses(AffineVector(result), expected);
+        check_encloses(AffineTVector(result), expected);
     }
 
     SECTION("scaled expression")
@@ -366,7 +366,7 @@ TEST_CASE("Real matrix expression times AffineVarMainVector")
         const auto result = (3.0 * a) * vector;
         const IntervalMatrixEigen expected = multiply_intervals(
             (3.0 * a).eval().cast<Interval>(), interval_hull(vector));
-        check_encloses(AffineVector(result), expected);
+        check_encloses(AffineTVector(result), expected);
     }
 
     SECTION("block expression")
@@ -379,54 +379,54 @@ TEST_CASE("Real matrix expression times AffineVarMainVector")
         const auto result = block * vector;
         const IntervalMatrixEigen expected = multiply_intervals(
             block.eval().cast<Interval>(), interval_hull(vector));
-        check_encloses(AffineVector(result), expected);
+        check_encloses(AffineTVector(result), expected);
     }
 }
 
-TEST_CASE("Interval matrix expression times AffineVarMainVector")
+TEST_CASE("Interval matrix expression times AffineTVarMainVector")
 {
     const IntervalMatrixEigen a = make_interval_matrix_2x3();
     const IntervalMatrixEigen b = make_interval_matrix_2x3();
-    const AffineVarVector vector = make_variable_vector_3();
+    const AffineTVarVector vector = make_variable_vector_3();
 
     const auto result = (a + b) * vector;
     const IntervalMatrixEigen expected =
         multiply_intervals((a + b).eval(), interval_hull(vector));
-    check_encloses(AffineVector(result), expected);
+    check_encloses(AffineTVector(result), expected);
 }
 
-TEST_CASE("Affine matrix expression times AffineVarMainVector")
+TEST_CASE("AffineT matrix expression times AffineTVarMainVector")
 {
-    const AffineMatrix a = make_affine_matrix_2x3();
-    const AffineMatrix b = make_affine_matrix_2x3();
-    const AffineVarVector vector = make_variable_vector_3();
+    const AffineTMatrix a = make_AffineT_matrix_2x3();
+    const AffineTMatrix b = make_AffineT_matrix_2x3();
+    const AffineTVarVector vector = make_variable_vector_3();
 
     const auto result = (a + b) * vector;
-    const AffineMatrix evaluated = (a + b).eval();
+    const AffineTMatrix evaluated = (a + b).eval();
     const IntervalMatrixEigen expected =
         multiply_intervals(interval_hull(evaluated), interval_hull(vector));
-    check_encloses(AffineVector(result), expected);
+    check_encloses(AffineTVector(result), expected);
 }
 
-TEST_CASE("AffineVarMainVector outer product with real row")
+TEST_CASE("AffineTVarMainVector outer product with real row")
 {
-    const AffineVarVector vector = make_variable_vector_3();
+    const AffineTVarVector vector = make_variable_vector_3();
     RealRow row(4);
     row << 2.0, -1.0, 0.5, 3.0;
 
     const auto result = vector * row;
-    static_assert(std::same_as<typename decltype(result)::Scalar, Affine>);
+    static_assert(std::same_as<typename decltype(result)::Scalar, AffineT>);
     REQUIRE(result.rows() == 3);
     REQUIRE(result.cols() == 4);
 
     const IntervalMatrixEigen expected = multiply_intervals(
         interval_hull(vector), row.cast<Interval>());
-    check_encloses(AffineMatrix(result), expected);
+    check_encloses(AffineTMatrix(result), expected);
 }
 
-TEST_CASE("AffineVarMainVector outer product with interval row")
+TEST_CASE("AffineTVarMainVector outer product with interval row")
 {
-    const AffineVarVector vector = make_variable_vector_3();
+    const AffineTVarVector vector = make_variable_vector_3();
     IntervalRowEigen row(4);
     row(0) = Interval(1.0, 2.0);
     row(1) = Interval(-1.0, 1.0);
@@ -434,89 +434,89 @@ TEST_CASE("AffineVarMainVector outer product with interval row")
     row(3) = Interval(2.0, 3.0);
 
     const auto result = vector * row;
-    static_assert(std::same_as<typename decltype(result)::Scalar, Affine>);
+    static_assert(std::same_as<typename decltype(result)::Scalar, AffineT>);
     REQUIRE(result.rows() == 3);
     REQUIRE(result.cols() == 4);
 
     const IntervalMatrixEigen expected =
         multiply_intervals(interval_hull(vector), IntervalMatrixEigen(row));
-    check_encloses(AffineMatrix(result), expected);
+    check_encloses(AffineTMatrix(result), expected);
 }
 
-TEST_CASE("AffineVarMainVector outer product with AffineRow")
+TEST_CASE("AffineTVarMainVector outer product with AffineTRow")
 {
-    const AffineVarVector vector = make_variable_vector_3();
-    AffineRow row(4);
+    const AffineTVarVector vector = make_variable_vector_3();
+    AffineTRow row(4);
     row(0) = Interval(1.0, 2.0);
     row(1) = Interval(-1.0, 1.0);
     row(2) = 0.5;
     row(3) = Interval(2.0, 3.0);
 
     const auto result = vector * row;
-    static_assert(std::same_as<typename decltype(result)::Scalar, Affine>);
+    static_assert(std::same_as<typename decltype(result)::Scalar, AffineT>);
     REQUIRE(result.rows() == 3);
     REQUIRE(result.cols() == 4);
 
     const IntervalMatrixEigen expected =
         multiply_intervals(interval_hull(vector), interval_hull(row));
-    check_encloses(AffineMatrix(result), expected);
+    check_encloses(AffineTMatrix(result), expected);
 }
 
-TEST_CASE("AffineMainVector outer product with real row")
+TEST_CASE("AffineTMainVector outer product with real row")
 {
-    const AffineVector vector = make_affine_vector_3();
+    const AffineTVector vector = make_AffineT_vector_3();
     RealRow row(2);
     row << -2.0, 4.0;
 
-    const AffineMatrix result = vector * row;
+    const AffineTMatrix result = vector * row;
     const IntervalMatrixEigen expected = multiply_intervals(
         interval_hull(vector), row.cast<Interval>());
     check_encloses(result, expected);
 }
 
-TEST_CASE("AffineMainVector outer product with interval row")
+TEST_CASE("AffineTMainVector outer product with interval row")
 {
-    const AffineVector vector = make_affine_vector_3();
+    const AffineTVector vector = make_AffineT_vector_3();
     IntervalRowEigen row(2);
     row(0) = Interval(-2.0, -1.0);
     row(1) = Interval(3.0, 4.0);
 
-    const AffineMatrix result = vector * row;
+    const AffineTMatrix result = vector * row;
     const IntervalMatrixEigen expected = multiply_intervals(
         interval_hull(vector), IntervalMatrixEigen(row));
     check_encloses(result, expected);
 }
 
-TEST_CASE("AffineMainVector outer product with AffineRow")
+TEST_CASE("AffineTMainVector outer product with AffineTRow")
 {
-    const AffineVector vector = make_affine_vector_3();
-    AffineRow row(2);
+    const AffineTVector vector = make_AffineT_vector_3();
+    AffineTRow row(2);
     row(0) = Interval(-2.0, -1.0);
     row(1) = Interval(3.0, 4.0);
 
-    const AffineMatrix result = vector * row;
+    const AffineTMatrix result = vector * row;
     const IntervalMatrixEigen expected = multiply_intervals(
         interval_hull(vector), interval_hull(row));
     check_encloses(result, expected);
 }
 
-TEST_CASE("AffineRow times real matrix")
+TEST_CASE("AffineTRow times real matrix")
 {
-    const AffineRow row = make_affine_row_3();
+    const AffineTRow row = make_AffineT_row_3();
     RealMatrix matrix(3, 2);
     matrix << 1.0, -1.0,
               2.0, 3.0,
               -2.0, 4.0;
 
-    const AffineRow result = row * matrix;
+    const AffineTRow result = row * matrix;
     const IntervalMatrixEigen expected = multiply_intervals(
         interval_hull(row), matrix.cast<Interval>());
     check_encloses(result, expected);
 }
 
-TEST_CASE("AffineRow times interval matrix")
+TEST_CASE("AffineTRow times interval matrix")
 {
-    const AffineRow row = make_affine_row_3();
+    const AffineTRow row = make_AffineT_row_3();
     IntervalMatrixEigen matrix(3, 2);
     matrix(0, 0) = Interval(1.0, 1.1);
     matrix(0, 1) = Interval(-1.0, -0.9);
@@ -525,16 +525,16 @@ TEST_CASE("AffineRow times interval matrix")
     matrix(2, 0) = Interval(-2.0, -1.9);
     matrix(2, 1) = Interval(4.0, 4.1);
 
-    const AffineRow result = row * matrix;
+    const AffineTRow result = row * matrix;
     const IntervalMatrixEigen expected =
         multiply_intervals(interval_hull(row), matrix);
     check_encloses(result, expected);
 }
 
-TEST_CASE("AffineRow times affine matrix")
+TEST_CASE("AffineTRow times AffineT matrix")
 {
-    const AffineRow row = make_affine_row_3();
-    AffineMatrix matrix(3, 2);
+    const AffineTRow row = make_AffineT_row_3();
+    AffineTMatrix matrix(3, 2);
     matrix(0, 0) = 1.0;
     matrix(0, 1) = -1.0;
     matrix(1, 0) = 2.0;
@@ -542,28 +542,28 @@ TEST_CASE("AffineRow times affine matrix")
     matrix(2, 0) = -2.0;
     matrix(2, 1) = 4.0;
 
-    const AffineRow result = row * matrix;
+    const AffineTRow result = row * matrix;
     const IntervalMatrixEigen expected = multiply_intervals(
         interval_hull(row), interval_hull(matrix));
     check_encloses(result, expected);
 }
 
-TEST_CASE("Real column vector times AffineRow")
+TEST_CASE("Real column vector times AffineTRow")
 {
     RealVector vector(3);
     vector << 1.0, -2.0, 4.0;
-    const AffineRow row = make_affine_row_3();
+    const AffineTRow row = make_AffineT_row_3();
 
-    const AffineMatrix result = vector * row;
+    const AffineTMatrix result = vector * row;
     const IntervalMatrixEigen expected = multiply_intervals(
         vector.cast<Interval>(), interval_hull(row));
     check_encloses(result, expected);
 }
 
-TEST_CASE("Affine matrix products preserve dynamic dimensions")
+TEST_CASE("AffineT matrix products preserve dynamic dimensions")
 {
-    AffineMatrix lhs(4, 3);
-    AffineMatrix rhs(3, 5);
+    AffineTMatrix lhs(4, 3);
+    AffineTMatrix rhs(3, 5);
 
     for(Eigen::Index i = 0; i < lhs.rows(); ++i)
         for(Eigen::Index j = 0; j < lhs.cols(); ++j)
@@ -573,7 +573,7 @@ TEST_CASE("Affine matrix products preserve dynamic dimensions")
         for(Eigen::Index j = 0; j < rhs.cols(); ++j)
             rhs(i, j) = static_cast<double>(2 - i + j);
 
-    const AffineMatrix result = lhs * rhs;
+    const AffineTMatrix result = lhs * rhs;
     REQUIRE(result.rows() == 4);
     REQUIRE(result.cols() == 5);
 
@@ -582,13 +582,13 @@ TEST_CASE("Affine matrix products preserve dynamic dimensions")
     check_encloses(result, expected);
 }
 
-TEST_CASE("Degenerate products produce degenerate affine results")
+TEST_CASE("Degenerate products produce degenerate AffineT results")
 {
     RealMatrix matrix(2, 3);
     matrix << 1.0, 2.0, 3.0,
               -1.0, 4.0, 0.5;
 
-    AffineVarVector variables(Vector({2.0, -1.0, 3.0}));
+    AffineTVarVector variables(Vector({2.0, -1.0, 3.0}));
     const auto result = matrix * variables;
 
     REQUIRE(result.rows() == 2);
@@ -596,9 +596,9 @@ TEST_CASE("Degenerate products produce degenerate affine results")
     CHECK(result(1).itv() == Interval(-4.5));
 }
 
-TEST_CASE("Identity matrix preserves AffineVarMainVector hulls")
+TEST_CASE("Identity matrix preserves AffineTVarMainVector hulls")
 {
-    const AffineVarVector variables = make_variable_vector_3();
+    const AffineTVarVector variables = make_variable_vector_3();
     const RealMatrix identity = RealMatrix::Identity(3, 3);
 
     const auto result = identity * variables;
@@ -608,9 +608,9 @@ TEST_CASE("Identity matrix preserves AffineVarMainVector hulls")
         CHECK(result(i).itv().is_superset(variables(i).itv()));
 }
 
-TEST_CASE("Zero real matrix annihilates AffineVarMainVector")
+TEST_CASE("Zero real matrix annihilates AffineTVarMainVector")
 {
-    const AffineVarVector variables = make_variable_vector_3();
+    const AffineTVarVector variables = make_variable_vector_3();
     const RealMatrix zero = RealMatrix::Zero(2, 3);
 
     const auto result = zero * variables;
@@ -620,16 +620,16 @@ TEST_CASE("Zero real matrix annihilates AffineVarMainVector")
     CHECK(result(1).itv() == Interval(0.0));
 }
 
-TEST_CASE("One-by-one products retain AffineMain scalar")
+TEST_CASE("One-by-one products retain AffineTMain scalar")
 {
-    const AffineVarVector variables(IntervalVector({{-2.0, 3.0}}));
+    const AffineTVarVector variables(IntervalVector({{-2.0, 3.0}}));
 
     SECTION("real matrix")
     {
         RealMatrix matrix(1, 1);
         matrix(0, 0) = -2.0;
         const auto result = matrix * variables;
-        static_assert(std::same_as<typename decltype(result)::Scalar, Affine>);
+        static_assert(std::same_as<typename decltype(result)::Scalar, AffineT>);
         CHECK(result(0).itv().is_superset(Interval(-6.0, 4.0)));
     }
 
@@ -638,17 +638,17 @@ TEST_CASE("One-by-one products retain AffineMain scalar")
         IntervalMatrixEigen matrix(1, 1);
         matrix(0, 0) = Interval(-2.0, -1.0);
         const auto result = matrix * variables;
-        static_assert(std::same_as<typename decltype(result)::Scalar, Affine>);
+        static_assert(std::same_as<typename decltype(result)::Scalar, AffineT>);
         CHECK(result(0).itv().is_superset(
             matrix(0, 0) * variables(0).itv()));
     }
 
-    SECTION("affine matrix")
+    SECTION("AffineT matrix")
     {
-        AffineMatrix matrix(1, 1);
+        AffineTMatrix matrix(1, 1);
         matrix(0, 0) = Interval(-2.0, -1.0);
         const auto result = matrix * variables;
-        static_assert(std::same_as<typename decltype(result)::Scalar, Affine>);
+        static_assert(std::same_as<typename decltype(result)::Scalar, AffineT>);
         CHECK(result(0).itv().is_superset(
             matrix(0, 0).itv() * variables(0).itv()));
     }
@@ -656,12 +656,12 @@ TEST_CASE("One-by-one products retain AffineMain scalar")
 
 TEST_CASE("Empty coefficient propagation through products")
 {
-    AffineMatrix matrix(1, 2);
+    AffineTMatrix matrix(1, 2);
     matrix(0, 0) = 1.0;
     matrix(0, 1) = 2.0;
     matrix(0, 1).set_empty();
 
-    const AffineVarVector variables(
+    const AffineTVarVector variables(
         IntervalVector({{1.0, 2.0}, {3.0, 4.0}}));
     const auto result = matrix * variables;
 

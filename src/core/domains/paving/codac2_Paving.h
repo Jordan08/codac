@@ -32,18 +32,21 @@ namespace codac2
       using NodeValue_ = std::function<std::list<IntervalVector>(Node_)>;
       using ConnectedSubset_ = Subpaving<P>;
 
+    protected:
       Paving(Index n)
         : Paving(IntervalVector(n))
       {
         assert_release(n > 0);
       }
 
+//
 //      Paving(const IntervalVector& x)
 //        : _tree(std::make_shared<PavingNode<P>>(*static_cast<P*>(this), x))
 //      { }
       Paving(const IntervalVector& x)
       { }
 
+    public:
       inline Index size() const
       {
         return std::get<0>(_tree->boxes()).size();
