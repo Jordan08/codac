@@ -5,22 +5,7 @@
 
 Below is an example covering a wide variety of drawing functions, colors, styles etc.
 
-.. tabs::
+* `Python version <https://github.com/codac-team/codac/blob/codac2_dev/examples/06_graphics_3D/main.py>`_
+* `C++ version <https://github.com/codac-team/codac/blob/codac2_dev/examples/06_graphics_3D/main.cpp>`_
+* `Matlab version <https://github.com/codac-team/codac/blob/codac2_dev/examples/06_graphics_3D/main.m>`_
 
-  .. group-tab:: Python
-
-    .. literalinclude:: 3d_example_src/src.py
-      :language: py
-      :dedent: 0
-
-  .. group-tab:: C++
-
-    .. literalinclude:: 3d_example_src/src.cpp
-      :language: c++
-      :dedent: 0
-      
-  .. group-tab:: Matlab
-
-    .. literalinclude:: 3d_example_src/src.m
-      :language: matlab
-      :dedent: 0
