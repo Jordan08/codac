@@ -25,31 +25,33 @@ void export_SepUnion(py::module& m, py::class_<SepBase,pySep>& pysep)
   exported
 
     .def(py::init(
-        [](const py::list& l)
+        [](py::args args)
         {
-          Collection<SepBase> l_copy;
-          for(const auto& li : l)
-            l_copy.push_back(li.cast<SepBase&>().copy());
-          return std::make_unique<SepUnion>(l_copy);
-        }),
-      SEPUNION_SEPUNION_CONST_COLLECTION_T_REF,
-      "s"_a)
+          Collection<SepBase> seps;
 
-    .def(py::init(
-        [](const SepBase& s)
-        {
-          return std::make_unique<SepUnion>(s.copy());
-        }),
-      SEPUNION_SEPUNION_CONST_S_REF,
-      "s"_a)
+          auto add = [&seps](py::handle s)
+          {
+            seps.push_back(
+              s.cast<SepBase&>().copy()
+            );
+          };
 
-    .def(py::init(
-        [](const SepBase& s1, const SepBase& s2)
-        {
-          return std::make_unique<SepUnion>(s1.copy(),s2.copy());
+          // Backward compatibility: SepUnion([s1,s2,s3])
+          if(args.size() == 1 && py::isinstance<py::list>(args[0]))
+          {
+            for(const auto& s : args[0].cast<py::list>())
+              add(s);
+          }
+          else
+          {
+            // New syntax: SepUnion(s1,s2,s3)
+            for(const auto& s : args)
+              add(s);
+          }
+
+          return std::make_unique<SepUnion>(seps);
         }),
-      SEPUNION_SEPUNION_CONST_S_REF_VARIADIC,
-      "s1"_a, "s2"_a)
+      SEPUNION_SEPUNION_CONST_COLLECTION_SEPBASE_REF)
 
     .def("nb", &SepUnion::nb,
       SIZET_SEPUNION_NB_CONST)

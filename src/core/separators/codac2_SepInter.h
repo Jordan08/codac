@@ -20,10 +20,15 @@ namespace codac2
   {
     public:
 
-      template<typename T>
-      SepInter(const Collection<T>& c)
+      template<typename S>
+        requires IsSepBaseOrPtr<S>
+      SepInter(std::initializer_list<S> seps)
+        : SepInter(Collection<SepBase>(seps))
+      { }
+
+      SepInter(const Collection<SepBase>& c)
         : Sep<SepInter>([&c]() {
-          assert_release(!c.empty());
+            assert_release(!c.empty());
             return size_of(c.front());
           }()), _seps(c)
       { }
