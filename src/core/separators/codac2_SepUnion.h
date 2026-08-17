@@ -20,10 +20,15 @@ namespace codac2
   {
     public:
 
-      template<typename T>
-      SepUnion(const Collection<T>& c)
+      template<typename S>
+        requires IsSepBaseOrPtr<S>
+      SepUnion(std::initializer_list<S> seps)
+        : SepUnion(Collection<SepBase>(seps))
+      { }
+
+      SepUnion(const Collection<SepBase>& c)
         : Sep<SepUnion>([&c]() {
-          assert_release(!c.empty());
+            assert_release(!c.empty());
             return size_of(c.front());
           }()), _seps(c)
       { }
