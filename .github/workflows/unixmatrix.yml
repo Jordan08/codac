@@ -28,9 +28,9 @@ jobs:
         fail-fast: false
         matrix:
             cfg:
-            - { os: windows-11-arm  , shell: cmd , arch: arm64  , bitness: 64, runtime: vc18          , cmake_params: '-G "Visual Studio 18" -T v145 -A arm64', cmake_flags: ' /MP4 /wd4267 /wd4244 /wd4305 /wd4996', test_config: 'Release/', desc: 'Windows Visual Studio 2026 arm64' }
-            - { os: windows-2025    , shell: cmd , arch: x64    , bitness: 64, runtime: vc18          , cmake_params: '-G "Visual Studio 18" -T v145 -A x64'  , cmake_flags: ' /MP4 /wd4267 /wd4244 /wd4305 /wd4996', test_config: 'Release/', desc: 'Windows Visual Studio 2026 x64' }
-            - { os: windows-2025    , shell: cmd , arch: x86    , bitness: 32, runtime: vc18          , cmake_params: '-G "Visual Studio 18" -T v145 -A Win32', cmake_flags: ' /MP4 /wd4267 /wd4244 /wd4305 /wd4996', test_config: 'Release/', choco_flags: '--x86', desc: 'Windows Visual Studio 2026 x86' }
+            - { os: windows-11-vs2026-arm, shell: cmd , arch: arm64  , bitness: 64, runtime: vc18          , cmake_params: '-G "Visual Studio 18" -T v145 -A arm64', cmake_flags: ' /MP4 /wd4267 /wd4244 /wd4305 /wd4996', test_config: 'Release/', desc: 'Windows Visual Studio 2026 arm64' }
+            - { os: windows-2025-vs2026  , shell: cmd , arch: x64    , bitness: 64, runtime: vc18          , cmake_params: '-G "Visual Studio 18" -T v145 -A x64'  , cmake_flags: ' /MP4 /wd4267 /wd4244 /wd4305 /wd4996', test_config: 'Release/', desc: 'Windows Visual Studio 2026 x64' }
+            - { os: windows-2025-vs2026  , shell: cmd , arch: x86    , bitness: 32, runtime: vc18          , cmake_params: '-G "Visual Studio 18" -T v145 -A Win32', cmake_flags: ' /MP4 /wd4267 /wd4244 /wd4305 /wd4996', test_config: 'Release/', choco_flags: '--x86', desc: 'Windows Visual Studio 2026 x86' }
             - { os: windows-11-arm  , shell: cmd , arch: arm64  , bitness: 64, runtime: vc17          , cmake_params: '-G "Visual Studio 17" -T v143 -A arm64', cmake_flags: ' /MP4 /wd4267 /wd4244 /wd4305 /wd4996', test_config: 'Release/', desc: 'Windows Visual Studio 2022 arm64' }
             - { os: windows-2022    , shell: cmd , arch: x64    , bitness: 64, runtime: vc17          , cmake_params: '-G "Visual Studio 17" -T v143 -A x64'  , cmake_flags: ' /MP4 /wd4267 /wd4244 /wd4305 /wd4996', test_config: 'Release/', desc: 'Windows Visual Studio 2022 x64' }
             - { os: windows-2022    , shell: cmd , arch: x86    , bitness: 32, runtime: vc17          , cmake_params: '-G "Visual Studio 17" -T v143 -A Win32', cmake_flags: ' /MP4 /wd4267 /wd4244 /wd4305 /wd4996', test_config: 'Release/', choco_flags: '--x86', desc: 'Windows Visual Studio 2022 x86' }
@@ -151,18 +151,18 @@ jobs:
     #- run: |
     #    "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vs_installer.exe" modify --installPath "C:\Program Files\Microsoft Visual Studio\2022\Enterprise" --add Microsoft.VisualStudio.ComponentGroup.VC.Tools.142.x86.x64 --add Microsoft.VisualStudio.Component.VC.14.29.16.11.x86.x64 --add Microsoft.VisualStudio.Component.VC.14.29.16.11.ARM64 --force --quiet --norestart --addProductLang en-US --includeRecommended
     #  if: (matrix.cfg.runtime=='vc16')
-    - run: |
-        choco feature disable -n usePackageExitCodes
-        choco install -y -r --no-progress visualstudio2026buildtools --package-parameters "--addProductLang en-US --includeRecommended --add Microsoft.VisualStudio.Component.CoreEditor --add Microsoft.VisualStudio.Workload.NativeDesktop --add Microsoft.VisualStudio.Workload.ManagedDesktop --add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Workload.ManagedDesktopBuildTools --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 --add Microsoft.VisualStudio.Component.VC.Tools.ARM64 --add Microsoft.VisualStudio.Workload.NativeCrossPlat --add Microsoft.VisualStudio.Component.VC.ATLMFC --add Microsoft.VisualStudio.Component.VC.CLI.Support --remove Component.Microsoft.VisualStudio.LiveShare --remove Microsoft.VisualStudio.Component.VC.TestAdapterForGoogleTest --remove Microsoft.VisualStudio.Component.VC.TestAdapterForBoostTest --remove Microsoft.VisualStudio.Component.EntityFramework --remove Microsoft.Component.CookiecutterTools --remove Microsoft.Component.PythonTools.Web --remove Component.CPython3.x64 --remove Microsoft.Component.PythonTools.Minicondax64"
-      if: (matrix.cfg.runtime=='vc18')
-    - run: |
-        rem Temporary issue on windows-11-arm, existing system CMake cannot be updated due to some MSI error, so using the one from Visual Studio...?
-        echo export BASHCMAKEPATH="/c/Program Files (x86)/Microsoft Visual Studio/18/BuildTools/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/bin">>%USERPROFILE%\.bashrc
-      if: (matrix.cfg.runtime=='vc18')&&(matrix.cfg.os=='windows-11-arm')
-    - run: |
-        choco install -y -r --no-progress cmake --force
-        echo export BASHCMAKEPATH="/c/Program Files/CMake/bin">>%USERPROFILE%\.bashrc
-      if: (matrix.cfg.runtime=='vc18')&&(matrix.cfg.os!='windows-11-arm')
+    #- run: |
+    #    choco feature disable -n usePackageExitCodes
+    #    choco install -y -r --no-progress visualstudio2026buildtools --package-parameters "--addProductLang en-US --includeRecommended --add Microsoft.VisualStudio.Component.CoreEditor --add #Microsoft.VisualStudio.Workload.NativeDesktop --add Microsoft.VisualStudio.Workload.ManagedDesktop --add Microsoft.VisualStudio.Workload.VCTools --add #Microsoft.VisualStudio.Workload.ManagedDesktopBuildTools --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 --add Microsoft.VisualStudio.Component.VC.Tools.ARM64 --add #Microsoft.VisualStudio.Workload.NativeCrossPlat --add Microsoft.VisualStudio.Component.VC.ATLMFC --add Microsoft.VisualStudio.Component.VC.CLI.Support --remove #Component.Microsoft.VisualStudio.LiveShare --remove Microsoft.VisualStudio.Component.VC.TestAdapterForGoogleTest --remove Microsoft.VisualStudio.Component.VC.TestAdapterForBoostTest --remove #Microsoft.VisualStudio.Component.EntityFramework --remove Microsoft.Component.CookiecutterTools --remove Microsoft.Component.PythonTools.Web --remove Component.CPython3.x64 --remove #Microsoft.Component.PythonTools.Minicondax64"
+    #  if: (matrix.cfg.runtime=='vc18')
+    #- run: |
+    #    rem Temporary issue on windows-11-arm, existing system CMake cannot be updated due to some MSI error, so using the one from Visual Studio...?
+    #    echo export BASHCMAKEPATH="/c/Program Files (x86)/Microsoft Visual Studio/18/BuildTools/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/bin">>%USERPROFILE%\.bashrc
+    #  if: (matrix.cfg.runtime=='vc18')&&(matrix.cfg.os=='windows-11-arm')
+    #- run: |
+    #    choco install -y -r --no-progress cmake --force
+    #    echo export BASHCMAKEPATH="/c/Program Files/CMake/bin">>%USERPROFILE%\.bashrc
+    #  if: (matrix.cfg.runtime=='vc18')&&(matrix.cfg.os!='windows-11-arm')
     - run: |
         rem choco install -y -r --no-progress eigen --version=3.4.0.20240224 ${{ matrix.cfg.choco_flags }}
         wget https://github.com/lebarsfa/ibex-lib/releases/download/ibex-2.8.9.20250626/ibex.2.8.9.20250626.nupkg --no-check-certificate -nv
