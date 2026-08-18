@@ -68,7 +68,7 @@ jobs:
             - { os: macos-14        , shell: bash, arch: x86_64 , bitness: 64, runtime: sonoma        , cmake_params: '-D CMAKE_SYSTEM_NAME=Darwin -D CMAKE_OSX_ARCHITECTURES=x86_64 -D CMAKE_OSX_DEPLOYMENT_TARGET=14.0', cmake_flags: '-fPIC', cross: true, desc: 'macOS Sonoma x86_64 (cross)' }
     name: ${{ matrix.cfg.desc }}
     steps: 
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         submodules: true
         fetch-depth: 0
