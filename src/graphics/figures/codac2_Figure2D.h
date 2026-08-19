@@ -183,6 +183,13 @@ namespace codac2
       void clear();
 
       /**
+       * \brief Saves the figure to a file
+       * 
+       * \param filename Name of the file to save the figure to
+       */
+      void save(const std::string& filename);
+
+      /**
        * \brief Getter for the scaling factor of the figure
        * 
        * \return The scaling factor of the figure
@@ -310,7 +317,7 @@ namespace codac2
       void draw_parallelepiped(const Parallelepiped& p, const StyleProperties& style = StyleProperties());
 
       /**
-       * \brief Draws a zonotope z+sum_i [-1,1] A_i on the figure
+       * \brief Draws a zonotope c+sum_i [-1,1] A_i on the figure
        * 
        * \param z Zonotope to draw (center and shape matrix)
        * \param style Style of the zonotope (edge color and fill color)
@@ -715,6 +722,17 @@ namespace codac2
         selected_fig()->clear();
       }
 
+      /**
+       * \brief Saves the figure to a file
+       * 
+       * \param filename Name of the file to save the figure to
+       */
+      static void save(const std::string& filename)
+      {
+        auto_init();
+        selected_fig()->save(filename);
+      }
+
       // Geometric shapes
 
       /**
@@ -856,15 +874,15 @@ namespace codac2
       }
 
       /**
-       * \brief Draws a zonotope z+sum_i [-1,1] A_i on the figure
+       * \brief Draws a zonotope c+sum_i [-1,1] A_i on the figure
        * 
-       * \param z Zonotope to draw (center and shape matrix)
+       * \param c Zonotope to draw (center and shape matrix)
        * \param style Style of the zonotope (edge color and fill color)
        */
-      static void draw_zonotope(const Zonotope& z, const StyleProperties& style = StyleProperties())
+      static void draw_zonotope(const Zonotope& c, const StyleProperties& style = StyleProperties())
       {
         auto_init();
-        selected_fig()->draw_zonotope(z,style);
+        selected_fig()->draw_zonotope(c,style);
       }
 
       /**
