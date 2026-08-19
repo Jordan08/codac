@@ -95,11 +95,11 @@ jobs:
     - run: |
         choco install -y -r --no-progress checksum wget zip
         rem Workaround to try solve some random package download failures...
-        wget https://www.ensta-bretagne.fr/packages/choco/winflexbison.2.4.9.20170215.nupkg --no-check-certificate -nv
-        wget https://www.ensta-bretagne.fr/packages/choco/patch.2.5.9.nupkg --no-check-certificate -nv
+        wget https://webperso.ensta.fr/packages/choco/winflexbison.2.4.9.20170215.nupkg --no-check-certificate -nv
+        wget https://webperso.ensta.fr/packages/choco/patch.2.5.9.nupkg --no-check-certificate -nv
         choco install -y -r --no-progress -s . winflexbison patch ${{ matrix.cfg.choco_flags }}
         del /f /q winflexbison.2.4.9.20170215.nupkg patch.2.5.9.nupkg
-        wget http://www.ensta-bretagne.fr/lebars/Share/cmake_extra_tools.zip --no-check-certificate -nv
+        wget http://webperso.ensta.fr/lebars/Share/cmake_extra_tools.zip --no-check-certificate -nv
         7z x cmake_extra_tools.zip -o"%SystemDrive%" -y
         del /f /q cmake_extra_tools.zip
         wget https://gist.github.com/lebarsfa/237841f9e5dad55ef192713b3b1b2f16/raw/04d77ced3457346c55f183ca12a10dbcb850e6d5/refreshenv.bashrc --no-check-certificate -nv
