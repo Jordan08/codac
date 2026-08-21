@@ -48,8 +48,6 @@ public:
 	// implicitly-generated default/copy/move constructors and assignment
 	// operators, and every other Eigen::Matrix constructor/assignment
 	// (e.g. AffineMainVector<T>(n) or v = v1+v2) would fail to compile.
-	using Base::Base;
-	using Base::operator=;
 	using Base::operator+;
 	using Base::operator-;
 	using Base::operator*;
@@ -70,7 +68,7 @@ public:
 	 *
 	 * \param n vector size
 	 */
-	explicit AffineVarMainVector(int n);
+	explicit AffineVarMainVector(Index n);
 
 	/**
 	 * \brief Creates a vector from an interval vector.
@@ -98,7 +96,18 @@ public:
 	 *
 	 * \param n2 new non-negative vector size
 	 */
-	void resize(codac2::Index n2);
+	void conservativeResize(Index n2);
+
+	/**
+	 * \brief Resizes the vector and reconstructs all components as independent
+	 * affine variables from their current interval enclosures.
+	 * Existing affine dependency information is not preserved.
+	 *
+	 * All components are initialized to (-inf,+inf).
+	 *
+	 * \param n2 new non-negative vector size
+	 */
+	void resize(Index n2);
 
 	/**
 	 * \brief Assigns this vector from an interval vector.
@@ -111,6 +120,25 @@ public:
 	 */
 	AffineVarMainVector<T>& operator=(const IntervalVector& x);
 
+
+	/**
+	 * \brief Broadcasts a single interval to every component.
+	 *
+	 * Unlike the generic Eigen::Matrix::init(const Scalar&) inherited via
+	 * ``using Base::Base``, this overload accepts an ``Interval`` directly and
+	 * assigns it component-wise through ``AffineVarMain::operator=(const Interval&)``,
+	 * which preserves each component's dedicated noise symbol (\c _var).
+	 * The generic scalar-broadcast ``init`` cannot be used here: it would
+	 * require an implicit ``Interval -> AffineVarMain<T>`` conversion, which is
+	 * intentionally not provided (see the assignment-asymmetry regression test
+	 * in codac2_tests_AffineForm_coverage.cpp).
+	 *
+	 * \param x interval value assigned to every component
+	 * \return a reference to this
+	 */
+	AffineVarMainVector<T>& init(const Interval& x);
+	AffineVarMainVector<T>& init(const AffineVarMain<T>& x)= delete;
+	AffineVarMainVector<T>& init(const AffineMain<T>& x)= delete;
 
 	/** \brief Returns \f$-*\mathrm{this}\f$. */
 	AffineMainVector<T> operator-() const;
@@ -191,43 +219,35 @@ inline auto operator*(
 
 
 template<class T>
-AffineVarMainVector<T>::AffineVarMainVector(int n) : Base(n)
-{
-	assert(n >= 1);
+AffineVarMainVector<T>::AffineVarMainVector(Index n) : Base() {
+	assert(n >= 0);
+	Base::resize(n);
 	for (Index i = 0; i < n; ++i) {
-		(*this)[i] = AffineVarMain<T>(n, static_cast<int>(i), Interval());
+		(*this)[i] = AffineVarMain<T>(n, i, Interval());
 	}
 }
 
 
-//template<class T>
-//AffineVarMainVector<T>::AffineVarMainVector(const AffineMainVector<T>& x): Base(x.size(),1)
-//	   {
-//	for (int i = 0; i < x.size(); i++){
-//		(*this)[i] = AffineVarMain<T>(x.size(),i,(x[i]).itv());
-//	}
-//}
-
 template<class T>
-AffineVarMainVector<T>::AffineVarMainVector(const IntervalVector& x) : Base(x.size(),1)
-	   {
+AffineVarMainVector<T>::AffineVarMainVector(const IntervalVector& x) : Base()  {
 	assert(x.size() <= static_cast<Eigen::Index>(std::numeric_limits<int>::max()));
+	 Base::resize(x.size());
 	for (Index i = 0; i < x.size(); i++){
 		(*this)[i] = AffineVarMain<T>(x.size(), i, x[i]);
 	}
 }
 
 template<class T>
-AffineVarMainVector<T>::AffineVarMainVector(const Vector& x) : Base(x.size(),1)
-	{
+AffineVarMainVector<T>::AffineVarMainVector(const Vector& x) : Base() {
 	assert(x.size() <= static_cast<Eigen::Index>(std::numeric_limits<int>::max()));
+	Base::resize(x.size());
 	for (Index i = 0; i < x.size(); i++){
 		(*this)[i] = AffineVarMain<T>(x.size(), i, Interval(x[i]));
 	}
 }
 
 template<class T>
-void AffineVarMainVector<T>::resize(codac2::Index n2) {
+void AffineVarMainVector<T>::conservativeResize(Index n2) {
 	assert(n2 >= 0);
 	assert(n2 <= static_cast<codac2::Index>(std::numeric_limits<int>::max()));
 	const Index n1 = this->size();
@@ -253,9 +273,27 @@ void AffineVarMainVector<T>::resize(codac2::Index n2) {
 }
 
 template<class T>
+void AffineVarMainVector<T>::resize(Index n2) {
+	assert(n2 >= 0);
+	assert(n2 <= static_cast<codac2::Index>(std::numeric_limits<int>::max()));
+	const Index n1 = this->size();
+    if(n2 == 0)   {
+        Base::resize(0);
+        return;
+    }
+	if (n2!=n1) {
+
+		Base::resize(n2);
+		for (Index i=0; i<n2; i++) {
+			(*this)[i]=AffineVarMain<T>(n2, i, Interval());
+		}
+	}
+}
+
+template<class T>
 AffineVarMainVector<T>& AffineVarMainVector<T>::operator=(const IntervalVector& x)  {
 	if (this->size()!=x.size()){
-		AffineVarMainVector<T>::resize(x.size());
+		Base::resize(x.size());
 	}
 	for (Index i=0; i<x.size(); i++){
 		(*this)[i]=AffineVarMain<T>(x.size(), i, x[i]);
@@ -263,14 +301,20 @@ AffineVarMainVector<T>& AffineVarMainVector<T>::operator=(const IntervalVector& 
 	return *this;
 }
 
+template<class T>
+AffineVarMainVector<T>& AffineVarMainVector<T>::init(const Interval& x)
+{
+    for (Index i = 0; i < this->size(); ++i)
+        (*this)[i] = AffineVarMain<T>(this->size(), i, x);
+    return *this;
+}
 
-template<typename T>
+template<class T>
 AffineMainVector<T> AffineVarMainVector<T>::operator-() const
 {
   AffineMainVector<T> result(this->size());
-
   for(Index i = 0; i < this->size(); ++i)
-    result[i] = -((*this)[i]);
+    result[i] = (-((*this)[i]));
 
   return result;
 }

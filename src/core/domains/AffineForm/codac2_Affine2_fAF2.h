@@ -31,20 +31,8 @@ private:
 	friend class AffineVarMain<AF_fAF2>;
 	friend class AffineMain<AF_fAF2>;
 
-	/**
-	 * Code for the particular case:
-	 * if the affine form is actif, _actif=1  and _n is the size of the affine form
-	 * if the set is degenerate, _actif = 0 and itv().diam()< AF_EC
-	 * if the set is empty, _actif = -1
-	 * if the set is ]-oo,+oo[, _actif = -2 and _err =]-oo,+oo[
-	 * if the set is [a, +oo[ , _actif = -3 and _err = [a, +oo[
-	 * if the set is ]-oo, a] , _actif = -4 and _err = ]-oo, a]
-	 *
-	 */
-
-	std::unique_ptr<double[]> _val; 		// vector of elements of the affine form
+	std::unique_ptr<double[]> _val; 		// vector of noise symbols of the affine form
 	double _err; 	// error of the affine form, corresponded to the last term
-	//	bool _actif; // boolean to know if the affine form is actif or not. This is to manage the particular case of EMPTY and an unbounded Interval
 
 	/**
 	 * \brief Returns the exact rounding error of the addition of two floating-point values.
@@ -58,7 +46,7 @@ private:
 	static void Split(double x, int sp, double *x_high, double *x_low);
 
 	/** \brief Creates an affine core from coefficients and remainder error. */
-	AF_fAF2(double * val, double err);
+	AF_fAF2(std::unique_ptr<double[]> val, double err);
 
 public:
 
@@ -82,24 +70,19 @@ inline AF_fAF2::AF_fAF2(AF_fAF2&& other) noexcept
 {
 }
 
-inline AF_fAF2& AF_fAF2::operator=(AF_fAF2&& other) noexcept
-{
-  if(this != &other)
-  {
+inline AF_fAF2& AF_fAF2::operator=(AF_fAF2&& other) noexcept {
+  if(this != &other)  {
     _val = std::exchange(other._val, nullptr);
     _err = other._err;
   }
-
   return *this;
 }
 
 
-inline AF_fAF2::AF_fAF2(double * val, double err) :
-	_val	(val ),
+inline AF_fAF2::AF_fAF2(std::unique_ptr<double[]> val, double err) :
+	_val	(std::move(val)),
 	_err	(err) {
-
 }
-
 
 
 

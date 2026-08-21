@@ -134,22 +134,22 @@ private:
 	friend class AffineVarMainVector<T>;
 	friend AffineVarMain<T>* Eigen::internal::default_construct_elements_of_array<AffineVarMain<T>>(AffineVarMain<T>*, std::size_t); //  <-- pour garder AffineVarMain() en protected
 
-    int _var;
+    Index _var;
 
 protected:
 	// Eigen first creates unbound placeholders. AffineVarMainVector then
 	// contextualizes each placeholder through copy assignment. An unbound
 	// object must never be assigned an Interval directly.
-    AffineVarMain() : AffineMain<T>(), _var(-1) {}
+    AffineVarMain();
 
 	/**
 	 * \brief Creates an affine variable among a set of variables.
 	 *
-	 * \param size total number of variables
+	 * \param noise_count total number of variables
 	 * \param var index of the variable represented by this instance
 	 * \param itv initial interval value
 	 */
-	explicit AffineVarMain(int size, int var, const Interval& itv);
+	explicit AffineVarMain(Index noise_count, Index var, const Interval& itv);
 
 public:
 	/**
@@ -159,6 +159,7 @@ public:
 	 */
     AffineVarMain(const AffineVarMain<T>& x);
 
+	Index noise_index() const { return _var; }
 	/**
 	 * \brief Assigns from another affine variable.
 	 *
@@ -174,10 +175,17 @@ public:
 	 * \return a reference to this
 	 */
 	AffineVarMain& operator=(const Interval& itv);
+
+		/**
+	 * \brief Sets this affine variable from an double.
+	 *
+	 * \param d double value assigned to this variable
+	 * \return a reference to this
+	 */
 	AffineVarMain& operator=(double d);
 
 
-	// Une variable déclarée ne doit pas être mutée en place : cela casserait la
+	// Une variable déclarée ne doit pas être mutée : cela casserait la
 	// cohérence entre _var et le contexte (taille totale de variables) dans
 	// lequel elle a été créée. Toute opération arithmétique doit repasser par
 	// une AffineMain<T> ordinaire (voir operator+, operator-, etc. libres).
@@ -217,20 +225,19 @@ public:
 };
 
 template<class T>
-inline AffineVarMain<T> AffineVarMain<T>::empty()
-{
+inline AffineVarMain<T> AffineVarMain<T>::empty() {
 	AffineVarMain<T> result(0,-1,Interval::empty());;
 	return result;
 }
 
 
 template<class T>
-AffineVarMain<T>::AffineVarMain(int size, int var1, const Interval& itv) :
-		AffineMain<T>(size, var1, itv),
+AffineVarMain<T>::AffineVarMain(Index noise_count, Index var1, const Interval& itv) :
+		AffineMain<T>(noise_count, var1, itv),
 		_var		(var1) {
-	assert(size > 0|| itv.is_empty());
+	assert(noise_count > 0|| itv.is_empty());
 	assert(_var >= 0 || itv.is_empty());
-	assert(_var < size);
+	assert(_var < noise_count);
 }
 
 
@@ -247,24 +254,26 @@ AffineVarMain<T>& AffineVarMain<T>::operator=(const AffineVarMain<T>& x) {
 		return *this;
 	}
 
-	if (_var < 0) {
-		// Eigen placeholder: acquire the complete variable identity once.
-		AffineMain<T>::operator=(x);
-		_var = x._var;
-		return *this;
-	}
+	// if (_var < 0) {
+	// 	// Eigen placeholder: acquire the complete variable identity once.
+	// 	AffineMain<T>::operator=(x);
+	// 	_var = x._var;
+	// 	return *this;
+	// }
+	// if (x._var == _var && x.noise_count() == this->noise_count()) {
+	// 	// Same affine context and same dedicated noise symbol.
+	// 	AffineMain<T>::operator=(x);
+	// 	return *this;
+	// }
+	// // Assigning a different affine variable must not overwrite the destination
+	// // identity. Rebuild the destination from the certified interval enclosure,
+	// // which gives it its own noise symbol and avoids duplicated or out-of-range
+	// // symbol indices inside an AffineVarMainVector.
+	// return (*this = x.itv());
 
-	if (x._var == _var && x.size() == this->size()) {
-		// Same affine context and same dedicated noise symbol.
-		AffineMain<T>::operator=(x);
-		return *this;
-	}
-
-	// Assigning a different affine variable must not overwrite the destination
-	// identity. Rebuild the destination from the certified interval enclosure,
-	// which gives it its own noise symbol and avoids duplicated or out-of-range
-	// symbol indices inside an AffineVarMainVector.
-	return (*this = x.itv());
+	AffineMain<T>::operator=(x);
+	_var = x._var;
+	return *this;
 }
 
 template<class T>

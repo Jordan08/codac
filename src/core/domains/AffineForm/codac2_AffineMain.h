@@ -12,7 +12,6 @@
 
 #pragma once
 
-#include "codac2_Interval.h"
 #include <cmath>
 #include <cstdint>
 #include <initializer_list>
@@ -21,7 +20,7 @@
 #include <type_traits>
 #include <utility>
 
-
+#include "codac2_Interval.h"
 #include "codac2_Affine2_fAF2.h"
 #include "codac2_matrices.h"
 
@@ -106,25 +105,6 @@ namespace Eigen
 
 namespace codac2 {
 
-namespace detail {
-
-/** Portable integer power for finite scalar interpolation points. */
-inline double affine_powi(double base, unsigned int exponent)
-{
-  double result = 1.0;
-  while (exponent != 0U) {
-    if ((exponent & 1U) != 0U) {
-      result *= base;
-    }
-    exponent >>= 1U;
-    if (exponent != 0U) {
-      base *= base;
-    }
-  }
-  return result;
-}
-
-} // namespace detail
 
 /**
  * \ingroup arithmetic
@@ -132,7 +112,7 @@ inline double affine_powi(double base, unsigned int exponent)
  * \brief Main affine-form domain based on \c AF_Default.
  *
  * Affine forms rely on a compact status code:
- * - \c _actif=1: active affine form, \c _n is the number of variables
+ * - \c _actif=1: active affine form, \c _n_noise is the number of variables
  * - \c _actif=0: degenerate interval
  * - \c _actif=-1: empty set
  * - \c _actif=-2: \f$[-\infty,+\infty]\f$
@@ -154,18 +134,19 @@ enum class AffineStatus : std::int8_t
 //=================================================================================================================
 
 template<class T>
-class AffineMain  : public DomainInterface<Interval,double>
+class AffineMain  : public DomainInterface<Interval,double>, public DomainInterface<AffineMain<T>,double>
 {
 
 
 public:
 
 	typedef enum {
-		AF_Lin_Chebyshev=1, AF_Lin_MinRange=0
+		AF_Lin_Chebyshev=1, 
+		AF_Lin_MinRange=0
 	} Affine_Mode; // ...etc...
 
 	/**
-	 * \brief Changes the linearization mode globally.
+	 * \brief Changes the linearization mode for the current thread.
 	 *
 	 * \param tt approximation mode (Chebyshev by default)
 	 */
@@ -239,24 +220,38 @@ public:
 	 */
 	bool operator!=(const Interval& x) const ;
 
-	/**
-	 * \brief Comparison (strict less-than) between this and an interval.
-	 *
-	 * The comparison is performed on the interval enclosure of this affine form.
-	 *
-	 * \param x interval to be compared with
-	 * \return interval Boolean result
-	 */
+     /**
+     * \brief Comparison (strict less-than) between this and x
+     * 
+     * The returned ``BoolInterval`` encloses the truth value of
+     * \f$t<s\f$ for \f$t\in[\mathrm{this}]\f$ and \f$s\in[x]\f$.
+     * 
+     * \note Returns:
+     *       - ``BoolInterval::EMPTY`` if this or x is empty
+     *       - ``BoolInterval::TRUE`` iff \f$\mathrm{ub}([\mathrm{this}])<\mathrm{lb}([x])\f$
+     *       - ``BoolInterval::FALSE`` iff \f$\mathrm{ub}([x])\leq\mathrm{lb}([\mathrm{this}])\f$
+     *       - ``BoolInterval::UNKNOWN`` otherwise
+     * 
+     * \param x interval to be compared with
+     * \return interval Boolean result
+     */
 	BoolInterval operator<(const Interval& x) const;
 
-	/**
-	 * \brief Comparison (strict greater-than) between this and an interval.
-	 *
-	 * The comparison is performed on the interval enclosure of this affine form.
-	 *
-	 * \param x interval to be compared with
-	 * \return interval Boolean result
-	 */
+     /**
+     * \brief Comparison (strict greater-than) between this and x
+     * 
+     * The returned BoolInterval encloses the truth value of
+     * \f$t>s\f$ for \f$t\in[\mathrm{this}]\f$ and \f$s\in[x]\f$.
+     * 
+     * \note Returns:
+     *       - ``BoolInterval::EMPTY`` if this or x is empty
+     *       - ``BoolInterval::TRUE`` iff \f$\mathrm{lb}([\mathrm{this}])>\mathrm{ub}([x])\f$
+     *       - ``BoolInterval::FALSE`` iff \f$\mathrm{lb}([x])\geq\mathrm{ub}([\mathrm{this}])\f$
+     *       - ``BoolInterval::UNKNOWN`` otherwise
+     * 
+     * \param x interval to be compared with
+     * \return interval Boolean result
+     */
 	BoolInterval operator>(const Interval& x) const;
 
 	/**
@@ -315,8 +310,9 @@ public:
 	virtual AffineMain& operator=(const Interval& itv);
 
 
-	AffineMain(AffineMain&&) noexcept = default;
-	AffineMain& operator=(AffineMain&&) noexcept = default;
+	// AffineMain(AffineMain&&) noexcept = default;
+
+	// AffineMain& operator=(AffineMain&&) noexcept = default;
 
 	/* Union and Intersection of two Affine form must not be implemented
 	 * That could produce to much confusion.
@@ -324,6 +320,7 @@ public:
 	/** \brief Intersection of *this and x.
 	 * \param x - the interval to compute the intersection with.*/
 	AffineMain& operator&=(const AffineMain& x) = delete;
+
 	/** \brief Union of *this and I.
 	 * \param x - the interval to compute the hull with.*/
 	AffineMain& operator|=(const AffineMain& x) = delete;
@@ -414,7 +411,7 @@ public:
 	 *
 	 * \return number of variables
 	 */
-	int size() const;
+	Index noise_count() const;
 
 	/**
 	 * \brief Returns the interval enclosure of this affine form.
@@ -429,7 +426,7 @@ public:
 	 * \param i coefficient index
 	 * \return coefficient value
 	 */
-	double val(int i) const;
+	double noise(Index i) const;
 
 	/**
 	 * \brief Returns the remainder error term.
@@ -480,6 +477,7 @@ public:
 	 * \note Always returns true if this is empty.
 	 */
 	bool is_subset(const Interval& x) const;
+	bool is_subset(const AffineMain<T>& x) const;
 
 	/**
 	 * \brief Tests whether this interval enclosure is a strict subset of \p x.
@@ -489,6 +487,7 @@ public:
 	 * in both cases, the first is inside the interior of the second.
 	 */
 	bool is_strict_subset(const Interval& x) const;
+	bool is_strict_subset(const AffineMain<T>& x) const;
 
 	/**
 	 * \brief Tests whether this interval enclosure is inside the interior of \p x.
@@ -498,6 +497,7 @@ public:
 	 * \note Always returns true if this is empty.
 	 */
 	bool is_interior_subset(const Interval& x) const;
+	bool is_interior_subset(const AffineMain<T>& x) const;
 
 	/**
 	 * \brief Tests whether this interval enclosure is in the relative interior of \p x.
@@ -507,6 +507,7 @@ public:
 	 * is the interior (in the usual meaning).
 	 */
 	bool is_relative_interior_subset(const Interval& x) const;
+	bool is_relative_interior_subset(const AffineMain<T>& x) const;
 
 	/**
 	 * \brief Tests whether this interval enclosure is a strict interior subset of \p x.
@@ -515,6 +516,7 @@ public:
 	 * and the empty set is not "strictly" in the interior of the empty set.
 	 */
 	bool is_strict_interior_subset(const Interval& x) const;
+	bool is_strict_interior_subset(const AffineMain<T>& x) const;
 
 	/**
 	 * \brief Tests whether this interval enclosure is a superset of \p x.
@@ -522,6 +524,7 @@ public:
 	 * \note Always returns true if x is empty.
 	 */
 	bool is_superset(const Interval& x) const;
+	bool is_superset(const AffineMain<T>& x) const;
 
 	/**
 	 * \brief Tests whether this interval enclosure is a strict superset of \p x.
@@ -529,6 +532,7 @@ public:
 	 * \see #is_strict_subset(const Interval&) const.
 	 */
 	bool is_strict_superset(const Interval& x) const;
+	bool is_strict_superset(const AffineMain<T>& x) const;
 
 	/**
 	 * \brief Tests whether this interval enclosure contains \p d.
@@ -551,6 +555,7 @@ public:
 	 * \brief Tests whether this interval enclosure intersects \p x.
 	 */
 	bool intersects(const Interval &x) const;
+	bool intersects(const AffineMain<T>& x) const;
 
 	/**
 	 * \brief Tests whether this and \p x overlap with non-null volume.
@@ -558,6 +563,7 @@ public:
 	 * Equivalently, some interior points (of this or x) must belong to the intersection.
 	 */
 	bool overlaps(const Interval &x) const;
+	bool overlaps(const AffineMain<T> &x) const;
 
 	/**
 	 * \brief Tests whether this and \p x are disjoint.
@@ -566,6 +572,7 @@ public:
 	 * \return true iff this and \p x do not intersect
 	 */
 	bool is_disjoint(const Interval &x) const;
+	bool is_disjoint(const AffineMain<T> &x) const;
 
 
 	/**
@@ -735,8 +742,9 @@ private:
 	AffineMain& Aacosh(const Interval& itv);
 	AffineMain& Aasinh(const Interval& itv);
 	AffineMain& Aatanh(const Interval& itv);
+	/** \brief Internal helper: compute atan2(y,x), y being *this. */
+	AffineMain& Aatan2(const AffineMain& x, const Interval& itvY, const Interval& itvX);
 
-//	template<class A>   friend AffineMain<A> AffineVarMain<A>::operator-() const ;
 	template<class A>   friend AffineMain<A> operator/(double d, const AffineMain<A>& x);
 	template<class A>	friend AffineMain<A> inv(const AffineMain<A>&  x);
 	template<class A>	friend AffineMain<A> sqr(const AffineMain<A>&  x);
@@ -767,6 +775,7 @@ private:
 	template<class A>	friend AffineMain<A> asinh(const AffineMain<A>&  x);
 	template<class A>	friend AffineMain<A> atanh(const AffineMain<A>&  x);
 
+	template<class A> 	friend AffineMain<A> atan2(const AffineMain<A>& y, const AffineMain<A>& x);
 
 	template<class A> friend std::ostream& operator<<(std::ostream& os, const AffineMain<A>& x);
 
@@ -790,9 +799,8 @@ protected:
 	 * See class description above for the exact code-to-state mapping.
 	 */
 	AffineStatus _status;		// boolean to know if the affine form is actif or not.
-	// This is to manage the particular case of EMPTY and an unbounded Interval
 
-	int _n; 		// dimension (size of _elt._val)-1  , ie number of variable
+	Index _n_noise; 		// dimension (size of _elt._val)-1  , ie number of noise symbols
 
 	T _elt;			// core of the affine form
 
@@ -801,17 +809,20 @@ protected:
 	 *
 	 * The \p var-th variable is initialized from \p itv.
 	 */
-	AffineMain(int size, int var, const Interval& itv);
+	AffineMain(Index noise_count, Index var, const Interval& itv);
 
 	/**
 	 * \brief Changes the number of affine variables.
 	 *
 	 * \param n new number of variables
 	 */
-	void resize(int n);
+	void resize_noise(Index n);
 
 
 };
+
+
+
 
 template<class T>
 inline AffineMain<T> AffineMain<T>::empty()
@@ -887,6 +898,30 @@ inline bool AffineMain<T>::is_superset(const Interval& x) const { return this->i
 template<class T>
 inline bool AffineMain<T>::is_strict_superset(const Interval& x) const { return this->itv().is_strict_superset(x); }
 
+
+
+template<class T>
+inline bool AffineMain<T>::is_subset(const AffineMain<T>& x) const { return this->itv().is_subset(x.itv()); }
+
+template<class T>
+inline bool AffineMain<T>::is_strict_subset(const AffineMain<T>& x) const { return this->itv().is_strict_subset(x.itv()); }
+
+template<class T>
+inline bool AffineMain<T>::is_interior_subset(const AffineMain<T>& x) const { return this->itv().is_interior_subset(x.itv()); }
+
+template<class T>
+inline bool AffineMain<T>::is_relative_interior_subset(const AffineMain<T>& x) const { return this->itv().is_relative_interior_subset(x.itv()); }
+
+template<class T>
+inline bool AffineMain<T>::is_strict_interior_subset(const AffineMain<T>& x) const { return this->itv().is_strict_interior_subset(x.itv()); }
+
+template<class T>
+inline bool AffineMain<T>::is_superset(const AffineMain<T>& x) const { return this->itv().is_superset(x.itv()); }
+
+template<class T>
+inline bool AffineMain<T>::is_strict_superset(const AffineMain<T>& x) const { return this->itv().is_strict_superset(x.itv()); }
+
+
 template<class T>
 inline bool AffineMain<T>::contains(const double& d) const { return this->itv().contains(d); }
 
@@ -902,6 +937,14 @@ inline bool AffineMain<T>::overlaps(const Interval &x) const { return this->itv(
 template<class T>
 inline bool AffineMain<T>::is_disjoint(const Interval &x) const { return this->itv().is_disjoint(x); }
 
+template<class T>
+inline bool AffineMain<T>::intersects(const AffineMain<T> &x) const { return this->itv().intersects(x.itv()); }
+
+template<class T>
+inline bool AffineMain<T>::overlaps(const AffineMain<T> &x) const { return this->itv().overlaps(x.itv()); }
+
+template<class T>
+inline bool AffineMain<T>::is_disjoint(const AffineMain<T> &x) const { return this->itv().is_disjoint(x.itv()); }
 
 
 template<class T>
@@ -1109,6 +1152,10 @@ template<class T>
 AffineMain<T> atanh(const AffineMain<T>& x);
 
 
+template<class T>
+AffineMain<T> atan2(const AffineMain<T>& y, const AffineMain<T>& x);
+
+
 /** \brief Returns \f$|\mathrm{AF}[x]|\f$. */
 template<class T>
 AffineMain<T> abs(const AffineMain<T>& x);
@@ -1245,7 +1292,7 @@ AffineMain<T>::AffineMain(const Interval& x) : AffineMain() {
 
 template<typename AF>
 AffineMain<AF>::operator Interval() const {
-    return itv();
+    return this->itv();
 }
 
 
@@ -1345,8 +1392,8 @@ inline void AffineMain<T>::set_empty(){
 
 
 template<class T>
-inline int AffineMain<T>::size() const{
-	return _n;
+inline Index AffineMain<T>::noise_count() const{
+	return _n_noise;
 }
 
 template<class T>
@@ -1415,14 +1462,9 @@ inline AffineMain<T>& AffineMain<T>::operator/=(const Interval& x){
 	return *this *= (1.0/x) ;
 }
 
-//template<class T>
-//inline AffineMain<T>& AffineMain<T>::operator+=(const AffineMain<T>& x){
-//	return saxpy(1.0, x, 0.0, 0.0, false, true, false, false);
-//}
-
 template<class T>
 inline AffineMain<T>& AffineMain<T>::operator-=(const AffineMain<T>& x){
-	return *this += (-AffineMain<T>(x));
+	return *this += (AffineMain<T>(x).Aneg());
 }
 
 template<class T>
@@ -1728,6 +1770,16 @@ inline AffineMain<T> atanh(const AffineMain<T>& x){
 	out.Aatanh(x.itv());
 	return out;
 }
+
+template<class T>
+inline AffineMain<T> atan2(const AffineMain<T>& y, const AffineMain<T>& x)
+{
+    AffineMain<T> res(y);
+    res.Aatan2(x, y.itv(), x.itv());
+    return res;
+}
+
+
 template<class T>
 inline AffineMain<T> abs(const AffineMain<T> &x){
 	AffineMain<T> out(x);
@@ -1880,8 +1932,8 @@ inline std::ostream& operator<<(std::ostream& os, const AffineMain<T>& x) {
 		os << x.itv() << " : ";
 		if (x.is_active()) {
 			os << x.mid();
-			for (int i = 0; i < x.size(); i++) {
-				os << " + " << x.val(i) << " eps_" << i;
+			for (int i = 0; i < x.noise_count(); i++) {
+				os << " + " << x.noise(i) << " eps_" << i;
 			}
 			os << " + " << x.err() << " [-1,1] ";
 		} else {
@@ -2221,7 +2273,7 @@ inline AffineMain<T>& AffineMain<T>::Acos(const Interval& itv){
 
 		alpha  = 2*c1/(itv.diam());
 		beta   = c0-c1*((itv.lb()+itv.ub())/(itv.diam()));
-		//ddelta = ((size()*Interval(TEMP1.rad())) + Interval(TEMP2.rad())).ub();
+		//ddelta = ((noise_count()*Interval(TEMP1.rad())) + Interval(TEMP2.rad())).ub();
 
 		// compute the maximal error
 		ddelta= 0.0;
@@ -2317,7 +2369,7 @@ inline AffineMain<T>& AffineMain<T>::Asin(const Interval& itv){
 
 		alpha  = 2*c1/(itv.diam());
 		beta   = c0-c1*((itv.lb()+itv.ub())/(itv.diam()));
-		//ddelta = ((size()*Interval(TEMP1.rad())) + Interval(TEMP2.rad())).ub();
+		//ddelta = ((noise_count()*Interval(TEMP1.rad())) + Interval(TEMP2.rad())).ub();
 
 		// compute the maximal error
 		ddelta= 0.0;
@@ -2411,7 +2463,7 @@ inline AffineMain<T>& AffineMain<T>::Atan(const Interval& itv){
 
 		alpha  = 2*c1/(itv.diam());
 		beta   = c0-c1*((itv.lb()+itv.ub())/(itv.diam()));
-		//ddelta = ((size()*Interval(TEMP1.rad())) + Interval(TEMP2.rad())).ub();
+		//ddelta = ((noise_count()*Interval(TEMP1.rad())) + Interval(TEMP2.rad())).ub();
 
 		// compute the maximal error
 		ddelta= 0.0;
@@ -2508,7 +2560,7 @@ inline AffineMain<T>& AffineMain<T>::Aacos(const Interval& itv){
 
 		alpha  = 2*c1/(itv2.diam());
 		beta   = c0-c1*((itv2.lb()+itv2.ub())/(itv2.diam()));
-		//ddelta = ((_n*Interval(TEMP1.rad())) + Interval(TEMP2.rad())).ub();
+		//ddelta = ((_n_noise*Interval(TEMP1.rad())) + Interval(TEMP2.rad())).ub();
 
 		// compute the maximal error
 		ddelta= 0.0;
@@ -2578,7 +2630,7 @@ inline AffineMain<T>& AffineMain<T>::Aasin(const Interval& itv){
 
 		alpha  = 2*c1/(itv2.diam());
 		beta   = c0-c1*((itv2.lb()+itv2.ub())/(itv2.diam()));
-		//ddelta = ((_n*Interval(TEMP1.rad())) + Interval(TEMP2.rad())).ub();
+		//ddelta = ((_n_noise*Interval(TEMP1.rad())) + Interval(TEMP2.rad())).ub();
 
 		// compute the maximal error
 		ddelta= 0.0;
@@ -2646,7 +2698,7 @@ inline AffineMain<T>& AffineMain<T>::Aatan(const Interval& itv){
 
 		alpha  = 2*c1/(itv.diam());
 		beta   = c0-c1*((itv.lb()+itv.ub())/(itv.diam()));
-		//ddelta = ((_n*Interval(TEMP1.rad())) + Interval(TEMP2.rad())).ub();
+		//ddelta = ((_n_noise*Interval(TEMP1.rad())) + Interval(TEMP2.rad())).ub();
 
 		// compute the maximal error
 		ddelta= 0.0;
@@ -2753,7 +2805,7 @@ inline AffineMain<T>& AffineMain<T>::Asinh(const Interval& itv){
 
 		alpha  = 2*c1/(itv.diam());
 		beta   = c0-c1*((itv.lb()+itv.ub())/(itv.diam()));
-		//ddelta = ((_n*Interval(TEMP1.rad())) + Interval(TEMP2.rad())).ub();
+		//ddelta = ((_n_noise*Interval(TEMP1.rad())) + Interval(TEMP2.rad())).ub();
 
 		// compute the maximal error
 		ddelta= 0.0;
@@ -2825,7 +2877,7 @@ inline AffineMain<T>& AffineMain<T>::Atanh(const Interval& itv){
 
 		alpha  = 2*c1/(itv.diam());
 		beta   = c0-c1*((itv.lb()+itv.ub())/(itv.diam()));
-		//ddelta = ((_n*Interval(TEMP1.rad())) + Interval(TEMP2.rad())).ub();
+		//ddelta = ((_n_noise*Interval(TEMP1.rad())) + Interval(TEMP2.rad())).ub();
 
 		// compute the maximal error
 		ddelta= 0.0;
@@ -3012,6 +3064,65 @@ AffineMain<T>::Aatanh(const Interval& itv)
 
 
 template<class T>
+inline AffineMain<T>& AffineMain<T>::Aatan2(const AffineMain<T>& x, const Interval& itvY, const Interval& itvX){
+    if(itvY.is_empty() || itvX.is_empty()){
+		*this = Interval::empty();
+		return *this;
+	}
+    // We handle the special case x=[0,0] separately
+    else if(itvX == Interval::zero())  {
+      if(itvY.lb() >= 0) {
+        if(itvY.ub() == 0)
+          *this = Interval::empty(); // atan2(0,0) is undefined
+        else 
+          *this = Interval::half_pi();
+      }
+      else if(itvY.ub() <= 0) 
+        *this = (-Interval::half_pi());
+      else
+        *this = Interval(-1,1)*Interval::half_pi();
+	  return *this;
+    }
+    else if(itvX.lb() >= 0) {
+		// Zone sûre (x>0 sur toute la boîte): atan2(y,x) == atan(y/x)
+    	// exactement, donc on réutilise la division affine et l'atan affine
+    	// déjà validés, sans nouvelle linéarisation.
+		*this /= x;                 // *this contient AF[y] -> devient AF[y]/AF[x]
+    	this->Aatan(this->itv());
+      	return *this; // now, x.ub()>0 -> atan does not give an empty set
+	}
+    else if(itvX.ub() <= 0) {
+      if(itvY.lb() >= 0) {
+		*this /= x;                 // *this contient AF[y] -> devient AF[y]/AF[x]
+    	this->Aatan(this->itv());
+		*this += Interval::pi(); // x.ub()<0
+      	return *this;
+		}
+      else if(itvY.ub() < 0) {
+		*this /= x;         
+    	this->Aatan(this->itv());
+		*this -= Interval::pi(); 
+      	return *this;
+		}
+      else {
+        *this = Interval(-1,1)*Interval::pi();
+		return *this;
+	  }
+    }
+    else  {     
+	// Cas singulier ou coupure de branche potentielle: on ne tente pas de
+    // préserver la corrélation affine, on redescend sur l'Interval.
+		Interval res_itv = atan2(itvY, itvX);
+        *this = res_itv;
+        return *this;
+    }
+  }
+
+
+
+
+
+template<class T>
 inline AffineMain<T>& AffineMain<T>::Aabs(const Interval& itv){
 	Interval res_itv = abs(itv);
 
@@ -3057,6 +3168,25 @@ inline AffineMain<T>& AffineMain<T>::Aabs(const Interval& itv){
 
 
 
+namespace detail {
+
+/** Portable integer power for finite scalar interpolation points. */
+inline double affine_powi(double base, unsigned int exponent)
+{
+  double result = 1.0;
+  while (exponent != 0U) {
+    if ((exponent & 1U) != 0U) {
+      result *= base;
+    }
+    exponent >>= 1U;
+    if (exponent != 0U) {
+      base *= base;
+    }
+  }
+  return result;
+}
+
+} // namespace detail
 
 template<class T>
 inline AffineMain<T>& AffineMain<T>::Apow(int n, const Interval& itv) {
@@ -3098,10 +3228,8 @@ inline AffineMain<T>& AffineMain<T>::Apow(int n, const Interval& itv) {
 			Interval dmm(0.0), TEMP1(0.0), TEMP2(0.0), band(0.0);
 
 			dmm = pow(itv, n);
-			const double f_lb = detail::affine_powi(
-					itv.lb(), static_cast<unsigned int>(n));
-			const double f_ub = detail::affine_powi(
-					itv.ub(), static_cast<unsigned int>(n));
+			const double f_lb = detail::affine_powi(itv.lb(), static_cast<unsigned int>(n));
+			const double f_ub = detail::affine_powi(itv.ub(), static_cast<unsigned int>(n));
 			alpha = (f_ub - f_lb)/itv.diam();
 			if (!std::isfinite(f_lb) || !std::isfinite(f_ub) ||
 					!std::isfinite(alpha)) {
@@ -3165,7 +3293,7 @@ inline AffineMain<T>& AffineMain<T>::Apow(int n, const Interval& itv) {
 				*this = pow(itv, n);
 				return *this;
 			}
-			//ddelta = ((_n * Interval(TEMP1.rad())) + Interval(TEMP2.rad())).ub(); //
+			//ddelta = ((_n_noise * Interval(TEMP1.rad())) + Interval(TEMP2.rad())).ub(); //
 
 			// compute the maximal error
 

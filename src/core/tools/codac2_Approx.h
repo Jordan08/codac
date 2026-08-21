@@ -214,7 +214,7 @@ namespace codac2
    * - otherwise, the lower bound, upper bound and midpoint of the affine
    *   form's interval enclosure must match those of the expected interval
    *   (up to \c eps), and the sum of the absolute values of all noise
-   *   coefficients (\c val(i) for \c i in [0,size()) ) must match the
+   *   coefficients (\c noise(i) for \c i in [0,size()) ) must match the
    *   expected radius (up to \c eps). This generalizes \c CHECK_affine_eq
    *   (1 noise variable) and \c CHECK_affine_eq2 (2 noise variables) to any
    *   number of noise variables.
@@ -245,20 +245,16 @@ namespace codac2
         if(y_expected.is_unbounded())
           return x1.is_unbounded() && (x1.itv() == Approx<Interval>(y_expected,x2._eps));
 
-        if(!(x1.itv().lb() == Approx<double>(y_expected.lb(),x2._eps)))
+        if(!(x1.lb() == Approx<double>(y_expected.lb(),x2._eps)))
           return false;
 
-        if(!(x1.itv().ub() == Approx<double>(y_expected.ub(),x2._eps)))
+        if(!(x1.ub() == Approx<double>(y_expected.ub(),x2._eps)))
           return false;
 
-        if(!(x1.itv().mid() == Approx<double>(y_expected.mid(),x2._eps)))
+        if(!(x1.mid() == Approx<double>(y_expected.mid(),x2._eps)))
           return false;
 
-        double sum_val = 0.;
-        for(int i = 0 ; i < x1.size() ; i++)
-          sum_val += std::fabs(x1.val(i));
-
-        return sum_val == Approx<double>(y_expected.rad(),x2._eps);
+        return x1.rad() == Approx<double>(y_expected.rad(),x2._eps);
       }
 
       friend bool operator==(const Approx<AffineMain<T>>& x1, const AffineMain<T>& x2)

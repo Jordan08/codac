@@ -33,6 +33,7 @@
 #include "codac2_IntervalMatrix.h"
 #include "codac2_IntervalRow.h"
 #include "codac2_Approx.h"
+#include <iostream>
 
 using namespace codac2;
 
@@ -204,3 +205,74 @@ TEST_CASE("Eigen AffineT implicit conversion to and from Interval", "[AffineT][c
     const AffineT sum = a + itv;
     check_interval_enclosure(sum, Interval(4.0) + itv);
 }
+
+
+// ============================================================================
+// 6. AffineTVarVector::init(const Interval&): each component keeps its own
+//    dedicated noise symbol after a broadcast initialization
+// ============================================================================
+//
+// Regression test for the ex_affineform.cpp idiom `x.init(Interval(...))`.
+// The generic Eigen::Matrix::init(const Scalar&) cannot be used here
+// (Interval -> AffineVarMain<T> is intentionally not constructible, see
+// test 3 above); AffineTVarVector needs its own init(const Interval&)
+// overload assigning component-wise while preserving each component's
+// dedicated noise symbol.
+
+TEST_CASE("AffineTVarVector init(Interval) preserves distinct noise symbols",
+          "[AffineT][AffineTVarVector][init][regression]")
+{
+    AffineTVarVector v(3);
+    v.init(Interval(1.0, 2.0));
+
+    REQUIRE(v.size() == 3);
+
+    const double rad = Interval(1.0, 2.0).rad(); // 0.5
+
+    for (int i = 0; i < 3; ++i)
+    {
+        CAPTURE(i, v[i].itv());
+
+        // Every component carries the same interval enclosure...
+        CHECK(v[i].itv() == Interval(1.0, 2.0));
+        CHECK(v[i].rad() == rad);
+        CHECK(v[i].noise_count() == 3);
+        // ...but each keeps its own, distinct noise symbol: component i has
+        // a coefficient equal to the interval's radius on eps_i, and zero
+        // on every other eps_j. A regression that broadcast a single shared
+        // symbol (or degraded to a plain interval constant) would show up
+        // here as a non-diagonal pattern.
+        for (int j = 0; j < 3; ++j)
+            CHECK(v[i].noise(j) == (i == j ? rad : 0.0));
+    }
+
+    v.conservativeResize(5);
+
+    for (int i = 0; i < 3; ++i)
+    {
+        CAPTURE(i, v[i].itv());
+
+        // Every component carries the same interval enclosure...
+        CHECK(v[i].itv() == Interval(1.0, 2.0));
+        CHECK(v[i].rad() == rad);
+        CHECK(v[i].noise_count() == 5);
+
+        // ...but each keeps its own, distinct noise symbol: component i has
+        // a coefficient equal to the interval's radius on eps_i, and zero
+        // on every other eps_j. A regression that broadcast a single shared
+        // symbol (or degraded to a plain interval constant) would show up
+        // here as a non-diagonal pattern.
+        for (int j = 0; j < 5; ++j)
+            CHECK(v[i].noise(j) == (i == j ? rad : 0.0));
+    }
+
+    for (int i = 3; i < 5; ++i)
+    {
+        CAPTURE(i, v[i].itv());
+
+        // Every component carries the same interval enclosure...
+        CHECK(v[i].itv() == Interval());
+        CHECK(v[i].noise_count() == 5);
+    }
+}
+

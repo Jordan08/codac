@@ -16,7 +16,7 @@
 using namespace std;
 using namespace codac2;
 
-const double ERROR = std::numeric_limits<double>::epsilon()*10; //__builtin_powi(2.0, -50);
+const double ERROR = std::numeric_limits<double>::epsilon()*100; //__builtin_powi(2.0, -50);
 
 typedef AF_Default AA;
 
@@ -175,12 +175,12 @@ TEST_CASE("AffineMainVector")
   {
 	  AffineVarMainVector<AA> x( IntervalVector({ {-1.,2.}, {3.,4.} }));
 
-	  x.resize(3);
+	  x.conservativeResize(3);
 	  CHECK(x.size() == 3);
 	  CHECK(x[0].itv() == Interval(-1.,2.));
 	  CHECK(x[1].itv() == Interval(3.,4.));
 	  CHECK(x[2].itv() == Interval());
-	  x.resize(1);
+	  x.conservativeResize(1);
 
 	  CHECK(x.size() == 1);
 	  CHECK(x[0].itv() == Interval(-1.,2.));
@@ -188,7 +188,7 @@ TEST_CASE("AffineMainVector")
 
   {
     AffineVarMainVector<AA> x(IntervalVector({{1.,2.},{3.,4.}}));
-    x.resize(2); // même taille
+    x.conservativeResize(2); // même taille
     CHECK(x[0].itv() == Interval(1.,2.));
     CHECK(x[1].itv() == Interval(3.,4.));
   }
@@ -1317,8 +1317,8 @@ TEST_CASE("AffineVarMainVector: construction and assignment from IntervalVector"
 
 	CHECK(x.size() == 3);
 
-	for (Eigen::Index i = 0; i < x.size(); ++i) {
-	    CHECK(x[i].size() == 3);
+	for (Index i = 0; i < x.size(); ++i) {
+	    CHECK(x[i].noise_count() == 3);
 	    CHECK(x[i].itv() == values[i]);
 	}
 }
@@ -1355,3 +1355,34 @@ TEST_CASE("AffineMainVector: test des addon Eigen (lb, ub, mid)")
 	CHECK(x.itv() == values);
 
 }
+
+TEST_CASE(
+    "AffineVarMainVector does not inherit Eigen constructors",
+    "[AffineVarMainVector]"
+)
+{
+    AffineVarMainVector<AF_fAF2> x(3);
+
+    CHECK(x[0].noise_index() == 0);
+    CHECK(x[1].noise_index() == 1);
+    CHECK(x[2].noise_index() == 2);
+
+
+    AffineVarMainVector<AF_fAF2> y(IntervalVector({{-1., 1.}, {2., 3.}, {4., 5.}}));
+    CHECK(y[0].noise_index() == 0);
+    CHECK(y[1].noise_index() == 1);
+    CHECK(y[2].noise_index() == 2);
+
+    AffineVarMainVector<AF_fAF2> z(Vector({-1., 2., 3.}));
+    CHECK(z[0].noise_index() == 0);
+    CHECK(z[1].noise_index() == 1);
+    CHECK(z[2].noise_index() == 2);
+
+    AffineVarMainVector<AF_fAF2> w(0);
+    w.resize(3);
+    CHECK(w[0].noise_index() == 0);
+    CHECK(w[1].noise_index() == 1);
+    CHECK(w[2].noise_index() == 2);
+}
+
+

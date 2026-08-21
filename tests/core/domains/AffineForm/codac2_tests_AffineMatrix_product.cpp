@@ -668,3 +668,17 @@ TEST_CASE("Empty coefficient propagation through products")
     REQUIRE(result.size() == 1);
     CHECK(result(0).is_empty());
 }
+
+
+TEST_CASE("Matrix product preserves dependency: A*x - A*x collapses to zero")
+{
+    const RealMatrix matrix = make_real_matrix_2x3();
+    const AffineTVarVector x = make_variable_vector_3();
+
+    const AffineTVector result = (matrix * x) - (matrix * x);
+
+    for(Eigen::Index i = 0; i < result.size(); ++i)
+        CHECK(result(i).itv() == Interval(0.0));
+}
+
+

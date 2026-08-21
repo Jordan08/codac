@@ -22,14 +22,11 @@
 #include <climits>
 
 
-
 namespace codac2 {
-
-
 
 /**
  * Code for the particular case:
- * if the affine form is actif, _status=1  and _n is the size of the affine form
+ * if the affine form is actif, _status=1  and _n_noise is the number of noise symbols of the affine form
  * if the set is degenerate, _status = 0 and itv().diam()< AF_EC
  * if the set is empty, _status = -1
  * if the set is ]-oo,+oo[, _status = -2 and _err = ]-oo,+oo[
@@ -39,14 +36,19 @@ namespace codac2 {
  */
 template<>
 AffineMain<AF_fAF2>::AffineMain() :
-		 _status (AffineStatus::AllReals     ),
-		 _n		(0		),
-		 _elt	(nullptr	,oo)	{
+		 _status  (AffineStatus::AllReals     ),
+		 _n_noise (0		),
+		 _elt	  (nullptr	,0.0	)	{
  }
 
+template<>
+AffineVarMain<AF_fAF2>::AffineVarMain() : 
+		AffineMain<AF_fAF2>(), 
+		_var(-1) {}
 
 template<>
 AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator=(const Interval& x) {
+	assert(_n_noise >= 0);
 	if (x.is_empty()) {
 		_status = AffineStatus::Empty;
 		_elt._err = 0.0;
@@ -66,9 +68,9 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator=(const Interval& x) {
 		else
 			this->_elt._err = x.ub();
 	} else  {
-		if (_elt._val==nullptr) { _elt._val = std::make_unique<double[]>(_n+1); }
+		if (_elt._val==nullptr) { _elt._val = std::make_unique<double[]>(_n_noise+1); }
 		_elt._val[0] = x.mid();
-		for (int i=1; i<=_n;i++) {
+		for (Index i=1; i<=_n_noise;i++) {
 			_elt._val[i] =0;
 		}
 		if ( x.is_degenerated()) {
@@ -86,9 +88,9 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator=(const Interval& x) {
 
 template<>
 AffineVarMain<AF_fAF2>& AffineVarMain<AF_fAF2>::operator=(const Interval& x) {
-	assert(_n > 0);
+	assert(_n_noise >= 0);
 	assert(_var >= 0);
-	assert(_var < _n);
+	assert(_var < _n_noise);
 	if (x.is_empty()) {
 		this->_status = AffineStatus::Empty;
 		this->_elt._err = 0.0;
@@ -104,9 +106,9 @@ AffineVarMain<AF_fAF2>& AffineVarMain<AF_fAF2>::operator=(const Interval& x) {
 		if (x.ub()<= -std::numeric_limits<double>::max()) this->_elt._err = -std::numeric_limits<double>::max();
 		else this->_elt._err = x.ub();
 	} else  {
-		if (this->_elt._val==nullptr) { this->_elt._val = std::make_unique<double[]>(_n+1); }
+		if (this->_elt._val==nullptr) { this->_elt._val = std::make_unique<double[]>(_n_noise+1); }
 		this->_elt._val[0] = x.mid();
-		for (int i=1; i<=_n;i++) {
+		for (Index i=1; i<=_n_noise;i++) {
 			this->_elt._val[i] =0;
 		}
 		if ( x.is_degenerated()) {
@@ -126,16 +128,16 @@ AffineVarMain<AF_fAF2>& AffineVarMain<AF_fAF2>::operator=(const Interval& x) {
 
 
 template<>
-AffineMain<AF_fAF2>::AffineMain(int size, int var, const Interval& itv) :
-			_status	(AffineStatus::Degenerate),
-			_n 		(size),
-			_elt	(nullptr,0.0)
+AffineMain<AF_fAF2>::AffineMain(Index noise_count, Index var, const Interval& itv) :
+			_status	 (AffineStatus::Degenerate),
+			_n_noise (noise_count),
+			_elt	 (nullptr,0.0)
 {
-	assert((((size>=0) && (var>=0))||itv.is_empty()) && (var<size));
+	assert((((noise_count>=0) && (var>=0))||itv.is_empty()) && (var<noise_count));
 	if (!(itv.is_unbounded()||itv.is_empty())) {
-		_elt._val	=std::make_unique<double[]>(size + 1);
+		_elt._val	=std::make_unique<double[]>(noise_count + 1);
 		_elt._val[0] = itv.mid();
-		for (int i = 1; i <= size; i++){
+		for (Index i = 1; i <= noise_count; i++){
 			_elt._val[i] = 0.0;
 		}
 		if (! itv.is_degenerated()) {
@@ -168,11 +170,11 @@ AffineMain<AF_fAF2>::AffineMain(int size, int var, const Interval& itv) :
 template<>
 AffineMain<AF_fAF2>::AffineMain(const AffineMain<AF_fAF2>& x) :
 		_status	(x._status),
-		_n		(x._n),
+		_n_noise(x._n_noise),
 		_elt	(nullptr	,x._elt._err ) {
 	if (x.is_active()) {
-		_elt._val =std::make_unique<double[]>(x._n + 1);
-		for (int i = 0; i <= x._n; i++){
+		_elt._val =std::make_unique<double[]>(x._n_noise + 1);
+		for (Index i = 0; i <= x._n_noise; i++){
 			_elt._val[i] = x._elt._val[i];
 		}
 	}
@@ -193,22 +195,22 @@ AffineMain<AF_fAF2>::operator=(const AffineMain<AF_fAF2>& x)
 
   if (!x.is_active()) {
     // An inactive affine form has no usable coefficient representation.
-    // Releasing the old storage prevents _n from becoming inconsistent
+    // Releasing the old storage prevents _n_noise from becoming inconsistent
     // with the actual allocation capacity.
     _elt._val = nullptr;
-    _n = x._n;
+    _n_noise = x._n_noise;
     return *this;
   }
 
-  if (_elt._val == nullptr || _n != x._n) {
+  if (_elt._val == nullptr || _n_noise != x._n_noise) {
     // unique_ptr::operator= frees whatever _elt._val previously owned only
     // after the new array has been successfully allocated, so the
     // destination is left unchanged if allocation throws.
-    _elt._val = std::make_unique<double[]>(x._n + 1);
-    _n = x._n;
+    _elt._val = std::make_unique<double[]>(x._n_noise + 1);
+    _n_noise = x._n_noise;
   }
 
-  for (int i = 0; i <= x._n; ++i) {
+  for (Index i = 0; i <= x._n_noise; ++i) {
     _elt._val[i] = x._elt._val[i];
   }
 
@@ -217,8 +219,8 @@ AffineMain<AF_fAF2>::operator=(const AffineMain<AF_fAF2>& x)
 
 
 template<>
-double AffineMain<AF_fAF2>::val(int i) const{
-	assert(is_active() &&(0<=i) && (i<size()));
+double AffineMain<AF_fAF2>::noise(Index i) const{
+	assert(is_active() &&(0<=i) && (i<noise_count()));
 	return _elt._val[i+1];
 }
 
@@ -256,7 +258,7 @@ const Interval AffineMain<AF_fAF2>::itv() const {
 	default: { // _status== AffineStatus::Active
 		Interval res(_elt._val[0]);
 		Interval pmOne(-1.0, 1.0);
-		for (int i = 1; i <= size(); i++){
+		for (Index i = 1; i <= noise_count(); i++){
 			res += (_elt._val[i] * pmOne);
 		}
 		res += _elt._err * pmOne;
@@ -278,7 +280,7 @@ double AffineMain<AF_fAF2>::mid() const{
 
 /**
  * Code for the particular case:
- * if the affine form is actif, _status=1  and _n is the size of the affine form
+ * if the affine form is actif, _status=1  and _n_noise is the number of noise symbols of the affine form
  * if the set is degenerate, _status = 0 and itv().diam()< AF_EC
  * if the set is empty, _status = -1
  * if the set is ]-oo,+oo[, _status = -2 and _err =]-oo,+oo[
@@ -305,7 +307,7 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::Aneg() {
 		break;
 	}
 	case AffineStatus::Active : {
-		for (int i = 0; i <= size(); i++) {
+		for (Index i = 0; i <= noise_count(); i++) {
 			_elt._val[i] = (-_elt._val[i]);
 		}
 		break;
@@ -325,7 +327,7 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator*=(double alpha) {
 	if (_status==AffineStatus::Active) {  // multiply by a scalar alpha
 		if (alpha==0.0) {
 			_status = AffineStatus::Degenerate;
-			for (int i=0; i<=_n;i++) {
+			for (Index i=0; i<=_n_noise;i++) {
 				_elt._val[i]=0;
 			}
 			_elt._err = 0;
@@ -333,7 +335,7 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator*=(double alpha) {
 			double temp, ttt, sss, eee;
 			ttt= 0.0;
 			sss= 0.0;
-			for (int i=0; i<=size();i++) {
+			for (Index i=0; i<=noise_count();i++) {
 				eee = _elt.twoProd(_elt._val[i], alpha, &temp);
 				_elt._val[i] = temp;
 				ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
@@ -346,7 +348,7 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator*=(double alpha) {
 			_elt._err = (1+2*AF_EM)*( ((1+2*AF_EM)*std::fabs(alpha)*_elt._err) +	((AF_EE*ttt) +	(AF_EE*sss)) );
 
 			bool b = (_elt._err<oo);
-			for (int i=0;i<=size();i++) {
+			for (Index i=0;i<=noise_count();i++) {
 				b &= (std::fabs(_elt._val[i])<oo);
 			}
 			if (!b) { *this = Interval(); }
@@ -445,26 +447,26 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::inflate(double ddelta) {
 
 
 template<>
-void AffineMain<AF_fAF2>::resize(int n) {
+void AffineMain<AF_fAF2>::resize_noise(Index n) {
 	assert(n>=1);
-	if(n == _n)	return;
+	if(n == _n_noise)	return;
 
 	if (_elt._val==nullptr) {
-		_n = n;
+		_n_noise = n;
 		_elt._val = std::make_unique<double[]>(n+1);
-		for (int i=0;i<=n;i++) {
+		for (Index i=0;i<=n;i++) {
 			_elt._val[i] = 0;
 		}
 	} else {
 		auto tmp = std::make_unique<double[]>(n+1);
-		int i=0;
-		for (;i<=_n;i++) {
+		Index i=0;
+		for (;i<=_n_noise;i++) {
 			tmp[i] = _elt._val[i];
 		}
 		for (;i<=n;i++) {
 			tmp[i] = 0;
 		}
-		_n = n;
+		_n_noise = n;
 		_elt._val = std::move(tmp);
 	}
 	return;
@@ -485,13 +487,13 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator+=(const AffineMain<AF_fAF2>& 
 			*this = y;
 			*this += tmp;
 		} else {
-			if (_n < y.size()) {
-				this->resize(y.size());
+			if (_n_noise < y.noise_count()) {
+				this->resize_noise(y.noise_count());
 			}
 			double temp, ttt, sss, eee;
 			ttt=0.0;
 			sss=0.0;
-			for(int i=0;i<=y.size();i++) {
+			for(Index i=0;i<=y.noise_count();i++) {
 				eee = _elt.twoSum(_elt._val[i], y._elt._val[i], &temp);
 				ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
 				if (std::fabs(temp)<AF_EC) {
@@ -506,7 +508,7 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator+=(const AffineMain<AF_fAF2>& 
 			_elt._err = (1+2*AF_EM)*( (_elt._err+y._elt._err) + ((AF_EE*(ttt)) + (AF_EE*sss)) );
 
 			bool b = (_elt._err<oo);
-			for (int i=0;i<=_n;i++) {
+			for (Index i=0;i<=_n_noise;i++) {
 				b &= (std::fabs(_elt._val[i])<oo);
 			}
 			if (!b) {*this = Interval(); }
@@ -538,22 +540,22 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator*=(const AffineMain<AF_fAF2>& 
 			*this = y;
 			*this *= tmp;
 		} else 	 {
-			if (_n < y.size()) {
-				this->resize(y.size());
+			if (_n_noise < y.noise_count()) {
+				this->resize_noise(y.noise_count());
 			}
 			double Sx, Sy, Sxy, Sz, ttt, sss, ppp, tmp, xVal0, eee;
 			std::unique_ptr<double[]> xTmp;
 
-			xTmp = std::make_unique<double[]>(_n + 1);
+			xTmp = std::make_unique<double[]>(_n_noise + 1);
 			Sx=0.0; Sy=0.0; Sxy=0.0; Sz=0.0; ttt=0.0; sss=0.0; ppp=0.0; tmp=0.0; xVal0=0.0; eee=0.0;
 
 			// These accumulators may later be multiplied by quantities at the
 			// opposite scale. Do not discard them using an absolute threshold.
 			// For example, 1e-300 * 1e300 contributes at order one.
-			for (int i = 1; i <= _n; i++) {
+			for (Index i = 1; i <= _n_noise; i++) {
 				ppp = 0.0;
 
-				if (i <= y.size()) {
+				if (i <= y.noise_count()) {
 					eee = _elt.twoProd(_elt._val[i], y._elt._val[i], &ppp);
 					ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
 
@@ -570,7 +572,7 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator*=(const AffineMain<AF_fAF2>& 
 				ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
 				Sx = tmp;
 
-				if (i <= y.size()) {
+				if (i <= y.noise_count()) {
 					eee = _elt.twoSum(Sy, std::fabs(y._elt._val[i]), &tmp);
 					ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
 					Sy = tmp;
@@ -579,7 +581,7 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator*=(const AffineMain<AF_fAF2>& 
 
 			xVal0 = _elt._val[0];
 			// RES = X%T(0) * res
-			for (int i = 0; i <= _n; i++) {
+			for (Index i = 0; i <= _n_noise; i++) {
 				eee = _elt.twoProd(_elt._val[i],y._elt._val[0], &ppp);
 				ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
 				_elt._val[i] = ppp;
@@ -592,7 +594,7 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator*=(const AffineMain<AF_fAF2>& 
 
 			// Xtmp = X%T(0) * Y
 			xTmp[0] = 0.0;
-			for (int i = 1; i <= y.size(); i++) {
+			for (Index i = 1; i <= y.noise_count(); i++) {
 				eee = _elt.twoProd(xVal0,y._elt._val[i], &ppp);
 				ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
 				xTmp[i] = ppp;
@@ -605,7 +607,7 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator*=(const AffineMain<AF_fAF2>& 
 			}
 
 			//RES =  RES + Xtmp = ( Y%(0) * X ) + ( X%T(0) * Y - X%T(0)*Y%(0) )
-			for (int i = 0; i <= y.size(); i++) {
+			for (Index i = 0; i <= y.noise_count(); i++) {
 
 				eee = _elt.twoSum(_elt._val[i],xTmp[i], &tmp);
 				ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
@@ -649,7 +651,7 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator*=(const AffineMain<AF_fAF2>& 
 
 
 			bool b = (_elt._err<oo);
-			for (int i=0;i<=_n;i++) {
+			for (Index i=0;i<=_n_noise;i++) {
 				b &= (std::fabs(_elt._val[i])<oo);
 			}
 			if (!b) *this = Interval();
@@ -659,7 +661,6 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator*=(const AffineMain<AF_fAF2>& 
 		*this = (itv() * y.itv());
 	}
 
-	//std::cout << "OUT *= "<<std::endl<< *this << std::endl;
 	return *this;
 }
 
@@ -675,9 +676,7 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator*=(const Interval& y) {
 		if (y.is_degenerated()) {
 			*this *= y.mid();
 		} else {
-			AffineMain<AF_fAF2> tmp;
-			tmp= y.mid();	 // to check if it is the best way to do it
-			tmp.inflate(y.rad());
+			AffineMain<AF_fAF2> tmp(y);
 			*this *= tmp;
 		}
 	}
@@ -702,7 +701,7 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::Asqr(const Interval& itv) {
 		Sx = 0; Sx2 = 0; ttt = 0; sss = 0; ppp = 0; x0 = 0; eee =0.0; tmp =0.0;
 
 		// compute the error
-		for (int i = 1; i <= _n; i++) {
+		for (Index i = 1; i <= _n_noise; i++) {
 
 			eee = _elt.twoProd(_elt._val[i],_elt._val[i], &ppp);
 			ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
@@ -739,7 +738,7 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::Asqr(const Interval& itv) {
 		}
 
 		// compute 2*_elt._val[0]*(*this)
-		for (int i = 1; i <= _n; i++) {
+		for (Index i = 1; i <= _n_noise; i++) {
 
 			eee = _elt.twoProd((2*x0),_elt._val[i], &ppp);
 			ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
@@ -778,7 +777,7 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::Asqr(const Interval& itv) {
 
 		{
 			bool b = (_elt._err<oo);
-			for (int i=0;i<=_n;i++) {
+			for (Index i=0;i<=_n_noise;i++) {
 				b &= (std::fabs(_elt._val[i])<oo);
 			}
 			if (!b) {
@@ -788,7 +787,6 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::Asqr(const Interval& itv) {
 
 	}
 
-//	std::cout << "out sqr "<<std::endl;
 	return *this;
 }
 
@@ -798,7 +796,7 @@ void AffineMain<AF_fAF2>::compact(double tol)
 {
   // Empty and unbounded affine forms have no coefficient representation.
   // Their logical dimension may nevertheless be non-zero, so iterating up
-  // to _n would dereference a null _elt._val pointer.
+  // to _n_noise would dereference a null _elt._val pointer.
   if (!is_active() || _elt._val == nullptr) {
     return;
   }
@@ -808,7 +806,7 @@ void AffineMain<AF_fAF2>::compact(double tol)
   if (!std::isfinite(tol) || tol < 0.0) {
     return;
   }
-  	for (int i=1;i<=_n;i++) {
+  	for (Index i=1;i<=_n_noise;i++) {
   		if (std::fabs(_elt._val[i])<tol) {
   			double temp=0.0;
   			double sss=0.0;

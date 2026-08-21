@@ -33,16 +33,19 @@ using FixedAffineTMatrix =    Eigen::Matrix<AffineT, 2, 3>;
 using FixedAffineTVector =    Eigen::Matrix<AffineT, 3, 1>;
 using FixedAffineTRow =       Eigen::Matrix<AffineT, 1, 3>;
 
+
+const double ERROR = std::numeric_limits<double>::epsilon()*100; 
+
 void check_point(const AffineT& actual, double expected)
 {
     CAPTURE(actual.itv(), expected);
-    CHECK(actual == Approx<AffineT>(Interval(expected)));
+    CHECK(actual == Approx<AffineT>(Interval(expected),ERROR));
 }
 
 void check_interval(const AffineT& actual, const Interval expected)
 {
     CAPTURE(actual.itv(), expected);
-    CHECK(actual == Approx<AffineT>(expected));
+    CHECK(actual == Approx<AffineT>(expected,ERROR));
 }
 
 void check_interval_enclosure(
