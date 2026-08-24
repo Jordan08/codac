@@ -25,6 +25,7 @@ namespace codac2
             assert_release(!c.empty());
             Index n = size_of(c.front());
             for(const auto& s : c) {
+              (void)s;
               assert_release(size_of(s) == n && "all separators must be of same size");
             }
             return n;
