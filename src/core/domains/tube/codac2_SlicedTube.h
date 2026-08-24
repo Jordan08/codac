@@ -891,7 +891,7 @@ namespace codac2
       {
         return invert_common_subsets(y, v_t, t,
           [this,&v,&y](auto it, const Interval& t_) {
-            return slice(it)->invert(y, *v.slice(it), t_);
+            return this->slice(it)->invert(y, *v.slice(it), t_);
           });
       }
 

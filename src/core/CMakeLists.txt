@@ -63,12 +63,14 @@
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/codac2_Domain.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/codac2_Scalar.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/codac2_Wrapper.h
+
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/ellipsoid/codac2_Ellipsoid.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/ellipsoid/codac2_Ellipsoid_checks.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/ellipsoid/codac2_Ellipsoid_mapping.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/ellipsoid/codac2_Ellipsoid.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/ellipsoid/codac2_Ellipsoid_utils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/ellipsoid/codac2_Ellipsoid_utils.h
+
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/interval/codac2_Interval.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/interval/codac2_Interval_impl.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/interval/codac2_Interval_operations.h
@@ -76,14 +78,17 @@
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/interval/codac2_IntervalMatrix.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/interval/codac2_IntervalRow.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/interval/codac2_IntervalVector.h
+
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/paving/codac2_Paving.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/paving/codac2_Paving.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/paving/codac2_PavingNode.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/paving/codac2_Subpaving.h
+
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/zonotope/codac2_Parallelepiped.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/zonotope/codac2_Parallelepiped.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/zonotope/codac2_Zonotope.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/zonotope/codac2_Zonotope.cpp
+
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/tube/codac2_Slice.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/tube/codac2_SliceBase.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/tube/codac2_SliceBase.h
@@ -100,21 +105,23 @@
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/tube/codac2_TubeBase.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/tube/codac2_Tube_operator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/tube/codac2_tube_cart_prod.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/domains/AffineForm/codac2_AffineMain.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/domains/AffineForm/codac2_Affine2_fAF2.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/domains/AffineForm/codac2_Affine2_fAF2.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/domains/AffineForm/codac2_AffineVector.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/domains/AffineForm/codac2_AffineRow.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/domains/AffineForm/codac2_AffineMatrix.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/domains/AffineForm/codac2_AffineVar.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/domains/AffineForm/codac2_AffineVarVector.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/domains/AffineForm/codac2_Affine.h
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/affine/codac2_AffineMain.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/affine/codac2_Affine2_fAF2.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/affine/codac2_Affine2_fAF2.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/affine/codac2_AffineVector.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/affine/codac2_AffineRow.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/affine/codac2_AffineMatrix.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/affine/codac2_AffineVar.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/affine/codac2_AffineVarVector.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/affine/codac2_Affine.h
 
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/codac2_ExprBase.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/codac2_ExprBase.h
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/codac2_FunctionArgsList.h
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/codac2_FunctionBase.h
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/codac2_VarBase.h
+
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/analytic/codac2_analytic_componentwise.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/analytic/codac2_analytic_componentwise.h
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/analytic/codac2_analytic_constants.h
@@ -128,6 +135,7 @@
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/analytic/codac2_AnalyticFunction.h
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/analytic/codac2_AnalyticType.h
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/analytic/codac2_ExprType.h
+
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/set/codac2_set_operations.h
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/set/codac2_set_operators.h
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/set/codac2_set_variables.h
@@ -143,7 +151,7 @@
     ${CMAKE_CURRENT_SOURCE_DIR}/geometry/codac2_Polygon.h
     ${CMAKE_CURRENT_SOURCE_DIR}/geometry/codac2_Segment.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/geometry/codac2_Segment.h
-    
+
     ${CMAKE_CURRENT_SOURCE_DIR}/operators/codac2_abs.h
     ${CMAKE_CURRENT_SOURCE_DIR}/operators/codac2_acos.h
     ${CMAKE_CURRENT_SOURCE_DIR}/operators/codac2_arith_add.h
@@ -202,7 +210,7 @@
     ${CMAKE_CURRENT_SOURCE_DIR}/matrices/eigen/MatrixBase_addons/codac2_MatrixBase_addons_MatrixBase.h
     ${CMAKE_CURRENT_SOURCE_DIR}/matrices/eigen/MatrixBase_addons/codac2_MatrixBase_addons_Vector.h
     ${CMAKE_CURRENT_SOURCE_DIR}/matrices/eigen/MatrixBase_addons/codac2_MatrixBase_addons_VectorBase.h
-    
+
     ${CMAKE_CURRENT_SOURCE_DIR}/matrices/codac2_cart_prod.h
     ${CMAKE_CURRENT_SOURCE_DIR}/matrices/codac2_GaussJordan.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/matrices/codac2_GaussJordan.h
@@ -215,7 +223,6 @@
     ${CMAKE_CURRENT_SOURCE_DIR}/matrices/codac2_Vector.h
     ${CMAKE_CURRENT_SOURCE_DIR}/matrices/codac2_IntvFullPivLU.h
     ${CMAKE_CURRENT_SOURCE_DIR}/matrices/codac2_IntvFullPivLU.cpp
-
 
     ${CMAKE_CURRENT_SOURCE_DIR}/paver/codac2_pave.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/paver/codac2_pave.h
@@ -298,16 +305,19 @@
     ${CMAKE_CURRENT_SOURCE_DIR}/trajectory/codac2_TrajBase_impl.h
   )
 
+
 ################################################################################
 # Create the target for libcodac-core
 ################################################################################
 
-  #if(NOT CMAKE_CXX_STANDARD)
-    set(CMAKE_CXX_STANDARD 20)
-    set(CMAKE_CXX_STANDARD_REQUIRED ON)
-  #endif()
-
   add_library(${PROJECT_NAME}-core ${CODAC_CORE_SRC})
+
+  set_target_properties(${PROJECT_NAME}-core PROPERTIES
+    CXX_STANDARD 20
+    CXX_STANDARD_REQUIRED ON
+    CXX_EXTENSIONS OFF
+  )
+
   target_include_directories(${PROJECT_NAME}-core PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/actions
     ${CMAKE_CURRENT_SOURCE_DIR}/contractors
@@ -319,6 +329,7 @@
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/paving
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/zonotope
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/tube
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/affine
     ${CMAKE_CURRENT_SOURCE_DIR}/functions
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/analytic
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/set
@@ -347,21 +358,63 @@
   set(CODAC_PKG_CONFIG_CFLAGS "${CODAC_PKG_CONFIG_CFLAGS} -I\${includedir}/${PROJECT_NAME}-core" PARENT_SCOPE)
   set(CODAC_PKG_CONFIG_LIBS "${CODAC_PKG_CONFIG_LIBS} -l${PROJECT_NAME}-core" PARENT_SCOPE)
 
-  
+
 ################################################################################
-# Installation of libcodac-core files
+# Installation / build include tree
 ################################################################################
-  
-# Getting header files from sources
+
+  # Directory containing the generated/build-time public headers.
+  set(CODAC_BUILD_INCLUDE_DIR
+      ${CMAKE_CURRENT_BINARY_DIR}/../../include)
+
+  file(MAKE_DIRECTORY ${CODAC_BUILD_INCLUDE_DIR})
+
+
+  # Generate the build-time include tree using symbolic links.
+  #
+  # IMPORTANT:
+  # Do NOT copy headers here.
+  #
+  # Copying creates two physically different files:
+  #
+  #   src/core/tools/codac2_math.h
+  #   build/include/codac2_math.h
+  #
+  # which can bypass #pragma once and produce redefinition errors.
+  #
+  # Symbolic links preserve a single physical header.
 
   foreach(srcfile ${CODAC_CORE_SRC})
+
     if(srcfile MATCHES "\\.h$" OR srcfile MATCHES "\\.hpp$")
+
       list(APPEND CODAC_CORE_HDR ${srcfile})
-      file(COPY ${srcfile} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../../include)
+
+      get_filename_component(header_name
+                             ${srcfile}
+                             NAME)
+
+      set(build_header
+          ${CODAC_BUILD_INCLUDE_DIR}/${header_name})
+
+      if(EXISTS ${build_header} OR IS_SYMLINK ${build_header})
+        file(REMOVE ${build_header})
+      endif()
+
+      file(
+        CREATE_LINK
+        ${srcfile}
+        ${build_header}
+        SYMBOLIC
+      )
+
     endif()
+
   endforeach()
 
+
 # Generating the file codac-core.h
+# ================================
 
   set(CODAC_CORE_MAIN_HEADER ${CMAKE_CURRENT_BINARY_DIR}/codac-core.h)
   set(CODAC_MAIN_SUBHEADERS ${CODAC_MAIN_SUBHEADERS} "codac-core.h" PARENT_SCOPE)
@@ -373,10 +426,29 @@
       file(APPEND ${CODAC_CORE_MAIN_HEADER} "#include <${header_name}>\n")
     endif()
   endforeach()
-  file(COPY ${CODAC_CORE_MAIN_HEADER} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../../include)
+
+
+  # The generated umbrella header is also exposed in the build include tree.
+  set(build_core_main_header
+      ${CODAC_BUILD_INCLUDE_DIR}/codac-core.h)
+
+  if(
+    EXISTS ${build_core_main_header}
+    OR IS_SYMLINK ${build_core_main_header}
+  )
+    file(REMOVE ${build_core_main_header})
+  endif()
+
+  file(
+    CREATE_LINK
+    ${CODAC_CORE_MAIN_HEADER}
+    ${build_core_main_header}
+    SYMBOLIC
+  )
 
 
 # Install files in system directories
+# ====================================
 
   install(TARGETS ${PROJECT_NAME}-core DESTINATION ${CMAKE_INSTALL_LIBDIR})
   install(FILES ${CODAC_CORE_HDR} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}-core)

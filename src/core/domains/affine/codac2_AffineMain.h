@@ -107,17 +107,17 @@ namespace codac2 {
 
 
 /**
- * \ingroup arithmetic
  *
  * \brief Main affine-form domain based on \c AF_Default.
  *
- * Affine forms rely on a compact status code:
- * - \c _actif=1: active affine form, \c _n_noise is the number of variables
- * - \c _actif=0: degenerate interval
- * - \c _actif=-1: empty set
- * - \c _actif=-2: \f$[-\infty,+\infty]\f$
- * - \c _actif=-3: \f$[a,+\infty]\f$ encoded with \c _err=a
- * - \c _actif=-4: \f$[-\infty,a]\f$ encoded with \c _err=a
+ * The affine form stores an interval enclosure together with an optional
+ * affine dependency representation. Its state is encoded by \c AffineStatus:
+ * - \c Active: active affine form with noise variables
+ * - \c Degenerate: singleton interval
+ * - \c Empty: empty set
+ * - \c AllReals: \f$[-\infty,+\infty]\f$
+ * - \c UpperUnbounded: \f$[a,+\infty]\f$
+ * - \c LowerUnbounded: \f$[-\infty,a]\f$
  */
 enum class AffineStatus : std::int8_t
 {
@@ -148,11 +148,11 @@ public:
 	/**
 	 * \brief Changes the linearization mode for the current thread.
 	 *
-	 * \param tt approximation mode (Chebyshev by default)
+	 * \param tt approximation mode; Chebyshev is used by default
 	 */
 	static void change_mode(Affine_Mode tt=AF_Lin_Chebyshev);
 	/**
-	 * \brief Get the linearization mode globally.
+	 * \brief Returns the linearization mode for the current thread.
 	 *
 	 * \return the approximation mode
 	 */
@@ -161,8 +161,23 @@ public:
 	/** \brief Creates an unbounded affine form (like \c Interval()). */
 	AffineMain();
 
+	/**
+	 * \brief Creates a degenerate affine form from a real value.
+	 *
+	 * \param value real value
+	 */
 	AffineMain(double value);
+	/**
+	 * \brief Creates an affine form from an interval.
+	 *
+	 * \param itv interval enclosure
+	 */
 	AffineMain(const Interval& itv);
+	/**
+	 * \brief Converts this affine form to its interval enclosure.
+	 *
+	 * \return interval enclosure of this affine form
+	 */
 	operator Interval() const;
 
 	/**
@@ -170,13 +185,13 @@ public:
 	 *
 	 * \param x affine form to copy
 	 */
-	AffineMain(const AffineMain& x);
+	AffineMain(const AffineMain<T>& x);
 
 	/** \brief Destroys the affine form. */
 	virtual ~AffineMain() { };
 
 	/** \brief Returns \f$-*\mathrm{this}\f$. */
-	AffineMain operator-() const;
+	AffineMain<T> operator-() const;
 
 	/**
 	 * \brief Tests exact equality with another affine form.
@@ -186,7 +201,7 @@ public:
 	 * \param x affine form to compare with
 	 * \return true iff both interval enclosures are exactly equal
 	 */
-	bool operator==(const AffineMain& x) const;
+	bool operator==(const AffineMain<T>& x) const;
 
 	/**
 	 * \brief Tests exact equality with an interval.
@@ -197,7 +212,7 @@ public:
 	bool operator==(const Interval& x) const;
 
 	/**
-	 * \brief Tests exact equality with an double.
+	 * \brief Tests exact equality with a real value.
 	 *
 	 * \param x interval to compare with
 	 * \return true iff both intervals are exactly equal
@@ -210,7 +225,7 @@ public:
 	 * \param x affine form to compare with
 	 * \return true iff interval enclosures are different
 	 */
-	bool operator!=(const AffineMain& x) const;
+	bool operator!=(const AffineMain<T>& x) const;
 
 	/**
 	 * \brief Tests non-equality with an interval.
@@ -262,7 +277,7 @@ public:
 	 * \param x affine form to be compared with
 	 * \return interval Boolean result
 	 */
-	BoolInterval operator<(const AffineMain& x) const;
+	BoolInterval operator<(const AffineMain<T>& x) const;
 
 	/**
 	 * \brief Comparison (strict greater-than) between two affine forms.
@@ -272,15 +287,16 @@ public:
 	 * \param x affine form to be compared with
 	 * \return interval Boolean result
 	 */
-	BoolInterval operator>(const AffineMain& x) const;
+	BoolInterval operator>(const AffineMain<T>& x) const;
 
 
 	/**
-	 * \brief Tests non-equality with an double.
+	 * \brief Tests non-equality with a real value.
 	 *
 	 * \param x interval to compare with
 	 * \return true iff intervals are different
-	 */	bool operator!=(const double x) const;
+	 */
+	bool operator!=(const double x) const;
 
 	/** \brief Sets this affine form to the empty set. */
 	void set_empty();
@@ -291,7 +307,7 @@ public:
 	 * \param x affine form to copy
 	 * \return a reference to this
 	 */
-	AffineMain& operator=(const AffineMain& x);
+	AffineMain<T>& operator=(const AffineMain<T>& x);
 
 	/**
 	 * \brief Assigns from a real value.
@@ -299,7 +315,7 @@ public:
 	 * \param x real value
 	 * \return a reference to this
 	 */
-	AffineMain& operator=(double x);
+	AffineMain<T>& operator=(double x);
 
 	/**
 	 * \brief Assigns from an interval.
@@ -307,23 +323,35 @@ public:
 	 * \param itv interval value
 	 * \return a reference to this
 	 */
-	virtual AffineMain& operator=(const Interval& itv);
+	virtual AffineMain<T>& operator=(const Interval& itv);
 
 
-	// AffineMain(AffineMain&&) noexcept = default;
+	// AffineMain(AffineMain<T>&&) noexcept = default;
 
-	// AffineMain& operator=(AffineMain&&) noexcept = default;
+	// AffineMain<T>& operator=(AffineMain<T>&&) noexcept = default;
 
 	/* Union and Intersection of two Affine form must not be implemented
 	 * That could produce to much confusion.
 	 */
-	/** \brief Intersection of *this and x.
-	 * \param x - the interval to compute the intersection with.*/
-	AffineMain& operator&=(const AffineMain& x) = delete;
+	/**
+	 * \brief Intersection assignment is disabled for affine forms.
+	 *
+	 * This operation is intentionally deleted because the intersection of two
+	 * affine forms cannot be represented without discarding affine information.
+	 *
+	 * \param x affine form
+	 */
+	AffineMain<T>& operator&=(const AffineMain<T>& x) = delete;
 
-	/** \brief Union of *this and I.
-	 * \param x - the interval to compute the hull with.*/
-	AffineMain& operator|=(const AffineMain& x) = delete;
+	/**
+	 * \brief Hull assignment is disabled for affine forms.
+	 *
+	 * This operation is intentionally deleted because the hull of two affine
+	 * forms would discard affine dependency information.
+	 *
+	 * \param x affine form
+	 */
+	AffineMain<T>& operator|=(const AffineMain<T>& x) = delete;
 
 	/**
 	 * \brief Adds \f$[-\mathrm{rad},+\mathrm{rad}]\f$ to this.
@@ -331,7 +359,7 @@ public:
 	 * \param radd inflation radius
 	 * \return a reference to this
 	 */
-	AffineMain& inflate(double radd);
+	AffineMain<T>& inflate(double radd);
 
 	/**
 	 * \brief Returns the lower bound of this.
@@ -477,6 +505,13 @@ public:
 	 * \note Always returns true if this is empty.
 	 */
 	bool is_subset(const Interval& x) const;
+	/**
+	 * \brief Tests whether the interval enclosure of this affine form is a subset of \p x.
+	 *
+	 * \param x interval or affine form to compare with
+	 * \note Returns true when this affine form is empty.
+	 * \return true iff the interval enclosure is a subset of \p x
+	 */
 	bool is_subset(const AffineMain<T>& x) const;
 
 	/**
@@ -487,6 +522,12 @@ public:
 	 * in both cases, the first is inside the interior of the second.
 	 */
 	bool is_strict_subset(const Interval& x) const;
+	/**
+	 * \brief Tests whether the interval enclosure of this affine form is a strict subset of \p x.
+	 *
+	 * \param x interval or affine form to compare with
+	 * \return true iff the enclosure is a strict subset of \p x
+	 */
 	bool is_strict_subset(const AffineMain<T>& x) const;
 
 	/**
@@ -497,6 +538,13 @@ public:
 	 * \note Always returns true if this is empty.
 	 */
 	bool is_interior_subset(const Interval& x) const;
+	/**
+	 * \brief Tests whether the interval enclosure of this affine form is contained in the interior of \p x.
+	 *
+	 * \param x interval or affine form to compare with
+	 * \note Returns true when this affine form is empty.
+	 * \return true iff the enclosure is contained in the interior of \p x
+	 */
 	bool is_interior_subset(const AffineMain<T>& x) const;
 
 	/**
@@ -507,6 +555,14 @@ public:
 	 * is the interior (in the usual meaning).
 	 */
 	bool is_relative_interior_subset(const Interval& x) const;
+	/**
+	 * \brief Tests whether the interval enclosure is contained in the relative interior of \p x.
+	 *
+	 * For a degenerate \p x, the relative interior is \p x itself.
+	 *
+	 * \param x interval or affine form to compare with
+	 * \return true iff the enclosure is contained in the relative interior of \p x
+	 */
 	bool is_relative_interior_subset(const AffineMain<T>& x) const;
 
 	/**
@@ -516,22 +572,42 @@ public:
 	 * and the empty set is not "strictly" in the interior of the empty set.
 	 */
 	bool is_strict_interior_subset(const Interval& x) const;
+	/**
+	 * \brief Tests whether the interval enclosure is strictly contained in the interior of \p x.
+	 *
+	 * \param x interval or affine form to compare with
+	 * \return true iff the enclosure is strictly contained in the interior of \p x
+	 */
 	bool is_strict_interior_subset(const AffineMain<T>& x) const;
 
 	/**
 	 * \brief Tests whether this interval enclosure is a superset of \p x.
 	 *
-	 * \note Always returns true if x is empty.
+	 * \param x interval or affine form to compare with
+	 * \return true iff the enclosure is a superset of \p x
 	 */
 	bool is_superset(const Interval& x) const;
+	/**
+	 * \brief Tests whether the interval enclosure of this affine form contains \p x.
+	 *
+	 * \param x interval or affine form to compare with
+	 * \return true iff the enclosure is a superset of \p x
+	 */
 	bool is_superset(const AffineMain<T>& x) const;
 
 	/**
 	 * \brief Tests whether this interval enclosure is a strict superset of \p x.
 	 *
-	 * \see #is_strict_subset(const Interval&) const.
+	 * \param x interval or affine form to compare with
+	 * \return true iff the enclosure is a strict superset of \p x
 	 */
 	bool is_strict_superset(const Interval& x) const;
+	/**
+	 * \brief Tests whether the interval enclosure of this affine form is a strict superset of \p x.
+	 *
+	 * \param x interval or affine form to compare with
+	 * \return true iff the enclosure is a strict superset of \p x
+	 */
 	bool is_strict_superset(const AffineMain<T>& x) const;
 
 	/**
@@ -555,6 +631,12 @@ public:
 	 * \brief Tests whether this interval enclosure intersects \p x.
 	 */
 	bool intersects(const Interval &x) const;
+	/**	
+	 * \brief Tests whether this affine form intersects \p x.
+	 *
+	 * \param x interval or affine form to compare with
+	 * \return true iff the interval enclosures have a non-empty intersection
+	 */
 	bool intersects(const AffineMain<T>& x) const;
 
 	/**
@@ -563,6 +645,13 @@ public:
 	 * Equivalently, some interior points (of this or x) must belong to the intersection.
 	 */
 	bool overlaps(const Interval &x) const;
+
+	/**
+	 * \brief Tests whether this affine form and \p x overlap with non-zero volume.
+	 *
+	 * \param x interval or affine form to compare with
+	 * \return true iff their intersection has non-zero volume
+	 */
 	bool overlaps(const AffineMain<T> &x) const;
 
 	/**
@@ -572,8 +661,14 @@ public:
 	 * \return true iff this and \p x do not intersect
 	 */
 	bool is_disjoint(const Interval &x) const;
-	bool is_disjoint(const AffineMain<T> &x) const;
 
+	/**
+	 * \brief Tests whether this affine form and \p x are disjoint.
+	 *
+	 * \param x interval or affine form to compare with
+	 * \return true iff their interval enclosures do not intersect
+	 */
+	bool is_disjoint(const AffineMain<T> &x) const;
 
 	/**
 	 * \brief Adds \p d to this.
@@ -581,7 +676,7 @@ public:
 	 * \param d real value
 	 * \return a reference to this
 	 */
-	AffineMain& operator+=(double d);
+	AffineMain<T>& operator+=(double d);
 
 	/**
 	 * \brief Subtracts \p d from this.
@@ -589,7 +684,7 @@ public:
 	 * \param d real value
 	 * \return a reference to this
 	 */
-	AffineMain& operator-=(double d);
+	AffineMain<T>& operator-=(double d);
 
 	/**
 	 * \brief Multiplies this by \p d.
@@ -597,7 +692,7 @@ public:
 	 * \param d real value
 	 * \return a reference to this
 	 */
-	AffineMain& operator*=(double d);
+	AffineMain<T>& operator*=(double d);
 
 	/**
 	 * \brief Divides this by \p d.
@@ -605,7 +700,7 @@ public:
 	 * \param d real value
 	 * \return a reference to this
 	 */
-	AffineMain& operator/=(double d) ;
+	AffineMain<T>& operator/=(double d) ;
 
 	/**
 	 * \brief Adds interval \p x to this.
@@ -613,7 +708,7 @@ public:
 	 * \param x interval value
 	 * \return a reference to this
 	 */
-	AffineMain& operator+=(const Interval& x);
+	AffineMain<T>& operator+=(const Interval& x);
 
 	/**
 	 * \brief Subtracts interval \p x from this.
@@ -621,7 +716,7 @@ public:
 	 * \param x interval value
 	 * \return a reference to this
 	 */
-	AffineMain& operator-=(const Interval& x);
+	AffineMain<T>& operator-=(const Interval& x);
 
 	/**
 	 * \brief Multiplies this by interval \p x.
@@ -629,7 +724,7 @@ public:
 	 * \param x interval value
 	 * \return a reference to this
 	 */
-	AffineMain& operator*=(const Interval& x);
+	AffineMain<T>& operator*=(const Interval& x);
 
 	/**
 	 * \brief Divides this by interval \p x.
@@ -637,7 +732,7 @@ public:
 	 * \param x interval value
 	 * \return a reference to this
 	 */
-	AffineMain& operator/=(const Interval& x);
+	AffineMain<T>& operator/=(const Interval& x);
 
 	/**
 	 * \brief Adds affine form \p x to this.
@@ -645,7 +740,7 @@ public:
 	 * \param x affine form value
 	 * \return a reference to this
 	 */
-	AffineMain& operator+=(const AffineMain& x);
+	AffineMain<T>& operator+=(const AffineMain<T>& x);
 
 	/**
 	 * \brief Subtracts affine form \p x from this.
@@ -653,7 +748,7 @@ public:
 	 * \param x affine form value
 	 * \return a reference to this
 	 */
-	AffineMain& operator-=(const AffineMain& x);
+	AffineMain<T>& operator-=(const AffineMain<T>& x);
 
 	/**
 	 * \brief Multiplies this by affine form \p x.
@@ -661,7 +756,7 @@ public:
 	 * \param x affine form value
 	 * \return a reference to this
 	 */
-	AffineMain& operator*=(const AffineMain& x);
+	AffineMain<T>& operator*=(const AffineMain<T>& x);
 
 	/**
 	 * \brief Divides this by affine form \p x.
@@ -669,9 +764,7 @@ public:
 	 * \param x affine form value
 	 * \return a reference to this
 	 */
-	AffineMain& operator/=(const AffineMain& x);
-
-
+	AffineMain<T>& operator/=(const AffineMain<T>& x);
 
     /**
      * \brief Provides an empty Affine Form
@@ -681,69 +774,236 @@ public:
     static AffineMain<T> empty();
 
 
-private:
-	/** \brief Internal helper: compute square. */
-	AffineMain& Asqr(const Interval& itv);
-	/** \brief Internal helper: negate. */
-	AffineMain&  Aneg();
-	/** \brief Internal helper: compute inverse (Chebyshev/MinRange). */
-	AffineMain&  Ainv(const Interval& itv);
-	/** \brief Internal helper: compute square root. */
-	AffineMain&  Asqrt(const Interval& itv);
-	/** \brief Internal helper: compute exponential. */
-	AffineMain&  Aexp(const Interval& itv);
-	/** \brief Internal helper: compute logarithm. */
-	AffineMain&  Alog(const Interval& itv);
-	/** \brief Internal helper: compute power (integer exponent). */
-	AffineMain&  Apow(int n, const Interval& itv);
-	/** \brief Internal helper: compute power (real exponent). */
-	AffineMain&  Apow(double d, const Interval& itv);
-	/** \brief Internal helper: compute power (interval exponent). */
-	AffineMain&  Apow(const Interval &y, const Interval& itvx);
-	/** \brief Internal helper: compute n-th root. */
-	AffineMain&  Aroot(int n, const Interval& itv);
-	/** \brief Internal helper: compute cosine. */
-	AffineMain&  Acos(const Interval& itv);
-	/** \brief Internal helper: compute sine. */
-	AffineMain&  Asin(const Interval& itv);
-	/** \brief Internal helper: compute tangent. */
-	AffineMain&  Atan(const Interval& itv);
-	/** \brief Internal helper: compute arc-cosine. */
-	AffineMain&  Aacos(const Interval& itv);
-	/** \brief Internal helper: compute arc-sine. */
-	AffineMain&  Aasin(const Interval& itv);
-	/** \brief Internal helper: compute arc-tangent. */
-	AffineMain&  Aatan(const Interval& itv);
-	/** \brief Internal helper: compute hyperbolic cosine. */
-	AffineMain&  Acosh(const Interval& itv);
-	/** \brief Internal helper: compute hyperbolic sine. */
-	AffineMain&  Asinh(const Interval& itv);
-	/** \brief Internal helper: compute hyperbolic tangent. */
-	AffineMain&  Atanh(const Interval& itv);
-	/** \brief Internal helper: compute absolute value. */
-	AffineMain&  Aabs(const Interval& itv);
-	/** \brief Internal helper: Chebyshev inverse. */
-	AffineMain&  Ainv_CH(const Interval& itv);
-	/** \brief Internal helper: Chebyshev square root. */
-	AffineMain&  Asqrt_CH(const Interval& itv);
-	/** \brief Internal helper: Chebyshev exponential. */
-	AffineMain&  Aexp_CH(const Interval& itv);
-	/** \brief Internal helper: Chebyshev logarithm. */
-	AffineMain&  Alog_CH(const Interval& itv);
-	/** \brief Internal helper: MinRange inverse. */
-	AffineMain&  Ainv_MR(const Interval& itv);
-	/** \brief Internal helper: MinRange square root. */
-	AffineMain&  Asqrt_MR(const Interval& itv);
-	/** \brief Internal helper: MinRange exponential. */
-	AffineMain&  Aexp_MR(const Interval& itv);
-	/** \brief Internal helper: MinRange logarithm. */
-	AffineMain&  Alog_MR(const Interval& itv);
-
-	AffineMain& Aacosh(const Interval& itv);
-	AffineMain& Aasinh(const Interval& itv);
-	AffineMain& Aatanh(const Interval& itv);
-	/** \brief Internal helper: compute atan2(y,x), y being *this. */
-	AffineMain& Aatan2(const AffineMain& x, const Interval& itvY, const Interval& itvX);
+	private:
+	/**
+	 * \brief Internal helper that computes the square of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>& Asqr(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the negation of the current affine form.
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Aneg();
+	/**
+	 * \brief Internal helper that computes the inverse of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Ainv(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the square root of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Asqrt(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the exponential of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Aexp(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the natural logarithm of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Alog(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the power of the current affine form. *
+	 * \param n integer exponent
+	 * \param itv interval enclosure of the base
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Apow(int n, const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the power of the current affine form. *
+	 * \param d real exponent
+	 * \param itv interval enclosure of the base
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Apow(double d, const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the power of the current affine form. *
+	 * \param y interval exponent
+	 * \param itvx interval enclosure of the base
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Apow(const Interval &y, const Interval& itvx);
+	/**
+	 * \brief Internal helper that computes the n-th root of the current affine form. *
+	 * \param n root degree
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Aroot(int n, const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the cosine of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Acos(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the sine of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Asin(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the tangent of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Atan(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the arc-cosine of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Aacos(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the arc-sine of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Aasin(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the arc-tangent of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Aatan(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the hyperbolic cosine of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Acosh(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the hyperbolic sine of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Asinh(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the hyperbolic tangent of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Atanh(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the absolute value of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Aabs(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the inverse using Chebyshev linearization of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Ainv_CH(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the square root using Chebyshev linearization of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Asqrt_CH(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the exponential using Chebyshev linearization of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Aexp_CH(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the natural logarithm using Chebyshev linearization of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Alog_CH(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the inverse using MinRange linearization of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Ainv_MR(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the square root using MinRange linearization of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Asqrt_MR(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the exponential using MinRange linearization of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Aexp_MR(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the natural logarithm using MinRange linearization of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Alog_MR(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the inverse hyperbolic cosine of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>& Aacosh(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the inverse hyperbolic sine of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>& Aasinh(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the inverse hyperbolic tangent of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>& Aatanh(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the two-argument arctangent of the current affine form. *
+	 * \param x affine form representing the x-coordinate
+	 * \param itvY interval enclosure of the y-coordinate
+	 * \param itvX interval enclosure of the x-coordinate
+	 *
+	 * \return reference to this affine form
+	 */
+	AffineMain<T>& Aatan2(const AffineMain<T>& x, const Interval& itvY, const Interval& itvX);
 
 	template<class A>   friend AffineMain<A> operator/(double d, const AffineMain<A>& x);
 	template<class A>	friend AffineMain<A> inv(const AffineMain<A>&  x);
@@ -768,8 +1028,6 @@ private:
 	template<class A>	friend AffineMain<A> sinh(const AffineMain<A>&  x);
 	template<class A>	friend AffineMain<A> tanh(const AffineMain<A>&  x);
 	template<class A>	friend AffineMain<A> abs(const AffineMain<A>& x);
-	template<class A>	friend AffineMain<A> floor(const AffineMain<A>&  x);
-	template<class A>	friend AffineMain<A> ceil(const AffineMain<A>&  x);
 
 	template<class A>	friend AffineMain<A> acosh(const AffineMain<A>&  x);
 	template<class A>	friend AffineMain<A> asinh(const AffineMain<A>&  x);
@@ -798,7 +1056,7 @@ protected:
 	 *
 	 * See class description above for the exact code-to-state mapping.
 	 */
-	AffineStatus _status;		// boolean to know if the affine form is actif or not.
+	AffineStatus _status;		// Current affine-form status.
 
 	Index _n_noise; 		// dimension (size of _elt._val)-1  , ie number of noise symbols
 
@@ -818,7 +1076,6 @@ protected:
 	 */
 	void resize_noise(Index n);
 
-
 };
 
 
@@ -837,7 +1094,6 @@ template<class T>
 thread_local typename AffineMain<T>::Affine_Mode AffineMain<T>::mode = AffineMain<T>::AF_Lin_Chebyshev;// default mode is Chebyshev
 
 
-/** \ingroup arithmetic */
 /*@{*/
 
 /**
@@ -947,15 +1203,37 @@ template<class T>
 inline bool AffineMain<T>::is_disjoint(const AffineMain<T> &x) const { return this->itv().is_disjoint(x.itv()); }
 
 
+/**
+ * \brief Compares an interval with an affine form using strict less-than.
+ *
+ * The comparison is performed on their interval enclosures.
+ *
+ * \param x interval
+ * \param y affine form
+ * \return interval Boolean enclosing the truth value of \f$x < [y]\f$
+ */
 template<class T>
 BoolInterval operator<(const Interval& x, const AffineMain<T>& y);
 
+/**
+ * \brief Compares an interval with an affine form using strict greater-than.
+ *
+ * The comparison is performed on their interval enclosures.
+ *
+ * \param x interval
+ * \param y affine form
+ * \return interval Boolean enclosing the truth value of \f$x > [y]\f$
+ */
 template<class T>
 BoolInterval operator>(const Interval& x, const AffineMain<T>& y);
 
 
 
-/** \brief Returns \f$-x\f$. */
+/**
+ * \brief Returns the additive inverse of an affine form.
+ *
+ * \return \f$-x\f$
+ */
 template<class T>
 inline AffineMain<T> AffineMain<T>::operator-() const {
 	AffineMain<T> res(*this);
@@ -963,287 +1241,762 @@ inline AffineMain<T> AffineMain<T>::operator-() const {
 	return res;
 }
 
-/** \brief Returns \f$\mathrm{AF}[x]_1+\mathrm{AF}[x]_2\f$. */
+/**
+ * \brief Adds two affine forms.
+ *
+ * \param x1 first affine form
+ * \param x2 second affine form
+ * \return affine sum
+ */
 template<class T>
 AffineMain<T> operator+(const AffineMain<T>&  x1, const AffineMain<T>&  x2);
 
-/** \brief Returns \f$\mathrm{AF}[x]+d\f$. */
+/**
+ * \brief Adds a real value to an affine form.
+ *
+ * \param x affine form
+ * \param d real value
+ * \return \f$x+d\f$
+ */
 template<class T>
 AffineMain<T> operator+(const AffineMain<T>&  x, double d);
 
-/** \brief Returns \f$d+\mathrm{AF}[x]\f$. */
+/**
+ * \brief Adds a real value to an affine form.
+ *
+ * \param d real value
+ * \param x affine form
+ * \return \f$d+x\f$
+ */
 template<class T>
 AffineMain<T> operator+(double d, const AffineMain<T>&  x);
 
-/** \brief Returns \f$\mathrm{AF}[x]_1+[x]_2\f$. */
+/**
+ * \brief Adds an interval to an affine form.
+ *
+ * \param x1 affine form
+ * \param x2 interval
+ * \return \f$x_1+x_2\f$
+ */
 template<class T>
 AffineMain<T> operator+(const AffineMain<T>&  x1, const Interval& x2);
 
-/** \brief Returns \f$[x]_1+\mathrm{AF}[x]_2\f$. */
+/**
+ * \brief Adds an interval to an affine form.
+ *
+ * \param x1 interval
+ * \param x2 affine form
+ * \return affine sum
+ */
+
 template<class T>
 AffineMain<T> operator+(const Interval& x1, const AffineMain<T>&  x2);
 
-/** \brief AF[x]_1-AF[x]_2. */
+/**
+ * \brief Subtracts two affine forms.
+ *
+ * \param x1 first affine form
+ * \param x2 second affine form
+ * \return affine difference
+ */
 template<class T>
 AffineMain<T> operator-(const AffineMain<T>&  x1, const AffineMain<T>&  x2);
 
-/** \brief Returns \f$\mathrm{AF}[x]-d\f$. */
+/**
+ * \brief Returns the difference between an affine form and a real value.
+ *
+ * \param x affine form
+ * \param d real value
+ * \return \f$x-d\f$
+ */
 template<class T>
 AffineMain<T> operator-(const AffineMain<T>&  x, double d);
 
-/** \brief Returns \f$d-\mathrm{AF}[x]\f$. */
+/**
+ * \brief Subtracts an affine form from a real value.
+ *
+ * \param d real value
+ * \param x affine form
+ * \return \f$d-x\f$
+ */
+
 template<class T>
 AffineMain<T> operator-(double d, const AffineMain<T>&  x);
 
-/** \brief Returns \f$\mathrm{AF}[x]_1-[x]_2\f$. */
+/**
+ * \brief Subtracts an interval from an affine form.
+ *
+ * \param x1 affine form
+ * \param x2 interval
+ * \return \f$x_1-x_2\f$
+ */
 template<class T>
 AffineMain<T> operator-(const AffineMain<T>&  x1, const Interval& x2);
 
-/** \brief Returns \f$[x]_1-\mathrm{AF}[x]_2\f$. */
+/**
+ * \brief Subtracts an affine form from an interval.
+ *
+ * \param x1 interval
+ * \param x2 affine form
+ * \return \f$x_1-x_2\f$
+ */
+
 template<class T>
 AffineMain<T> operator-(const Interval& x1, const AffineMain<T>&  x2);
 
-/** \brief Returns \f$\mathrm{AF}[x]_1\times\mathrm{AF}[x]_2\f$. */
+/**
+ * \brief Multiplies two affine forms.
+ *
+ * \param x1 first affine form
+ * \param x2 second affine form
+ * \return affine product
+ */
 template<class T>
 AffineMain<T> operator*(const AffineMain<T>&  x1, const AffineMain<T>&  x2);
 
-/** \brief Returns \f$\mathrm{AF}[x]\times d\f$. */
+/**
+ * \brief Multiplies an affine form by a real value.
+ *
+ * \param x affine form
+ * \param d real value
+ * \return \f$x d\f$
+ */
 template<class T>
 AffineMain<T> operator*(const AffineMain<T>&  x, double d);
 
-/** \brief Returns \f$d\times \mathrm{AF}[x]\f$. */
+/**
+ * \brief Multiplies an affine form by a real value.
+ *
+ * \param d real value
+ * \param x affine form
+ * \return \f$d x\f$
+ */
 template<class T>
 AffineMain<T> operator*(double d, const AffineMain<T>&  x);
 
-/** \brief Returns \f$\mathrm{AF}[x]_1\times[x]_2\f$. */
+/**
+ * \brief Multiplies an affine form by an interval.
+ *
+ * \param x1 affine form
+ * \param x2 interval
+ * \return affine product
+ */
 template<class T>
 AffineMain<T> operator*(const AffineMain<T>&  x1, const Interval& x2);
 
-/** \brief Returns \f$[x]_1\times\mathrm{AF}[x]_2\f$. */
+/**
+ * \brief Multiplies an interval by an affine form.
+ *
+ * \param x1 interval
+ * \param x2 affine form
+ * \return affine product
+ */
+
 template<class T>
 AffineMain<T> operator*(const Interval& x1, const AffineMain<T>&  x2);
 
-/** \brief Returns \f$\mathrm{AF}[x]_1/\mathrm{AF}[x]_2\f$. */
+/**
+ * \brief Divides two affine forms.
+ *
+ * \param x1 numerator affine form
+ * \param x2 denominator affine form
+ * \return affine quotient
+ */
 template<class T>
 AffineMain<T> operator/(const AffineMain<T>&  x1, const AffineMain<T>&  x2);
 
-/** \brief Returns \f$\mathrm{AF}[x]/d\f$. */
+/**
+ * \brief Divides an affine form by a real value.
+ *
+ * \param x affine form
+ * \param d real divisor
+ * \return affine quotient
+ */
 template<class T>
 AffineMain<T> operator/(const AffineMain<T>&  x, double d);
 
-/** \brief Returns \f$d/\mathrm{AF}[x]\f$. */
+/**
+ * \brief Divides a real value by an affine form.
+ *
+ * \param d real value
+ * \param x affine form
+ * \return affine quotient
+ */
 template<class T>
 AffineMain<T> operator/(double d, const AffineMain<T>&  x);
 
-/** \brief Returns \f$\mathrm{AF}[x]_1/[x]_2\f$. */
+/**
+ * \brief Divides an affine form by an interval.
+ *
+ * \param x1 affine form
+ * \param x2 interval
+ * \return affine quotient
+ */
 template<class T>
 AffineMain<T> operator/(const AffineMain<T>&  x1, const Interval& x2);
 
-/** \brief Returns \f$[x]_1/\mathrm{AF}[x]_2\f$. */
+/**
+ * \brief Divides an interval by an affine form.
+ *
+ * \param x1 interval numerator
+ * \param x2 affine form denominator
+ * \return affine quotient
+ */
+
 template<class T>
 AffineMain<T> operator/(const Interval& x1, const AffineMain<T>&  x2);
 
 
-/** \brief Returns the Hausdorff distance between two affine forms. */
+/**
+ * \brief Returns the Hausdorff distance between the two arguments.
+ *
+ * \param x1 first interval or affine form
+ * \param x2 second interval or affine form
+ * \return Hausdorff distance
+ */
 template<class T>
 double distance(const AffineMain<T>& x1, const AffineMain<T>& x2);
 
-/** \brief Returns the Hausdorff distance between an interval and an affine form. */
+/**
+ * \brief Returns the Hausdorff distance between the two arguments.
+ *
+ * \param x1 first interval or affine form
+ * \param x2 second interval or affine form
+ * \return Hausdorff distance
+ */
 template<class T>
 double distance(const Interval &x1, const AffineMain<T>& x2);
 
-/** \brief Returns the Hausdorff distance between an affine form and an interval. */
+/**
+ * \brief Returns the Hausdorff distance between the two arguments.
+ *
+ * \param x1 first interval or affine form
+ * \param x2 second interval or affine form
+ * \return Hausdorff distance
+ */
 template<class T>
 double distance(const AffineMain<T>& x1, const Interval &x2);
 
 
-/** \brief Returns \f$1/\mathrm{AF}[x]\f$. */
+/**
+ * \brief Returns the multiplicative inverse of an affine form.
+ *
+ * \param x affine form
+ * \return affine result
+ */
 template<class T>
 AffineMain<T> inv(const AffineMain<T>&  x);
 
-/** \brief Returns \f$\mathrm{AF}[x]^2\f$. */
+/**
+ * \brief Returns the square of an affine form.
+ *
+ * \param x affine form
+ * \return affine result
+ */
 template<class T>
 AffineMain<T> sqr(const AffineMain<T>&  x);
 
-/** \brief Returns \f$\sqrt{\mathrm{AF}[x]}\f$. */
+/**
+ * \brief Returns the square root of an affine form.
+ *
+ * \param x affine form
+ * \return affine result
+ */
 template<class T>
 AffineMain<T> sqrt(const AffineMain<T>&  x);
 
-/** \brief Returns \f$\exp(\mathrm{AF}[x])\f$. */
+/**
+ * \brief Returns the exponential of an affine form.
+ *
+ * \param x affine form
+ * \return affine result
+ */
 template<class T>
 AffineMain<T> exp(const AffineMain<T>&  x);
 
-/** \brief Returns \f$\log(\mathrm{AF}[x])\f$. */
+/**
+ * \brief Returns the natural logarithm of an affine form.
+ *
+ * \param x affine form
+ * \return affine result
+ */
 template<class T>
 AffineMain<T> log(const AffineMain<T>&  x);
 
-/** \brief Returns \f$\mathrm{AF}[x]^n\f$. */
+/**
+ * \brief Returns an integer power of an affine form.
+ *
+ * \param x affine form
+ * \param n integer exponent
+ * \return affine result
+ */
 template<class T>
 AffineMain<T> pow(const AffineMain<T>&  x, int n);
 
-/** \brief Returns \f$\mathrm{AF}[x]^d\f$. */
+/**
+ * \brief Returns a real power of an affine form.
+ *
+ * \param x affine form
+ * \param d real exponent
+ * \return affine result
+ */
 template<class T>
 AffineMain<T> pow(const AffineMain<T>&  x, double d);
 
-/** \brief Returns \f$\mathrm{AF}[x]^{[y]}\f$. */
+/**
+ * \brief Returns an affine form raised to an interval exponent.
+ *
+ * \param x affine form base
+ * \param y interval exponent
+ * \return affine result
+ *
+ * \note The dependency structure of the exponent is not represented when
+ * the exponent is supplied as an interval.
+ */
 template<class T>
 AffineMain<T> pow(const AffineMain<T>& x, const Interval &y);
 
-/** \brief Returns \f$\mathrm{AF}[x]^{\mathrm{AF}[y]}\f$. */
+/**
+ * \brief Returns an affine form raised to an affine-form exponent.
+ *
+ * \param x affine form base
+ * \param y affine form exponent
+ * \return affine result
+ *
+ * \note The affine dependency structure of the exponent is not preserved;
+ * the exponent is evaluated through its interval enclosure.
+ */
 template<class T>
 AffineMain<T> pow(const AffineMain<T>& x, const AffineMain<T>& y);
 
-/** \brief Returns the n-th root of \f$\mathrm{AF}[x]\f$. */
+/**
+ * \brief Returns a real value raised to an affine-form exponent.
+ *
+ * \param d real base
+ * \param x affine form exponent
+ * \return affine result
+ *
+ * \note The affine dependency structure of the exponent is evaluated through
+ * its interval enclosure.
+ */
+template<class T>
+AffineMain<T> pow(double d, const AffineMain<T>& x);
+
+/**
+ * \brief Returns an interval raised to an affine-form exponent.
+ *
+ * \param x interval base
+ * \param y affine form exponent
+ * \return affine result
+ *
+ * \note The affine dependency structure of the exponent is evaluated through
+ * its interval enclosure.
+ */
+template<class T>
+AffineMain<T> pow(const Interval& x, const AffineMain<T>& y);
+
+/**
+ * \brief Returns the n-th root of an affine form.
+ *
+ * \param x affine form
+ * \param n root degree
+ * \return affine result
+ */
 template<class T>
 AffineMain<T> root(const AffineMain<T>&  x, int n);
 
-/** \brief Returns \f$\cos(\mathrm{AF}[x])\f$. */
+/**
+ * \brief Returns the cosine of an affine form.
+ *
+ * \param x affine form
+ * \return affine result
+ */
 template<class T>
 AffineMain<T> cos(const AffineMain<T>&  x);
 
-/** \brief Returns \f$\sin(\mathrm{AF}[x])\f$. */
+/**
+ * \brief Returns the sine of an affine form.
+ *
+ * \param x affine form
+ * \return affine result
+ */
 template<class T>
 AffineMain<T> sin(const AffineMain<T>&  x);
 
-/** \brief Returns \f$\tan(\mathrm{AF}[x])\f$. */
+/**
+ * \brief Returns the tangent of an affine form.
+ *
+ * \param x affine form
+ * \return affine result
+ */
 template<class T>
 AffineMain<T> tan(const AffineMain<T>&  x);
 
-/** \brief Returns \f$\arccos(\mathrm{AF}[x])\f$. */
+/**
+ * \brief Returns the arc-cosine of an affine form.
+ *
+ * \param x affine form
+ * \return affine result
+ */
 template<class T>
 AffineMain<T> acos(const AffineMain<T>&  x);
 
-/** \brief Returns \f$\arcsin(\mathrm{AF}[x])\f$. */
+/**
+ * \brief Returns the arc-sine of an affine form.
+ *
+ * \param x affine form
+ * \return affine result
+ */
 template<class T>
 AffineMain<T> asin(const AffineMain<T>&  x);
 
-/** \brief Returns \f$\arctan(\mathrm{AF}[x])\f$. */
+/**
+ * \brief Returns the arc-tangent of an affine form.
+ *
+ * \param x affine form
+ * \return affine result
+ */
 template<class T>
 AffineMain<T> atan(const AffineMain<T>&  x);
 
-/** \brief Returns \f$\cosh(\mathrm{AF}[x])\f$. */
+/**
+ * \brief Returns the hyperbolic cosine of an affine form.
+ *
+ * \param x affine form
+ * \return affine result
+ */
 template<class T>
 AffineMain<T> cosh(const AffineMain<T>&  x);
 
-/** \brief Returns \f$\sinh(\mathrm{AF}[x])\f$. */
+/**
+ * \brief Returns the hyperbolic sine of an affine form.
+ *
+ * \param x affine form
+ * \return affine result
+ */
 template<class T>
 AffineMain<T> sinh(const AffineMain<T>&  x);
 
-/** \brief Returns \f$\tanh(\mathrm{AF}[x])\f$. */
+/**
+ * \brief Returns the hyperbolic tangent of an affine form.
+ *
+ * \param x affine form
+ * \return affine result
+ */
 template<class T>
 AffineMain<T> tanh(const AffineMain<T>&  x);
 
 /**
- * \brief Returns \f$\operatorname{acosh}(x)\f$.
+ * \brief Returns the inverse hyperbolic cosine of an affine form.
+ *
+ * \param x affine form
+ * \return affine result
  */
 template<class T>
 AffineMain<T> acosh(const AffineMain<T>& x);
 
 /**
- * \brief Returns \f$\operatorname{asinh}(x)\f$.
+ * \brief Returns the inverse hyperbolic sine of an affine form.
+ *
+ * \param x affine form
+ * \return affine result
  */
 template<class T>
 AffineMain<T> asinh(const AffineMain<T>& x);
 
 /**
- * \brief Returns \f$\operatorname{atanh}(x)\f$.
+ * \brief Returns the inverse hyperbolic tangent of an affine form.
+ *
+ * \param x affine form
+ * \return affine result
  */
 template<class T>
 AffineMain<T> atanh(const AffineMain<T>& x);
 
 
+/**
+ * \brief Returns the two-argument arctangent.
+ *
+ * Computes \f$\operatorname{atan2}(y,x)\f$ from two affine forms.
+ *
+ * \param y affine form representing the y-coordinate
+ * \param x affine form representing the x-coordinate
+ * \return affine result
+ */
 template<class T>
 AffineMain<T> atan2(const AffineMain<T>& y, const AffineMain<T>& x);
 
 
-/** \brief Returns \f$|\mathrm{AF}[x]|\f$. */
+/**
+ * \brief Returns the absolute value of an affine form.
+ *
+ * \param x affine form
+ * \return affine result
+ */
 template<class T>
 AffineMain<T> abs(const AffineMain<T>& x);
 
+/**
+ * \brief Returns the interval maximum of two arguments.
+ *
+ * \param x first interval or affine form
+ * \param y second interval or affine form
+ * \return interval containing the maximum
+ *
+ * \note The result is an \c Interval and does not preserve affine
+ * dependency information.
+ */
 template<class T>
 Interval max(const AffineMain<T>&  x, const AffineMain<T>&  y);
+/**
+ * \brief Returns the interval maximum of two arguments.
+ *
+ * \param x first interval or affine form
+ * \param y second interval or affine form
+ * \return interval containing the maximum
+ *
+ * \note The result is an \c Interval and does not preserve affine
+ * dependency information.
+ */
 template<class T>
 Interval max(const Interval& x, const AffineMain<T>&  y);
+/**
+ * \brief Returns the interval maximum of two arguments.
+ *
+ * \param x first interval or affine form
+ * \param y second interval or affine form
+ * \return interval containing the maximum
+ *
+ * \note The result is an \c Interval and does not preserve affine
+ * dependency information.
+ */
 template<class T>
 Interval max(const AffineMain<T>&  x, const Interval& y);
 
+/**
+ * \brief Returns the interval minimum of two arguments.
+ *
+ * \param x first interval or affine form
+ * \param y second interval or affine form
+ * \return interval containing the minimum
+ *
+ * \note The result is an \c Interval and does not preserve affine
+ * dependency information.
+ */
 template<class T>
 Interval min(const AffineMain<T>&  x, const AffineMain<T>&  y);
+/**
+ * \brief Returns the interval minimum of two arguments.
+ *
+ * \param x first interval or affine form
+ * \param y second interval or affine form
+ * \return interval containing the minimum
+ *
+ * \note The result is an \c Interval and does not preserve affine
+ * dependency information.
+ */
 template<class T>
 Interval min(const Interval& x, const AffineMain<T>&  y) ;
+/**
+ * \brief Returns the interval minimum of two arguments.
+ *
+ * \param x first interval or affine form
+ * \param y second interval or affine form
+ * \return interval containing the minimum
+ *
+ * \note The result is an \c Interval and does not preserve affine
+ * dependency information.
+ */
 template<class T>
 Interval min(const AffineMain<T>&  x, const Interval& y);
 
 
 /**
- * \brief Returns \f$[x]_1\cap[x]_2\f$.
+ * \brief Returns the intersection of two interval enclosures.
  *
- * \return \c Interval::EMPTY if the intersection is empty
+ * \param x1 first affine form or interval
+ * \param x2 second affine form or interval
+ * \return intersection as an \c Interval; \c Interval::EMPTY if empty
  */
 template<class T>
 Interval operator&(const AffineMain<T>&  x1, const AffineMain<T>&  x2);
+/**
+ * \brief Returns the intersection of two interval enclosures.
+ *
+ * \param x1 first affine form or interval
+ * \param x2 second affine form or interval
+ * \return intersection as an \c Interval; \c Interval::EMPTY if empty
+ */
 template<class T>
 Interval operator&(const Interval& x1, const AffineMain<T>&  x2);
+/**
+ * \brief Returns the intersection of two interval enclosures.
+ *
+ * \param x1 first affine form or interval
+ * \param x2 second affine form or interval
+ * \return intersection as an \c Interval; \c Interval::EMPTY if empty
+ */
 template<class T>
 Interval operator&(const AffineMain<T>&  x1, const Interval& x2);
 
 
-/** \brief Returns \f$\square([x]_1\cup[x]_2)\f$. */
+/**
+ * \brief Returns the interval hull of the union of two interval enclosures.
+ *
+ * \param x1 first affine form or interval
+ * \param x2 second affine form or interval
+ * \return hull of the union as an \c Interval
+ */
 template<class T>
 Interval operator|(const AffineMain<T>&  x1, const AffineMain<T>&  x2);
+/**
+ * \brief Returns the interval hull of the union of two interval enclosures.
+ *
+ * \param x1 first affine form or interval
+ * \param x2 second affine form or interval
+ * \return hull of the union as an \c Interval
+ */
 template<class T>
 Interval operator|(const Interval& x1, const AffineMain<T>&  x2);
+/**
+ * \brief Returns the interval hull of the union of two interval enclosures.
+ *
+ * \param x1 first affine form or interval
+ * \param x2 second affine form or interval
+ * \return hull of the union as an \c Interval
+ */
 template<class T>
 Interval operator|(const AffineMain<T>&  x1, const Interval& x2);
 
 
-/** \brief Returns the largest integer interval included in \p x. */
-template<class T>
-AffineMain<T> integer(const AffineMain<T>&  x);
 /**
- * \brief Returns \f$\lfloor[x]\rfloor\f$.
+ * \brief Returns the largest integer interval contained in an affine form.
  *
- * \param x affine form value
- * \return operation result
+ * \param x affine form
+ * \return integer interval
+ *
+ * \note The result is an \c Interval and does not preserve affine
+ * dependency information.
  */
 template<class T>
-AffineMain<T> floor(const AffineMain<T>& x);
-
+Interval integer(const AffineMain<T>&  x);
 /**
- * \brief Returns \f$\lceil[x]\rceil\f$.
+ * \brief Returns the interval floor of an affine form.
  *
- * \param x affine form value
- * \return operation result
+ * \param x affine form
+ * \return \f$\lfloor[x]\rfloor\f$ as an \c Interval
+ *
+ * \note The result does not preserve affine dependency information.
  */
 template<class T>
-AffineMain<T> ceil(const AffineMain<T>& x);
+Interval floor(const AffineMain<T>& x);
 
-/** \brief Sign of AF[x].
+/**
+ * \brief Returns the interval ceiling of an affine form.
  *
- *  Return \f$sign(AF[x]) = hull \{ sign{x}, x\inAF[x] \}\f$.
- * \remark By convention, \f$ 0\inAF[x] \Longrightarrow sign(AF[x])=[-1,1]\f$. */
+ * \param x affine form
+ * \return \f$\lceil[x]\rceil\f$ as an \c Interval
+ *
+ * \note The result does not preserve affine dependency information.
+ */
+template<class T>
+Interval ceil(const AffineMain<T>& x);
+
+/**
+ * \brief Returns the interval sign enclosure of an affine form.
+ *
+ * \param x affine form
+ * \return affine result
+ */
 template<class T>
 AffineMain<T> sign(const AffineMain<T>&  x);
 
 
 
-/** \brief Chi of AF[a], AF[b] and AF[c].
+/**
+ * \brief Selects between two affine forms according to the sign of a condition.
  *
- *  Return \f$chi(AF[a],AF[b],AF[c]) = 0.5*(1-\sign(AF[a]))*AF[b] + 0.5*(\sign(AF[a])+1)*AF[c]. \f$
- * \remark  chi(AF[a],AF[b],AF[c]) =AF[b] if [a]<=0, AF[c] if AF[a]>0, hull \{AF[b], AF[c]\} else.  */
+ * For a condition \p a that is strictly non-positive, the result is \p b;
+ * for a condition that is strictly positive, the result is \p c. If both
+ * signs are possible, the result encloses both branches.
+ *
+ * \param a condition, as an interval or affine form
+ * \param b value selected when \p a is non-positive
+ * \param c value selected when \p a is positive
+ * \return affine result enclosing the selected branch or both branches
+ */
 template<class T>
 AffineMain<T> chi(const AffineMain<T>&  a,const AffineMain<T>&  b,const AffineMain<T>&  c);
+/**
+ * \brief Selects between two affine forms according to the sign of a condition.
+ *
+ * For a condition \p a that is strictly non-positive, the result is \p b;
+ * for a condition that is strictly positive, the result is \p c. If both
+ * signs are possible, the result encloses both branches.
+ *
+ * \param a condition, as an interval or affine form
+ * \param b value selected when \p a is non-positive
+ * \param c value selected when \p a is positive
+ * \return affine result enclosing the selected branch or both branches
+ */
 template<class T>
 AffineMain<T> chi(const Interval&  a,const AffineMain<T>&  b,const AffineMain<T>&  c);
+/**
+ * \brief Selects between two affine forms according to the sign of a condition.
+ *
+ * For a condition \p a that is strictly non-positive, the result is \p b;
+ * for a condition that is strictly positive, the result is \p c. If both
+ * signs are possible, the result encloses both branches.
+ *
+ * \param a condition, as an interval or affine form
+ * \param b value selected when \p a is non-positive
+ * \param c value selected when \p a is positive
+ * \return affine result enclosing the selected branch or both branches
+ */
 template<class T>
 AffineMain<T> chi(const Interval&  a,const Interval&  b,const AffineMain<T>&  c);
+/**
+ * \brief Selects between two affine forms according to the sign of a condition.
+ *
+ * For a condition \p a that is strictly non-positive, the result is \p b;
+ * for a condition that is strictly positive, the result is \p c. If both
+ * signs are possible, the result encloses both branches.
+ *
+ * \param a condition, as an interval or affine form
+ * \param b value selected when \p a is non-positive
+ * \param c value selected when \p a is positive
+ * \return affine result enclosing the selected branch or both branches
+ */
 template<class T>
 AffineMain<T> chi(const Interval&  a,const AffineMain<T>&  b,const Interval&  c);
+/**
+ * \brief Selects between two affine forms according to the sign of a condition.
+ *
+ * For a condition \p a that is strictly non-positive, the result is \p b;
+ * for a condition that is strictly positive, the result is \p c. If both
+ * signs are possible, the result encloses both branches.
+ *
+ * \param a condition, as an interval or affine form
+ * \param b value selected when \p a is non-positive
+ * \param c value selected when \p a is positive
+ * \return affine result enclosing the selected branch or both branches
+ */
 template<class T>
 AffineMain<T> chi(const AffineMain<T>&  a,const Interval&  b,const AffineMain<T>&  c);
+/**
+ * \brief Selects between two affine forms according to the sign of a condition.
+ *
+ * For a condition \p a that is strictly non-positive, the result is \p b;
+ * for a condition that is strictly positive, the result is \p c. If both
+ * signs are possible, the result encloses both branches.
+ *
+ * \param a condition, as an interval or affine form
+ * \param b value selected when \p a is non-positive
+ * \param c value selected when \p a is positive
+ * \return affine result enclosing the selected branch or both branches
+ */
 template<class T>
 AffineMain<T> chi(const AffineMain<T>&  a,const AffineMain<T>&  b,const Interval&  c);
-
 
 
 
@@ -1817,45 +2570,21 @@ inline Interval min(const AffineMain<T>& x, const Interval& y) {
 
 
 template<class T>
-inline AffineMain<T> integer(const AffineMain<T>& x)
+inline Interval integer(const AffineMain<T>& x)
 {
-  const Interval value = x.itv();
-  if (value.is_degenerated() && std::isfinite(value.lb()) &&
-      value.lb() == std::floor(value.lb())) {
-    return AffineMain<T>(x);
-  }
-
-  AffineMain<T> out;
-  out = integer(value);
-  return out;
+  return integer(x.itv());
 }
 
 template<class T>
-inline AffineMain<T> floor(const AffineMain<T>& x)
+inline Interval floor(const AffineMain<T>& x)
 {
-  const Interval value = x.itv();
-  if (value.is_degenerated() && std::isfinite(value.lb()) &&
-      value.lb() == std::floor(value.lb())) {
-    return AffineMain<T>(x);
-  }
-
-  AffineMain<T> out;
-  out = floor(value);
-  return out;
+  return floor(x.itv());
 }
 
 template<class T>
-inline AffineMain<T> ceil(const AffineMain<T>& x)
+inline Interval ceil(const AffineMain<T>& x)
 {
-  const Interval value = x.itv();
-  if (value.is_degenerated() && std::isfinite(value.lb()) &&
-      value.lb() == std::ceil(value.lb())) {
-    return AffineMain<T>(x);
-  }
-
-  AffineMain<T> out;
-  out = ceil(value);
-  return out;
+  return ceil(x.itv());
 }
 
 template<class T>
@@ -1921,7 +2650,7 @@ inline AffineMain<T> chi(const Interval& a,
 			return AffineMain<T>(b);
 		} else {
 			AffineMain<T> out;
-			out = b.itv|c_itv;
+			out = b_itv|c_itv;
 			return  out;
 		}
 }

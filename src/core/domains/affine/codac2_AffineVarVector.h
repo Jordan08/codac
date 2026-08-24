@@ -25,8 +25,7 @@ namespace codac2 {
 
 
 /**
- * \ingroup arithmetic
- *
+ * \class AffineVarMainVector
  * \brief Vector of affine variables.
  *
  * Each component is an \c AffineVarMain sharing a coherent number of
@@ -42,12 +41,10 @@ public:
 
 	using Base = Eigen::Matrix<AffineVarMain<T>, -1, 1>;
 
-	// Inherit the constructors and the assignment operators of the Eigen base
-	// class (dynamic size constructor, expression assignment, etc.).
-	// Without these "using" declarations, the derived class only gets the
-	// implicitly-generated default/copy/move constructors and assignment
-	// operators, and every other Eigen::Matrix constructor/assignment
-	// (e.g. AffineMainVector<T>(n) or v = v1+v2) would fail to compile.
+	// Expose the selected Eigen arithmetic operators for affine-variable
+	// vectors. Constructors and assignment operators are intentionally not
+	// inherited from Eigen: some generic Eigen constructors perform scalar
+	// initialization that is not compatible with AffineVarMain<T>.
 	using Base::operator+;
 	using Base::operator-;
 	using Base::operator*;
@@ -59,12 +56,11 @@ public:
 	 * Each component is set to the default (unbounded) affine form, i.e.
 	 * the equivalent of ``Interval()`` (]-oo,+oo[).
 	 *
-	 * \note This constructor hides (replaces) the generic
-	 * ``Eigen::Matrix(int n)`` constructor inherited above via
-	 * ``using Base::Base``. That generic constructor always tries to
-	 * zero-initialize non-interval scalar types through ``init(0.)``,
-	 * which does not compile for ``AffineVarMain<T>`` since there is no
-	 * implicit conversion from ``double`` to ``AffineVarMain<T>``.
+	 * \note The generic ``Eigen::Matrix(int n)`` constructor is deliberately
+	 * not inherited. It may perform scalar initialization through
+	 * ``init(0.)``, which is not compatible with ``AffineVarMain<T>``.
+	 * This constructor therefore provides the intended initialization
+	 * semantics explicitly.
 	 *
 	 * \param n vector size
 	 */
@@ -85,25 +81,24 @@ public:
 	explicit AffineVarMainVector(const Vector& x);
 
 	/**
-	 * \brief Resizes the vector and reconstructs all components as independent
-	 * affine variables from their current interval enclosures.
-	 * Existing affine dependency information is not preserved.
+	 * \brief Resizes this vector, rebuilding common components from their current interval enclosure.
 	 *
-	 * Existing components are reconstructed from their interval enclosures;
-	 * newly created components are initialized to (-inf,+inf). Empty
-	 * components remain empty, consistently with IntervalVector semantics.
-	 * The operation has the strong exception guarantee.
+	 * \note Existing affine dependency (noise-symbol correlation) is not preserved:
+	 *       - components common to both sizes are recreated as independent affine
+	 *         variables from their current interval enclosure (\c itv()), empty
+	 *         components remaining empty
+	 *       - newly created components (when growing) are initialized to \f$[-\infty,+\infty]\f$
+	 *       This operation has the strong exception guarantee.
 	 *
 	 * \param n2 new non-negative vector size
 	 */
 	void conservativeResize(Index n2);
 
 	/**
-	 * \brief Resizes the vector and reconstructs all components as independent
-	 * affine variables from their current interval enclosures.
-	 * Existing affine dependency information is not preserved.
+	 * \brief Resizes this vector, resetting every component to an independent unbounded affine variable.
 	 *
-	 * All components are initialized to (-inf,+inf).
+	 * \note Unlike conservativeResize(), existing interval enclosures are discarded: every
+	 *       component, including those common to both sizes, is reset to \f$[-\infty,+\infty]\f$.
 	 *
 	 * \param n2 new non-negative vector size
 	 */
@@ -124,8 +119,9 @@ public:
 	/**
 	 * \brief Broadcasts a single interval to every component.
 	 *
-	 * Unlike the generic Eigen::Matrix::init(const Scalar&) inherited via
-	 * ``using Base::Base``, this overload accepts an ``Interval`` directly and
+	 * \note This function is used for template purposes.
+	 *
+	 * This overload accepts an ``Interval`` directly and
 	 * assigns it component-wise through ``AffineVarMain::operator=(const Interval&)``,
 	 * which preserves each component's dedicated noise symbol (\c _var).
 	 * The generic scalar-broadcast ``init`` cannot be used here: it would
@@ -137,7 +133,10 @@ public:
 	 * \return a reference to this
 	 */
 	AffineVarMainVector<T>& init(const Interval& x);
+
+	/** \brief Disabled: broadcasting an ``AffineVarMain<T>`` would require duplicating its noise symbol across components. */
 	AffineVarMainVector<T>& init(const AffineVarMain<T>& x)= delete;
+	/** \brief Disabled: broadcasting an ``AffineMain<T>`` would require an implicit conversion to ``AffineVarMain<T>`` that is intentionally not provided. */
 	AffineVarMainVector<T>& init(const AffineMain<T>& x)= delete;
 
 	/** \brief Returns \f$-*\mathrm{this}\f$. */
@@ -145,11 +144,14 @@ public:
 
 
 	/**
-	 * Product of a matrix expression by a vector of affine variables.
+	 * \brief Returns \f$(*\mathrm{this}) \cdot \mathrm{rhs}\f$.
 	 *
-	 * The AffineVarMainVector is internally converted to an
-	 * AffineMainVector. The resulting Eigen object contains AffineMain<T>
+	 * The ``AffineVarMainVector`` is internally converted to an
+	 * ``AffineMainVector``. The resulting Eigen object contains ``AffineMain<T>``
 	 * coefficients and preserves the dimensions of the matrix product.
+	 *
+	 * \param rhs matrix expression to multiply this vector by
+	 * \return the resulting affine matrix expression, evaluated eagerly
 	 */
 	template<typename OtherDerived>
 	requires requires(const AffineMainVector<T>& lhs,const Eigen::MatrixBase<OtherDerived>&  rhs)
@@ -162,6 +164,15 @@ public:
 	}
 
 
+	/**
+	 * \name Disabled mutating operators
+	 *
+	 * A vector of affine variables must not be mutated component-wise in a
+	 * way that bypasses \c AffineVarMain's noise-symbol bookkeeping. Any
+	 * arithmetic result must be captured in a plain ``AffineMainVector<T>``
+	 * instead (see the free operators and \c operator- above).
+	 * @{
+	 */
 	AffineVarMainVector& operator=(const AffineMainVector<T>&) = delete;
 
 	AffineVarMainVector& operator+=(const Vector&) = delete;
@@ -192,16 +203,21 @@ public:
 	AffineVarMainVector& operator*=(const Eigen::EigenBase<OtherDerived>&) = delete;
 	template<typename OtherDerived>
 	AffineVarMainVector& operator/=(const Eigen::EigenBase<OtherDerived>&) = delete;
+	/** @} */
 
 };
 
 
 /**
- * Product of a matrix expression by a vector of affine variables.
+ * \brief Returns \f$\mathrm{lhs} \cdot \mathrm{rhs}\f$.
  *
- * The AffineVarMainVector is internally converted to an
- * AffineMainVector. The resulting Eigen object contains AffineMain<T>
+ * The ``AffineVarMainVector`` is internally converted to an
+ * ``AffineMainVector``. The resulting Eigen object contains ``AffineMain<T>``
  * coefficients and preserves the dimensions of the matrix product.
+ *
+ * \param lhs matrix expression on the left-hand side
+ * \param rhs vector of affine variables on the right-hand side
+ * \return the resulting affine matrix expression, evaluated eagerly
  */
 template<typename OtherDerived, class T>
 requires  requires(const Eigen::MatrixBase<OtherDerived>& lhs,const AffineMainVector<T>& rhs)
@@ -321,13 +337,12 @@ AffineMainVector<T> AffineVarMainVector<T>::operator-() const
 
 
 /**
- * \brief Stream output operator for ``IntervalVector`` objects.
+ * \brief Streams out x
  *
- * \param os The output stream to write to.
- * \param x The interval vector whose contents are to be printed.
- * \return A reference to the modified output stream.
+ * \param os the stream to be updated
+ * \param x the vector of affine variables to stream out
+ * \return a reference to the updated stream
  */
-
 template<class T>
 inline std::ostream& operator<<(std::ostream& os, const AffineVarMainVector<T>& x)
 {

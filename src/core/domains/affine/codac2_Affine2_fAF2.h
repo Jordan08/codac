@@ -24,6 +24,17 @@ namespace codac2 {
 template<class T>  class AffineMain;
 template<class T>  class AffineVarMain;
 
+/**
+ * \class AF_fAF2
+ * \brief Core coefficient storage of the "fAF2" affine-arithmetic model.
+ *
+ * Stores the vector of noise-symbol coefficients and the accumulated
+ * rounding/linearization error of an affine form, together with the
+ * error-free floating-point transformations (\c twoSum, \c twoProd) used to
+ * keep the model rigorous. The buffer is exclusively owned (non-copyable,
+ * movable only), which is why \c AffineMain and \c AffineVarMain always
+ * manipulate it through move semantics.
+ */
 class AF_fAF2 {
 
 private:
@@ -36,23 +47,77 @@ private:
 
 	/**
 	 * \brief Returns the exact rounding error of the addition of two floating-point values.
+	 *
+	 * \param a first operand
+	 * \param b second operand
+	 * \param res rounded floating-point sum \f$a+b\f$
+	 * \return the exact rounding error \f$\varepsilon\f$ such that \f$a+b=\mathrm{res}+\varepsilon\f$ in infinite precision
 	 */
 	static double twoSum(double a, double b, double *res);
 
 	/**
 	 * \brief Returns the exact rounding error of the multiplication of two floating-point values.
+	 *
+	 * Uses a hardware FMA instruction when available at runtime (see
+	 * \c codac_fma_runtime), and falls back to a Split-based Dekker product
+	 * otherwise.
+	 *
+	 * \param x first operand
+	 * \param y second operand
+	 * \param r_1 rounded floating-point product \f$x \cdot y\f$
+	 * \return the exact rounding error \f$\varepsilon\f$ such that \f$x \cdot y=r_1+\varepsilon\f$ in infinite precision
 	 */
-	static double twoProd(double a, double b, double *res);
+	static double twoProd(double x, double y, double *r_1);
+
+	/**
+	 * \brief Splits a double-precision value into a high and a low part.
+	 *
+	 * Used internally by the non-FMA fallback implementation of \c twoProd
+	 * (Dekker's error-free splitting, see "Handbook of Floating-Point
+	 * Arithmetic" p.132-139).
+	 *
+	 * \param x value to split
+	 * \param sp number of significant bits kept in \p x_high (splitting exponent)
+	 * \param x_high high-order part of \p x
+	 * \param x_low low-order part of \p x, such that \f$x=x_{high}+x_{low}\f$
+	 */
 	static void Split(double x, int sp, double *x_high, double *x_low);
 
-	/** \brief Creates an affine core from coefficients and remainder error. */
+	/**
+	 * \brief Creates an affine core from coefficients and remainder error.
+	 *
+	 * \param val vector of noise-symbol coefficients, whose ownership is transferred
+	 * \param err accumulated remainder error of the affine form
+	 */
 	AF_fAF2(std::unique_ptr<double[]> val, double err);
 
 public:
 
+	/** \brief Copy constructor, explicitly disabled: an \c AF_fAF2 core exclusively owns its coefficient buffer. */
 	AF_fAF2(const AF_fAF2&) = delete;
+
+	/** \brief Copy assignment, explicitly disabled: an \c AF_fAF2 core exclusively owns its coefficient buffer. */
 	AF_fAF2& operator=(const AF_fAF2&) = delete;
+
+	/**
+	 * \brief Move constructor.
+	 *
+	 * Transfers ownership of the coefficient buffer from \p other, which is
+	 * left with a null buffer afterwards.
+	 *
+	 * \param other affine core to move from
+	 */
 	AF_fAF2(AF_fAF2&& other) noexcept;
+
+	/**
+	 * \brief Move assignment.
+	 *
+	 * Transfers ownership of the coefficient buffer from \p other, which is
+	 * left with a null buffer afterwards.
+	 *
+	 * \param other affine core to move from
+	 * \return a reference to this
+	 */
 	AF_fAF2& operator=(AF_fAF2&& other) noexcept;
 
 	/** \brief Destroys the affine core. */
@@ -87,8 +152,17 @@ inline AF_fAF2::AF_fAF2(std::unique_ptr<double[]> val, double err) :
 
 
 
-// check one time if  fma is available at runtime, and store the result in a static variable.
-// This avoids repeated checks and ensures that the FMA support is determined only once during the program's execution.
+/**
+ * \brief Checks, once per program execution, whether the CPU supports the FMA instruction set.
+ *
+ * The runtime CPU-feature check is expensive, so it is performed only once
+ * (on first call) and its result is cached in a function-local static
+ * variable for all subsequent calls. Note that this only reflects hardware
+ * support: the FMA code path is only ever emitted by the compiler for
+ * translation units also built with the matching flag (e.g. ``-mfma``).
+ *
+ * \return true if FMA is available at runtime, false otherwise
+ */
 inline bool codac_fma_runtime() noexcept
 {
     static const bool has_fma = []() noexcept {

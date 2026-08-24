@@ -1141,14 +1141,14 @@ TEST_CASE("floor and ceil of non-integer singleton")
 			IntervalVector({{1.5}, {-1.5}, {2.0}})
 	);
 
-	CHECK(floor(variables[0]).itv() == Interval(1.0));
-	CHECK(ceil(variables[0]).itv() == Interval(2.0));
+	CHECK(floor(variables[0]) == Interval(1.0));
+	CHECK(ceil(variables[0]) == Interval(2.0));
 
-	CHECK(floor(variables[1]).itv() == Interval(-2.0));
-	CHECK(ceil(variables[1]).itv() == Interval(-1.0));
+	CHECK(floor(variables[1]) == Interval(-2.0));
+	CHECK(ceil(variables[1]) == Interval(-1.0));
 
-	CHECK(floor(variables[2]).itv() == Interval(2.0));
-	CHECK(ceil(variables[2]).itv() == Interval(2.0));
+	CHECK(floor(variables[2]) == Interval(2.0));
+	CHECK(ceil(variables[2]) == Interval(2.0));
 }
 
 namespace

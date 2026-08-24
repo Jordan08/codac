@@ -74,6 +74,10 @@ namespace codac2
       const std::map<const SlicedTubeBase*,std::shared_ptr<SliceBase>>& slices() const;
 
       using Interval::operator==;
+      
+      bool operator==(const TSlice& x) const {
+        return Interval::operator==(x);
+      }  
 
     protected:
 

@@ -62,6 +62,14 @@ struct is_affine_based< AffineVarMain<T> > : std::true_type {};
  */
 namespace Eigen
 {
+  /**
+   * \brief Eigen numeric traits for ``AffineVarMain<T>``.
+   *
+   * Lets ``AffineVarMain<T>`` be used as an Eigen scalar type, in the same
+   * spirit as the specialization above for ``AffineMain<T>``: every member
+   * is inherited unchanged from ``NumTraits<double>`` except ``Real``,
+   * ``Nested`` and ``Scalar``, which are aliased to ``AffineVarMain<T>``.
+   */
   template<class T>
   struct NumTraits<codac2::AffineVarMain<T>>
    : NumTraits<double> // permits to get the epsilon, dummy_precision, lowest, highest functions
@@ -83,6 +91,16 @@ namespace Eigen
     };
   };
 
+  /**
+   * \name Scalar-binary operation traits for AffineVarMain<T>
+   *
+   * These specializations tell Eigen that any binary operation mixing
+   * ``AffineVarMain<T>`` with ``double``, ``Interval``, ``AffineMain<T>``
+   * or another ``AffineVarMain<T>`` must produce a plain ``AffineMain<T>``:
+   * an affine variable is a declared, context-bound entity and is never
+   * itself the result of an arithmetic operation.
+   * @{
+   */
   template<class T,typename BinOp>
   struct ScalarBinaryOpTraits<codac2::AffineVarMain<T>,double,BinOp>
   { typedef codac2::AffineMain<T> ReturnType; };
@@ -110,13 +128,13 @@ namespace Eigen
   template<class T,typename BinOp>
   struct ScalarBinaryOpTraits<codac2::AffineVarMain<T>,codac2::Interval,BinOp>
   { typedef codac2::AffineMain<T> ReturnType; };
+  /** @} */
 
 }
 
 namespace codac2 {
 /**
- * \ingroup arithmetic
- *
+ * \class AffineVarMain
  * \brief Affine variables built on top of \c AF_Default.
  *
  * This class specializes \c AffineMain by associating one variable index
@@ -137,9 +155,14 @@ private:
     Index _var;
 
 protected:
-	// Eigen first creates unbound placeholders. AffineVarMainVector then
-	// contextualizes each placeholder through copy assignment. An unbound
-	// object must never be assigned an Interval directly.
+	/**
+	 * \brief Default constructor, creates an unbound placeholder.
+	 *
+	 * Eigen first creates unbound placeholders when allocating a dynamic
+	 * ``Eigen::Matrix<AffineVarMain<T>,-1,1>``; \c AffineVarMainVector then
+	 * contextualizes each placeholder through copy assignment. An unbound
+	 * object must never be assigned an ``Interval`` directly.
+	 */
     AffineVarMain();
 
 	/**
@@ -159,7 +182,9 @@ public:
 	 */
     AffineVarMain(const AffineVarMain<T>& x);
 
+	/** \brief Returns the index of the dedicated noise symbol of this variable. */
 	Index noise_index() const { return _var; }
+
 	/**
 	 * \brief Assigns from another affine variable.
 	 *
@@ -185,10 +210,17 @@ public:
 	AffineVarMain& operator=(double d);
 
 
-	// Une variable déclarée ne doit pas être mutée : cela casserait la
-	// cohérence entre _var et le contexte (taille totale de variables) dans
-	// lequel elle a été créée. Toute opération arithmétique doit repasser par
-	// une AffineMain<T> ordinaire (voir operator+, operator-, etc. libres).
+	/**
+	 * \name Disabled mutating operators
+	 *
+	 * A declared affine variable must not be mutated in place: doing so
+	 * would break the consistency between its dedicated noise symbol
+	 * (\c _var) and the context (total number of variables) in which it
+	 * was created. Any arithmetic result must be captured in a plain
+	 * ``AffineMain<T>`` instead, via the free ``operator+``, ``operator-``,
+	 * ``operator*``, ``operator/``, etc.
+	 * @{
+	 */
 	AffineVarMain& operator=(const AffineMain<T>&) = delete;
 
 	AffineVarMain& operator+=(double) = delete;
@@ -215,6 +247,7 @@ public:
 	AffineVarMain& operator*=(const Eigen::EigenBase<OtherDerived>&) = delete;
 	template<typename OtherDerived>
 	AffineVarMain& operator/=(const Eigen::EigenBase<OtherDerived>&) = delete;
+	/** @} */
 
     /**
      * \brief Provides an empty Affine Form

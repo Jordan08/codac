@@ -9,9 +9,34 @@ The AffineVariables class
 dynamic-size vector of *declared* affine variables. It is the **only** way
 to introduce new, independent noise symbols :math:`\varepsilon_i` into a
 computation — a plain :ref:`Affine <sec-affine-class>` built from an
-``Interval`` never carries one. Every component of an ``AffineVariables``
-vector shares the same noise-symbol context, and keeps its own dedicated
-symbol for the lifetime of the vector.
+``Interval`` never carries one.
+
+Each component of an ``AffineVariables`` vector belongs to the same
+noise-symbol context and has its own dedicated symbol. This identity is
+preserved when assigning a new ``Interval`` or ``double`` to an existing
+component, and when copying the whole vector. Operations that rebuild the
+vector, such as ``resize()``, ``conservativeResize()`` or assignment from an
+``IntervalVector``, intentionally create a new context.
+
+The role of the class can be summarized as:
+
+.. code-block:: text
+
+   Interval / Vector
+          |
+          | declaration of uncertain quantities
+          v
+   AffineVariables
+      x[0] <-> eps_0
+      x[1] <-> eps_1
+      x[2] <-> eps_2
+          |
+          | affine / nonlinear computations
+          v
+   Affine / AffineVector / AffineMatrix
+
+``AffineVariables`` is therefore a declaration container, not a general
+purpose container for computed affine expressions.
 
 
 Creating affine variables
@@ -34,11 +59,62 @@ Creating affine variables
    * - Constructor
      - Description
    * - ``AffineVariables(Index n)``
-     - ``n`` unbound components, each :math:`]-\infty,+\infty[`
+     - Creates ``n`` unbound components, each initially enclosing
+       :math:`]-\infty,+\infty[`. Every component receives a distinct
+       noise symbol.
    * - ``AffineVariables(const IntervalVector& x)``
-     - one component per entry of ``x``, each bound to its own symbol
+     - Creates one component per entry of ``x``. Each component is bound
+       to its own noise symbol and has the corresponding interval
+       enclosure.
    * - ``AffineVariables(const Vector& x)``
-     - degenerate (point) components, still each with its own symbol
+     - Creates one component per entry of ``x``. Each component has a
+       degenerate interval enclosure and still receives its own noise
+       symbol. The point value therefore does not make the component a
+       constant in the dependency model.
+
+
+Terminology used in this page
+------------------------------
+
+A component of ``AffineVariables`` is a **declared affine variable**. Each
+such variable is associated with a dedicated **noise symbol**
+:math:`\varepsilon_i`. The noise symbol, rather than the component object
+itself, is the entity that is shared by the affine expressions derived from
+the variable.
+
+This terminology is used consistently throughout the affine documentation:
+``AffineVariables`` declares variables and introduces noise symbols, while
+``Affine`` / ``AffineVector`` / ``AffineMatrix`` carry those symbols through
+computations.
+
+
+A complete workflow
+-------------------
+
+The following example illustrates the typical workflow with
+``AffineVariables``:
+
+1. declare the uncertain quantities of the problem;
+2. inspect their noise-symbol identities;
+3. assign new interval values when needed;
+4. use the declared variables in affine expressions;
+5. preserve dependencies by reusing the same declared components;
+6. materialize the variables as an ``AffineVector`` for vector operations.
+
+.. tabs::
+
+  .. group-tab:: C++
+
+    .. literalinclude:: src.cpp
+      :language: c++
+      :start-after: [affine-variables-complete-beg]
+      :end-before: [affine-variables-complete-end]
+      :dedent: 4
+
+The important point is that the declaration step and the computation step
+are separate. ``AffineVariables`` introduces the independent noise symbols;
+the resulting ``Affine`` and ``AffineVector`` objects carry those symbols
+through subsequent computations.
 
 
 Component identity
@@ -46,9 +122,9 @@ Component identity
 
 Each component exposes its own noise-symbol index through
 ``noise_index()``. Reassigning a component from an ``Interval`` or a
-``double`` replaces its numeric value but keeps that index unchanged —
-this is what lets later computations recognize that two expressions still
-refer to the *same* uncertain quantity:
+``double`` replaces its numeric value but keeps that index unchanged.
+This lets later computations recognize that two expressions still refer
+to the *same* uncertain quantity:
 
 .. tabs::
 
@@ -59,6 +135,30 @@ refer to the *same* uncertain quantity:
       :start-after: [affine-variables-2-beg]
       :end-before: [affine-variables-2-end]
       :dedent: 4
+
+Assigning a new interval is therefore **not** equivalent to declaring a new
+variable: the existing noise-symbol identity is preserved.
+
+Shared dependency versus independent affine forms
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Two expressions derived from the same ``AffineVariables`` component share
+the same noise symbol. Consequently, subtracting the same declared variable
+from itself is exactly zero:
+
+.. tabs::
+
+  .. group-tab:: C++
+
+    .. literalinclude:: src.cpp
+      :language: c++
+      :start-after: [affine-variables-dependency-beg]
+      :end-before: [affine-variables-dependency-end]
+      :dedent: 4
+
+By contrast, two plain ``Affine`` objects constructed independently from the
+same interval do not share a noise symbol. They therefore do not have the
+same dependency information.
 
 .. warning::
 
@@ -159,12 +259,6 @@ here by hand:
       :end-before: [affine-variables-16-end]
       :dedent: 4
 
-.. warning::
-
-  Only the containment check (``is_superset``) on this last example was
-  verified; the exact coefficients shown are a format placeholder, not
-  computed values. Run the snippet to see the actual printed output.
-
 
 Resizing
 ------------
@@ -181,19 +275,38 @@ Two resizing operations are available, with different guarantees:
       :end-before: [affine-variables-3-end]
       :dedent: 4
 
+The distinction is important:
+
 .. list-table::
-   :widths: 30 70
+   :widths: 30 30 40
    :header-rows: 1
 
    * - Method
-     - Behavior
+     - Interval enclosure
+     - Noise-symbol identity
    * - ``resize(n)``
-     - Drops all existing dependency information; every component becomes
-       a fresh, independent, unbounded variable.
+     - Existing enclosures are discarded.
+     - All components are rebuilt as fresh independent variables.
    * - ``conservativeResize(n)``
-     - Keeps each surviving component's *interval enclosure* (not its
-       correlations, which cannot survive a change of context size); newly
-       added components are unbounded.
+     - Surviving components keep their interval enclosures; new components
+       are unbounded.
+     - Surviving components are reconstructed in a new context, so their
+       previous affine dependencies are discarded.
+
+For example, after
+
+.. code-block:: cpp
+
+   AffineVariables v(IntervalVector({{1,2},{-1,1}}));
+   v.conservativeResize(3);
+
+the first two components still enclose ``[1,2]`` and ``[-1,1]``, while the
+third component is unbounded. The original noise-symbol identities are not
+preserved by the resize operation.
+
+In contrast, assigning an ``Interval`` to an existing component or using
+``init(const Interval&)`` does not rebuild the context: the component keeps
+its existing noise-symbol identity.
 
 
 Broadcasting a single interval
@@ -217,6 +330,46 @@ Broadcasting a single interval
   ``AffineVariables`` therefore provides its own ``init(const Interval&)``
   overload, applying the same interval to every component while
   preserving each one's own symbol.
+
+For example, after
+
+.. code-block:: cpp
+
+   AffineVariables v(3);
+   v.init(Interval(1,2));
+
+the three components all enclose ``[1,2]`` but remain independent:
+conceptually,
+
+.. code-block:: text
+
+   v[0] = 1.5 + 0.5 eps_0
+   v[1] = 1.5 + 0.5 eps_1
+   v[2] = 1.5 + 0.5 eps_2
+
+Thus ``v[0] - v[1]`` is not zero, whereas ``v[0] - v[0]`` is exactly
+zero.
+
+
+Assigning values to existing variables
+----------------------------------------
+
+An existing component can be assigned from an ``Interval`` or a ``double``.
+The value changes, but the component keeps its existing noise-symbol identity:
+
+.. tabs::
+
+  .. group-tab:: C++
+
+    .. literalinclude:: src.cpp
+      :language: c++
+      :start-after: [affine-variables-assignment-beg]
+      :end-before: [affine-variables-assignment-end]
+      :dedent: 4
+
+This is different from creating a new ``Affine`` from an ``Interval``:
+the latter does not introduce a symbol that can be shared with a declared
+variable.
 
 
 Using declared variables in a computation
@@ -253,7 +406,7 @@ generic, component-wise matrix assignment, which calls
 ``AffineVarMain::operator=(const AffineVarMain&)`` per component. This
 copies each component's noise-symbol identity along with its value — after
 the assignment, ``w[i]`` and ``v[i]`` refer to the exact same noise symbol,
-and are therefore seen as fully correlated by any later computation mixing
+and are therefore seen as fully dependent by any later computation mixing
 both:
 
 .. tabs::
@@ -266,11 +419,12 @@ both:
       :end-before: [affine-variables-6-end]
       :dedent: 4
 
-.. note::
+.. warning::
 
-  This is by design: it lets ``w`` act as a snapshot of ``v`` that later
-  code can still recognize as referring to the same underlying uncertain
-  quantities, rather than as an unrelated, freshly independent copy.
+  Copying an ``AffineVariables`` object does **not** create independent
+  uncertainty. The copied components refer to the same noise symbols as
+  the source components. Use a newly constructed ``AffineVariables`` if
+  independent variables are required.
 
 
 Reassigning from an IntervalVector
@@ -281,7 +435,8 @@ fresh interval vector, resizing this vector first if the sizes differ.
 Unlike ``init(const Interval&)`` (same size, same symbols, new common
 value), this rebuilds every component from scratch — behavior-wise it is
 equivalent to ``resize()`` followed by a component-wise assignment, not to
-``conservativeResize()``:
+``conservativeResize()``. Consequently, no dependency from before the
+assignment survives:
 
 .. tabs::
 
@@ -292,6 +447,37 @@ equivalent to ``resize()`` followed by a component-wise assignment, not to
       :start-after: [affine-variables-7-beg]
       :end-before: [affine-variables-7-end]
       :dedent: 4
+
+
+What ``AffineVariables`` is — and is not
+------------------------------------------
+
+``AffineVariables`` is a declaration container for the independent
+uncertain quantities of a problem. It should not be used as a general
+purpose vector of computed affine expressions.
+
+Use:
+
+* ``AffineVariables`` to declare independent uncertain quantities;
+* :ref:`Affine <sec-affine-class>` to build scalar affine expressions;
+* :ref:`AffineVector <sec-affine-vector-class>` to store and manipulate
+  vectors of affine expressions;
+* :ref:`AffineMatrix <sec-affine-matrix-class>` to store and manipulate
+  matrices of affine expressions.
+
+A typical workflow is therefore:
+
+.. code-block:: cpp
+
+   AffineVariables x(...);
+
+   Affine f = x[0] * x[1] + sin(x[2]);
+
+   AffineVector y = A * x;
+
+Once a value is a derived expression rather than a declared uncertain
+quantity, it belongs in ``Affine`` or ``AffineVector`` rather than in
+``AffineVariables``.
 
 
 What is deliberately unavailable
@@ -336,8 +522,11 @@ Products with a matrix
 
 ``AffineVariables`` can appear directly as an operand of a matrix product:
 it is converted internally to an ``AffineVector``, so the result always
-carries ``Affine`` (not ``AffineVarMain``) coefficients — see
-:ref:`the AffineMatrix page <sec-affine-matrix-class>` for more on
+carries ``Affine`` (not ``AffineVarMain``) coefficients. This is the natural
+transition from declaring uncertain quantities to performing vector and
+matrix computations.
+
+See :ref:`the AffineMatrix page <sec-affine-matrix-class>` for more on
 dependency preservation through matrix products.
 
 .. tabs::

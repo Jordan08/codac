@@ -88,7 +88,8 @@
     
   if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_compile_options(-Wreturn-type  -Wno-unused-parameter)
-    add_compile_options( -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer -g -o0  )
+    add_compile_options( -fno-omit-frame-pointer -g -O0  )
+    add_compile_options( -fsanitize=address -fsanitize=undefined)
     add_link_options(-fsanitize=address,undefined)
   endif()
   

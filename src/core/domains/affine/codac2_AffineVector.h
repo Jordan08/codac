@@ -23,7 +23,6 @@ namespace codac2 {
 template<class T> class AffineVarMainVector;
 
 /**
- * \ingroup arithmetic
  *
  * \brief Dynamic-size column vector of affine forms.
  *
@@ -36,7 +35,11 @@ template<class T>
 using AffineMainVector = Eigen::Matrix<AffineMain<T>, -1, 1>;
 
 /**
- * \brief Stream output for an affine vector.
+ * \brief Streams out x
+ *
+ * \param os the stream to be updated
+ * \param x the affine vector to stream out
+ * \return a reference to the updated stream
  */
 template<class T>
 inline std::ostream& operator<<(std::ostream& os, const AffineMainVector<T>& x)

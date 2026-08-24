@@ -128,6 +128,50 @@ TEST_CASE("Affine class - manual")
   }
 
   {
+    // [affine-class-nonlinear-list-beg]
+    AffineVariables v(IntervalVector({{1,2},{2,3},{0.5,1.0}}));
+    Affine x = v[0];
+    Affine y = v[1];
+    Affine z = v[2];
+
+    Affine a1 = inv(x);
+    Affine a2 = sqr(x);
+    Affine a3 = sqrt(x);
+    Affine a4 = exp(x);
+    Affine a5 = log(x);
+    Affine a6 = pow(x, 2);
+    Affine a7 = pow(x, 0.5);
+    Affine a8 = pow(x, Interval(1,2));
+    Affine a9 = pow(x, y);
+    Affine a10 = root(x, 2);
+    Affine a11 = sin(z);
+    Affine a12 = cos(z);
+    Affine a13 = tan(z);
+    Affine a14 = asin(z);
+    Affine a15 = acos(z);
+    Affine a16 = atan(z);
+    Affine a17 = sinh(z);
+    Affine a18 = cosh(z);
+    Affine a19 = tanh(z);
+    Affine a20 = asinh(z);
+    Affine a21 = acosh(x);
+    Affine a22 = atanh(z);
+    Affine a23 = atan2(z, x);
+    Affine a24 = abs(x);
+    Interval a25 = floor(x);
+    Interval a26 = ceil(x);
+    Interval a27 = integer(x);
+    Affine a28 = sign(z);
+    Affine a29 = chi(z, x, y);
+    // [affine-class-nonlinear-list-end]
+    (void)a1; (void)a2; (void)a3; (void)a4; (void)a5; (void)a6; (void)a7;
+    (void)a8; (void)a9; (void)a10; (void)a11; (void)a12; (void)a13;
+    (void)a14; (void)a15; (void)a16; (void)a17; (void)a18; (void)a19;
+    (void)a20; (void)a21; (void)a22; (void)a23; (void)a24; (void)a25;
+    (void)a26; (void)a27; (void)a28; (void)a29;
+  }
+
+  {
     // [affine-class-6-beg]
     // The linearization mode is a global (thread-local) setting shared by
     // every AffineMain instantiation; restore the default after use so
@@ -175,11 +219,9 @@ TEST_CASE("Affine class - manual")
 
   {
     // [affine-class-9-beg]
-    // atan2(y,x) is available for affine forms. On a box that does not
-    // straddle the x=0 branch cut it is computed through composition with
-    // the (already validated) affine division and atan, without any new
-    // linearization; on a box straddling the cut it soundly falls back to
-    // the plain Interval result.
+    // atan2(y,x) is available for affine forms. When the affine
+    // division/atan construction is not applicable, the implementation
+    // falls back to a sound interval enclosure.
     AffineVariables var(IntervalVector({{1,2},{0.5,1}}));
     Affine x = var[0];
     Affine y = var[1];
@@ -191,6 +233,45 @@ TEST_CASE("Affine class - manual")
 
 TEST_CASE("AffineVariables class - manual")
 {
+  {
+    // [affine-variables-complete-beg]
+    // 1. Declare uncertain quantities.
+    AffineVariables x(IntervalVector({
+      {0., 1.},
+      {2., 4.},
+      {-1., 1.}
+    }));
+
+    // 2. Each component receives a distinct noise symbol.
+    Index i0 = x[0].noise_index();
+    Index i1 = x[1].noise_index();
+    Index i2 = x[2].noise_index();
+
+    // 3. Existing variables can be assigned a new interval without
+    // changing their noise-symbol identity.
+    x[1] = Interval(5., 6.);
+
+    // 4. Use the declared variables in affine expressions.
+    Affine a = x[0] + 2. * x[1];
+    Affine b = x[1] - x[2];
+
+    // 5. Reusing the same declared variable preserves its dependency.
+    Affine c = x[0] - x[0];
+
+    // 6. Materialize the declared variables as an AffineVector when vector
+    // operations are required.
+    AffineVector v(x);
+    AffineVector y = 2. * v;
+    // [affine-variables-complete-end]
+
+    CHECK(i0 == 0);
+    CHECK(i1 == 1);
+    CHECK(i2 == 2);
+    CHECK(x[1].noise_index() == i1);
+    CHECK(c.itv() == Interval(0.0));
+    CHECK(y.itv() == IntervalVector({{0.,2.},{10.,12.},{-2.,2.}}));
+  }
+
   {
     // [affine-variables-1-beg]
     AffineVariables u(3);                  // 3 unbound components, ]-oo,+oo[ each
@@ -220,6 +301,38 @@ TEST_CASE("AffineVariables class - manual")
   }
 
   {
+    // [affine-variables-assignment-beg]
+    AffineVariables v(IntervalVector({{1.,2.},{-1.,1.}}));
+
+    Index i0 = v[0].noise_index();
+    v[0] = Interval(5.,6.);
+    v[1] = 3.;
+
+    // The numeric values change, but the declared identities remain.
+    // [affine-variables-assignment-end]
+    CHECK(v[0].noise_index() == i0);
+    CHECK(v[1].noise_index() == 1);
+    CHECK(v[0].itv() == Interval(5.,6.));
+    CHECK(v[1].itv() == Interval(3.));
+  }
+
+  {
+    // [affine-variables-dependency-beg]
+    AffineVariables v(IntervalVector({{1.,2.}}));
+    Affine a = v[0];
+    Affine b = v[0];
+    Affine correlated = a - b;
+
+    // These two plain Affine objects are created independently.
+    Affine p(Interval(1.,2.));
+    Affine q(Interval(1.,2.));
+    Affine independent = p - q;
+    // [affine-variables-dependency-end]
+    CHECK(correlated.itv() == Interval(0.0));
+    CHECK(independent.itv() == Approx<Interval>(Interval(-1.,1.)));
+  }
+
+  {
     // [affine-variables-3-beg]
     // resize() drops any existing dependency information and reconstructs
     // every component as a fresh, independent, unbounded variable.
@@ -227,12 +340,22 @@ TEST_CASE("AffineVariables class - manual")
     // interval enclosure (not its correlations), and initializes any newly
     // added component to ]-oo,+oo[.
     AffineVariables v(IntervalVector({{1,2},{-1,1},{3,4}}));
+    Index old_i0 = v[0].noise_index();
+
     v.conservativeResize(4);
-    // v[0..2] still enclose their original intervals, v[3] is unbounded
+    // v[0..2] still enclose their original intervals, v[3] is unbounded.
+    // Their previous noise-symbol identities are intentionally not kept.
+    Index new_i0 = v[0].noise_index();
+
+    // resize() discards even the surviving interval enclosures and creates
+    // a completely fresh set of unbounded variables.
+    v.resize(2);
     // [affine-variables-3-end]
-    CHECK(v.size() == 4);
-    CHECK(v[0].itv() == Interval(1,2));
-    CHECK(v[3].itv() == Interval());
+    CHECK(v.size() == 2);
+    CHECK(v[0].itv() == Interval());
+    CHECK(old_i0 == new_i0);
+    CHECK(v[0].noise_index() == new_i0);
+    CHECK(v[1].itv() == Interval());
   }
 
   {
@@ -277,6 +400,9 @@ TEST_CASE("AffineVariables class - manual")
     // [affine-variables-6-end]
     CHECK(w[0].noise_index() == v[0].noise_index());
     CHECK(d.itv() == Interval(0.0));
+
+    // A copy is therefore not a declaration of independent uncertainty:
+    // w[0] and v[0] remain fully correlated.
   }
 
   {
@@ -415,9 +541,8 @@ TEST_CASE("AffineVariables class - manual")
     // against the source) -- only the guaranteed containment is checked.
     // Run this snippet to see the actual printed values.
     AffineVariables v(IntervalVector({{0, 1.5707963267948966}})); // [0, pi/2]
-    Affine y = sin(v[0]);
-    // Expected `cout << y` format (structure only):
-    //   <itv> : <mid> + <coeff> eps_0 + <err> [-1,1]
+    Affine y = sin(v[0]);  //  [-0.0544991, 1.25618] : 0.600837 + 0.52725 eps_0 + 0.128086 [-1,1]
+    // The exact coefficients depend on the selected linearization mode.
     // [affine-variables-16-end]
     CHECK(y.itv().is_superset(Interval(0,1)));
   }
@@ -577,6 +702,20 @@ TEST_CASE("AffineMatrix class - manual")
   }
 
   {
+    // [affine-matrix-shared-beg]
+    AffineVariables v(2);
+    v[0] = Interval(-1,1);
+    v[1] = Interval(2,3);
+
+    AffineMatrix M(2,2);
+    M(0,0) = v[0];
+    M(0,1) = v[1];
+    M(1,0) = v[0];
+    M(1,1) = v[1];
+    // [affine-matrix-shared-end]
+  }
+
+  {
     // [affine-matrix-4-beg]
     // transpose(), like on any Eigen matrix, swaps rows and columns.
     AffineMatrix M(2,2);
@@ -601,6 +740,30 @@ TEST_CASE("AffineMatrix class - manual")
     CHECK(row0(1).itv() == Interval(3,3));
     CHECK(col1(0).itv() == Interval(3,3));
     CHECK(col1(1).itv() == Interval(0,1));
+  }
+
+  {
+    // [affine-matrix-products-beg]
+    AffineVariables v(IntervalVector({{-1,1},{2,3}}));
+
+    AffineMatrix M(2,2);
+    M(0,0) = v[0];
+    M(0,1) = v[1];
+    M(1,0) = v[0];
+    M(1,1) = v[1];
+
+    AffineVector x(v);
+    AffineVector y1 = M * x;
+
+    AffineMatrix N(2,2);
+    N.setIdentity();
+    AffineVector y2 = N * x;
+    AffineMatrix P = M * N;
+    // [affine-matrix-products-end]
+    CHECK(y1.size() == 2);
+    CHECK(y2.size() == 2);
+    CHECK(P.rows() == 2);
+    CHECK(P.cols() == 2);
   }
 
   {

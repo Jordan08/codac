@@ -10,6 +10,11 @@ dynamic-size matrix of :ref:`Affine <sec-affine-class>` forms, a plain
 ``Eigen::Matrix<Affine,-1,-1>`` type alias, exactly like
 :ref:`AffineVector <sec-affine-vector-class>` is for column vectors.
 
+It is a **working container**, not a declaration mechanism: assigning an
+``AffineVariables`` component to a matrix coefficient preserves that
+component's noise symbol, while constructing a coefficient from an
+``Interval`` does not introduce a new reusable noise symbol.
+
 
 Products with a vector of affine forms
 -------------------------------------------
@@ -34,13 +39,53 @@ either side of such a product: it is converted internally to an
 ``Affine`` (not ``AffineVarMain``) coefficients.
 
 
+Supported matrix products
+--------------------------
+
+The affine matrix/vector types follow the corresponding Eigen dimensions:
+
+.. list-table:: Common products
+   :widths: 35 65
+   :header-rows: 1
+
+   * - Expression
+     - Result
+   * - ``RealMatrix * AffineVector``
+     - ``AffineVector``
+   * - ``RealMatrix * AffineVariables``
+     - ``AffineVector``; the declared variables are converted to affine
+       expressions without losing their noise symbols.
+   * - ``AffineVector * RealRow``
+     - ``AffineMatrix``
+   * - ``AffineRow * RealMatrix``
+     - ``AffineRow``
+   * - ``AffineMatrix * AffineVector``
+     - ``AffineVector``
+   * - ``AffineMatrix * AffineMatrix``
+     - ``AffineMatrix``
+
+The exact scalar combinations accepted by Eigen's expression templates are
+also available for affine and interval coefficients where the corresponding
+Codac overloads are defined.
+
+.. tabs::
+
+  .. group-tab:: C++
+
+    .. literalinclude:: src.cpp
+      :language: c++
+      :start-after: [affine-matrix-products-beg]
+      :end-before: [affine-matrix-products-end]
+      :dedent: 4
+
+
 Dependency preservation through matrix products
 -----------------------------------------------------
 
 This is typically where affine arithmetic pays off compared to interval
 arithmetic in practice: evaluating the *same* declared variables through
 one or more matrices and recombining the results linearly does not lose
-correlation, e.g. in a state-space / control computation that reuses the
+dependency information, e.g. in a state-space / control computation that reuses the
 same uncertain state vector several times:
 
 .. tabs::
@@ -54,12 +99,15 @@ same uncertain state vector several times:
       :dedent: 4
 
 
-Matrix of arbitrary affine forms
--------------------------------------
+Building a matrix from affine forms
+-----------------------------------------
 
-``AffineMatrix`` components do not need to originate from
-``AffineVariables`` at all — like ``AffineVector``, it is a general-purpose
-container, and ``itv()`` gives the enclosing ``IntervalMatrix``:
+``AffineMatrix`` is a general-purpose container: its components can come
+from anywhere — declared variables, as below, or freestanding
+``Affine(Interval(...))``/``Affine(double)`` constants (in which case they
+carry no ``eps_i`` term at all, see
+:ref:`the Affine class page <sec-affine-class>`). ``itv()`` gives the
+enclosing ``IntervalMatrix`` either way:
 
 .. tabs::
 
@@ -70,6 +118,49 @@ container, and ``itv()`` gives the enclosing ``IntervalMatrix``:
       :start-after: [affine-matrix-3-beg]
       :end-before: [affine-matrix-3-end]
       :dedent: 4
+
+
+Shared noise symbols in matrix coefficients
+--------------------------------------------
+
+Several matrix coefficients can deliberately refer to the same declared
+variable. The resulting matrix therefore carries shared noise symbols in
+multiple entries:
+
+.. code-block:: cpp
+
+   AffineVariables v(2);
+   v[0] = Interval(-1,1);
+   v[1] = Interval(2,3);
+
+   AffineMatrix M(2,2);
+   M(0,0) = v[0];
+   M(0,1) = v[1];
+   M(1,0) = v[0];
+   M(1,1) = v[1];
+
+Here ``M(0,0)`` and ``M(1,0)`` share the same noise symbol, as do
+``M(0,1)`` and ``M(1,1)``. This is different from constructing four
+independent ``Affine`` coefficients from the same intervals.
+
+.. tabs::
+
+  .. group-tab:: C++
+
+    .. literalinclude:: src.cpp
+      :language: c++
+      :start-after: [affine-matrix-shared-beg]
+      :end-before: [affine-matrix-shared-end]
+      :dedent: 4
+
+
+AffineRow
+---------
+
+``AffineRow`` is the row-vector counterpart of ``AffineVector``. It uses the
+same scalar type, ``Affine``, and therefore preserves any noise symbols
+carried by its components. It is primarily encountered through Eigen
+operations such as ``transpose()`` and ``row(i)``.
 
 
 Transpose, rows and columns

@@ -14,7 +14,32 @@ operation and algorithm remains available without duplicating Eigen's API.
 Unlike :ref:`AffineVariables <sec-affine-variables-class>`, an
 ``AffineVector`` does not itself introduce noise symbols: it is the
 *working* type produced and consumed by computations, whether or not its
-components happen to be correlated with one another.
+components happen to share noise symbols.
+
+The distinction is fundamental:
+
+.. list-table:: ``AffineVariables`` versus ``AffineVector``
+   :widths: 35 32 33
+   :header-rows: 1
+
+   * - Property
+     - ``AffineVariables``
+     - ``AffineVector``
+   * - Introduces noise symbols
+     - Yes
+     - No
+   * - Main role
+     - Declares independent uncertain quantities
+     - Stores and computes with affine expressions
+   * - Typical contents
+     - Declared variables with dedicated noise symbols
+     - Results of affine computations
+   * - In-place compound assignment
+     - Intentionally restricted
+     - Available through the Eigen API
+   * - Typical use
+     - Start a dependency-aware computation
+     - Continue and combine that computation
 
 
 Creating and inspecting an affine vector
@@ -87,8 +112,9 @@ Block access
 ----------------
 
 Being a plain Eigen column vector, the usual block accessors
-(``head``, ``tail``, ``segment``) are available and return an
-``AffineVector`` over the requested range:
+(``head``, ``tail``, ``segment``) are available. They return Eigen block
+expressions and can be materialized as an ``AffineVector`` when a concrete
+vector is required:
 
 .. tabs::
 
@@ -116,17 +142,18 @@ Transpose
 
 .. note::
 
-  ``transpose()`` turns an ``AffineVector`` into an
-  :ref:`AffineRow <sec-affine-matrix-class>`, exactly like it would for any
-  Eigen column vector.
+  ``transpose()`` provides the corresponding Eigen row expression, which can
+  be materialized as an :ref:`AffineRow <sec-affine-matrix-class>`, exactly
+  like it would for any Eigen column vector.
 
 
 Nonlinear functions, component by component
 ------------------------------------------------
 
-There is no vectorized shortcut for elementary functions the way there is
-for the linear compound assignments above (``+=``, ``*=``...): applying
-``sin``, ``sqr``, etc. to every component is done one component at a time:
+There is no dedicated vector overload for the scalar nonlinear functions
+listed on the :ref:`Affine class page <sec-affine-class>`. Applying
+``sin``, ``sqr``, ``exp``, etc. to every component is therefore done one
+component at a time:
 
 .. tabs::
 
@@ -137,6 +164,18 @@ for the linear compound assignments above (``+=``, ``*=``...): applying
       :start-after: [affine-vector-6-beg]
       :end-before: [affine-vector-6-end]
       :dedent: 4
+
+
+Nonlinear functions available
+--------------------------------
+
+The scalar nonlinear functions available for ``Affine`` can be applied
+component by component. The complete list is given on the
+:ref:`Affine class page <sec-affine-class>`. The interval-valued functions
+``floor``, ``ceil`` and ``integer`` are likewise applied component by
+component, but their results do not preserve affine dependencies.
+The :ref:`Affine class page <sec-affine-class>` gives the complete list and
+the corresponding scalar semantics.
 
 
 Printing
