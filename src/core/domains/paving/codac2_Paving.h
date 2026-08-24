@@ -33,19 +33,18 @@ namespace codac2
       using ConnectedSubset_ = Subpaving<P>;
 
     protected:
-      Paving(Index n)
-        : Paving(IntervalVector(n))
-      {
-        assert_release(n > 0);
-      }
-
-//
-//      Paving(const IntervalVector& x)
-//        : _tree(std::make_shared<PavingNode<P>>(*static_cast<P*>(this), x))
-//      { }
-      Paving(const IntervalVector& x)
-      { }
-
+      // Paving(Index n)
+      //   : Paving(IntervalVector(n))
+      // {
+      //   assert_release(n > 0);
+      // }
+      // Paving(const IntervalVector& x)
+      //   : _tree(std::make_shared<PavingNode<P>>(*static_cast<P*>(this), x))
+      // { }
+      // Paving(const IntervalVector& x)
+      // { }
+      Paving () { }
+      
     public:
       inline Index size() const
       {
