@@ -11,7 +11,9 @@
   # To use a specific compiler:
   #set(CMAKE_C_COMPILER "gcc-7")
   #set(CMAKE_CXX_COMPILER "/usr/bin/g++-7")
-
+  #set(CMAKE_C_COMPILER "clang-18")
+  #set(CMAKE_CXX_COMPILER "clang++-18")
+ 
   project(codac VERSION ${VERSION} LANGUAGES CXX)
 
   if(NOT VERSION_ID)
@@ -81,8 +83,26 @@
   if(MSVC)
     add_compile_options(/W4)
   else()
-    add_compile_options(-Wall -Wextra -Wpedantic)
+    add_compile_options(-Wall -Wextra -Wpedantic )
   endif()
+    
+  if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_compile_options(-Wreturn-type  -Wno-unused-parameter)
+    add_compile_options( -fno-omit-frame-pointer -g -O0  )
+    add_compile_options( -fsanitize=address -fsanitize=undefined)
+    add_link_options(-fsanitize=address,undefined)
+  endif()
+  
+  
+  include(CheckCXXCompilerFlag)
+  if(MSVC)
+      check_cxx_compiler_flag("/arch:AVX2" COMPILER_SUPPORTS_FMA)
+      add_compile_options(/arch:AVX2)
+  elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
+      check_cxx_compiler_flag("-mfma" COMPILER_SUPPORTS_FMA)
+      add_compile_options(-mfma )
+  endif()
+
 
   # Temporary attempts to fix errors similar to: 
   # _ number of sections exceeded object file format limit.

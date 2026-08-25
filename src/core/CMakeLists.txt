@@ -293,12 +293,14 @@
 # Create the target for libcodac-core
 ################################################################################
 
-  #if(NOT CMAKE_CXX_STANDARD)
-    set(CMAKE_CXX_STANDARD 20)
-    set(CMAKE_CXX_STANDARD_REQUIRED ON)
-  #endif()
-
   add_library(${PROJECT_NAME}-core ${CODAC_CORE_SRC})
+
+  set_target_properties(${PROJECT_NAME}-core PROPERTIES
+    CXX_STANDARD 20
+    CXX_STANDARD_REQUIRED ON
+    CXX_EXTENSIONS OFF
+  )
+
   target_include_directories(${PROJECT_NAME}-core PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/actions
     ${CMAKE_CURRENT_SOURCE_DIR}/contractors
@@ -337,21 +339,63 @@
   set(CODAC_PKG_CONFIG_CFLAGS "${CODAC_PKG_CONFIG_CFLAGS} -I\${includedir}/${PROJECT_NAME}-core" PARENT_SCOPE)
   set(CODAC_PKG_CONFIG_LIBS "${CODAC_PKG_CONFIG_LIBS} -l${PROJECT_NAME}-core" PARENT_SCOPE)
 
-  
+
 ################################################################################
-# Installation of libcodac-core files
+# Installation / build include tree
 ################################################################################
-  
-# Getting header files from sources
+
+  # Directory containing the generated/build-time public headers.
+  set(CODAC_BUILD_INCLUDE_DIR
+      ${CMAKE_CURRENT_BINARY_DIR}/../../include)
+
+  file(MAKE_DIRECTORY ${CODAC_BUILD_INCLUDE_DIR})
+
+
+  # Generate the build-time include tree using symbolic links.
+  #
+  # IMPORTANT:
+  # Do NOT copy headers here.
+  #
+  # Copying creates two physically different files:
+  #
+  #   src/core/tools/codac2_math.h
+  #   build/include/codac2_math.h
+  #
+  # which can bypass #pragma once and produce redefinition errors.
+  #
+  # Symbolic links preserve a single physical header.
 
   foreach(srcfile ${CODAC_CORE_SRC})
+
     if(srcfile MATCHES "\\.h$" OR srcfile MATCHES "\\.hpp$")
+
       list(APPEND CODAC_CORE_HDR ${srcfile})
-      file(COPY ${srcfile} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../../include)
+
+      get_filename_component(header_name
+                             ${srcfile}
+                             NAME)
+
+      set(build_header
+          ${CODAC_BUILD_INCLUDE_DIR}/${header_name})
+
+      if(EXISTS ${build_header} OR IS_SYMLINK ${build_header})
+        file(REMOVE ${build_header})
+      endif()
+
+      file(
+        CREATE_LINK
+        ${srcfile}
+        ${build_header}
+        SYMBOLIC
+      )
+
     endif()
+
   endforeach()
 
+
 # Generating the file codac-core.h
+# ================================
 
   set(CODAC_CORE_MAIN_HEADER ${CMAKE_CURRENT_BINARY_DIR}/codac-core.h)
   set(CODAC_MAIN_SUBHEADERS ${CODAC_MAIN_SUBHEADERS} "codac-core.h" PARENT_SCOPE)
@@ -363,10 +407,29 @@
       file(APPEND ${CODAC_CORE_MAIN_HEADER} "#include <${header_name}>\n")
     endif()
   endforeach()
-  file(COPY ${CODAC_CORE_MAIN_HEADER} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../../include)
+
+
+  # The generated umbrella header is also exposed in the build include tree.
+  set(build_core_main_header
+      ${CODAC_BUILD_INCLUDE_DIR}/codac-core.h)
+
+  if(
+    EXISTS ${build_core_main_header}
+    OR IS_SYMLINK ${build_core_main_header}
+  )
+    file(REMOVE ${build_core_main_header})
+  endif()
+
+  file(
+    CREATE_LINK
+    ${CODAC_CORE_MAIN_HEADER}
+    ${build_core_main_header}
+    SYMBOLIC
+  )
 
 
 # Install files in system directories
+# ====================================
 
   install(TARGETS ${PROJECT_NAME}-core DESTINATION ${CMAKE_INSTALL_LIBDIR})
   install(FILES ${CODAC_CORE_HDR} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}-core)

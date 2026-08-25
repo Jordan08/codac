@@ -160,6 +160,24 @@
     PRIVATE ${PROJECT_NAME}-core ${PROJECT_NAME}-sympy ${LIBS} Ibex::ibex
   )
 
+  # --------------------------------------------------------------
+  # Sanitizer runtime as a shared library (Debug builds only)
+  # --------------------------------------------------------------
+  #
+  # _core.so is loaded via dlopen() by an unsanitized python
+  # interpreter. By default Clang/GCC embed the ASan/UBSan runtime
+  # statically into shared libraries, which leaves symbols like
+  # __ubsan_vptr_type_cache or __asan_* unresolved at dlopen() time
+  # (python has no sanitizer runtime of its own to provide them).
+  # -shared-libsan makes _core.so depend on the sanitizer runtime as
+  # a proper shared library instead; that runtime is then LD_PRELOAD-ed
+  # for the python tests (see tests/CMakeLists.txt).
+  if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    target_compile_options(_core PRIVATE -shared-libsan)
+    target_link_options(_core PRIVATE -shared-libsan)
+  endif()
+
+
   # Copy the generated library in the package folder
   add_custom_command(TARGET _core POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:_core>" "${PYTHON_PACKAGE_DIR}/${PYTHON_PACKAGE_NAME}"

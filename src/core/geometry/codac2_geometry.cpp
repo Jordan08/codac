@@ -62,15 +62,14 @@ namespace codac2
 
   vector<IntervalVector> convex_hull(vector<IntervalVector> pts)
   {
-    // Removing duplicates
-    sort(pts.begin(), pts.end(), 
-      [](const IntervalVector& a, const IntervalVector& b) {
-        return a[0].mid() < b[0].mid() || (a[0].mid() == b[0].mid() && a[1].lb() < b[1].lb());
-      });
-    pts.erase(unique(pts.begin(), pts.end()), pts.end());
+	// Removing duplicates
+	  sort(pts.begin(), pts.end(),
+			  [](const IntervalVector& a, const IntervalVector& b) {
+		  return a[0].mid() < b[0].mid() || (a[0].mid() == b[0].mid() && a[1].lb() < b[1].lb());
+	  });
+	  pts.erase(unique(pts.begin(), pts.end()), pts.end());
 
-    if(pts.size() < 3)
-      return pts;
+	  if(pts.size() < 3) return pts;
 
     // Implementation of a Graham scan method.
     // Based on some sources from OpenGenus Foundation.

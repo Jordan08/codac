@@ -37,38 +37,48 @@ namespace codac2
         : _x(x.eval()), _eps(eps)
       { }
 
-      friend bool operator==(const T& x1, const Approx<T>& x2)
-      {
-        if constexpr(std::is_same_v<T,double>)
-          return std::fabs(x1-x2._x) < x2._eps;
+      friend bool operator==(const T& x1, const Approx<T>& x2)  {
+    	  if constexpr(std::is_same_v<T,double>) {
+    		  if (std::isnan(x1) && std::isnan(x2._x)) {
+    			  return true;
+    		  } else if (x2._x>=std::numeric_limits<double>::max())  {
+    			  return (x1>=std::numeric_limits<double>::max());
+    		  } else if (x2._x<=-std::numeric_limits<double>::max())  {
+    			  return (x1<=-std::numeric_limits<double>::max());
+    		  }  else if ((x2._x < 1.0) && (x2._x > -1.0)) {
+    			  return std::fabs(x1-x2._x) < x2._eps; //absolute error
+    		  } else {
+    			  return std::fabs(x1-x2._x) < x2._eps*std::max(std::fabs(x1),std::fabs(x2._x)); //relative error
+    		  }
+    	  }
+    	  else if(x1.size() != x2._x.size())
+    		  return false;
 
-        else if(x1.size() != x2._x.size())
-          return false;
+    	  else if(x1 == x2._x)
+    		  return true;
 
-        else if(x1 == x2._x)
-          return true;
+    	  else if constexpr(std::is_same_v<T,Interval>)
+        				{
+    		  if((x1.is_empty() && !x2._x.is_empty()) || (!x1.is_empty() && x2._x.is_empty()))
+    			  return false;
+    		  return (x1.lb() == x2._x.lb() || x1.lb() == Approx<double>(x2._x.lb(),x2._eps))
+    				  && (x1.ub() == x2._x.ub() || x1.ub() == Approx<double>(x2._x.ub(),x2._eps));
+        				}
 
-        else if constexpr(std::is_same_v<T,Interval>)
-        {
-          if((x1.is_empty() && !x2._x.is_empty()) || (!x1.is_empty() && x2._x.is_empty()))
-            return false;
-          return (x1.lb() == x2._x.lb() || x1.lb() == Approx<double>(x2._x.lb(),x2._eps))
-              && (x1.ub() == x2._x.ub() || x1.ub() == Approx<double>(x2._x.ub(),x2._eps));
-        }
-
-        else if constexpr(std::is_same_v<T,Vector>
-          || std::is_same_v<T,IntervalVector>
-          || std::is_same_v<T,Row>
-          || std::is_same_v<T,IntervalRow>
-          || std::is_same_v<T,Matrix>
-          || std::is_same_v<T,IntervalMatrix>)
-        {
-          for(Index i = 0 ; i < x1.rows() ; i++)
-            for(Index j = 0 ; j < x1.cols() ; j++)
-              if(!(x1(i,j) == Approx<typename T::Scalar>(x2._x(i,j), x2._eps)))
-                return false;
-          return true;
-        }
+    	  else if constexpr(std::is_same_v<T,Vector>
+    	  || std::is_same_v<T,IntervalVector>
+    	  || std::is_same_v<T,Row>
+    	  || std::is_same_v<T,IntervalRow>
+    	  || std::is_same_v<T,Matrix>
+    	  || std::is_same_v<T,IntervalMatrix>)
+        				{
+    		  for(Index i = 0 ; i < x1.rows() ; i++)
+    			  for(Index j = 0 ; j < x1.cols() ; j++)
+    				  if(!(x1(i,j) == Approx<typename T::Scalar>(x2._x(i,j), x2._eps)))
+    					  return false;
+    		  return true;
+        		
+      }
 
         else
         {

@@ -27,6 +27,8 @@ namespace codac2
       TrajBase()
       { }
 
+      virtual ~TrajBase() = default;   // <-- ajout : corrige le warning sur toutes les classes filles
+
       virtual Index size() const = 0;
       virtual std::pair<Index,Index> shape() const = 0;
       virtual bool is_empty() const = 0;
