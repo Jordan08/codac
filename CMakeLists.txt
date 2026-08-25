@@ -13,7 +13,7 @@
   #set(CMAKE_CXX_COMPILER "/usr/bin/g++-7")
   #set(CMAKE_C_COMPILER "clang-18")
   #set(CMAKE_CXX_COMPILER "clang++-18")
- 
+
   project(codac VERSION ${VERSION} LANGUAGES CXX)
 
   if(NOT VERSION_ID)

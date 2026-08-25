@@ -22,7 +22,21 @@ endif()
 # Test sources
 # ==================================================================
 
-list(APPEND SRC_TESTS # listing files without extension
+list(APPEND SRC_TESTS
+
+  # ----------------------------------------------------------------
+  # Core / Affine
+  # ----------------------------------------------------------------
+
+  core/domains/affine/codac2_tests_AffineForm_base
+  core/domains/affine/codac2_tests_AffineVector
+  core/domains/affine/codac2_tests_AffineMatrix_base
+  core/domains/affine/codac2_tests_AffineMatrix_product
+  core/domains/affine/codac2_tests_AffineForm_Eigen
+  core/domains/affine/codac2_tests_AffineForm_coverage
+
+  ../doc/manual/manual/affine/src
+
 
   # ----------------------------------------------------------------
   # 3rd
@@ -68,20 +82,26 @@ list(APPEND SRC_TESTS # listing files without extension
   # ----------------------------------------------------------------
 
   core/domains/codac2_tests_BoolInterval
+
   core/domains/ellipsoid/codac2_tests_Ellipsoid
+
   core/domains/interval/codac2_tests_Interval
   core/domains/interval/codac2_tests_Interval_operations
   core/domains/interval/codac2_tests_IntervalMatrix
   core/domains/interval/codac2_tests_IntervalVector
+
   ../doc/manual/manual/intervals/src
+
   core/domains/zonotope/codac2_tests_Parallelepiped_eval
   core/domains/zonotope/codac2_tests_Parallelepiped
   core/domains/zonotope/codac2_tests_Zonotope
+
   core/domains/tube/codac2_tests_TDomain
   core/domains/tube/codac2_tests_Slice
   core/domains/tube/codac2_tests_Slice_polygon
   core/domains/tube/codac2_tests_SlicedTube
   core/domains/tube/codac2_tests_SlicedTube_integral
+
   ../doc/manual/manual/tubes/src
 
 
@@ -90,6 +110,7 @@ list(APPEND SRC_TESTS # listing files without extension
   # ----------------------------------------------------------------
 
   core/functions/analytic/codac2_tests_AnalyticFunction
+
   ../doc/manual/manual/functions/analytic/src
 
 
@@ -101,6 +122,7 @@ list(APPEND SRC_TESTS # listing files without extension
   core/geometry/codac2_tests_geometry
   core/geometry/codac2_tests_Polygon
   core/geometry/codac2_tests_Segment
+
   ../doc/manual/manual/geometry/src
 
 
@@ -119,6 +141,7 @@ list(APPEND SRC_TESTS # listing files without extension
   core/matrices/codac2_tests_inversion
   core/matrices/codac2_tests_IntFullPivLU
   core/matrices/codac2_tests_GaussJordan
+
   ../doc/manual/manual/linear/src
 
 
@@ -158,6 +181,7 @@ list(APPEND SRC_TESTS # listing files without extension
   core/tools/codac2_tests_transformations
   core/tools/codac2_tests_trunc
   core/tools/ibex/codac2_tests_ibex
+
   ../doc/manual/manual/tools/src
 
 
