@@ -41,8 +41,7 @@ namespace codac2
       // Paving(const IntervalVector& x)
       //   : _tree(std::make_shared<PavingNode<P>>(*static_cast<P*>(this), x))
       // { }
-      // Paving(const IntervalVector& x)
-      // { }
+
       Paving () { }
       
     public:
