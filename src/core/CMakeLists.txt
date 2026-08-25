@@ -210,6 +210,7 @@
     ${CMAKE_CURRENT_SOURCE_DIR}/matrices/eigen/MatrixBase_addons/codac2_MatrixBase_addons_MatrixBase.h
     ${CMAKE_CURRENT_SOURCE_DIR}/matrices/eigen/MatrixBase_addons/codac2_MatrixBase_addons_Vector.h
     ${CMAKE_CURRENT_SOURCE_DIR}/matrices/eigen/MatrixBase_addons/codac2_MatrixBase_addons_VectorBase.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/matrices/eigen/MatrixBase_addons/codac2_MatrixBase_addons_AffineMainVector.h
 
     ${CMAKE_CURRENT_SOURCE_DIR}/matrices/codac2_cart_prod.h
     ${CMAKE_CURRENT_SOURCE_DIR}/matrices/codac2_GaussJordan.cpp

@@ -11,7 +11,7 @@
 
 #include <time.h>
 
-#include "codac.h"
+#include <codac>
 
 using namespace std;
 using namespace codac2;
