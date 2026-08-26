@@ -94,14 +94,54 @@
   endif()
   
   
+
+  # FMA (fused multiply-add) is only ever activated here through an explicit
+  # compiler flag, and only when check_cxx_compiler_flag() confirms it is
+  # actually recognized. This matters because "the FMA flag" is not a
+  # portable concept:
+  #  - x86/x86_64 (GCC/Clang): -mfma enables the FMA3 ISA extension.
+  #  - x86/x64 (MSVC): there is no dedicated FMA flag; /arch:AVX2 implies it.
+  #  - AArch64 (ARMv8-A, e.g. regular Raspberry Pi OS 64-bit): FMA
+  #    (FMADD/FMLA) is part of the base ISA, scalar and NEON alike, so no
+  #    flag exists or is needed; -mfma is simply unknown to the compiler
+  #    there, the check below fails, and the flag is skipped (the compiler
+  #    still emits FMA instructions on its own when it can).
+  #  - ARMv7-A / 32-bit ARMv8-A (e.g. a Raspberry Pi 2 in AArch32, or a
+  #    Raspberry Pi 3/4 running a 32-bit OS: the silicon is ARMv8-A but the
+  #    32-bit userland reports itself as armv7l or armv8l): FMA hardware is
+  #    optional on ARMv7-A but mandatory on ARMv8-A even in its 32-bit
+  #    execution state, and in both cases it is exposed the same way, via
+  #    the NEON-VFPv4 FPU extension, activated by
+  #    -mfpu=neon-vfpv4 -mfloat-abi=hard (plus -ffp-contract=fast, since
+  #    C++ does not permit fusing a*b+c into FMA by default). -mfma itself
+  #    is not a recognized flag on any 32-bit ARM target, so this is
+  #    handled in its own branch below rather than falling through to the
+  #    generic GCC/Clang case.
+  #  - ARMv6 hard-float (e.g. Raspbian Bullseye armv6hf, Raspberry Pi
+  #    Zero/1): the FPU predates fused multiply-add support (FMA was only
+  #    introduced with VFPv4/ARMv7-A), so there is no equivalent flag to
+  #    fall back to either; the check fails and we correctly get plain
+  #    (unfused) multiply+add on that target.
+  # In all unsupported cases the check below simply leaves the flag out,
+  # which is the correct behavior rather than a build failure.
   include(CheckCXXCompilerFlag)
   if(MSVC)
       check_cxx_compiler_flag("/arch:AVX2" COMPILER_SUPPORTS_FMA)
-      add_compile_options(/arch:AVX2)
+      if(COMPILER_SUPPORTS_FMA)
+        add_compile_options(/arch:AVX2)
+      endif()
+  elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang" AND CMAKE_SYSTEM_PROCESSOR MATCHES "^armv[7-9]")
+      check_cxx_compiler_flag("-mfpu=neon-vfpv4 -mfloat-abi=hard" COMPILER_SUPPORTS_FMA)
+      if(COMPILER_SUPPORTS_FMA)
+        add_compile_options(-mfpu=neon-vfpv4 -mfloat-abi=hard -ffp-contract=fast)
+      endif()
   elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
       check_cxx_compiler_flag("-mfma" COMPILER_SUPPORTS_FMA)
-      add_compile_options(-mfma )
+      if(COMPILER_SUPPORTS_FMA)
+        add_compile_options(-mfma )
+      endif()
   endif()
+
 
 
   # Temporary attempts to fix errors similar to: 
