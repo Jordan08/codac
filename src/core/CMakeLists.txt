@@ -326,7 +326,7 @@
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/ellipsoid
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/interval
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/interval/eigen
-    ${CMAKE_CURRENT_SOURCE_DIR}/domains/AffineForm
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/affine
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/paving
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/zonotope
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/tube
