@@ -10,6 +10,7 @@
 
 #include <pybind11/pybind11.h>
 #include <codac2_Interval.h>
+#include <codac2_Affine.h>
 #include <codac2_AnalyticFunction.h>
 #include <codac2_ExprType.h>
 #include <codac2_Row.h>
@@ -62,6 +63,12 @@ void export_CtcWrapper(py::module& m, py::class_<CtcBase<IntervalVector>,pyCtcIn
 void export_linear_ctc(py::module& m);
 
 // domains
+py::class_<Affine> export_Affine(py::module& m);
+void export_Affine_operations(py::module& m, py::class_<Affine>& py_Affine);
+py::class_<AffineVariables> export_AffineVariables(py::module& m);
+py::class_<AffineRow> export_AffineRow(py::module& m);
+py::class_<AffineVector> export_AffineVector(py::module& m);
+py::class_<AffineMatrix> export_AffineMatrix(py::module& m);
 void export_BoolInterval(py::module& m);
 void export_Ellipsoid(py::module& m);
 void export_Ellipsoid_utils(py::module& m);
@@ -248,6 +255,12 @@ PYBIND11_MODULE(_core, m)
   auto py_IB = export_EigenBlock<IntervalMatrix>(m, "IntervalMatrixBlock");
   export_EigenBlock<IntervalRow>(m, "IntervalRowBlock");
   export_EigenBlock<IntervalVector>(m, "IntervalVectorBlock");
+  auto py_Affine = export_Affine(m);
+  export_Affine_operations(m, py_Affine);
+  export_AffineVariables(m);
+  export_AffineRow(m);
+  export_AffineVector(m);
+  export_AffineMatrix(m);
   export_Slice<Interval>(m, "Slice_Interval");
   export_Slice<IntervalVector>(m, "Slice_IntervalVector");
   export_Slice<IntervalMatrix>(m, "Slice_IntervalMatrix");
