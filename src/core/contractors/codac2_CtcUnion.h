@@ -48,6 +48,7 @@ namespace codac2
       {
         for(const auto& ci : _ctcs)
         {
+          (void)ci;
           assert_release(ci->size() == this->size());
         }
       }

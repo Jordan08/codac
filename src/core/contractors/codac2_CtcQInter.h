@@ -21,6 +21,7 @@ namespace codac2
   {
     public:
 
+      // q is the maximum number of constraints that may be violated.
       CtcQInter(unsigned int q, const Collection<CtcBase<IntervalVector>>& c)
         : Ctc<CtcQInter,IntervalVector>([&c]() {
             assert_release(!c.empty());
@@ -35,6 +36,7 @@ namespace codac2
         assert_release(q <= c.size());
       }
 
+      // q is the maximum number of constraints that may be violated.
       explicit CtcQInter(unsigned int q, Index n, const Collection<CtcBase<IntervalVector>>& ctcs = {})
         : Ctc<CtcQInter,IntervalVector>(n), _q(q), _ctcs(ctcs)
       {
