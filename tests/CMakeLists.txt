@@ -29,11 +29,10 @@ list(APPEND SRC_TESTS
   # ----------------------------------------------------------------
 
   core/domains/affine/codac2_tests_AffineForm_base
+  core/domains/affine/codac2_tests_AffineForm_arithmetic
+  core/domains/affine/codac2_tests_AffineVariables
   core/domains/affine/codac2_tests_AffineVector
-  core/domains/affine/codac2_tests_AffineMatrix_base
-  core/domains/affine/codac2_tests_AffineMatrix_product
-  core/domains/affine/codac2_tests_AffineForm_Eigen
-  core/domains/affine/codac2_tests_AffineForm_coverage
+  core/domains/affine/codac2_tests_AffineMatrix
 
   ../doc/manual/manual/affine/src
 
