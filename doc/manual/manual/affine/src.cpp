@@ -229,6 +229,75 @@ TEST_CASE("Affine class - manual")
     // [affine-class-9-end]
     CHECK(z.itv().is_subset(Interval(0, Interval::half_pi().ub())));
   }
+
+  {
+    // [affine-class-10-beg]
+    // mig(), mag(), smag() and smig() mirror the equivalent Interval
+    // methods, applied to this affine form's own interval enclosure;
+    // volume() is an alias for diam() in this scalar, 1-dimensional case.
+    AffineVariables v(IntervalVector({{-3,5},{2,4}}));
+    Affine x = v[0]; // [-3,5]: straddles zero
+    Affine y = v[1]; // [2,4]: strictly positive
+
+    x.mig();    // mignitude: 0 (0 belongs to [-3,5])
+    x.mag();    // magnitude: 5 (max(|-3|,|5|))
+    x.smag();   // signed magnitude: 5 (the bound with the largest |.|)
+    x.smig();   // signed mignitude: 0 (the enclosure straddles zero)
+    x.volume(); // == x.diam(): 8
+
+    y.mig();  // mignitude: 2 (y is strictly positive: its lower bound)
+    y.mag();  // magnitude: 4
+    y.smag(); // signed magnitude: 4
+    y.smig(); // signed mignitude: 2 (y is strictly positive: its lower bound)
+    // [affine-class-10-end]
+    CHECK(x.mig() == 0.0);
+    CHECK(x.mag() == 5.0);
+    CHECK(x.smag() == 5.0);
+    CHECK(x.smig() == 0.0);
+    CHECK(x.volume() == x.diam());
+    CHECK(x.volume() == 8.0);
+    CHECK(y.mig() == 2.0);
+    CHECK(y.mag() == 4.0);
+    CHECK(y.smag() == 4.0);
+    CHECK(y.smig() == 2.0);
+  }
+
+  {
+    // [affine-class-11-beg]
+    // inflate(r) widens the enclosure by [-r,+r] on each side, in place
+    // (outward-rounded, so the result may be a hair wider than [0.5,2.5]).
+    AffineVariables v(1);
+    v[0] = Interval(1,2);
+    Affine x = v[0]; // [1,2]
+    x.inflate(0.5);  // [0.5,2.5]
+    // [affine-class-11-end]
+    CHECK(x.itv().is_superset(Interval(0.5,2.5)));
+  }
+
+  {
+    // [affine-class-12-beg]
+    // These predicates mirror the equivalent Interval methods, applied to
+    // this affine form's own interval enclosure; each accepts either an
+    // Interval or another Affine (contains() takes a plain double).
+    AffineVariables v(IntervalVector({{1,2},{0,3},{5,6}}));
+    Affine x = v[0]; // [1,2]
+    Affine y = v[1]; // [0,3]
+    Affine z = v[2]; // [5,6]
+
+    x.is_subset(y);   // true:  [1,2] is a subset of [0,3]
+    y.is_superset(x); // true:  [0,3] is a superset of [1,2]
+    x.is_disjoint(z); // true:  [1,2] and [5,6] share no point at all
+    x.intersects(y);  // true:  [1,2] and [0,3] share at least one point
+    x.overlaps(y);    // true:  their intersection has non-zero volume
+    x.contains(1.5);  // true:  1.5 belongs to [1,2]
+    // [affine-class-12-end]
+    CHECK(x.is_subset(y));
+    CHECK(y.is_superset(x));
+    CHECK(x.is_disjoint(z));
+    CHECK(x.intersects(y));
+    CHECK(x.overlaps(y));
+    CHECK(x.contains(1.5));
+  }
 }
 
 TEST_CASE("AffineVariables class - manual")

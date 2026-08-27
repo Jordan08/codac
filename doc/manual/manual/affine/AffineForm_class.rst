@@ -149,6 +149,60 @@ Affine form properties
    * - ``is_empty()``, ``is_active()``, ``is_unbounded()``
      - Status predicates, mirroring the equivalent ``Interval`` predicates
 
+``mig()``, ``mag()``, ``smag()`` and ``smig()`` mirror the equivalent
+``Interval`` methods, applied to the affine form's own interval enclosure;
+``volume()`` is an alias for ``diam()`` in this scalar, 1-dimensional case:
+
+.. tabs::
+
+  .. group-tab:: C++
+
+    .. literalinclude:: src.cpp
+      :language: c++
+      :start-after: [affine-class-10-beg]
+      :end-before: [affine-class-10-end]
+      :dedent: 4
+
+.. list-table:: Magnitude of an affine form :math:`\hat{x}`
+   :widths: 30 70
+   :header-rows: 1
+
+   * - Method
+     - Description
+   * - ``mig()``
+     - Mignitude: :math:`\mathrm{lb}(\hat{x})` if :math:`\hat{x}>0`,
+       :math:`-\mathrm{ub}(\hat{x})` if :math:`\hat{x}<0`, :math:`0` otherwise
+   * - ``mag()``
+     - Magnitude: :math:`\max(|\mathrm{lb}(\hat{x})|,|\mathrm{ub}(\hat{x})|)`
+   * - ``smag()``
+     - Signed magnitude: whichever bound has the larger absolute value,
+       kept with its sign
+   * - ``smig()``
+     - Signed mignitude: :math:`\mathrm{lb}(\hat{x})` if
+       :math:`\mathrm{lb}(\hat{x})>0`, :math:`\mathrm{ub}(\hat{x})` if
+       :math:`\mathrm{ub}(\hat{x})<0`, :math:`0` otherwise
+   * - ``volume()``
+     - Alias for ``diam()``
+
+
+Enlarging an affine form
+----------------------------
+
+``inflate(r)`` adds :math:`[-r,+r]` to the affine form's remainder error
+term, in place, widening its interval enclosure symmetrically by
+:math:`r` on each side (the result is outward-rounded, so it may be a
+tiny bit wider than the mathematical :math:`r`-enlargement):
+
+.. tabs::
+
+  .. group-tab:: C++
+
+    .. literalinclude:: src.cpp
+      :language: c++
+      :start-after: [affine-class-11-beg]
+      :end-before: [affine-class-11-end]
+      :dedent: 4
+
 
 Affine arithmetic
 --------------------
@@ -429,6 +483,46 @@ interval enclosure can compare equal.
       :start-after: [affine-class-7-beg]
       :end-before: [affine-class-7-end]
       :dedent: 4
+
+
+Set-relation predicates
+----------------------------
+
+These predicates all mirror the equivalent ``Interval`` predicate, applied
+to the affine form's own interval enclosure — they return a plain C++
+``bool``, unlike ``operator<``/``operator>`` above. Each accepts either an
+``Interval`` or another ``Affine`` (``contains()`` takes a plain
+``double``):
+
+.. tabs::
+
+  .. group-tab:: C++
+
+    .. literalinclude:: src.cpp
+      :language: c++
+      :start-after: [affine-class-12-beg]
+      :end-before: [affine-class-12-end]
+      :dedent: 4
+
+.. list-table:: Set-relation predicates on an affine form :math:`\hat{x}`
+   :widths: 30 70
+   :header-rows: 1
+
+   * - Method
+     - Description
+   * - ``is_subset(x)``
+     - ``true`` iff this form's enclosure is a subset of ``x``
+   * - ``is_superset(x)``
+     - ``true`` iff this form's enclosure is a superset of ``x``
+   * - ``is_disjoint(x)``
+     - ``true`` iff this form's enclosure and ``x`` share no point at all
+   * - ``intersects(x)``
+     - ``true`` iff this form's enclosure and ``x`` share at least one point
+   * - ``overlaps(x)``
+     - ``true`` iff their intersection has non-zero volume (a single
+       touching point does not count)
+   * - ``contains(d)``
+     - ``true`` iff the real value ``d`` belongs to this form's enclosure
 
 
 Dependency information by operation
