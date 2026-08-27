@@ -124,21 +124,34 @@
   #    (unfused) multiply+add on that target.
   # In all unsupported cases the check below simply leaves the flag out,
   # which is the correct behavior rather than a build failure.
+  # CODAC_ARCH_CXX_FLAGS collects whichever of the flags below actually got
+  # applied, so that it can be re-exported as part of CODAC_CXX_FLAGS in the
+  # generated codac-config.cmake (see src/CMakeLists.txt). Without this,
+  # downstream consumers (examples, user projects built via find_package(CODAC))
+  # compile Eigen's header-only templates with different alignment/instruction-set
+  # assumptions than the ones baked into the prebuilt static libraries they link
+  # against -- an ODR/ABI mismatch that Eigen documents as unsafe, and that in
+  # practice corrupts the heap (mismatched aligned_malloc/aligned_free paths).
+  set(CODAC_ARCH_CXX_FLAGS "")
+
   include(CheckCXXCompilerFlag)
   if(MSVC)
       check_cxx_compiler_flag("/arch:AVX2" COMPILER_SUPPORTS_FMA)
       if(COMPILER_SUPPORTS_FMA)
         add_compile_options(/arch:AVX2)
+        set(CODAC_ARCH_CXX_FLAGS "/arch:AVX2")
       endif()
   elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang" AND CMAKE_SYSTEM_PROCESSOR MATCHES "^armv[7-9]")
       check_cxx_compiler_flag("-mfpu=neon-vfpv4 -mfloat-abi=hard" COMPILER_SUPPORTS_FMA)
       if(COMPILER_SUPPORTS_FMA)
         add_compile_options(-mfpu=neon-vfpv4 -mfloat-abi=hard -ffp-contract=fast)
+        set(CODAC_ARCH_CXX_FLAGS "-mfpu=neon-vfpv4 -mfloat-abi=hard -ffp-contract=fast")
       endif()
   elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
       check_cxx_compiler_flag("-mfma" COMPILER_SUPPORTS_FMA)
       if(COMPILER_SUPPORTS_FMA)
         add_compile_options(-mfma )
+        set(CODAC_ARCH_CXX_FLAGS "-mfma")
       endif()
   endif()
 
