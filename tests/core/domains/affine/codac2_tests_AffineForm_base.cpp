@@ -1085,3 +1085,55 @@ TEST_CASE("AffineForm operator<< streams the interval enclosure and coefficients
 }
 
 
+TEST_CASE("AffineMain size(), init() and init_from_list() reinitialize in place")
+{
+  // size() is always 1, matching Interval::size()'s template-uniformity role.
+  CHECK(AffineT().size() == 1);
+  CHECK(AffineT::empty().size() == 1);
+  CHECK(AffineT(Interval(1.0, 2.0)).size() == 1);
+
+  AffineTVarVector ax(1);
+  ax[0] = Interval(1.0, 2.0);
+  AffineT x = ax[0];
+  CHECK(x.size() == 1);
+
+  // init() resets to [-oo,oo].
+  x.init();
+  CHECK(x.itv() == Interval());
+  CHECK(x.is_unbounded());
+
+  // init(const Interval&) assigns like operator=(const Interval&): for a
+  // plain AffineMain (with no dedicated noise symbol of its own) the whole
+  // uncertainty is carried by the remainder error term, and every noise
+  // coefficient is left at zero.
+  x.init(Interval(3.0, 7.0));
+  CHECK(x.itv() == Interval(3.0, 7.0));
+  CHECK(x.mid() == 5.0);
+  CHECK(x.err() == 2.0);
+  for (Index i = 0; i < x.noise_count(); ++i) {
+    CAPTURE(i);
+    CHECK(x.noise(i) == 0.0);
+  }
+
+  // A degenerate interval carries no uncertainty at all.
+  AffineT y;
+  y.init(Interval(4.0));
+  CHECK(y.itv() == Interval(4.0));
+  CHECK(y.err() == 0.0);
+  CHECK(y.is_degenerated());
+
+  // init_from_list mirrors Interval::init_from_list: one value gives a
+  // degenerate point, two values give the bounds of the resulting hull.
+  AffineT single;
+  single.init_from_list({4.0});
+  CHECK(single.itv() == Interval(4.0));
+  CHECK(single.is_degenerated());
+
+  AffineT pair;
+  pair.init_from_list({1.0, 3.0});
+  CHECK(pair.itv() == Interval(1.0, 3.0));
+  CHECK(pair.mid() == 2.0);
+  CHECK(pair.err() == 1.0);
+}
+
+

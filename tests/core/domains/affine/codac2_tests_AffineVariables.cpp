@@ -370,3 +370,49 @@ TEST_CASE(
 }
 
 
+TEST_CASE("AffineVarMain init() and init(Interval) place the radius on this variable's own noise symbol",
+          "[AffineVarMain][init][regression]")
+{
+    AffineTVarVector variables(3);
+    // Give every component a distinct, non-trivial value first, so that
+    // init() below is genuinely observed to reset the state rather than
+    // leaving stale coefficients around.
+    variables[0] = Interval(10.0, 20.0);
+    variables[1] = Interval(-5.0, 5.0);
+    variables[2] = Interval(100.0, 200.0);
+
+    variables[1].init(Interval(3.0, 7.0));
+
+    REQUIRE(variables[1].noise_count() == 3);
+    CHECK(variables[1].noise_index() == 1);
+    CHECK(variables[1].itv() == Interval(3.0, 7.0));
+    CHECK(variables[1].mid() == 5.0);
+
+    // Unlike a plain AffineMain (where the whole radius goes to the
+    // remainder error term), an AffineVarMain carries it on its own
+    // dedicated noise symbol: every other component's contribution to
+    // variables[1], and its remainder error term, stay at zero.
+    CHECK(variables[1].noise(1) == 2.0);
+    CHECK(variables[1].noise(0) == 0.0);
+    CHECK(variables[1].noise(2) == 0.0);
+    CHECK(variables[1].err() == 0.0);
+
+    // The other components are untouched.
+    CHECK(variables[0].itv() == Interval(10.0, 20.0));
+    CHECK(variables[2].itv() == Interval(100.0, 200.0));
+
+    // init() resets to an unbounded placeholder, still tied to index 1.
+    variables[1].init();
+    CHECK(variables[1].is_unbounded());
+    CHECK(variables[1].noise_index() == 1);
+
+    // A degenerate interval carries no uncertainty at all, on the noise
+    // symbol or anywhere else.
+    variables[2].init(Interval(50.0));
+    CHECK(variables[2].itv() == Interval(50.0));
+    CHECK(variables[2].is_degenerated());
+    CHECK(variables[2].noise(2) == 0.0);
+    CHECK(variables[2].err() == 0.0);
+}
+
+
