@@ -209,6 +209,31 @@ public:
 	 */
 	AffineVarMain& operator=(double d);
 
+	/**
+	 * \brief Sets this affine variable to [-oo,oo].
+	 *
+	 * \note This function is used for template purposes.
+	 * \note Unlike AffineMain::init(), the uncertainty this introduces is
+	 *       carried by this variable's own dedicated noise symbol (index
+	 *       \c _var), not by the remainder error term: this is exactly
+	 *       what operator=(const Interval&) already does.
+	 *
+	 * \return a reference to this
+	 */
+	AffineVarMain& init();
+
+	/**
+	 * \brief Sets this affine variable from an interval.
+	 *
+	 * \note This function is used for template purposes.
+	 * \note The radius of \p x is stored on this variable's own dedicated
+	 *       noise symbol (index \c _var), not on the remainder error term.
+	 *
+	 * \param x the value for re-initialization
+	 * \return a reference to this
+	 */
+	AffineVarMain& init(const Interval& x);
+
 
 	/**
 	 * \name Disabled mutating operators
@@ -312,6 +337,18 @@ AffineVarMain<T>& AffineVarMain<T>::operator=(const AffineVarMain<T>& x) {
 template<class T>
 inline AffineVarMain<T>& AffineVarMain<T>::operator=(double d) {
 	*this = Interval(d);
+	return *this;
+}
+
+template<class T>
+inline AffineVarMain<T>& AffineVarMain<T>::init() {
+	*this = Interval(-oo,oo);
+	return *this;
+}
+
+template<class T>
+inline AffineVarMain<T>& AffineVarMain<T>::init(const Interval& x) {
+	*this = x;
 	return *this;
 }
 

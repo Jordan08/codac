@@ -1854,3 +1854,15 @@ TEST_CASE("Matrix product preserves dependency: A*x - A*x collapses to zero")
 }
 
 
+TEST_CASE("AffineMainMatrix stream output for a non-empty matrix")
+{
+    const AffineTMatrix matrix = make_point_matrix_3x4();
+    std::ostringstream stream;
+    stream << matrix;
+
+    CAPTURE(stream.str());
+    CHECK_FALSE(stream.str().empty());
+    CHECK(stream.str().find("empty") == std::string::npos);
+}
+
+

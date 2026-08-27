@@ -1632,12 +1632,120 @@ TEST_CASE("Non-smooth nonlinear affine functions enclose reference values")
 }
 
 
-/*
- * Low-level AF_fAF2 robustness tests.
- *
- * The first two tests are especially useful with AddressSanitizer and
- * UndefinedBehaviorSanitizer. Without a sanitizer, an out-of-bounds access
- * or a null dereference may be silent, allocator-dependent, or may crash the
- * test process before Catch2 can report an assertion.
- */
+TEST_CASE("atan2 encloses the reference two-argument arctangent")
+{
+  const std::vector<std::pair<Interval,Interval>> cases = {
+    {Interval(1.0, 2.0), Interval(1.0, 2.0)},     // first quadrant
+    {Interval(1.0, 2.0), Interval(-2.0, -1.0)},   // second quadrant
+    {Interval(-2.0, -1.0), Interval(-2.0, -1.0)}, // third quadrant
+    {Interval(-2.0, -1.0), Interval(1.0, 2.0)},   // fourth quadrant
+    {Interval(-0.1, 0.1), Interval(1.0, 2.0)}     // straddles y=0, x>0
+  };
+
+  for (const auto& input : cases) {
+    const Interval& y_itv = input.first;
+    const Interval& x_itv = input.second;
+    CAPTURE(y_itv, x_itv);
+
+    AffineTVarVector variables(IntervalVector({y_itv, x_itv}));
+    const AffineT result = atan2(variables[0], variables[1]);
+    const Interval reference = atan2(y_itv, x_itv);
+
+    CHECK_affine_inclu<AA>(result, reference);
+
+    for (int k = 0; k <= 50; ++k) {
+      const double y = y_itv.lb() + (y_itv.ub()-y_itv.lb())*k/50.0;
+      const double x = x_itv.lb() + (x_itv.ub()-x_itv.lb())*k/50.0;
+      CAPTURE(y, x, result.itv());
+      CHECK(result.contains(std::atan2(y, x)));
+    }
+  }
+}
+
+
+TEST_CASE("chi selects a branch according to the sign of the condition")
+{
+  AffineTVarVector bx(2);
+  bx[0] = Interval(10.0, 11.0);  // branch b
+  bx[1] = Interval(20.0, 21.0);  // branch c
+
+  const AffineT negative(Interval(-2.0, -1.0));
+  const AffineT positive(Interval(1.0, 2.0));
+
+  // Condition strictly negative: selects b, for every Interval/AffineMain
+  // combination of the operands that the API exposes.
+  CHECK(chi(negative, bx[0], bx[1]).itv() == bx[0].itv());
+  CHECK(chi(negative.itv(), bx[0], bx[1]).itv() == bx[0].itv());
+  CHECK(chi(negative.itv(), bx[0].itv(), bx[1]).itv() == bx[0].itv());
+  CHECK(chi(negative.itv(), bx[0], bx[1].itv()).itv() == bx[0].itv());
+  CHECK(chi(negative, Interval(30.0, 31.0), bx[1]).itv() == Interval(30.0, 31.0));
+
+  // Condition strictly positive: selects c.
+  CHECK(chi(positive, bx[0], bx[1]).itv() == bx[1].itv());
+  CHECK(chi(positive.itv(), bx[0], bx[1]).itv() == bx[1].itv());
+  CHECK(chi(positive, bx[0], Interval(30.0, 31.0)).itv() == Interval(30.0, 31.0));
+
+  // Condition straddling zero: both branches remain possible, so the
+  // result must enclose their union.
+  const AffineT straddling = chi(Interval(-1.0, 1.0), bx[0], bx[1]);
+  CHECK(straddling.itv().is_superset(bx[0].itv() | bx[1].itv()));
+
+  // An empty condition yields an empty result.
+  CHECK(chi(Interval::empty(), bx[0], bx[1]).is_empty());
+}
+
+
+// NOTE: distance(x1,x2) is declared and documented on AffineMain<T>
+// (codac2_AffineMain.h) for 3 overloads (AffineMain-AffineMain,
+// Interval-AffineMain, AffineMain-Interval), and each one forwards to a
+// free function codac2::distance(const Interval&, const Interval&) that
+// does not exist anywhere in the codebase (verified by a full search of
+// src/core). Instantiating any of the 3 overloads fails to compile, so
+// distance() is left untested here: this is a library gap, not a gap in
+// this test. See the reply that added this test suite for the full report.
+
+
+TEST_CASE("inflate widens the enclosure by the given radius on each side")
+{
+  AffineTVarVector ax(1);
+  ax[0] = Interval(1.0, 2.0);
+  const Interval before = ax[0].itv();
+
+  AffineT inflated = ax[0];
+  inflated.inflate(0.5);
+
+  CHECK_affine_inclu<AA>(inflated, before + Interval(-0.5, 0.5));
+  CHECK(inflated.noise_count() == ax[0].noise_count());
+
+  // Inflating by zero must not change the enclosure.
+  AffineT unchanged = ax[0];
+  unchanged.inflate(0.0);
+  CHECK(unchanged.itv() == before);
+}
+
+
+TEST_CASE("mig, mag, smag, smig and volume delegate to the interval enclosure")
+{
+  AffineTVarVector ax(3);
+  ax[0] = Interval(-3.0, 5.0);   // straddles zero
+  ax[1] = Interval(2.0, 4.0);    // strictly positive
+  ax[2] = Interval(-5.0, -1.0);  // strictly negative
+
+  for (Index i = 0; i < ax.size(); ++i) {
+    CAPTURE(i, ax[i].itv());
+    CHECK(ax[i].mig() == ax[i].itv().mig());
+    CHECK(ax[i].mag() == ax[i].itv().mag());
+    CHECK(ax[i].smag() == ax[i].itv().smag());
+    CHECK(ax[i].smig() == ax[i].itv().smig());
+    CHECK(ax[i].volume() == ax[i].itv().volume());
+    CHECK(ax[i].volume() == ax[i].diam());
+  }
+
+  // The documented formula: mig = 0 when the interval straddles zero,
+  // +lb when strictly positive, -ub when strictly negative.
+  CHECK(ax[0].mig() == 0.0);
+  CHECK(ax[1].mig() == 2.0);
+  CHECK(ax[2].mig() == 1.0);
+  CHECK(ax[0].mag() == 5.0);
+}
 

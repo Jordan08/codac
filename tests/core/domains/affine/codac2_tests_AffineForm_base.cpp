@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <sstream>
 #include <type_traits>
 #include <vector>
 #include "codac2_Affine.h"
@@ -236,6 +237,15 @@ TEST_CASE("AffineForm operations")
   }
 }
 
+
+// ============================================================================
+// Comma-initializer with Interval literals on AffineT-scalar containers
+// ============================================================================
+//
+// These are the exact call sites that used to fail with "invalid operands
+// to binary expression" before AffineTMain(const Interval&) was added:
+// Eigen's comma-initializer needs a converting constructor for each
+// inserted value, operator=(const Interval&) alone isn't enough.
 
 TEST_CASE("Eigen AffineT comma-initializer with Interval literals", "[Eigen][comma-initializer][AffineT]")
 {
@@ -935,6 +945,142 @@ TEST_CASE(
       CHECK(std::isfinite(result.err()));
       CHECK(result.err() >= 0.0);
     }
+  }
+}
+
+
+TEST_CASE("AffineMain empty() factory matches an Interval::empty() assignment")
+{
+  const AffineT from_factory = AffineT::empty();
+  AffineT from_assignment = Interval::empty();
+
+  CHECK(from_factory.is_empty());
+  CHECK(from_assignment.is_empty());
+  CHECK(from_factory.itv().is_empty());
+  CHECK(from_factory.noise_count() == from_assignment.noise_count());
+  CHECK(from_factory == Approx<AffineT>(Interval::empty()));
+}
+
+
+TEST_CASE("AffineForm strict comparison operators return the documented BoolInterval")
+{
+  AffineTVarVector ax(2);
+  ax[0] = Interval(0, 1);
+  ax[1] = Interval(2, 3);
+
+  // ub(ax[0]) < lb(ax[1]): certainly true, both ways and for every
+  // Interval/AffineMain combination of the operands.
+  CHECK((ax[0] < ax[1]) == BoolInterval::TRUE);
+  CHECK((ax[1] > ax[0]) == BoolInterval::TRUE);
+  CHECK((ax[0] < Interval(2, 3)) == BoolInterval::TRUE);
+  CHECK((Interval(2, 3) > ax[0]) == BoolInterval::TRUE);
+
+  // The reverse comparisons are certainly false.
+  CHECK((ax[1] < ax[0]) == BoolInterval::FALSE);
+  CHECK((ax[0] > ax[1]) == BoolInterval::FALSE);
+  CHECK((Interval(2, 3) < ax[0]) == BoolInterval::FALSE);
+
+  // Overlapping ranges: the sign is undetermined.
+  AffineTVarVector bx(2);
+  bx[0] = Interval(0, 2);
+  bx[1] = Interval(1, 3);
+  CHECK((bx[0] < bx[1]) == BoolInterval::UNKNOWN);
+  CHECK((bx[0] > bx[1]) == BoolInterval::UNKNOWN);
+
+  // An empty operand makes the comparison empty.
+  AffineTVarVector ex(1);
+  ex[0] = Interval::empty();
+  CHECK((ex[0] < ax[1]) == BoolInterval::EMPTY);
+  CHECK((ex[0] > ax[1]) == BoolInterval::EMPTY);
+  CHECK((ex[0] < Interval(2, 3)) == BoolInterval::EMPTY);
+  CHECK((Interval(2, 3) < ex[0]) == BoolInterval::EMPTY);
+}
+
+
+TEST_CASE("AffineForm set-relation predicates delegate to the interval enclosure")
+{
+  AffineTVarVector ax(4);
+  ax[0] = Interval(1, 2);   // subset candidate
+  ax[1] = Interval(0, 3);   // superset candidate
+  ax[2] = Interval(5, 6);   // disjoint from ax[0]/ax[1]
+  ax[3] = Interval(2, 4);   // overlaps ax[1] without being a subset
+
+  // is_subset / is_superset, against both an Interval and an AffineForm.
+  CHECK(ax[0].is_subset(Interval(0, 3)));
+  CHECK(ax[0].is_subset(ax[1]));
+  CHECK_FALSE(ax[1].is_subset(ax[0]));
+  CHECK(ax[1].is_superset(ax[0]));
+  CHECK(ax[1].is_superset(Interval(1, 2)));
+  CHECK_FALSE(ax[0].is_superset(ax[1]));
+
+  // Strict variants fail on touching boundaries, succeed strictly inside.
+  CHECK(ax[0].is_strict_subset(ax[1]));
+  CHECK_FALSE(ax[1].is_strict_subset(ax[1]));
+  CHECK(ax[1].is_strict_superset(ax[0]));
+  CHECK_FALSE(ax[1].is_strict_superset(ax[1]));
+
+  // NOTE: is_relative_interior_subset() was removed from AffineMain<T>
+  // (it forwarded to an Interval method that does not exist and could
+  // never be instantiated); there is nothing left to test here.
+
+  // Interior variant: ax[0]=[1,2] lies in the interior of [0,3], but its
+  // own lower bound touches the boundary of [1,3].
+  CHECK(ax[0].is_interior_subset(Interval(0, 3)));
+  CHECK_FALSE(ax[0].is_interior_subset(Interval(1, 3)));
+  CHECK(ax[0].is_strict_interior_subset(Interval(0, 3)));
+
+  // contains / interior_contains.
+  CHECK(ax[0].contains(1.0));
+  CHECK(ax[0].contains(2.0));
+  CHECK_FALSE(ax[0].interior_contains(1.0));
+  CHECK(ax[0].interior_contains(1.5));
+
+  // intersects / overlaps / is_disjoint, on overlapping and disjoint pairs.
+  CHECK(ax[0].intersects(ax[1]));
+  CHECK(ax[0].overlaps(ax[1]));
+  CHECK_FALSE(ax[0].is_disjoint(ax[1]));
+
+  CHECK_FALSE(ax[0].intersects(ax[2]));
+  CHECK_FALSE(ax[0].overlaps(ax[2]));
+  CHECK(ax[0].is_disjoint(ax[2]));
+
+  // A boundary-touching pair intersects (non-empty intersection) but does
+  // not overlap (zero-volume intersection), and is not disjoint.
+  AffineTVarVector touching(2);
+  touching[0] = Interval(0, 2);
+  touching[1] = Interval(2, 4);
+  CHECK(touching[0].intersects(touching[1]));
+  CHECK_FALSE(touching[0].overlaps(touching[1]));
+  CHECK_FALSE(touching[0].is_disjoint(touching[1]));
+
+  // Every predicate must agree exactly with the equivalent Interval query
+  // on the enclosure, since AffineMain simply forwards to itv().
+  CHECK(ax[3].is_subset(ax[1]) == ax[3].itv().is_subset(ax[1].itv()));
+  CHECK(ax[3].overlaps(ax[1]) == ax[3].itv().overlaps(ax[1].itv()));
+}
+
+
+TEST_CASE("AffineForm operator<< streams the interval enclosure and coefficients")
+{
+  {
+    AffineTVarVector ax(1);
+    ax[0] = Interval(1.0, 2.0);
+    std::ostringstream stream;
+    stream << ax[0];
+
+    std::ostringstream expected_prefix;
+    expected_prefix << ax[0].itv();
+
+    CAPTURE(stream.str());
+    CHECK(stream.str().substr(0, expected_prefix.str().size()) == expected_prefix.str());
+    CHECK(stream.str().find(" : ") != std::string::npos);
+    CHECK(stream.str().find("eps_0") != std::string::npos);
+  }
+  {
+    const AffineT empty_form = AffineT::empty();
+    std::ostringstream stream;
+    stream << empty_form;
+    CHECK(stream.str().find("not enabled") != std::string::npos);
   }
 }
 

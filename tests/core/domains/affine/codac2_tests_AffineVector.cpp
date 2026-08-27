@@ -16,6 +16,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <concepts>
+#include <sstream>
 #include <type_traits>
 #include <utility>
 
@@ -2225,6 +2226,51 @@ TEST_CASE("Eigen AffineTVector compound assignments with AffineTVarVector",
 //        check_point(value[1], 2.0 / 3.0);
 //        check_point(value[2], 1.0);
 //    }
+}
+
+
+TEST_CASE("AffineMainVector and AffineMainRow stream output")
+{
+    SECTION("AffineMainVector, non-empty")
+    {
+        AffineTVector v = make_point_vector_5();
+        std::ostringstream stream;
+        stream << v;
+        CAPTURE(stream.str());
+        CHECK_FALSE(stream.str().empty());
+        CHECK(stream.str().find("empty") == std::string::npos);
+    }
+
+    SECTION("AffineMainVector, empty")
+    {
+        AffineTVector v(2);
+        v[0] = Interval::empty();
+        std::ostringstream stream;
+        stream << v;
+        CHECK(stream.str() == "[ empty 2d box ]");
+    }
+
+    SECTION("AffineMainRow, non-empty")
+    {
+        AffineTRow row(3);
+        row[0] = Interval(1.0);
+        row[1] = Interval(2.0);
+        row[2] = Interval(3.0);
+        std::ostringstream stream;
+        stream << row;
+        CAPTURE(stream.str());
+        CHECK_FALSE(stream.str().empty());
+        CHECK(stream.str().find("empty") == std::string::npos);
+    }
+
+    SECTION("AffineMainRow, empty")
+    {
+        AffineTRow row(2);
+        row[0] = Interval::empty();
+        std::ostringstream stream;
+        stream << row;
+        CHECK(stream.str() == "[ empty row ]");
+    }
 }
 
 

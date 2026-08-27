@@ -16,12 +16,14 @@
 #include <cstdint>
 #include <initializer_list>
 #include <limits>
+#include <list>
 #include <ostream>
 #include <type_traits>
 #include <utility>
 
 #include "codac2_Interval.h"
 #include "codac2_Affine2_fAF2.h"
+#include "codac2_assert.h"
 #include "codac2_matrices.h"
 
 
@@ -325,6 +327,35 @@ public:
 	 */
 	virtual AffineMain<T>& operator=(const Interval& itv);
 
+	/**
+	 * \brief Sets this affine form to [-oo,oo]
+	 *
+	 * \note This function is used for template purposes.
+	 *
+	 * \return a reference to this
+	 */
+	AffineMain<T>& init();
+
+	/**
+	 * \brief Sets this affine form to x
+	 *
+	 * \note This function is used for template purposes.
+	 *
+	 * \param x the value for re-initialization
+	 * \return a reference to this
+	 */
+	AffineMain<T>& init(const Interval& x);
+
+	/**
+	 * \brief Sets the bounds of this affine form as the hull of a list of values.
+	 *
+	 * \note This function is separated from the constructor for py binding purposes.
+	 *
+	 * \param l list of one or two values contained in the resulting affine form
+	 * \return a reference to this
+	 */
+	AffineMain<T>& init_from_list(const std::list<double>& l);
+
 
 	// AffineMain(AffineMain<T>&&) noexcept = default;
 
@@ -433,6 +464,15 @@ public:
 	 * \brief Volume (alias of diam for 1D domains).
 	 */
 	double volume() const;
+
+	/**
+	 * \brief Returns the dimension of this (which is always 1).
+	 *
+	 * \note This function is used for template purposes.
+	 *
+	 * \return 1
+	 */
+	Index size() const;
 
 	/**
 	 * \brief Returns the number of represented noise variables.
@@ -547,23 +587,10 @@ public:
 	 */
 	bool is_interior_subset(const AffineMain<T>& x) const;
 
-	/**
-	 * \brief Tests whether this interval enclosure is in the relative interior of \p x.
-	 *
-	 * When x is degenerated, the relative interior of x is x itself
-	 * (it is not an open set). Otherwise, the relative interior of x
-	 * is the interior (in the usual meaning).
-	 */
-	bool is_relative_interior_subset(const Interval& x) const;
-	/**
-	 * \brief Tests whether the interval enclosure is contained in the relative interior of \p x.
-	 *
-	 * For a degenerate \p x, the relative interior is \p x itself.
-	 *
-	 * \param x interval or affine form to compare with
-	 * \return true iff the enclosure is contained in the relative interior of \p x
-	 */
-	bool is_relative_interior_subset(const AffineMain<T>& x) const;
+	// NOTE: is_relative_interior_subset() was removed: it forwarded to
+	// Interval::is_relative_interior_subset(), which codac2::Interval does
+	// not provide, so it could never be instantiated. See the Python
+	// bindings (codac2_py_Affine.cpp) for the same finding.
 
 	/**
 	 * \brief Tests whether this interval enclosure is a strict interior subset of \p x.
@@ -1134,6 +1161,40 @@ template<class T>
 inline double AffineMain<T>::volume() const { return this->itv().volume(); }
 
 template<class T>
+inline Index AffineMain<T>::size() const { return 1; }
+
+template<class T>
+inline AffineMain<T>& AffineMain<T>::init()
+{
+	*this = Interval(-oo,oo);
+	return *this;
+}
+
+template<class T>
+inline AffineMain<T>& AffineMain<T>::init(const Interval& x)
+{
+	*this = x;
+	return *this;
+}
+
+template<class T>
+inline AffineMain<T>& AffineMain<T>::init_from_list(const std::list<double>& l)
+{
+	if (l.size() == 1)
+		*this = Interval(*l.begin());
+
+	else if (l.size() == 2)
+		*this = Interval(*l.begin(), *std::prev(l.end()));
+
+	else
+	{
+		assert_release("'AffineMain' can only be defined by one or two 'double' values.");
+	}
+
+	return *this;
+}
+
+template<class T>
 inline bool AffineMain<T>::is_subset(const Interval& x) const { return this->itv().is_subset(x); }
 
 template<class T>
@@ -1141,9 +1202,6 @@ inline bool AffineMain<T>::is_strict_subset(const Interval& x) const { return th
 
 template<class T>
 inline bool AffineMain<T>::is_interior_subset(const Interval& x) const { return this->itv().is_interior_subset(x); }
-
-template<class T>
-inline bool AffineMain<T>::is_relative_interior_subset(const Interval& x) const { return this->itv().is_relative_interior_subset(x); }
 
 template<class T>
 inline bool AffineMain<T>::is_strict_interior_subset(const Interval& x) const { return this->itv().is_strict_interior_subset(x); }
@@ -1164,9 +1222,6 @@ inline bool AffineMain<T>::is_strict_subset(const AffineMain<T>& x) const { retu
 
 template<class T>
 inline bool AffineMain<T>::is_interior_subset(const AffineMain<T>& x) const { return this->itv().is_interior_subset(x.itv()); }
-
-template<class T>
-inline bool AffineMain<T>::is_relative_interior_subset(const AffineMain<T>& x) const { return this->itv().is_relative_interior_subset(x.itv()); }
 
 template<class T>
 inline bool AffineMain<T>::is_strict_interior_subset(const AffineMain<T>& x) const { return this->itv().is_strict_interior_subset(x.itv()); }
@@ -1447,35 +1502,11 @@ template<class T>
 AffineMain<T> operator/(const Interval& x1, const AffineMain<T>&  x2);
 
 
-/**
- * \brief Returns the Hausdorff distance between the two arguments.
- *
- * \param x1 first interval or affine form
- * \param x2 second interval or affine form
- * \return Hausdorff distance
- */
-template<class T>
-double distance(const AffineMain<T>& x1, const AffineMain<T>& x2);
-
-/**
- * \brief Returns the Hausdorff distance between the two arguments.
- *
- * \param x1 first interval or affine form
- * \param x2 second interval or affine form
- * \return Hausdorff distance
- */
-template<class T>
-double distance(const Interval &x1, const AffineMain<T>& x2);
-
-/**
- * \brief Returns the Hausdorff distance between the two arguments.
- *
- * \param x1 first interval or affine form
- * \param x2 second interval or affine form
- * \return Hausdorff distance
- */
-template<class T>
-double distance(const AffineMain<T>& x1, const Interval &x2);
+// NOTE: distance(x1,x2) was removed: every overload forwarded to a free
+// function codac2::distance(const Interval&, const Interval&) that
+// codac2 does not provide, so none of them could ever be instantiated.
+// See the Python bindings (codac2_py_Affine_operations.cpp) for the same
+// finding.
 
 
 /**
@@ -2327,21 +2358,6 @@ inline AffineMain<T> operator/(const AffineMain<T>& x1, const Interval& x2){
 template<class T>
 inline AffineMain<T> operator/(const Interval& x1, const AffineMain<T>& x2){
 	return AffineMain<T>(x1) *= (AffineMain<T>(x2).Ainv(x2.itv()));
-}
-
-template<class T>
-inline double distance(const AffineMain<T> &x1, const AffineMain<T> &x2){
-	return distance(x1.itv(), x2.itv());
-}
-
-template<class T>
-inline double distance(const Interval &x1, const AffineMain<T> &x2){
-	return distance(x1, x2.itv());
-}
-
-template<class T>
-inline double distance(const AffineMain<T> &x1, const Interval &x2){
-	return distance(x1.itv(), x2);
 }
 
 template<class T>

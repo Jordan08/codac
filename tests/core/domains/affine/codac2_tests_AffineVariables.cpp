@@ -14,6 +14,7 @@
 
 #include <concepts>
 #include <memory>
+#include <sstream>
 #include <type_traits>
 
 #include "codac2_Affine.h"
@@ -132,15 +133,80 @@ TEST_CASE("AffineTVarMain cannot be assigned from AffineTMain", "[AffineT][Affin
 }
 
 
-// ============================================================================
-// 4. Comma-initializer with Interval literals on AffineT-scalar containers
-// ============================================================================
-//
-// These are the exact call sites that used to fail with "invalid operands
-// to binary expression" before AffineTMain(const Interval&) was added:
-// Eigen's comma-initializer needs a converting constructor for each
-// inserted value, operator=(const Interval&) alone isn't enough.
+TEST_CASE("AffineVarMain empty() factory produces an empty affine variable")
+{
+    const AffineVarMain<AA> empty_var = AffineVarMain<AA>::empty();
 
+    CHECK(empty_var.is_empty());
+    CHECK(empty_var.itv().is_empty());
+    CHECK(empty_var.noise_index() == -1);
+}
+
+
+template<class T>
+concept can_init_from_interval =
+    requires(AffineTVarVector& v, const Interval& x) { v.init(x); };
+
+template<class T>
+concept can_init_from_var =
+    requires(AffineTVarVector& v, const AffineVarMain<T>& x) { v.init(x); };
+
+template<class T>
+concept can_init_from_affine =
+    requires(AffineTVarVector& v, const AffineMain<T>& x) { v.init(x); };
+
+TEST_CASE("AffineVarMainVector::init is only enabled for an Interval argument",
+          "[AffineTVarVector][init][regression]")
+{
+    static_assert(can_init_from_interval<Model>,
+                  "init(const Interval&) must remain available");
+    static_assert(!can_init_from_var<Model>,
+                  "init(const AffineVarMain<T>&) must stay deleted: broadcasting it "
+                  "would require duplicating its noise symbol across components");
+    static_assert(!can_init_from_affine<Model>,
+                  "init(const AffineMain<T>&) must stay deleted: it would require an "
+                  "implicit conversion to AffineVarMain<T> that is intentionally absent");
+}
+
+
+TEST_CASE("AffineVarMainVector::resize discards previous values, unlike conservativeResize",
+          "[AffineTVarVector][resize][regression]")
+{
+    const IntervalVector box({{1.0, 2.0}, {3.0, 4.0}});
+
+    AffineTVarVector preserved(box);
+    preserved.conservativeResize(3);
+    CHECK(preserved[0].itv() == Interval(1.0, 2.0));
+    CHECK(preserved[1].itv() == Interval(3.0, 4.0));
+    CHECK(preserved[2].itv() == Interval());
+
+    AffineTVarVector reset(box);
+    reset.resize(3);
+    CHECK(reset[0].itv() == Interval());
+    CHECK(reset[1].itv() == Interval());
+    CHECK(reset[2].itv() == Interval());
+
+    // resize() also reassigns fresh, sequential noise symbols.
+    for (Index i = 0; i < reset.size(); ++i)
+        CHECK(reset[i].noise_index() == i);
+}
+
+
+TEST_CASE("AffineVarMainVector operator<< streams the interval box")
+{
+    AffineTVarVector x(IntervalVector({{1.0, 2.0}, {3.0, 4.0}}));
+    std::ostringstream stream;
+    stream << x;
+    CAPTURE(stream.str());
+    CHECK_FALSE(stream.str().empty());
+    CHECK(stream.str().find("empty") == std::string::npos);
+
+    AffineTVarVector e(1);
+    e[0] = Interval::empty();
+    std::ostringstream empty_stream;
+    empty_stream << e;
+    CHECK(empty_stream.str() == "[ empty 1d box ]");
+}
 
 
 TEST_CASE("AffineTVarVector init(Interval) preserves distinct noise symbols",
