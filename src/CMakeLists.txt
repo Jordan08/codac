@@ -69,12 +69,21 @@
 
     find_package(IBEX REQUIRED)
 
+    # codac-core links PUBLIC against Threads::Threads (see src/core/CMakeLists.txt),
+    # e.g. for peibos/threading code. That requirement doesn't come back through
+    # find_library() above (a plain path has no transitive usage requirements),
+    # so it has to be re-declared here -- otherwise any downstream target that
+    # actually pulls in that code (such as the 11_peibos example) fails to link
+    # with an undefined reference to pthread_create.
+    set(THREADS_PREFER_PTHREAD_FLAG ON)
+    find_package(Threads REQUIRED)
+
     set(CODAC_VERSION ${PROJECT_VERSION})
-    set(CODAC_LIBRARIES \${CODAC_CORE_LIBRARY} \${CODAC_GRAPHICS_LIBRARY} \${CODAC_UNSUPPORTED_LIBRARY} Ibex::ibex)
+    set(CODAC_LIBRARIES \${CODAC_CORE_LIBRARY} \${CODAC_GRAPHICS_LIBRARY} \${CODAC_UNSUPPORTED_LIBRARY} Ibex::ibex Threads::Threads)
     set(CODAC_INCLUDE_DIRS \${CODAC_CORE_INCLUDE_DIR}/../ \${CODAC_CORE_INCLUDE_DIR}/../eigen3/ \${CODAC_CORE_INCLUDE_DIR} \${CODAC_GRAPHICS_INCLUDE_DIR} \${CODAC_UNSUPPORTED_INCLUDE_DIR})
 
     set(CODAC_C_FLAGS \"\")
-    set(CODAC_CXX_FLAGS \"\")
+    set(CODAC_CXX_FLAGS \"${CODAC_ARCH_CXX_FLAGS}\")
   ")
 
   if(WITH_PYTHON)
@@ -104,7 +113,21 @@
               PATH_SUFFIXES include/${PROJECT_NAME}-capd)
     find_library(CODAC_CAPD_LIBRARY NAMES ${PROJECT_NAME}-capd
                  PATH_SUFFIXES lib)
-                 
+
+    # Fold CAPD into the general CODAC_INCLUDE_DIRS / CODAC_LIBRARIES too, so
+    # that any consumer using the common find_package(CODAC) + \${CODAC_INCLUDE_DIRS}
+    # / \${CODAC_LIBRARIES} pattern gets CAPD for free (headers, the codac-capd
+    # library, and the capd::capd target), without needing to separately
+    # reference CODAC_CAPD_INCLUDE_DIR / CODAC_CAPD_LIBRARY / capd::capd
+    # themselves -- unlike the -mfma and Threads::Threads gaps, this one
+    # doesn't corrupt anything if forgotten (see 10_lie_groups), it just
+    # fails to compile, but it's the same class of oversight.
+    set(CODAC_INCLUDE_DIRS \${CODAC_INCLUDE_DIRS} \${CODAC_CAPD_INCLUDE_DIR})
+    set(CODAC_LIBRARIES \${CODAC_LIBRARIES} \${CODAC_CAPD_LIBRARY} capd::capd)
+
+    # CODAC_CAPD_LIBRARY is kept as its own variable too, for any consumer
+    # that prefers to opt into CAPD explicitly rather than pull it in via
+    # the general CODAC_LIBRARIES.
     set(CODAC_CAPD_LIBRARY \${CODAC_CAPD_LIBRARY} \${CODAC_LIBRARIES})
     ")
 
