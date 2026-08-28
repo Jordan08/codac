@@ -322,19 +322,78 @@ set(
 set(PYTHON_TEST_ENV_ARGS "PYTHONPATH=${PYTHON_PACKAGE_DIR}")
 
 if(WITH_PYTHON AND CMAKE_BUILD_TYPE STREQUAL "Debug"
-   AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+   AND CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
 
+  # This whole block is Linux-specific by construction, not just by
+  # "is the compiler Clang": LD_PRELOAD is a Linux/glibc loader feature
+  # with no equivalent environment variable on Windows, and the shared
+  # runtime file names it looks for below (libclang_rt.*.so) only exist
+  # in that form on Linux -- macOS uses DYLD_INSERT_LIBRARIES and ships
+  # its runtimes as e.g. libclang_rt.asan_osx_dynamic.dylib (combined
+  # ASan+UBSan, no per-arch suffix), and Windows uses neither an env-var
+  # preload mechanism nor this naming (clang-cl names them
+  # clang_rt.asan_dynamic-<arch>.dll). Real MSVC (cl.exe) is already
+  # excluded by the CMAKE_CXX_COMPILER_ID check above, but clang-cl
+  # (Windows) and AppleClang (macOS) both also match "Clang", so without
+  # this explicit Linux check they would silently fall through to the
+  # "no shared runtime found" warning below instead of making clear that
+  # the feature just does not apply on those platforms.
+
+  # Note: `clang --print-runtime-dir` assumes a per-target-runtime-dir
+  # layout (lib/<target-triple>/) which some distro packages (e.g. Ubuntu/
+  # Debian's llvm.org apt packages) do not use, instead keeping the legacy
+  # lib/linux/ layout: the reported directory would not exist there, even
+  # though the runtime libraries are actually installed. `-print-file-name`
+  # asks the driver to resolve each file the way it would at link time,
+  # which works regardless of which layout the distro packaging uses.
+  #
+  # The runtime file names themselves are not portable either: Clang embeds
+  # its own architecture name in them (e.g. libclang_rt.asan-aarch64.so on
+  # an AArch64 Raspberry Pi OS, libclang_rt.asan-armhf.so on a 32-bit
+  # ARMv7/ARMv8 hard-float userland). Rather than maintaining our own
+  # CMAKE_SYSTEM_PROCESSOR -> Clang-runtime-name table (which would drift
+  # out of sync as LLVM adds targets), ask the compiler itself:
+  # `-dumpmachine` prints its default target triple (understood by both
+  # Clang and GCC, and already normalized -- e.g. a 32-bit x86 compiler
+  # reports "i386", never "i686"), and its first field is, for essentially
+  # every architecture, precisely the suffix Clang's runtime uses.
+  #
+  # The one documented exception is 32-bit ARM, where the suffix instead
+  # follows the float ABI recorded in the triple's environment field
+  # (.../gnueabihf -> "armhf" hard-float, vs. plain "arm" otherwise) rather
+  # than the architecture field (which is typically "arm"/"armv7"/...) --
+  # this is an LLVM naming convention, not something any compiler flag
+  # reports directly, so it is the one case still special-cased below.
   execute_process(
-    COMMAND ${CMAKE_CXX_COMPILER} --print-runtime-dir
-    OUTPUT_VARIABLE CLANG_RT_DIR
+    COMMAND ${CMAKE_CXX_COMPILER} -dumpmachine
+    OUTPUT_VARIABLE _clang_target_triple
     OUTPUT_STRIP_TRAILING_WHITESPACE
   )
+  set(_sanitizer_rt_arch "")
+  if(_clang_target_triple)
+    string(REPLACE "-" ";" _clang_triple_fields "${_clang_target_triple}")
+    list(GET _clang_triple_fields 0 _sanitizer_rt_arch)
+    if(_sanitizer_rt_arch MATCHES "^armv?[0-9]*l?$")
+      if(_clang_target_triple MATCHES "eabihf$")
+        set(_sanitizer_rt_arch "armhf")
+      else()
+        set(_sanitizer_rt_arch "arm")
+      endif()
+    endif()
+  endif()
 
-  if(EXISTS "${CLANG_RT_DIR}")
-    file(GLOB SANITIZER_RT_LIBS
-      "${CLANG_RT_DIR}/libclang_rt.asan-x86_64.so"
-      "${CLANG_RT_DIR}/libclang_rt.ubsan_standalone-x86_64.so"
-    )
+  set(SANITIZER_RT_LIBS "")
+  if(_sanitizer_rt_arch)
+    foreach(_rt_lib_name libclang_rt.asan-${_sanitizer_rt_arch}.so libclang_rt.ubsan_standalone-${_sanitizer_rt_arch}.so)
+      execute_process(
+        COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=${_rt_lib_name}
+        OUTPUT_VARIABLE _rt_lib_path
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+      )
+      if(EXISTS "${_rt_lib_path}")
+        list(APPEND SANITIZER_RT_LIBS "${_rt_lib_path}")
+      endif()
+    endforeach()
   endif()
 
   if(SANITIZER_RT_LIBS)
@@ -354,8 +413,8 @@ if(WITH_PYTHON AND CMAKE_BUILD_TYPE STREQUAL "Debug"
   else()
     message(WARNING
       "Debug build with WITH_PYTHON: no shared ASan/UBSan runtime found "
-      "in '${CLANG_RT_DIR}'. Make sure the _core target is linked with "
-      "-shared-libsan, otherwise Python tests will fail with "
+      "for ${CMAKE_CXX_COMPILER}. Make sure the _core target is linked "
+      "with -shared-libsan, otherwise Python tests will fail with "
       "'undefined symbol' errors.")
   endif()
 

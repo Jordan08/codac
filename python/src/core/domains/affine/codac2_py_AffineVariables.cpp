@@ -92,24 +92,37 @@ py::class_<AffineVariables> export_AffineVariables(py::module& m)
           "__getitem__"
         #endif
         ,
-        [](const AffineVariables& x, Index_type i) -> Affine
+        [](const AffineVariables& x, Index_type i) -> const Affine&
         {
           matlab::test_integer(i);
           // An IndexError is required here: this class provides no __iter__,
           // and Python then iterates by calling __getitem__ until IndexError.
           if(matlab::input_index(i) < 0 || matlab::input_index(i) >= x.size())
             throw py::index_error();
-          return Affine(x[matlab::input_index(i)]);
-        },
+          // AffineVarMain<T> publicly inherits AffineMain<T> (Affine), so
+          // this is a plain reference upcast (no slicing/copy): the
+          // returned reference aliases the same component the container
+          // owns, matching the reference semantics of __getitem__ on
+          // AffineVector/AffineRow/AffineMatrix (see
+          // codac2_py_AffineVector_templ.h / codac2_py_AffineMatrixBase.h).
+          // Note that this also means the deleted AffineVarMain compound
+          // assignments (+=,-=,*=,/=) and operator=(const AffineMain<T>&)
+          // are reachable again through this reference: they are declared
+          // non-virtual in AffineMain and only deleted on AffineVarMain
+          // itself, so calling them through this AffineMain&-typed
+          // reference bypasses that protection, same as it would in C++
+          // through an AffineMain& alias of an AffineVarMain object.
+          return x[matlab::input_index(i)];
+        }, py::return_value_policy::reference_internal,
       DOC_TO_BE_DEFINED)
 
-    .def("get_item_0", [](const AffineVariables& x, Index_type i) -> Affine
+    .def("get_item_0", [](const AffineVariables& x, Index_type i) -> const Affine&
         {
           matlab::test_integer(i);
           if(i < 0 || i >= x.size())
             throw py::index_error();
-          return Affine(x[i]);
-        },
+          return x[i];
+        }, py::return_value_policy::reference_internal,
       DOC_TO_BE_DEFINED)
 
     // The value type is deliberately Interval, not Affine: AffineVarMain

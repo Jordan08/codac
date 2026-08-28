@@ -44,7 +44,7 @@ using namespace pybind11::literals;
 py::class_<AffineVector> export_AffineVector(py::module& m)
 {
   py::class_<AffineVector> exported_affinevector_class(m, "AffineVector",
-    USING_AFFINEMAINVECTOR_EQ_EIGEN_MATRIX_AFFINEMAIN_TMINUSONE1);
+    USING_AFFINEMAINVECTOR_EQ_TYPEDEF_EIGEN_MATRIX_AFFINEMAIN_TMINUSONE1);
   export_AffineVector_<AffineVector,Vector,IntervalVector>(m, exported_affinevector_class);
 
   exported_affinevector_class

@@ -42,7 +42,7 @@ using namespace pybind11::literals;
 py::class_<AffineMatrix> export_AffineMatrix(py::module& m)
 {
   py::class_<AffineMatrix> exported_affinematrix_class(m, "AffineMatrix",
-    USING_AFFINEMAINMATRIX_EQ_EIGEN_MATRIX_AFFINEMAIN_TMINUSONEMINUSONE);
+    USING_AFFINEMAINMATRIX_EQ_TYPEDEF_EIGEN_MATRIX_AFFINEMAIN_TMINUSONEMINUSONE);
   export_AffineMatrixBase<AffineMatrix,Matrix,false>(m, exported_affinematrix_class);
 
   exported_affinematrix_class

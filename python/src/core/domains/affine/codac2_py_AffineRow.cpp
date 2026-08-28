@@ -44,7 +44,7 @@ using namespace pybind11::literals;
 py::class_<AffineRow> export_AffineRow(py::module& m)
 {
   py::class_<AffineRow> exported_affinerow_class(m, "AffineRow",
-    USING_AFFINEMAINROW_EQ_EIGEN_MATRIX_AFFINEMAIN_T1MINUSONE);
+    USING_AFFINEMAINROW_EQ_TYPEDEF_EIGEN_MATRIX_AFFINEMAIN_T1MINUSONE);
   export_AffineVector_<AffineRow,Row,IntervalRow>(m, exported_affinerow_class);
 
   exported_affinerow_class

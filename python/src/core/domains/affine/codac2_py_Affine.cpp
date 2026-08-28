@@ -18,6 +18,7 @@
 #include <codac2_Interval.h>
 #include "codac2_py_Affine_docs.h" // Generated file from Doxygen XML (doxygen2docstring.py):
 #include "codac2_py_AffineMain_docs.h" // Generated file from Doxygen XML (doxygen2docstring.py):
+#include "codac2_py_AffineMain_operations_impl_docs.h" // Generated file from Doxygen XML (doxygen2docstring.py):
 #include "codac2_py_doc.h"
 #include "codac2_py_matlab.h"
 
