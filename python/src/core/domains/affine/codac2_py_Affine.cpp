@@ -133,6 +133,12 @@ py::class_<Affine> export_Affine(py::module& m)
     .def("volume", &Affine::volume,
       DOUBLE_AFFINEMAIN_T_VOLUME_CONST)
 
+    .def("size", [](const Affine& x)
+        {
+          return matlab::output_index(x.size());
+        },
+      INDEX_AFFINEMAIN_T_SIZE_CONST)
+
     .def("itv", &Affine::itv,
       CONST_INTERVAL_AFFINEMAIN_T_ITV_CONST)
 
@@ -155,6 +161,17 @@ py::class_<Affine> export_Affine(py::module& m)
 
     .def("set_empty", &Affine::set_empty,
       VOID_AFFINEMAIN_T_SET_EMPTY)
+
+    .def("init", (Affine&(Affine::*)())&Affine::init,
+      AFFINEMAIN_T_REF_AFFINEMAIN_T_INIT)
+
+    .def("init", (Affine&(Affine::*)(const Interval&))&Affine::init,
+      AFFINEMAIN_T_REF_AFFINEMAIN_T_INIT_CONST_INTERVAL_REF,
+      "x"_a)
+
+    .def("init_from_list", &Affine::init_from_list,
+      AFFINEMAIN_T_REF_AFFINEMAIN_T_INIT_FROM_LIST_CONST_LIST_DOUBLE_REF,
+      "l"_a)
 
     .def("is_active", &Affine::is_active,
       BOOL_AFFINEMAIN_T_IS_ACTIVE_CONST)

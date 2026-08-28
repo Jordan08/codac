@@ -107,6 +107,8 @@
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/tube/codac2_tube_cart_prod.h
 
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/affine/codac2_AffineMain.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/affine/codac2_AffineMain_impl.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/affine/codac2_AffineMain_operations_impl.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/affine/codac2_Affine2_fAF2.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/affine/codac2_Affine2_fAF2.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/affine/codac2_AffineVector.h

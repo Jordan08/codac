@@ -112,6 +112,38 @@ py::class_<AffineVariables> export_AffineVariables(py::module& m)
         },
       DOC_TO_BE_DEFINED)
 
+    // The value type is deliberately Interval, not Affine: AffineVarMain
+    // deletes operator=(const AffineMain<T>&) on purpose (see
+    // codac2_AffineVar.h), so only assigning an Interval (or a double,
+    // implicitly converted to Interval) reaches
+    // AffineVarMain::operator=(const Interval&), which stores the radius
+    // on this component's own dedicated noise symbol rather than in a
+    // generic remainder error term.
+
+    .def(
+        #if FOR_MATLAB
+          "set_item"
+        #else
+          "__setitem__"
+        #endif
+        , [](AffineVariables& x, Index_type i, const Interval& value)
+        {
+          matlab::test_integer(i);
+          if(matlab::input_index(i) < 0 || matlab::input_index(i) >= x.size())
+            throw py::index_error();
+          x[matlab::input_index(i)] = value;
+        },
+      AFFINEVARMAIN_REF_AFFINEVARMAIN_T_OPERATORAFF_CONST_INTERVAL_REF)
+
+    .def("set_item_0", [](AffineVariables& x, Index_type i, const Interval& value)
+        {
+          matlab::test_integer(i);
+          if(i < 0 || i >= x.size())
+            throw py::index_error();
+          x[i] = value;
+        },
+      AFFINEVARMAIN_REF_AFFINEVARMAIN_T_OPERATORAFF_CONST_INTERVAL_REF)
+
     .def("noise_index", [](const AffineVariables& x, Index_type i)
         {
           matlab::test_integer(i);
