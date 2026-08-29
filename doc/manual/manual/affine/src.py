@@ -463,7 +463,10 @@ class TestAffineManual(unittest.TestCase):
 
     # [affine-variables-11-beg]
     v = AffineVariables([[1,2],[-1,1]])
-    print(v)
+    # Expected `print(v)` output:
+    # [ [ 1, 2] : 1.5 + 0.5 eps_0 + 0 eps_1 + 0 [-1,1] ; 
+    #   [-1, 1] : 0   + 0 eps_0   + 1 eps_1 + 0 [-1,1]  ]
+
     # [affine-variables-11-end]
 
     # [affine-variables-12-beg]
@@ -613,7 +616,6 @@ class TestAffineManual(unittest.TestCase):
     # [affine-vector-7-beg]
     v = AffineVariables([[1,2],[3,4]])
     x = AffineVector(v)
-    print(x)
     # Expected `print(x)` output (each component prints its own full
     # Affine representation, joined by " ; " and wrapped in "[ ... ]" --
     # this is why itv() is usually preferred for a quick summary):
@@ -729,14 +731,13 @@ class TestAffineManual(unittest.TestCase):
     M = AffineMatrix(1,2)
     M[0,0] = Affine(Interval(1,2))
     M[0,1] = Affine(3.)
-    print(M)
     # Expected `print(M)` format (rows separated by newlines, each
     # component printing its own full Affine representation -- verbose,
     # as for AffineVector; itv() is usually preferred for a quick view).
     # Both M[0,0] and M[0,1] were built as freestanding Affine(Interval)/
     # Affine(double) constants (not through AffineVariables), so neither
     # carries an eps_i term: all uncertainty sits in the error bound.
-    #   [ [1, 2] : 1.5 + 0.5 [-1,1]  , [3, 3] : 3 + 0 [-1,1]  ]
+    #   [ [1, 2] : 1.5 + 0.5 [-1,1]  , <3, 3> : 3 + 0 [-1,1]  ]
     # [affine-matrix-6-end]
 
 
