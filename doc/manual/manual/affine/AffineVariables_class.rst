@@ -44,6 +44,14 @@ Creating affine variables
 
 .. tabs::
 
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-variables-1-beg]
+      :end-before: [affine-variables-1-end]
+      :dedent: 4
+
   .. group-tab:: C++
 
     .. literalinclude:: src.cpp
@@ -103,6 +111,14 @@ The following example illustrates the typical workflow with
 
 .. tabs::
 
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-variables-complete-beg]
+      :end-before: [affine-variables-complete-end]
+      :dedent: 4
+
   .. group-tab:: C++
 
     .. literalinclude:: src.cpp
@@ -128,6 +144,14 @@ to the *same* uncertain quantity:
 
 .. tabs::
 
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-variables-2-beg]
+      :end-before: [affine-variables-2-end]
+      :dedent: 4
+
   .. group-tab:: C++
 
     .. literalinclude:: src.cpp
@@ -147,6 +171,14 @@ the same noise symbol. Consequently, subtracting the same declared variable
 from itself is exactly zero:
 
 .. tabs::
+
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-variables-dependency-beg]
+      :end-before: [affine-variables-dependency-end]
+      :dedent: 4
 
   .. group-tab:: C++
 
@@ -179,6 +211,14 @@ visible:
 
 .. tabs::
 
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-variables-12-beg]
+      :end-before: [affine-variables-12-end]
+      :dedent: 4
+
   .. group-tab:: C++
 
     .. literalinclude:: src.cpp
@@ -190,6 +230,14 @@ visible:
 Coefficients scale independently of one another:
 
 .. tabs::
+
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-variables-13-beg]
+      :end-before: [affine-variables-13-end]
+      :dedent: 4
 
   .. group-tab:: C++
 
@@ -203,6 +251,14 @@ And reusing the same declared variable several times in a linear expression
 still cancels out exactly, for any interval it was declared over:
 
 .. tabs::
+
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-variables-14-beg]
+      :end-before: [affine-variables-14-end]
+      :dedent: 4
 
   .. group-tab:: C++
 
@@ -226,6 +282,14 @@ Applying an elementary function to a declared variable returns a plain
 ``Affine``, linearized around the variable's current enclosure:
 
 .. tabs::
+
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-variables-15-beg]
+      :end-before: [affine-variables-15-end]
+      :dedent: 4
 
   .. group-tab:: C++
 
@@ -251,6 +315,14 @@ here by hand:
 
 .. tabs::
 
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-variables-16-beg]
+      :end-before: [affine-variables-16-end]
+      :dedent: 4
+
   .. group-tab:: C++
 
     .. literalinclude:: src.cpp
@@ -266,6 +338,14 @@ Resizing
 Two resizing operations are available, with different guarantees:
 
 .. tabs::
+
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-variables-3-beg]
+      :end-before: [affine-variables-3-end]
+      :dedent: 4
 
   .. group-tab:: C++
 
@@ -295,10 +375,24 @@ The distinction is important:
 
 For example, after
 
-.. code-block:: cpp
 
-   AffineVariables v(IntervalVector({{1,2},{-1,1}}));
-   v.conservativeResize(3);
+.. tabs::
+
+   .. group-tab:: Python
+
+      .. code-block:: python
+
+          v= AffineVariables(IntervalVector([[1,2],[-1,1]]))
+          v.conservativeResize(3)
+
+   .. group-tab:: C++
+
+      .. code-block:: cpp
+
+          AffineVariables v(IntervalVector({{1,2},{-1,1}}));
+          v.conservativeResize(3);
+
+
 
 the first two components still enclose ``[1,2]`` and ``[-1,1]``, while the
 third component is unbounded. The original noise-symbol identities are not
@@ -313,6 +407,14 @@ Broadcasting a single interval
 ----------------------------------
 
 .. tabs::
+
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-variables-4-beg]
+      :end-before: [affine-variables-4-end]
+      :dedent: 4
 
   .. group-tab:: C++
 
@@ -333,10 +435,23 @@ Broadcasting a single interval
 
 For example, after
 
-.. code-block:: cpp
 
-   AffineVariables v(3);
-   v.init(Interval(1,2));
+.. tabs::
+
+   .. group-tab:: Python
+
+      .. code-block:: python
+
+          v = AffineVariables(3)
+          v.init(Interval(1,2))
+
+   .. group-tab:: C++
+
+      .. code-block:: cpp
+
+          AffineVariables v(3);
+          v.init(Interval(1,2));
+
 
 the three components all enclose ``[1,2]`` but remain independent:
 conceptually,
@@ -358,6 +473,14 @@ An existing component can be assigned from an ``Interval`` or a ``double``.
 The value changes, but the component keeps its existing noise-symbol identity:
 
 .. tabs::
+
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-variables-assignment-beg]
+      :end-before: [affine-variables-assignment-end]
+      :dedent: 4
 
   .. group-tab:: C++
 
@@ -383,6 +506,14 @@ with the declared variables, convert to a plain
 :ref:`AffineVector <sec-affine-vector-class>`:
 
 .. tabs::
+
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-variables-5-beg]
+      :end-before: [affine-variables-5-end]
+      :dedent: 4
 
   .. group-tab:: C++
 
@@ -410,6 +541,14 @@ and are therefore seen as fully dependent by any later computation mixing
 both:
 
 .. tabs::
+
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-variables-6-beg]
+      :end-before: [affine-variables-6-end]
+      :dedent: 4
 
   .. group-tab:: C++
 
@@ -440,6 +579,14 @@ assignment survives:
 
 .. tabs::
 
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-variables-7-beg]
+      :end-before: [affine-variables-7-end]
+      :dedent: 4
+
   .. group-tab:: C++
 
     .. literalinclude:: src.cpp
@@ -467,13 +614,27 @@ Use:
 
 A typical workflow is therefore:
 
-.. code-block:: cpp
+.. tabs::
 
-   AffineVariables x(...);
+   .. group-tab:: Python
 
-   Affine f = x[0] * x[1] + sin(x[2]);
+      .. code-block:: python
 
-   AffineVector y = A * x;
+         x = AffineVariables(...)
+
+         f = x[0] * x[1] + sin(x[2])
+
+         y = A @ x
+
+   .. group-tab:: C++
+
+      .. code-block:: cpp
+
+         AffineVariables x(...);
+
+         Affine f = x[0] * x[1] + sin(x[2]);
+
+         AffineVector y = A * x;
 
 Once a value is a derived expression rather than a declared uncertain
 quantity, it belongs in ``Affine`` or ``AffineVector`` rather than in
@@ -488,6 +649,14 @@ are explicitly deleted on ``AffineVariables`` — attempting any of them is a
 compile-time error, not a runtime surprise:
 
 .. tabs::
+
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-variables-8-beg]
+      :end-before: [affine-variables-8-end]
+      :dedent: 4
 
   .. group-tab:: C++
 
@@ -531,6 +700,14 @@ dependency preservation through matrix products.
 
 .. tabs::
 
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-variables-9-beg]
+      :end-before: [affine-variables-9-end]
+      :dedent: 4
+
   .. group-tab:: C++
 
     .. literalinclude:: src.cpp
@@ -544,6 +721,14 @@ Unary minus
 ---------------
 
 .. tabs::
+
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-variables-10-beg]
+      :end-before: [affine-variables-10-end]
+      :dedent: 4
 
   .. group-tab:: C++
 
@@ -565,6 +750,14 @@ Printing
 ------------
 
 .. tabs::
+
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-variables-11-beg]
+      :end-before: [affine-variables-11-end]
+      :dedent: 4
 
   .. group-tab:: C++
 

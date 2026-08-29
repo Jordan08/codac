@@ -8,6 +8,11 @@
 # assignments, and every product involving a matrix or a vector-by-row
 # outer product (real, Interval and Affine operands).
 #
+# Matching Python/NumPy convention, every matrix/vector product (matrix *
+# matrix, matrix * vector, row * matrix, row . vector) is bound on "@"
+# (__matmul__/__rmatmul__), not "*": "*" is reserved for scalar/elementwise
+# multiplication (see codac2_py_AffineMatrixBase.h).
+#
 # codac2_py_AffineMatrixBase.h exposes a hand-picked, reduced subset of
 # Eigen's API (documented as such in its own header comment) rather than
 # the full generic MatrixBase binding: there is no coeffRef()/
@@ -17,7 +22,7 @@
 # set_block()/set_row()/set_col()), and no fixed-size Eigen container
 # (Eigen::Matrix<Affine,N,M>) at all. Where a C++ test relies on one of
 # these, this file either reconstructs the same observable behavior from
-# the bound primitives (indexing, block(), +, *) or, for fixed-size
+# the bound primitives (indexing, block(), +, @) or, for fixed-size
 # containers and Eigen lazy-expression-template mechanics (which have no
 # meaning in Python: every Python expression is already evaluated
 # immediately), is not translated.
@@ -30,11 +35,6 @@
 # that name in place (e.g. via .set_empty()) reaches back into the
 # matrix, exactly as the equivalent C++ reference would.
 #
-# codac2::Approx<AffineMain<T>> is exposed to Python as Approx_Affine
-# (mirroring Approx_double/Approx_Interval/...), used here directly
-# rather than through the generic Approx() dispatcher: its constructor
-# takes an Interval, exactly like Approx_Interval's, so Approx() cannot
-# tell them apart from the argument's type alone.
 #
 # ----------------------------------------------------------------------------
 #  \date       2026
@@ -45,6 +45,8 @@
 import unittest
 import sys
 import math
+import builtins
+_min = builtins.min
 from codac import *
 
 ERROR = sys.float_info.epsilon*100
@@ -65,6 +67,16 @@ def interval_hull_matrix(value):
   for i in range(value.rows()):
     for j in range(value.cols()):
       result[[i,j]] = value[(i,j)].itv()
+  return result
+
+def interval_hull_row_matrix(row):
+  # 1 x n IntervalMatrix hull of a 1-D indexable AffineRow: interval_hull_matrix()
+  # cannot be reused directly since AffineRow only supports 1-D indexing (row[j]),
+  # not the (i,j) tuple indexing of a 2-D AffineMatrix.
+  n = len(row)
+  result = IntervalMatrix(1, n)
+  for j in range(n):
+    result[[0,j]] = row[j].itv()
   return result
 
 def interval_hull_vector(value):
@@ -103,30 +115,36 @@ def make_affine_row_3():
   return AffineRow([Interval(1.0,2.0), Interval(-1.0,1.0), Interval(3.0,4.0)])
 
 def affine_diagonal(matrix):
-  n = min(matrix.rows(), matrix.cols())
+  # _min, not min: "from codac import *" shadows the plain Python min()
+  # with codac's Interval/Affine-valued min(), which would turn n into an
+  # Interval and break range(n) below.
+  n = _min(matrix.rows(), matrix.cols())
   return AffineVector([matrix[(i,i)] for i in range(n)])
 
 def affine_set_diagonal(matrix, values):
-  n = min(matrix.rows(), matrix.cols())
+  n = _min(matrix.rows(), matrix.cols())
   for i in range(n):
     matrix[[i,i]] = values[i]
 
 def affine_trace(matrix):
-  n = min(matrix.rows(), matrix.cols())
+  n = _min(matrix.rows(), matrix.cols())
   result = matrix[(0,0)]
   for i in range(1, n):
     result = result + matrix[(i,i)]
   return result
 
 def affine_replicate(row, row_times, col_times):
+  # AffineMatrix's list constructor takes a Sequence[AffineVector], one
+  # AffineVector per row (see codac2_py_AffineMatrix.cpp): an AffineRow is
+  # not accepted there, hence AffineVector rather than AffineRow here.
   n = len(row)
   return AffineMatrix([
-    AffineRow([row[j % n] for j in range(n*col_times)]) for _ in range(row_times)
+    AffineVector([row[j % n] for j in range(n*col_times)]) for _ in range(row_times)
   ])
 
 def affine_outer_product(col, row):
   return AffineMatrix([
-    AffineRow([col[i]*row[j] for j in range(len(row))]) for i in range(len(col))
+    AffineVector([col[i]*row[j] for j in range(len(row))]) for i in range(len(col))
   ])
 
 def _as_interval(v):
@@ -301,7 +319,7 @@ class TestAffineMatrix(unittest.TestCase):
       for j in range(2):
         b[[i,j]] = Interval(bv[i][j])
 
-    result = a * b
+    result = a @ b
     self.assertTrue(result.rows()==2)
     self.assertTrue(result.cols()==2)
     self.assertTrue(result[(0,0)].itv() == Interval(11.))
@@ -316,7 +334,7 @@ class TestAffineMatrix(unittest.TestCase):
     a[[1,0]]=Interval(3.); a[[1,1]]=Interval(-2.); a[[1,2]]=Interval(4.)
 
     x = AffineVector(AffineVariables(IntervalVector([[1.,2.],[-1.,1.],[3.,4.]])))
-    y = a * x
+    y = a @ x
 
     self.assertTrue(y.size()==2)
     expected0 = x[0].itv()+2.*x[1].itv()-x[2].itv()
@@ -331,7 +349,7 @@ class TestAffineMatrix(unittest.TestCase):
     a[[1,0]]=Interval(2.); a[[1,1]]=Interval(3.)
 
     x = AffineVariables(IntervalVector([[-2.,5.],[1.,4.]]))
-    y = a * x
+    y = a @ x
 
     self.assertTrue(y.size()==2)
     self.assertTrue(y[0].itv().is_superset(x[0].itv()-x[1].itv()))
@@ -344,7 +362,7 @@ class TestAffineMatrix(unittest.TestCase):
     a[[1,0]]=Interval(4.); a[[1,1]]=Interval(5.); a[[1,2]]=Interval(6.)
 
     x = AffineVector(AffineVariables(Vector([2.,-1.])))
-    y = x.transpose() * a
+    y = x.transpose() @ a
 
     self.assertTrue(y[(0,0)].itv() == Interval(-2.))
     self.assertTrue(y[(0,1)].itv() == Interval(-1.))
@@ -693,7 +711,7 @@ class TestAffineMatrix(unittest.TestCase):
     rhs[[1,0]] = Interval(9.0);  rhs[[1,1]] = Interval(10.0)
     rhs[[2,0]] = Interval(11.0); rhs[[2,1]] = Interval(12.0)
 
-    result = lhs * rhs
+    result = lhs @ rhs
     self.check_point(result[(0,0)], 58.0)
     self.check_point(result[(0,1)], 64.0)
     self.check_point(result[(1,0)], 139.0)
@@ -707,7 +725,7 @@ class TestAffineMatrix(unittest.TestCase):
 
     vector = AffineVector(AffineVariables(IntervalVector([[2],[-1],[3]])))
 
-    result = matrix * vector
+    result = matrix @ vector
     self.check_point(result[0], 9.0)
     self.check_point(result[1], 21.0)
 
@@ -719,7 +737,7 @@ class TestAffineMatrix(unittest.TestCase):
     ])
 
     variables = AffineVariables(Vector([2.0, -1.0, 3.0]))
-    result = matrix * variables
+    result = matrix @ variables
 
     self.check_point(result[0], 9.0)
     self.check_point(result[1], 21.0)
@@ -871,11 +889,11 @@ class TestAffineMatrix(unittest.TestCase):
     self.check_point(value[(1,0)], -1.0)
     self.check_point(value[(1,1)], -1.0)
 
-    # There is no compound *= for a full matrix-matrix product (only the
+    # There is no compound @= for a full matrix-matrix product (only the
     # scalar overloads are exposed for +=/-=/*=//=, see the module
-    # docstring): reassigning from the non-compound * is the equivalent.
+    # docstring): reassigning from the non-compound @ is the equivalent.
     value = AffineMatrix(initial)
-    value = value * other
+    value = value @ other
     self.check_point(value[(0,0)], 10.0)
     self.check_point(value[(0,1)], 13.0)
     self.check_point(value[(1,0)], 22.0)
@@ -937,7 +955,7 @@ class TestAffineMatrix(unittest.TestCase):
     self.check_point(value[(1,1)], -1.0)
 
     value = AffineMatrix(initial)
-    value = value * rhs
+    value = value @ rhs
     self.check_point(value[(0,0)], 10.0)
     self.check_point(value[(0,1)], 13.0)
     self.check_point(value[(1,0)], 22.0)
@@ -948,7 +966,7 @@ class TestAffineMatrix(unittest.TestCase):
     matrix = make_real_matrix_2x3()
     vector = make_affine_vector_3()
 
-    result = matrix * vector
+    result = matrix @ vector
     expected = multiply_intervals(IntervalMatrix(matrix), interval_hull_vector(vector))
 
     self.check_encloses_vector(result, expected)
@@ -958,7 +976,7 @@ class TestAffineMatrix(unittest.TestCase):
     matrix = make_real_matrix_2x3()
     vector = make_variable_vector_3()
 
-    result = matrix * vector
+    result = matrix @ vector
     self.assertTrue(result.size() == 2)
 
     expected = multiply_intervals(IntervalMatrix(matrix), interval_hull_vector(vector))
@@ -969,7 +987,7 @@ class TestAffineMatrix(unittest.TestCase):
     matrix = make_interval_matrix_2x3()
     vector = make_affine_vector_3()
 
-    result = matrix * vector
+    result = matrix @ vector
     expected = multiply_intervals(matrix, interval_hull_vector(vector))
 
     self.check_encloses_vector(result, expected)
@@ -979,7 +997,7 @@ class TestAffineMatrix(unittest.TestCase):
     matrix = make_interval_matrix_2x3()
     vector = make_variable_vector_3()
 
-    result = matrix * vector
+    result = matrix @ vector
     self.assertTrue(result.size() == 2)
 
     expected = multiply_intervals(matrix, interval_hull_vector(vector))
@@ -990,7 +1008,7 @@ class TestAffineMatrix(unittest.TestCase):
     matrix = make_affine_matrix_2x3()
     vector = make_affine_vector_3()
 
-    result = matrix * vector
+    result = matrix @ vector
     expected = multiply_intervals(interval_hull_matrix(matrix), interval_hull_vector(vector))
 
     self.check_encloses_vector(result, expected)
@@ -1000,7 +1018,7 @@ class TestAffineMatrix(unittest.TestCase):
     matrix = make_affine_matrix_2x3()
     vector = make_variable_vector_3()
 
-    result = matrix * vector
+    result = matrix @ vector
     self.assertTrue(result.size() == 2)
 
     expected = multiply_intervals(interval_hull_matrix(matrix), interval_hull_vector(vector))
@@ -1017,19 +1035,19 @@ class TestAffineMatrix(unittest.TestCase):
     vector = make_variable_vector_3()
 
     # sum expression
-    result = (a + b) * vector
+    result = (a + b) @ vector
     expected = multiply_intervals(IntervalMatrix(a + b), interval_hull_vector(vector))
     self.check_encloses_vector(AffineVector(result), expected)
 
     # scaled expression
-    result = (3.0 * a) * vector
+    result = (3.0 * a) @ vector
     expected = multiply_intervals(IntervalMatrix(3.0 * a), interval_hull_vector(vector))
     self.check_encloses_vector(AffineVector(result), expected)
 
     # block expression
     large = Matrix([[1.0,-2.0,3.0,8.0],[4.0,0.5,-1.0,9.0],[7.0,6.0,5.0,4.0]])
     block = large.block(0, 0, 2, 3)
-    result = block * vector
+    result = block @ vector
     expected = multiply_intervals(IntervalMatrix(block), interval_hull_vector(vector))
     self.check_encloses_vector(AffineVector(result), expected)
 
@@ -1039,7 +1057,7 @@ class TestAffineMatrix(unittest.TestCase):
     b = make_interval_matrix_2x3()
     vector = make_variable_vector_3()
 
-    result = (a + b) * vector
+    result = (a + b) @ vector
     expected = multiply_intervals(a + b, interval_hull_vector(vector))
     self.check_encloses_vector(AffineVector(result), expected)
 
@@ -1049,7 +1067,7 @@ class TestAffineMatrix(unittest.TestCase):
     b = make_affine_matrix_2x3()
     vector = make_variable_vector_3()
 
-    result = (a + b) * vector
+    result = (a + b) @ vector
     evaluated = a + b
     expected = multiply_intervals(interval_hull_matrix(evaluated), interval_hull_vector(vector))
     self.check_encloses_vector(AffineVector(result), expected)
@@ -1057,7 +1075,11 @@ class TestAffineMatrix(unittest.TestCase):
   def test_affinevariables_outer_product_with_real_row(self):
 
     vector = make_variable_vector_3()
-    row = Row([2.0, -1.0, 0.5, 3.0])
+    # Row has no Python constructor (it exists only as a return type, e.g.
+    # from Vector.transpose()): a plain list of floats stands in for a
+    # "real" row here -- _as_interval()/Affine's scalar multiplication
+    # both already accept a plain float, so the helpers below need no Row.
+    row = [2.0, -1.0, 0.5, 3.0]
 
     result = affine_outer_product(AffineVector(vector), row)
     self.assertTrue(result.rows() == 3)
@@ -1093,7 +1115,9 @@ class TestAffineMatrix(unittest.TestCase):
   def test_affinevector_outer_product_with_real_row(self):
 
     vector = make_affine_vector_3()
-    row = Row([-2.0, 4.0])
+    # See test_affinevariables_outer_product_with_real_row: Row has no
+    # Python constructor, so a plain list of floats stands in for it.
+    row = [-2.0, 4.0]
 
     result = affine_outer_product(vector, row)
     expected = interval_outer_product(vector, row)
@@ -1122,8 +1146,11 @@ class TestAffineMatrix(unittest.TestCase):
     row = make_affine_row_3()
     matrix = Matrix([[1.0,-1.0],[2.0,3.0],[-2.0,4.0]])
 
-    result = row * matrix
-    expected = multiply_intervals(interval_hull_matrix(row), IntervalMatrix(matrix))
+    # AffineRow @ Matrix returns an AffineRow (only 1-D indexable, see the
+    # module docstring): wrap it as a 1 x n AffineMatrix so
+    # check_encloses_matrix can use its (i,j) tuple indexing.
+    result = AffineMatrix(row @ matrix)
+    expected = multiply_intervals(interval_hull_row_matrix(row), IntervalMatrix(matrix))
     self.check_encloses_matrix(result, expected)
 
   def test_affinerow_times_interval_matrix(self):
@@ -1135,8 +1162,10 @@ class TestAffineMatrix(unittest.TestCase):
       [Interval(-2.0,-1.9), Interval(4.0,4.1)]
     ])
 
-    result = row * matrix
-    expected = multiply_intervals(interval_hull_matrix(row), matrix)
+    # See test_affinerow_times_real_matrix: wrap the AffineRow result as a
+    # 1 x n AffineMatrix for check_encloses_matrix's (i,j) indexing.
+    result = AffineMatrix(row @ matrix)
+    expected = multiply_intervals(interval_hull_row_matrix(row), matrix)
     self.check_encloses_matrix(result, expected)
 
   def test_affinerow_times_affine_matrix(self):
@@ -1147,8 +1176,10 @@ class TestAffineMatrix(unittest.TestCase):
     matrix[[1,0]] = Interval(2.0); matrix[[1,1]] = Interval(3.0)
     matrix[[2,0]] = Interval(-2.0); matrix[[2,1]] = Interval(4.0)
 
-    result = row * matrix
-    expected = multiply_intervals(interval_hull_matrix(row), interval_hull_matrix(matrix))
+    # See test_affinerow_times_real_matrix: wrap the AffineRow result as a
+    # 1 x n AffineMatrix for check_encloses_matrix's (i,j) indexing.
+    result = AffineMatrix(row @ matrix)
+    expected = multiply_intervals(interval_hull_row_matrix(row), interval_hull_matrix(matrix))
     self.check_encloses_matrix(result, expected)
 
   def test_real_column_vector_times_affinerow(self):
@@ -1173,7 +1204,7 @@ class TestAffineMatrix(unittest.TestCase):
       for j in range(5):
         rhs[[i,j]] = Interval(float(2 - i + j))
 
-    result = lhs * rhs
+    result = lhs @ rhs
     self.assertTrue(result.rows() == 4)
     self.assertTrue(result.cols() == 5)
 
@@ -1185,7 +1216,7 @@ class TestAffineMatrix(unittest.TestCase):
     matrix = Matrix([[1.0,2.0,3.0],[-1.0,4.0,0.5]])
     variables = AffineVariables(Vector([2.0, -1.0, 3.0]))
 
-    result = matrix * variables
+    result = matrix @ variables
     self.assertTrue(result.size() == 2)
     self.assertTrue(result[0].itv() == Interval(9.0))
     self.assertTrue(result[1].itv() == Interval(-4.5))
@@ -1195,7 +1226,7 @@ class TestAffineMatrix(unittest.TestCase):
     variables = make_variable_vector_3()
     identity = Matrix.eye(3, 3)
 
-    result = identity * variables
+    result = identity @ variables
     self.assertTrue(result.size() == variables.size())
 
     for i in range(variables.size()):
@@ -1206,7 +1237,7 @@ class TestAffineMatrix(unittest.TestCase):
     variables = make_variable_vector_3()
     zero = Matrix.zero(2, 3)
 
-    result = zero * variables
+    result = zero @ variables
     self.assertTrue(result.size() == 2)
     self.assertTrue(result[0].itv() == Interval(0.0))
     self.assertTrue(result[1].itv() == Interval(0.0))
@@ -1217,18 +1248,18 @@ class TestAffineMatrix(unittest.TestCase):
 
     # real matrix
     matrix = Matrix([[-2.0]])
-    result = matrix * variables
+    result = matrix @ variables
     self.assertTrue(result[0].itv().is_superset(Interval(-6.0, 4.0)))
 
     # interval matrix
     matrix = IntervalMatrix([[Interval(-2.0, -1.0)]])
-    result = matrix * variables
+    result = matrix @ variables
     self.assertTrue(result[0].itv().is_superset(matrix[(0,0)] * variables[0].itv()))
 
     # Affine matrix
     matrix = AffineMatrix(1, 1)
     matrix[[0,0]] = Interval(-2.0, -1.0)
-    result = matrix * variables
+    result = matrix @ variables
     self.assertTrue(result[0].itv().is_superset(matrix[(0,0)].itv() * variables[0].itv()))
 
   def test_empty_coefficient_propagation_through_products(self):
@@ -1238,7 +1269,7 @@ class TestAffineMatrix(unittest.TestCase):
     matrix[[0,1]] = Interval.empty()
 
     variables = AffineVariables(IntervalVector([[1.0, 2.0], [3.0, 4.0]]))
-    result = matrix * variables
+    result = matrix @ variables
 
     self.assertTrue(result.size() == 1)
     self.assertTrue(result[0].is_empty())
@@ -1248,7 +1279,7 @@ class TestAffineMatrix(unittest.TestCase):
     matrix = make_real_matrix_2x3()
     x = make_variable_vector_3()
 
-    result = (matrix * x) - (matrix * x)
+    result = (matrix @ x) - (matrix @ x)
 
     for i in range(result.size()):
       self.assertTrue(result[i].itv() == Interval(0.0))

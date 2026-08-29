@@ -18,12 +18,7 @@
 #    reaches AffineVarMain::operator=(const Interval&) instead (see the
 #    comment in codac2_py_AffineVariables.cpp);
 #  - there is no standalone Python class for a single AffineVarMain (only
-#    AffineVariables, the vector container), so AffineVarMain<T>::empty()
-#    has no Python equivalent;
-#  - static_assert/concept-based regression tests (e.g. "AffineTVarMain
-#    cannot be assigned from AffineTMain", disabled scalar compound
-#    assignments) check C++ compile-time properties that do not exist in
-#    Python.
+#    AffineVariables, the vector container).
 #
 # ----------------------------------------------------------------------------
 #  \date       2026

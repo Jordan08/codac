@@ -45,16 +45,24 @@ void export_AffineMatrixBase([[maybe_unused]] py::module& m, py::class_<S>& pycl
 
   pyclass
 
+    // py::is_operator() is required here (as it already is on the
+    // arithmetic operators below): without it, pybind11 raises a TypeError
+    // on any argument that isn't another S instead of returning
+    // NotImplemented, which prevents Python from then trying the reflected
+    // comparison -- e.g. "affine_vector == Approx_AffineVector(...)" needs
+    // this __eq__ to step aside so Approx_AffineVector.__eq__ can run.
     .def("__eq__", [](const S& x1, const S& x2)
         {
           return x1 == x2;
         },
-      DOC_TO_BE_DEFINED)
+      py::is_operator(),
+      MATRIX_ADDONS_BASE_BOOL_OPERATOREQ_CONST_MATRIX_U_R_C__REF_CONST)
 
     .def("__ne__", [](const S& x1, const S& x2)
         {
           return !(x1 == x2);
         },
+      py::is_operator(),
       DOC_TO_BE_DEFINED)
 
     .def("__len__", [](const S& x)
@@ -457,7 +465,25 @@ void export_AffineMatrixBase([[maybe_unused]] py::module& m, py::class_<S>& pycl
     .def("__iadd__", [](S& x1, const S& x2) -> S& { x1 += x2; return x1; },
       py::is_operator())
 
+    // Scalar broadcast overloads of +=/-=, matching the generic Eigen
+    // addon (codac2_MatrixBase_addons_AffineMainVector.h): it accepts any
+    // OtherDerived satisfying IsIntervalDomain<OtherDerived> or
+    // std::is_arithmetic_v<OtherDerived>, and Affine itself satisfies
+    // IsIntervalDomain (is_interval_based<AffineMain<T>>, see
+    // codac2_AffineMain.h), on top of Interval.
+    .def("__iadd__", [](S& x1, const Interval& x2) -> S& { x1 += x2; return x1; },
+      py::is_operator())
+
+    .def("__iadd__", [](S& x1, const Affine& x2) -> S& { x1 += x2; return x1; },
+      py::is_operator())
+
     .def("__isub__", [](S& x1, const S& x2) -> S& { x1 -= x2; return x1; },
+      py::is_operator())
+
+    .def("__isub__", [](S& x1, const Interval& x2) -> S& { x1 -= x2; return x1; },
+      py::is_operator())
+
+    .def("__isub__", [](S& x1, const Affine& x2) -> S& { x1 -= x2; return x1; },
       py::is_operator())
 
     .def("__imul__", [](S& x1, double x2) -> S& { x1 *= x2; return x1; },
@@ -466,10 +492,16 @@ void export_AffineMatrixBase([[maybe_unused]] py::module& m, py::class_<S>& pycl
     .def("__imul__", [](S& x1, const Interval& x2) -> S& { x1 *= x2; return x1; },
       py::is_operator())
 
+    .def("__imul__", [](S& x1, const Affine& x2) -> S& { x1 *= x2; return x1; },
+      py::is_operator())
+
     .def("__itruediv__", [](S& x1, double x2) -> S& { x1 /= x2; return x1; },
       py::is_operator())
 
     .def("__itruediv__", [](S& x1, const Interval& x2) -> S& { x1 /= x2; return x1; },
+      py::is_operator())
+
+    .def("__itruediv__", [](S& x1, const Affine& x2) -> S& { x1 /= x2; return x1; },
       py::is_operator())
   ;
 

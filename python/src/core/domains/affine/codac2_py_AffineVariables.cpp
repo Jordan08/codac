@@ -24,7 +24,9 @@
 
 #include "codac2_py_doc.h"
 #include "codac2_py_matlab.h"
+#include "codac2_py_Matrix_addons_VectorBase_docs.h" // Generated file from Doxygen XML (doxygen2docstring.py)
 #include "codac2_py_MatrixBase_addons_AffineMainVector_docs.h" // Generated file from Doxygen XML (doxygen2docstring.py)
+#include "codac2_py_MatrixBase_addons_IntervalMatrixBase_docs.h" // Generated file from Doxygen XML (doxygen2docstring.py)
 #include "codac2_py_AffineVar_docs.h" // Generated file from Doxygen XML (doxygen2docstring.py)
 #include "codac2_py_AffineVarVector_docs.h" // Generated file from Doxygen XML (doxygen2docstring.py)
 
@@ -114,7 +116,7 @@ py::class_<AffineVariables> export_AffineVariables(py::module& m)
           // through an AffineMain& alias of an AffineVarMain object.
           return x[matlab::input_index(i)];
         }, py::return_value_policy::reference_internal,
-      DOC_TO_BE_DEFINED)
+      MATRIX_ADDONS_VECTORBASE_CONST_SCALAR_REF_OPERATORCOMPO_INDEX_CONST)
 
     .def("get_item_0", [](const AffineVariables& x, Index_type i) -> const Affine&
         {
@@ -123,7 +125,7 @@ py::class_<AffineVariables> export_AffineVariables(py::module& m)
             throw py::index_error();
           return x[i];
         }, py::return_value_policy::reference_internal,
-      DOC_TO_BE_DEFINED)
+      MATRIX_ADDONS_VECTORBASE_CONST_SCALAR_REF_OPERATORCOMPO_INDEX_CONST)
 
     // The value type is deliberately Interval, not Affine: AffineVarMain
     // deletes operator=(const AffineMain<T>&) on purpose (see
@@ -196,11 +198,35 @@ py::class_<AffineVariables> export_AffineVariables(py::module& m)
         },
       MATRIXBASE_ADDONS_AFFINEMAINVECTOR_AUTO_ITV_CONST)
 
+    // lb()/ub()/mid() come from the generic IntervalMatrixBase Eigen addon:
+    // AffineVarMain<T> is_interval_based (see codac2_AffineVar.h), so this
+    // addon applies to AffineVarMainVector<T> exactly as it does to
+    // AffineMainVector<T> (bound on AffineVector/AffineRow/AffineMatrix
+    // through export_AffineMatrixBase(), see codac2_py_AffineMatrixBase.h).
+
+    .def("lb", [](const AffineVariables& x)
+        {
+          return x.lb();
+        },
+      MATRIXBASE_ADDONS_INTERVALMATRIXBASE_AUTO_LB_CONST)
+
+    .def("ub", [](const AffineVariables& x)
+        {
+          return x.ub();
+        },
+      MATRIXBASE_ADDONS_INTERVALMATRIXBASE_AUTO_UB_CONST)
+
+    .def("mid", [](const AffineVariables& x)
+        {
+          return x.mid();
+        },
+      MATRIXBASE_ADDONS_INTERVALMATRIXBASE_AUTO_MID_CONST)
+
     .def("is_empty", [](const AffineVariables& x)
         {
           return x.is_empty();
         },
-      DOC_TO_BE_DEFINED)
+      MATRIXBASE_ADDONS_INTERVALMATRIXBASE_BOOL_IS_EMPTY_CONST)
 
     .def("__neg__", [](const AffineVariables& x) -> AffineVector
         {
@@ -209,39 +235,42 @@ py::class_<AffineVariables> export_AffineVariables(py::module& m)
       AFFINEMAINVECTOR_T_AFFINEVARMAINVECTOR_T_OPERATORMINUS_CONST)
 
     // Products: an affine-variable vector is never modified in place, the
-    // result of any product is a plain affine vector or matrix.
+    // result of any product is a plain affine vector or matrix. These are
+    // genuine matrix/vector products, so, matching Python/NumPy
+    // convention, they are bound on "@" (__matmul__), not "*" (which is
+    // reserved for scalar/elementwise multiplication).
 
-    .def("__mul__", [](const AffineVariables& x1, const Row& x2) -> AffineMatrix
+    .def("__matmul__", [](const AffineVariables& x1, const Row& x2) -> AffineMatrix
         {
           return AffineVector(x1)*x2.cast<Affine>();
         },
       py::is_operator())
 
-    .def("__mul__", [](const AffineVariables& x1, const IntervalRow& x2) -> AffineMatrix
+    .def("__matmul__", [](const AffineVariables& x1, const IntervalRow& x2) -> AffineMatrix
         {
           return AffineVector(x1)*x2.cast<Affine>();
         },
       py::is_operator())
 
-    .def("__mul__", [](const AffineVariables& x1, const AffineRow& x2) -> AffineMatrix
+    .def("__matmul__", [](const AffineVariables& x1, const AffineRow& x2) -> AffineMatrix
         {
           return AffineVector(x1)*x2;
         },
       py::is_operator())
 
-    .def("__rmul__", [](const AffineVariables& x2, const Matrix& x1) -> AffineVector
+    .def("__rmatmul__", [](const AffineVariables& x2, const Matrix& x1) -> AffineVector
         {
           return x1.cast<Affine>()*AffineVector(x2);
         },
       AUTO_OPERATORMUL_CONST_EIGEN_MATRIXBASE_OTHERDERIVED_REF_CONST_AFFINEVARMAINVECTOR_T_REF)
 
-    .def("__rmul__", [](const AffineVariables& x2, const IntervalMatrix& x1) -> AffineVector
+    .def("__rmatmul__", [](const AffineVariables& x2, const IntervalMatrix& x1) -> AffineVector
         {
           return x1.cast<Affine>()*AffineVector(x2);
         },
       AUTO_OPERATORMUL_CONST_EIGEN_MATRIXBASE_OTHERDERIVED_REF_CONST_AFFINEVARMAINVECTOR_T_REF)
 
-    .def("__rmul__", [](const AffineVariables& x2, const AffineMatrix& x1) -> AffineVector
+    .def("__rmatmul__", [](const AffineVariables& x2, const AffineMatrix& x1) -> AffineVector
         {
           return x1*AffineVector(x2);
         },

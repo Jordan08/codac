@@ -30,6 +30,39 @@ namespace codac2 {
  *
  * Each component is an \c AffineVarMain sharing a coherent number of
  * noise symbols with the other components.
+ *
+ * \note \b Invariant: position \c i in the vector always owns the dedicated
+ *       noise symbol of index \c i (see \c AffineVarMain::noise_index()).
+ *       Every factory-style method of this class (the constructors,
+ *       \c resize(), \c conservativeResize(), \c operator=(const
+ *       IntervalVector&), \c init(const Interval&)) establishes or restores
+ *       this invariant by (re)building each component as
+ *       ``AffineVarMain<T>(size(), i, itv)``.
+ *
+ *       This invariant is also what the many deleted mutating operators
+ *       (``operator+=``, ``-=``, ``*=``, ``/=``) exist to protect: a
+ *       declared affine variable must never be updated in place through an
+ *       arithmetic combination, since the result would no longer be a pure
+ *       function of its own noise symbol alone.
+ *
+ *       The remaining opening, plain element assignment through
+ *       ``operator[]``/``operator()`` (e.g. ``v[i] = w[j]``), is guarded the
+ *       same way at the \c AffineVarMain level: \c AffineVarMain::operator=
+ *       only adopts the source's noise symbol identity while the
+ *       destination is still an unbound Eigen placeholder (freshly
+ *       (re)allocated, not yet contextualized); once a component has an
+ *       established identity, assigning it another \c AffineVarMain (same
+ *       vector or not, same size or not) absorbs only that source's
+ *       interval enclosure, rebuilt on the destination's own noise symbol.
+ *       Without this guard, ``v[3] = v[7]`` would alias positions 3 and 7
+ *       onto the same noise symbol, making them silently -- and
+ *       incorrectly -- perfectly correlated in every later computation
+ *       (e.g. ``v[3] - v[7]`` would wrongly collapse to a single point
+ *       instead of enclosing the actual range of two independent
+ *       components). See the regression test
+ *       "AffineVarMain : assigning between two components of the same
+ *       vector does not alias their noise symbols" in
+ *       codac2_tests_AffineVariables.cpp.
  */
 
 

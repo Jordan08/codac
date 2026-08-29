@@ -32,6 +32,15 @@ namespace codac2 {
 
 	/** \brief Default affine type based on \c AF_Default. */
 	typedef AffineMain<AF_Default> 			Affine;
+
+	/**
+	 * \brief Default affine-variables container, based on \c AF_Default.
+	 *
+	 * See \c AffineVarMainVector for the invariant it maintains (position
+	 * \c i always owns the dedicated noise symbol of index \c i) and how
+	 * element assignment (e.g. ``variables[i] = ...``) is guarded to
+	 * preserve it.
+	 */
 	typedef AffineVarMainVector<AF_Default>	AffineVariables;
 	typedef AffineMainVector<AF_Default> 	AffineVector;
 	typedef AffineMainRow<AF_Default> 		AffineRow;

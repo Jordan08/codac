@@ -80,8 +80,10 @@ TEST_CASE(
 )
 {
 
-// Une affectction entre indices différents conserve l’identité
-// de la destination et ne crée pas une fausse dépendance.
+// Une affectation entre indices différents conserve l’identité
+// de la destination et ne crée pas une fausse dépendance : x[0] et x[1]
+// restent deux symboles de bruit indépendants, même si x[0] porte
+// désormais la même enveloppe intervalle que x[1].
 AffineTVarVector x(
     IntervalVector({{1.0, 2.0}, {3.0, 4.0}})
 );
@@ -89,23 +91,64 @@ AffineTVarVector x(
 x[0] = x[1];
 
 CHECK(x[0].itv().is_superset(Interval(3.0, 4.0)));
+CHECK(x[0].noise_index() == 0);
+CHECK(x[1].noise_index() == 1);
 
+// Since x[0] and x[1] are independent noise symbols carrying the same
+// [3,4] interval, their difference must enclose the full [-1,1] range,
+// not collapse to a single point the way it would if the assignment had
+// created a false dependency between them.
 AffineT result = x[0] - x[1];
-CHECK(result == Interval::zero());
+CHECK(result == Interval(-1.0, 1.0));
 }
 
 
 
-TEST_CASE(  "AffineVarMain : copie avec des tailles différentes")
+TEST_CASE(  "AffineVarMain : assigning across different contexts preserves this component's own identity")
 {
+// small[0] already has an established identity: index 0 in a 1-noise-symbol
+// context. Assigning it another vector's component (a different context,
+// a different index) must not silently overwrite that identity -- doing so
+// would alias small[0] onto large[2]'s noise symbol, breaking the
+// AffineVarMainVector invariant that position i always owns noise symbol i.
+// Only the interval enclosure of the source is absorbed, rebuilt on
+// small[0]'s own noise symbol -- same effect as init(const Interval&).
 AffineTVarVector small( IntervalVector({{1.0, 2.0}}));
 
 AffineTVarVector large( IntervalVector({{3.0, 4.0}, {5.0, 6.0}, {7.0, 8.0}}));
 
 small[0] = large[2];
 
-CHECK(small[0].noise_count() == 3);
+CHECK(small[0].noise_count() == 1);
+CHECK(small[0].noise_index() == 0);
 CHECK(small[0].itv()==large[2].itv());
+}
+
+
+TEST_CASE(  "AffineVarMain : assigning between two components of the same vector does not alias their noise symbols")
+{
+// Regression test: v[3]=v[7] must not make v[3] and v[7] share a noise
+// symbol. If it did, they would become perfectly correlated afterwards
+// (e.g. v[3]-v[7] would wrongly collapse to a single point) even though
+// they are meant to remain independent components of the box.
+AffineTVarVector v( IntervalVector({
+    {0.0, 1.0}, {0.0, 1.0}, {0.0, 1.0}, {10.0, 20.0},
+    {0.0, 1.0}, {0.0, 1.0}, {0.0, 1.0}, {30.0, 40.0}
+}));
+
+v[3] = v[7];
+
+CHECK(v[3].noise_index() == 3);
+CHECK(v[7].noise_index() == 7);
+CHECK(v[3].itv() == Interval(30.0, 40.0));
+
+// v[3] and v[7] now carry the same interval [30,40] but on distinct,
+// independent noise symbols (3 and 7), so their difference must enclose
+// the full [-10,10] range. Had the assignment instead aliased v[3] onto
+// v[7]'s noise symbol, this difference would have wrongly collapsed to
+// the single point 0.
+Interval diff = (v[3] - v[7]).itv();
+CHECK(diff == Interval(-10.0, 10.0));
 }
 
 

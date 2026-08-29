@@ -65,6 +65,14 @@ copied from one, which *do* carry a dedicated noise symbol:
 
 .. tabs::
 
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-class-1-beg]
+      :end-before: [affine-class-1-end]
+      :dedent: 4
+
   .. group-tab:: C++
 
     .. literalinclude:: src.cpp
@@ -99,6 +107,14 @@ full details; a short example:
 
 .. tabs::
 
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-class-2-beg]
+      :end-before: [affine-class-2-end]
+      :dedent: 4
+
   .. group-tab:: C++
 
     .. literalinclude:: src.cpp
@@ -122,6 +138,14 @@ Affine form properties
 ------------------------
 
 .. tabs::
+
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-class-3-beg]
+      :end-before: [affine-class-3-end]
+      :dedent: 4
 
   .. group-tab:: C++
 
@@ -154,6 +178,14 @@ Affine form properties
 ``volume()`` is an alias for ``diam()`` in this scalar, 1-dimensional case:
 
 .. tabs::
+
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-class-10-beg]
+      :end-before: [affine-class-10-end]
+      :dedent: 4
 
   .. group-tab:: C++
 
@@ -195,6 +227,14 @@ tiny bit wider than the mathematical :math:`r`-enlargement):
 
 .. tabs::
 
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-class-11-beg]
+      :end-before: [affine-class-11-end]
+      :dedent: 4
+
   .. group-tab:: C++
 
     .. literalinclude:: src.cpp
@@ -216,6 +256,14 @@ in the last line, where ``z - x`` cancels ``x``'s own contribution exactly
 and recovers ``2*x - x = x``:
 
 .. tabs::
+
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-class-4-beg]
+      :end-before: [affine-class-4-end]
+      :dedent: 4
 
   .. group-tab:: C++
 
@@ -318,6 +366,14 @@ conditional selection between affine expressions.
 
 .. tabs::
 
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-class-nonlinear-list-beg]
+      :end-before: [affine-class-nonlinear-list-end]
+      :dedent: 4
+
   .. group-tab:: C++
 
     .. literalinclude:: src.cpp
@@ -327,6 +383,14 @@ conditional selection between affine expressions.
       :dedent: 4
 
 .. tabs::
+
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-class-5-beg]
+      :end-before: [affine-class-5-end]
+      :dedent: 4
 
   .. group-tab:: C++
 
@@ -338,6 +402,14 @@ conditional selection between affine expressions.
 
 
 .. tabs::
+
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-class-9-beg]
+      :end-before: [affine-class-9-end]
+      :dedent: 4
 
   .. group-tab:: C++
 
@@ -440,6 +512,14 @@ The mode is stored as a thread-local setting:
 
 .. tabs::
 
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-class-6-beg]
+      :end-before: [affine-class-6-end]
+      :dedent: 4
+
   .. group-tab:: C++
 
     .. literalinclude:: src.cpp
@@ -476,6 +556,14 @@ interval enclosure can compare equal.
 
 .. tabs::
 
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-class-7-beg]
+      :end-before: [affine-class-7-end]
+      :dedent: 4
+
   .. group-tab:: C++
 
     .. literalinclude:: src.cpp
@@ -495,6 +583,14 @@ to the affine form's own interval enclosure — they return a plain C++
 ``double``):
 
 .. tabs::
+
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-class-12-beg]
+      :end-before: [affine-class-12-end]
+      :dedent: 4
 
   .. group-tab:: C++
 
@@ -585,6 +681,14 @@ range. The property also holds for a *derived* expression subtracted from
 itself (``zz``), not just a raw declared variable:
 
 .. tabs::
+
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-class-8-beg]
+      :end-before: [affine-class-8-end]
+      :dedent: 4
 
   .. group-tab:: C++
 

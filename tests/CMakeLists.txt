@@ -74,6 +74,7 @@ list(APPEND SRC_TESTS
   ../doc/manual/manual/contractors/geometric/src
   ../doc/manual/manual/contractors/analytic/src
   ../doc/manual/manual/contractors/set/src
+  ../doc/manual/manual/contractors/shape/src
 
 
   # ----------------------------------------------------------------
@@ -111,6 +112,7 @@ list(APPEND SRC_TESTS
   core/functions/analytic/codac2_tests_AnalyticFunction
 
   ../doc/manual/manual/functions/analytic/src
+  ../doc/manual/manual/functions/parallelepiped/src
 
 
   # ----------------------------------------------------------------
@@ -156,6 +158,8 @@ list(APPEND SRC_TESTS
   # ----------------------------------------------------------------
 
   core/peibos/codac2_tests_peibos
+
+  ../doc/manual/manual/functions/peibos/src
 
 
   # ----------------------------------------------------------------

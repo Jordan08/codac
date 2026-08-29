@@ -188,6 +188,20 @@ public:
 	/**
 	 * \brief Assigns from another affine variable.
 	 *
+	 * \note If this instance is still an unbound Eigen placeholder
+	 *       (\c noise_index() == -1), it adopts \p x's full identity,
+	 *       including its dedicated noise symbol: this is the one-shot
+	 *       contextualization performed right after an
+	 *       \c AffineVarMainVector allocates/resizes its underlying Eigen
+	 *       storage. Otherwise, this instance already has an established
+	 *       identity (a fixed position in some \c AffineVarMainVector,
+	 *       with its own dedicated noise symbol) that must not be
+	 *       silently reassigned to \p x's: only \p x's interval enclosure
+	 *       is absorbed, rebuilt on this instance's own noise symbol
+	 *       (same effect as \c init(const Interval&)). This is what keeps
+	 *       e.g. \c v[3]=v[7] on an \c AffineVarMainVector \c v from
+	 *       aliasing two positions onto the same noise symbol.
+	 *
 	 * \param x affine variable to copy
 	 * \return a reference to this
 	 */
@@ -312,26 +326,27 @@ AffineVarMain<T>& AffineVarMain<T>::operator=(const AffineVarMain<T>& x) {
 		return *this;
 	}
 
-	// if (_var < 0) {
-	// 	// Eigen placeholder: acquire the complete variable identity once.
-	// 	AffineMain<T>::operator=(x);
-	// 	_var = x._var;
-	// 	return *this;
-	// }
-	// if (x._var == _var && x.noise_count() == this->noise_count()) {
-	// 	// Same affine context and same dedicated noise symbol.
-	// 	AffineMain<T>::operator=(x);
-	// 	return *this;
-	// }
-	// // Assigning a different affine variable must not overwrite the destination
-	// // identity. Rebuild the destination from the certified interval enclosure,
-	// // which gives it its own noise symbol and avoids duplicated or out-of-range
-	// // symbol indices inside an AffineVarMainVector.
-	// return (*this = x.itv());
+	if (_var < 0) {
+		// Still-unbound Eigen placeholder: this is the one-shot
+		// contextualization performed right after an AffineVarMainVector
+		// allocates/resizes its underlying Eigen storage. Acquire the
+		// complete variable identity of x, including its noise symbol.
+		assert(x._var >= 0 && "contextualizing a placeholder from another placeholder");
+		AffineMain<T>::operator=(x);
+		_var = x._var;
+		return *this;
+	}
 
-	AffineMain<T>::operator=(x);
-	_var = x._var;
-	return *this;
+	// This instance already has an established identity (a fixed position
+	// in some AffineVarMainVector, with its own dedicated noise symbol
+	// _var). That identity must never be silently overwritten by x's --
+	// doing so (e.g. through v[3]=v[7] on an AffineVarMainVector v) would
+	// alias two positions onto the same noise symbol, making them appear
+	// perfectly correlated afterwards even though they are meant to stay
+	// independent. Only x's certified interval enclosure is absorbed,
+	// rebuilt on this instance's own noise symbol -- same effect as
+	// init(const Interval&).
+	return (*this = x.itv());
 }
 
 template<class T>

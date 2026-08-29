@@ -43,7 +43,7 @@ void export_AffineVector_(py::module& m, py::class_<AV>& pyclass)
           matlab::test_integer(n);
           return std::make_unique<AV>((int)n);
         }),
-      DOC_TO_BE_DEFINED,
+      MATRIX_ADDONS_VECTORBASE_MATRIX_INT,
       "n"_a)
 
     .def(py::init<const AV&>(),
@@ -86,7 +86,7 @@ void export_AffineVector_(py::module& m, py::class_<AV>& pyclass)
           }
           return av;
         }),
-      DOC_TO_BE_DEFINED,
+      MATRIX_ADDONS_INTERVALVECTOR_MATRIX_INITIALIZER_LIST_INITIALIZER_LIST_DOUBLE,
       "v"_a)
 
     .def(py::init( // this constructor must be the last one to be declared
@@ -97,7 +97,7 @@ void export_AffineVector_(py::module& m, py::class_<AV>& pyclass)
             (*av)[i] = v[i];
           return av;
         }),
-      DOC_TO_BE_DEFINED,
+      MATRIX_ADDONS_INTERVALVECTOR_MATRIX_INITIALIZER_LIST_INTERVAL,
       "v"_a)
 
     .def(
@@ -162,7 +162,7 @@ void export_AffineVector_(py::module& m, py::class_<AV>& pyclass)
         {
           return x.diag_matrix().eval();
         },
-      DOC_TO_BE_DEFINED)
+      MATRIXBASE_ADDONS_VECTORBASE_AUTO_DIAG_MATRIX_CONST)
 
     .def("resize", [](AV& x, Index_type n)
         {

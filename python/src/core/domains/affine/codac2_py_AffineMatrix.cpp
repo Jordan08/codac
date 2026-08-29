@@ -42,7 +42,7 @@ using namespace pybind11::literals;
 py::class_<AffineMatrix> export_AffineMatrix(py::module& m)
 {
   py::class_<AffineMatrix> exported_affinematrix_class(m, "AffineMatrix",
-    USING_AFFINEMAINMATRIX_EQ_TYPEDEF_EIGEN_MATRIX_AFFINEMAIN_TMINUSONEMINUSONE);
+    USING_AFFINEMAINMATRIX_EQ_EIGEN_MATRIX_AFFINEMAIN_TMINUSONEMINUSONE);
   export_AffineMatrixBase<AffineMatrix,Matrix,false>(m, exported_affinematrix_class);
 
   exported_affinematrix_class
@@ -55,7 +55,7 @@ py::class_<AffineMatrix> export_AffineMatrix(py::module& m)
           matlab::test_integer(r,c);
           return std::make_unique<AffineMatrix>((int)r,(int)c);
         }),
-      DOC_TO_BE_DEFINED,
+      MATRIX_ADDONS_MATRIXBASE_MATRIX_INT_INT,
       "r"_a, "c"_a)
 
     .def(py::init<const AffineMatrix&>(),
@@ -128,51 +128,54 @@ py::class_<AffineMatrix> export_AffineMatrix(py::module& m)
       MATRIX_ADDONS_INTERVALMATRIXBASE_STATIC_AUTO_EMPTY_INDEX_INDEX,
       "r"_a, "c"_a)
 
-    // Products with vectors and matrices
+    // Products with vectors and matrices. These are genuine matrix/vector
+    // products, so, matching Python/NumPy convention, they are bound on
+    // "@" (__matmul__), not "*" (__mul__ is reserved for scalar/elementwise
+    // multiplication, see codac2_py_AffineMatrixBase.h).
 
-    .def("__mul__", [](const AffineMatrix& x1, const Vector& x2) -> AffineVector
+    .def("__matmul__", [](const AffineMatrix& x1, const Vector& x2) -> AffineVector
         {
           return x1*x2.cast<Affine>();
         },
       py::is_operator())
 
-    .def("__mul__", [](const AffineMatrix& x1, const IntervalVector& x2) -> AffineVector
+    .def("__matmul__", [](const AffineMatrix& x1, const IntervalVector& x2) -> AffineVector
         {
           return x1*x2.cast<Affine>();
         },
       py::is_operator())
 
-    .def("__mul__", [](const AffineMatrix& x1, const AffineVector& x2) -> AffineVector
+    .def("__matmul__", [](const AffineMatrix& x1, const AffineVector& x2) -> AffineVector
         {
           return x1*x2;
         },
       py::is_operator())
 
-    .def("__mul__", [](const AffineMatrix& x1, const Matrix& x2) -> AffineMatrix
+    .def("__matmul__", [](const AffineMatrix& x1, const Matrix& x2) -> AffineMatrix
         {
           return x1*x2.cast<Affine>();
         },
       py::is_operator())
 
-    .def("__mul__", [](const AffineMatrix& x1, const IntervalMatrix& x2) -> AffineMatrix
+    .def("__matmul__", [](const AffineMatrix& x1, const IntervalMatrix& x2) -> AffineMatrix
         {
           return x1*x2.cast<Affine>();
         },
       py::is_operator())
 
-    .def("__mul__", [](const AffineMatrix& x1, const AffineMatrix& x2) -> AffineMatrix
+    .def("__matmul__", [](const AffineMatrix& x1, const AffineMatrix& x2) -> AffineMatrix
         {
           return x1*x2;
         },
       py::is_operator())
 
-    .def("__rmul__", [](const AffineMatrix& x2, const Matrix& x1) -> AffineMatrix
+    .def("__rmatmul__", [](const AffineMatrix& x2, const Matrix& x1) -> AffineMatrix
         {
           return x1.cast<Affine>()*x2;
         },
       py::is_operator())
 
-    .def("__rmul__", [](const AffineMatrix& x2, const IntervalMatrix& x1) -> AffineMatrix
+    .def("__rmatmul__", [](const AffineMatrix& x2, const IntervalMatrix& x1) -> AffineMatrix
         {
           return x1.cast<Affine>()*x2;
         },

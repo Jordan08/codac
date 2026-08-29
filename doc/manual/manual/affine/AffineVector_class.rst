@@ -51,6 +51,14 @@ arithmetic:
 
 .. tabs::
 
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-vector-1-beg]
+      :end-before: [affine-vector-1-end]
+      :dedent: 4
+
   .. group-tab:: C++
 
     .. literalinclude:: src.cpp
@@ -74,6 +82,14 @@ interval arithmetic would.
 
 .. tabs::
 
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-vector-2-beg]
+      :end-before: [affine-vector-2-end]
+      :dedent: 4
+
   .. group-tab:: C++
 
     .. literalinclude:: src.cpp
@@ -91,6 +107,14 @@ compound assignment operators, since its scalar type (``Affine``) does not
 delete them:
 
 .. tabs::
+
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-vector-3-beg]
+      :end-before: [affine-vector-3-end]
+      :dedent: 4
 
   .. group-tab:: C++
 
@@ -112,11 +136,20 @@ Block access
 ----------------
 
 Being a plain Eigen column vector, the usual block accessors
-(``head``, ``tail``, ``segment``) are available. They return Eigen block
-expressions and can be materialized as an ``AffineVector`` when a concrete
-vector is required:
+(``head``, ``tail``, ``segment``) are available in C++; the Python binding
+exposes the equivalent ``subvector(start_id, end_id)`` instead. They return
+Eigen block expressions and can be materialized as an ``AffineVector`` when
+a concrete vector is required:
 
 .. tabs::
+
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-vector-4-beg]
+      :end-before: [affine-vector-4-end]
+      :dedent: 4
 
   .. group-tab:: C++
 
@@ -131,6 +164,14 @@ Transpose
 -------------
 
 .. tabs::
+
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-vector-5-beg]
+      :end-before: [affine-vector-5-end]
+      :dedent: 4
 
   .. group-tab:: C++
 
@@ -157,6 +198,14 @@ component at a time:
 
 .. tabs::
 
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-vector-6-beg]
+      :end-before: [affine-vector-6-end]
+      :dedent: 4
+
   .. group-tab:: C++
 
     .. literalinclude:: src.cpp
@@ -182,6 +231,14 @@ Printing
 ------------
 
 .. tabs::
+
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-vector-7-beg]
+      :end-before: [affine-vector-7-end]
+      :dedent: 4
 
   .. group-tab:: C++
 

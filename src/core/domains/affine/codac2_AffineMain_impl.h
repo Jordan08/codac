@@ -403,15 +403,28 @@ inline AffineMain<T>& AffineMain<T>::Asqrt(const Interval& itv){
 }
 
 
-// Chebyshev formula:
-// alpha = (f(ub(x)) - f(lb(x))) / diam(x)
-// u     = (f')^{-1}(alpha)
-// d_a   = f(lb(x)) - alpha*lb(x)
-// d_b   = f(ub(x)) - alpha*ub(x)
-// d_min = min(d_a, d_b)
-// d_max = f(u) - alpha*u
+// Chebyshev formula, for f monotonic and either convex or concave on x
+// (so that g(t) = f(t) - alpha*t has a single extremum on x, at t=u):
+// alpha = (f(ub(x)) - f(lb(x))) / diam(x)     (chord slope)
+// u     = (f')^{-1}(alpha)                    (point where the tangent is parallel to the chord)
+// d_a   = f(lb(x)) - alpha*lb(x)               (chord offset, endpoint a)
+// d_b   = f(ub(x)) - alpha*ub(x)               (chord offset, endpoint b; d_a == d_b in exact arithmetic)
+// d_tan = f(u) - alpha*u                       (tangent offset, interior point u)
+//
+// The chord lies on one side of the graph of f and the tangent at u on the
+// other, so [d_a, d_b] (collapsed to a point) and d_tan bracket g over x:
+// - f concave (f''<0, e.g. sqrt, log): chord is below the curve, tangent is
+//   above it, so d_min = min(d_a, d_b) and d_max = d_tan.
+// - f convex (f''>0, e.g. inv on one sign, exp, even powers): the roles
+//   swap, chord is above the curve, tangent is below it, so
+//   d_min = d_tan and d_max = max(d_a, d_b).
+// In both cases:
 // beta  = mid([d_min, d_max])
 // zeta  = rad([d_min, d_max])
+//
+// Each routine below picks the ordering matching its own f: Asqrt_CH/Alog_CH
+// (concave) place the chord offset first and d_tan last; Ainv_CH/Aexp_CH
+// (convex) place d_tan first and the chord offset last.
 
 template<class T>
 inline AffineMain<T>& AffineMain<T>::Ainv_CH(const Interval& itv){

@@ -8,21 +8,6 @@
 # representation (coefficient storage, compact(), products/sums under
 # extreme scales).
 #
-# A few C++ tests from codac2_tests_AffineForm_base.cpp are not translated
-# here because they check things that do not exist, or are not exposed, in
-# Python:
-#  - static_assert/type_trait checks (std::is_constructible_v, ...) and the
-#    concept-based regression tests: these check C++ compile-time
-#    properties;
-#  - the Eigen comma-initializer tests ("vector << Interval(1.0), ..."):
-#    Python has no equivalent of that operator;
-#  - type-trait checks on the raw AF_fAF2 representation struct itself
-#    (as opposed to AffineMain<AF_fAF2>, i.e. Affine): AF_fAF2 is not
-#    exposed to Python as its own type;
-#  - the "software twoProd" test, gated by codac_fma_runtime() (not
-#    exposed to Python) and otherwise redundant with the "opposite finite
-#    scales" test kept below.
-#
 # Python has no assignment operator distinct from construction: wherever
 # the C++ test reassigns an *existing* Affine from an Interval or a double
 # (relying on AffineMain::operator=, e.g. to check that noise_count() is
@@ -32,6 +17,7 @@
 # existing Affine from another Affine has no such equivalent; those spots
 # fall back to copy-construction (Affine(source)).
 #
+# TODO: check this with Simon Rohou
 # AffineVariables.__getitem__ returns a live reference to the container's
 # element (like Affine/AffineVector/AffineRow/AffineMatrix indexing
 # already did), not a copy: wherever this file names a single component
@@ -40,12 +26,6 @@
 # get an independent copy first -- otherwise the mutation would silently
 # reach back into the container, exactly as it would with a live C++
 # reference, and corrupt any later read of that same component.
-#
-# codac2::Approx<AffineMain<T>> is exposed to Python as Approx_Affine
-# (mirroring Approx_double/Approx_Interval/...), used here directly
-# rather than through the generic Approx() dispatcher: its constructor
-# takes an Interval, exactly like Approx_Interval's, so Approx() cannot
-# tell them apart from the argument's type alone.
 #
 # ----------------------------------------------------------------------------
 #  \date       2026

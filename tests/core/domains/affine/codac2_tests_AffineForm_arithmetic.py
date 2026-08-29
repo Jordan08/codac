@@ -30,12 +30,6 @@
 # the check_add/check_mul/check_div helpers below, which reuse their
 # operands across many assertions).
 #
-# codac2::Approx<AffineMain<T>> is exposed to Python as Approx_Affine
-# (mirroring Approx_double/Approx_Interval/...), used here directly
-# rather than through the generic Approx() dispatcher: its constructor
-# takes an Interval, exactly like Approx_Interval's, so Approx() cannot
-# tell them apart from the argument's type alone.
-#
 # ----------------------------------------------------------------------------
 #  \date       2026
 #  \author     Jordan Ninin

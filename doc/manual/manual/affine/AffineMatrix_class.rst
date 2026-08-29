@@ -25,6 +25,14 @@ or observation matrix on an uncertain state:
 
 .. tabs::
 
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-matrix-1-beg]
+      :end-before: [affine-matrix-1-end]
+      :dedent: 4
+
   .. group-tab:: C++
 
     .. literalinclude:: src.cpp
@@ -70,6 +78,14 @@ Codac overloads are defined.
 
 .. tabs::
 
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-matrix-products-beg]
+      :end-before: [affine-matrix-products-end]
+      :dedent: 4
+
   .. group-tab:: C++
 
     .. literalinclude:: src.cpp
@@ -89,6 +105,14 @@ dependency information, e.g. in a state-space / control computation that reuses 
 same uncertain state vector several times:
 
 .. tabs::
+
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-matrix-2-beg]
+      :end-before: [affine-matrix-2-end]
+      :dedent: 4
 
   .. group-tab:: C++
 
@@ -110,6 +134,14 @@ carry no ``eps_i`` term at all, see
 enclosing ``IntervalMatrix`` either way:
 
 .. tabs::
+
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-matrix-3-beg]
+      :end-before: [affine-matrix-3-end]
+      :dedent: 4
 
   .. group-tab:: C++
 
@@ -145,6 +177,14 @@ independent ``Affine`` coefficients from the same intervals.
 
 .. tabs::
 
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-matrix-shared-beg]
+      :end-before: [affine-matrix-shared-end]
+      :dedent: 4
+
   .. group-tab:: C++
 
     .. literalinclude:: src.cpp
@@ -173,6 +213,14 @@ and ``col(j)`` returns an :ref:`AffineVector <sec-affine-vector-class>`:
 
 .. tabs::
 
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-matrix-4-beg]
+      :end-before: [affine-matrix-4-end]
+      :dedent: 4
+
   .. group-tab:: C++
 
     .. literalinclude:: src.cpp
@@ -182,6 +230,14 @@ and ``col(j)`` returns an :ref:`AffineVector <sec-affine-vector-class>`:
       :dedent: 4
 
 .. tabs::
+
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-matrix-5-beg]
+      :end-before: [affine-matrix-5-end]
+      :dedent: 4
 
   .. group-tab:: C++
 
@@ -196,6 +252,14 @@ Printing
 ------------
 
 .. tabs::
+
+  .. group-tab:: Python
+
+    .. literalinclude:: src.py
+      :language: py
+      :start-after: [affine-matrix-6-beg]
+      :end-before: [affine-matrix-6-end]
+      :dedent: 4
 
   .. group-tab:: C++
 

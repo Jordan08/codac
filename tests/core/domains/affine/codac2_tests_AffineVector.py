@@ -37,14 +37,6 @@
 # reference, not a copy: naming it (e.g. "x = variables[0]") and then
 # mutating that name in place would reach back into the container.
 #
-# codac2::Approx<AffineMain<T>>/Approx<AffineMainVector<T>> are exposed
-# to Python as Approx_Affine/Approx_AffineVector (mirroring
-# Approx_double/Approx_Interval/Approx_Vector/...), used here directly
-# rather than through the generic Approx() dispatcher: their constructor
-# takes an Interval/IntervalVector, exactly like Approx_Interval/
-# Approx_IntervalVector's, so Approx() cannot tell them apart from the
-# argument's type alone.
-#
 # ----------------------------------------------------------------------------
 #  \date       2026
 #  \author     Jordan Ninin
