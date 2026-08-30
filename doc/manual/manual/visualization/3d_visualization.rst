@@ -57,7 +57,7 @@ Vehicles
 
 In addition, a function ``draw_axes`` is available to draw the three axes of the 3D space.
 
-.. doxygenfunction:: codac2::Figure3D::draw_axes(double)
+.. doxygenfunction:: codac2::Figure3D::draw_axes(double, const Vector&)
   :project: codac
 
 Note that only the stroke color is used in all of the supported drawing functions.

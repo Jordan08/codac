@@ -399,6 +399,7 @@ namespace codac2
         return eval_common(t,
           [this,&v](auto it, const Interval& t_) {
             return this->slice(it)->operator()(t_, *v.slice(it));
+
           });
       }
 

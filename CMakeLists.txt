@@ -13,7 +13,7 @@
   #set(CMAKE_CXX_COMPILER "/usr/bin/g++-7")
   #set(CMAKE_C_COMPILER "clang-18")
   #set(CMAKE_CXX_COMPILER "clang++-18")
- 
+
   project(codac VERSION ${VERSION} LANGUAGES CXX)
 
   if(NOT VERSION_ID)
@@ -93,7 +93,7 @@
     add_link_options(-fsanitize=address,undefined)
   endif()
   
-  
+
 
   # FMA (fused multiply-add) is only ever activated here through an explicit
   # compiler flag, and only when check_cxx_compiler_flag() confirms it is

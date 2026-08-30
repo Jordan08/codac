@@ -63,12 +63,14 @@
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/codac2_Domain.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/codac2_Scalar.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/codac2_Wrapper.h
+
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/ellipsoid/codac2_Ellipsoid.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/ellipsoid/codac2_Ellipsoid_checks.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/ellipsoid/codac2_Ellipsoid_mapping.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/ellipsoid/codac2_Ellipsoid.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/ellipsoid/codac2_Ellipsoid_utils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/ellipsoid/codac2_Ellipsoid_utils.h
+
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/interval/codac2_Interval.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/interval/codac2_Interval_impl.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/interval/codac2_Interval_operations.h
@@ -76,14 +78,17 @@
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/interval/codac2_IntervalMatrix.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/interval/codac2_IntervalRow.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/interval/codac2_IntervalVector.h
+
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/paving/codac2_Paving.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/paving/codac2_Paving.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/paving/codac2_PavingNode.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/paving/codac2_Subpaving.h
+
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/zonotope/codac2_Parallelepiped.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/zonotope/codac2_Parallelepiped.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/zonotope/codac2_Zonotope.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/zonotope/codac2_Zonotope.cpp
+
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/tube/codac2_Slice.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/tube/codac2_SliceBase.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/tube/codac2_SliceBase.h
@@ -106,6 +111,7 @@
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/codac2_FunctionArgsList.h
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/codac2_FunctionBase.h
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/codac2_VarBase.h
+
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/analytic/codac2_analytic_componentwise.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/analytic/codac2_analytic_componentwise.h
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/analytic/codac2_analytic_constants.h
@@ -119,6 +125,7 @@
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/analytic/codac2_AnalyticFunction.h
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/analytic/codac2_AnalyticType.h
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/analytic/codac2_ExprType.h
+
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/set/codac2_set_operations.h
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/set/codac2_set_operators.h
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/set/codac2_set_variables.h
@@ -134,7 +141,7 @@
     ${CMAKE_CURRENT_SOURCE_DIR}/geometry/codac2_Polygon.h
     ${CMAKE_CURRENT_SOURCE_DIR}/geometry/codac2_Segment.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/geometry/codac2_Segment.h
-    
+
     ${CMAKE_CURRENT_SOURCE_DIR}/operators/codac2_abs.h
     ${CMAKE_CURRENT_SOURCE_DIR}/operators/codac2_acos.h
     ${CMAKE_CURRENT_SOURCE_DIR}/operators/codac2_arith_add.h
@@ -206,7 +213,6 @@
     ${CMAKE_CURRENT_SOURCE_DIR}/matrices/codac2_Vector.h
     ${CMAKE_CURRENT_SOURCE_DIR}/matrices/codac2_IntvFullPivLU.h
     ${CMAKE_CURRENT_SOURCE_DIR}/matrices/codac2_IntvFullPivLU.cpp
-
 
     ${CMAKE_CURRENT_SOURCE_DIR}/paver/codac2_pave.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/paver/codac2_pave.h
@@ -288,6 +294,7 @@
     ${CMAKE_CURRENT_SOURCE_DIR}/trajectory/codac2_TrajBase.h
     ${CMAKE_CURRENT_SOURCE_DIR}/trajectory/codac2_TrajBase_impl.h
   )
+
 
 ################################################################################
 # Create the target for libcodac-core
