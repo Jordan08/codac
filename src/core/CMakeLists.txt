@@ -106,6 +106,18 @@
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/tube/codac2_Tube_operator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/tube/codac2_tube_cart_prod.h
 
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/affine/codac2_AffineMain.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/affine/codac2_AffineMain_impl.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/affine/codac2_AffineMain_operations_impl.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/affine/codac2_Affine2_fAF2.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/affine/codac2_Affine2_fAF2.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/affine/codac2_AffineVector.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/affine/codac2_AffineRow.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/affine/codac2_AffineMatrix.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/affine/codac2_AffineVar.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/affine/codac2_AffineVarVector.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/affine/codac2_Affine.h
+
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/codac2_ExprBase.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/codac2_ExprBase.h
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/codac2_FunctionArgsList.h
@@ -200,7 +212,8 @@
     ${CMAKE_CURRENT_SOURCE_DIR}/matrices/eigen/MatrixBase_addons/codac2_MatrixBase_addons_MatrixBase.h
     ${CMAKE_CURRENT_SOURCE_DIR}/matrices/eigen/MatrixBase_addons/codac2_MatrixBase_addons_Vector.h
     ${CMAKE_CURRENT_SOURCE_DIR}/matrices/eigen/MatrixBase_addons/codac2_MatrixBase_addons_VectorBase.h
-    
+    ${CMAKE_CURRENT_SOURCE_DIR}/matrices/eigen/MatrixBase_addons/codac2_MatrixBase_addons_AffineMainVector.h
+
     ${CMAKE_CURRENT_SOURCE_DIR}/matrices/codac2_cart_prod.h
     ${CMAKE_CURRENT_SOURCE_DIR}/matrices/codac2_GaussJordan.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/matrices/codac2_GaussJordan.h
@@ -315,9 +328,11 @@
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/ellipsoid
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/interval
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/interval/eigen
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/affine
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/paving
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/zonotope
     ${CMAKE_CURRENT_SOURCE_DIR}/domains/tube
+    ${CMAKE_CURRENT_SOURCE_DIR}/domains/affine
     ${CMAKE_CURRENT_SOURCE_DIR}/functions
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/analytic
     ${CMAKE_CURRENT_SOURCE_DIR}/functions/set

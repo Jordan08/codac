@@ -218,6 +218,8 @@ User manual
    * :ref:`sec-domains-tubes-slicedtube`
    * The Trajectory classes
    * Increasing performances using views
+   
+* :ref:`sec-affine`
 
 * Contractors
    * What are contractors?
@@ -409,6 +411,7 @@ Development
    manual/visualization/index.rst
    manual/tools/index.rst
    manual/extensions/index.rst
+   manual/affine/index.rst
    
 ..    linear/index.rst
 ..    functions/index.rst

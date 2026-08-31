@@ -22,7 +22,20 @@ endif()
 # Test sources
 # ==================================================================
 
-list(APPEND SRC_TESTS # listing files without extension
+list(APPEND SRC_TESTS
+
+  # ----------------------------------------------------------------
+  # Core / Affine
+  # ----------------------------------------------------------------
+
+  core/domains/affine/codac2_tests_AffineForm_base
+  core/domains/affine/codac2_tests_AffineForm_arithmetic
+  core/domains/affine/codac2_tests_AffineVariables
+  core/domains/affine/codac2_tests_AffineVector
+  core/domains/affine/codac2_tests_AffineMatrix
+
+  ../doc/manual/manual/affine/src
+
 
   # ----------------------------------------------------------------
   # 3rd

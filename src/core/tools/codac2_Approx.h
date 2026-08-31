@@ -18,6 +18,8 @@
 #include "codac2_Matrix.h"
 #include "codac2_IntervalMatrix.h"
 #include "codac2_Polygon.h"
+#include "codac2_AffineMain.h"
+#include "codac2_AffineVector.h"
 
 namespace codac2
 {
@@ -198,4 +200,118 @@ namespace codac2
 
   Approx(const Polygon&, double) -> 
     Approx<Polygon>;
+
+
+  /**
+   * \brief \c Approx specialization comparing an \c AffineMain<T> affine form
+   *        to an expected \c Interval.
+   *
+   * The comparison mimics what \c CHECK_affine_eq / \c CHECK_affine_eq2 used
+   * to check by hand:
+   * - both must be empty, or both non-empty,
+   * - if the expected interval is unbounded, the affine form's interval
+   *   enclosure must match it (up to \c Approx<Interval>),
+   * - otherwise, the lower bound, upper bound and midpoint of the affine
+   *   form's interval enclosure must match those of the expected interval
+   *   (up to \c eps), and the sum of the absolute values of all noise
+   *   coefficients (\c noise(i) for \c i in [0,size()) ) must match the
+   *   expected radius (up to \c eps). This generalizes \c CHECK_affine_eq
+   *   (1 noise variable) and \c CHECK_affine_eq2 (2 noise variables) to any
+   *   number of noise variables.
+   */
+  template<class T>
+  class Approx<AffineMain<T> >
+  {
+	  private:
+
+		  const Interval _x;
+		  const double _eps;
+	  public:
+
+      explicit Approx(const Interval& x, double eps = DEFAULT_EPS)
+        : _x(x), _eps(eps)
+      { }
+
+      friend bool operator==(const AffineMain<T>& x1, const Approx<AffineMain<T>>& x2)
+      {
+        const Interval& y_expected = x2._x;
+
+        if(y_expected.is_empty())
+          return x1.is_empty();
+
+        if(x1.is_empty())
+          return false;
+
+        if(y_expected.is_unbounded())
+          return x1.is_unbounded() && (x1.itv() == Approx<Interval>(y_expected,x2._eps));
+
+        if(!(x1.lb() == Approx<double>(y_expected.lb(),x2._eps)))
+          return false;
+
+        if(!(x1.ub() == Approx<double>(y_expected.ub(),x2._eps)))
+          return false;
+
+        if(!(x1.mid() == Approx<double>(y_expected.mid(),x2._eps)))
+          return false;
+
+        return x1.rad() == Approx<double>(y_expected.rad(),x2._eps);
+      }
+
+      friend bool operator==(const Approx<AffineMain<T>>& x1, const AffineMain<T>& x2)
+      {
+        return x2 == x1;
+      }
+
+      friend std::ostream& operator<<(std::ostream& os, const Approx<AffineMain<T>>& x)
+      {
+        os << "Approx(" << x._x << ")";
+        return os;
+      }
+
+  };
+
+  template<class T>
+  class Approx<AffineMainVector<T>>
+  {
+	  private:
+
+		  const IntervalVector _x;
+		  const double _eps;
+	  public:
+
+      explicit Approx(const IntervalVector& x, double eps = DEFAULT_EPS)
+        : _x(x), _eps(eps)
+      { }
+
+      friend bool operator==(const AffineMainVector<T>& x1, const Approx<AffineMainVector<T>>& x2)
+      {
+		const IntervalVector& y_expected = x2._x;
+
+		if(y_expected.is_empty())
+		  return x1.is_empty();
+
+		if(x1.is_empty())
+		  return false;
+
+		for(int i = 0 ; i < x1.size() ; i++)
+		  if(!(x1[i] == Approx<AffineMain<T>>(y_expected[i],x2._eps)))
+			return false;
+
+		return true;
+      }
+
+      friend bool operator==(const Approx<AffineMainVector<T>>& x1, const AffineMainVector<T>& x2)
+      {
+        return x2 == x1;
+      }
+
+      friend std::ostream& operator<<(std::ostream& os, const Approx<AffineMainVector<T>>& x)
+      {
+        os << "Approx(" << x._x << ")";
+        return os;
+      }
+
+  };
+
+
 }
