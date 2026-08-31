@@ -2,11 +2,8 @@
 on:
     push:
         branches:
-        - codac1
-        - codac2
-        # The following is implied by above selection...
-        #branches-ignore:
-        #- codac2_codac4matlab
+        - AffineForm
+        - fix-warnings
         tags-ignore: ['**']  # Ignore all tag pushes
     pull_request:
         branches-ignore:
