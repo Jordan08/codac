@@ -1,8 +1,9 @@
 # Unit tests
 on:
     push:
-        branches-ignore:
-        - codac2_codac4matlab
+        branches:
+        - AffineForm
+        - fix-warnings
         tags-ignore: ['**']  # Ignore all tag pushes
     pull_request:
         branches-ignore:
