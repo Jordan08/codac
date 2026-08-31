@@ -452,6 +452,41 @@ if(WITH_PYTHON AND CMAKE_BUILD_TYPE STREQUAL "Debug"
 
 endif()
 
+# ------------------------------------------------------------------
+# Sanitizer runtime discoverability for MSVC (Debug builds only)
+# ------------------------------------------------------------------
+#
+# CODAC_MSVC_ASAN_RUNTIME_DLL is set by the root CMakeLists.txt (empty if
+# no matching runtime could be found, in which case /fsanitize=address was
+# never even added -- nothing to do here either). Windows has no
+# LD_PRELOAD-style env var and no "must load first" requirement: the
+# loader just needs to be able to find the runtime DLL via PATH or next
+# to the binary that imports it, when that binary is loaded. Python's
+# _core.pyd gets its own copy placed next to it (see
+# python/src/core/CMakeLists.txt); the plain C++ test executables and the
+# python.exe launched below have no such fixed "next to" location, so
+# their directory search is extended via PATH instead, the direct
+# Windows analogue of prepending to LD_PRELOAD above.
+set(CODAC_MSVC_ASAN_PATH_ENV "")
+if(MSVC AND CODAC_MSVC_ASAN_RUNTIME_DLL)
+  get_filename_component(_msvc_asan_dll_dir "${CODAC_MSVC_ASAN_RUNTIME_DLL}" DIRECTORY)
+  # Both ctest's ENVIRONMENT test property and the COMMAND argument list
+  # passed to `cmake -E env` below are themselves ';'-separated CMake
+  # lists, so the ';' that Windows uses to separate PATH entries has to be
+  # escaped as '\;' here -- otherwise CMake would silently split this one
+  # "PATH=......" value into several unrelated list entries.
+  #
+  # NOTE: $ENV{PATH} is captured at CMake *configure* time, i.e. whatever
+  # PATH was active when `cmake` was run to configure the project. If
+  # ctest is later invoked from a shell with a materially different PATH,
+  # this won't reflect that -- a limitation inherent to baking an
+  # environment value into generated build files, not specific to this
+  # check.
+  string(REPLACE ";" "\\;" _msvc_asan_path_escaped "${_msvc_asan_dll_dir};$ENV{PATH}")
+  set(CODAC_MSVC_ASAN_PATH_ENV "PATH=${_msvc_asan_path_escaped}")
+  list(APPEND PYTHON_TEST_ENV_ARGS "${CODAC_MSVC_ASAN_PATH_ENV}")
+endif()
+
 # Build every test
 # ==================================================================
 
@@ -539,8 +574,12 @@ foreach(SRC_TEST ${SRC_TESTS})
   )
 
   if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(_test_debug_env "UBSAN_OPTIONS=print_stacktrace=1")
+    if(CODAC_MSVC_ASAN_PATH_ENV)
+      list(APPEND _test_debug_env "${CODAC_MSVC_ASAN_PATH_ENV}")
+    endif()
     set_tests_properties(${TEST_NAME}_cpp PROPERTIES
-      ENVIRONMENT "UBSAN_OPTIONS=print_stacktrace=1"
+      ENVIRONMENT "${_test_debug_env}"
     )
   endif()
 

@@ -87,10 +87,100 @@
   endif()
     
   if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    add_compile_options(-Wreturn-type  -Wno-unused-parameter)
-    add_compile_options( -fno-omit-frame-pointer -g -O0  )
-    add_compile_options( -fsanitize=address -fsanitize=undefined)
-    add_link_options(-fsanitize=address,undefined)
+    if(MSVC)
+      # cl.exe silently ignores GCC/Clang-style "-f..."/"-g"/"-O0" flags
+      # with a D9002 warning rather than failing the build, so without this
+      # branch a Debug build under MSVC would quietly end up *unsanitized*
+      # instead of erroring -- a behavior gap invisible until someone
+      # actually diffs test coverage between platforms.
+      #
+      # MSVC's AddressSanitizer (/fsanitize=address) has shipped since
+      # Visual Studio 16.9; there is no UndefinedBehaviorSanitizer on this
+      # toolchain, so Debug builds here get ASan coverage only, not the
+      # ASan+UBSan combination GCC/Clang get below. Its runtime is a DLL
+      # shipped next to cl.exe, rather than a LD_PRELOAD-style shared
+      # object that the dynamic loader pulls in transparently: *every*
+      # executable and DLL built with /fsanitize=address needs that
+      # runtime DLL to be discoverable at load time (next to the binary,
+      # or on PATH) -- per Microsoft's own documentation, this holds even
+      # for /MT static-CRT builds, unlike every other CRT component.
+      # See tests/CMakeLists.txt and python/src/core/CMakeLists.txt for
+      # how CODAC_MSVC_ASAN_RUNTIME_DLL, set below, is used to make that
+      # DLL discoverable for the test suite and for the Python bindings.
+      #
+      # Source: https://learn.microsoft.com/en-us/cpp/sanitizers/asan-runtime
+      #
+      # Rather than enable /fsanitize=address unconditionally, this whole
+      # feature is opt-in on whether the matching runtime DLL can actually
+      # be located next to this cl.exe: if it can't (toolset too old,
+      # target architecture unsupported by MSVC ASan, or a packaging
+      # layout this check doesn't recognize), Debug builds simply stay
+      # unsanitized rather than either failing configuration or compiling
+      # binaries that are guaranteed to fail to load at run time with a
+      # missing-DLL error. This mirrors how the FMA detection above is
+      # capability-gated via check_cxx_compiler_flag() rather than an
+      # assumed target/toolset list.
+      #
+      # MSVC ASan runtime binaries are named using Clang's architecture
+      # conventions (i386/x86_64/aarch64), not MSVC's own (X86/x64/ARM64) --
+      # this is documented by Microsoft itself, not a codac convention.
+      # CMAKE_CXX_COMPILER_ARCHITECTURE_ID (a builtin CMake variable, MSVC
+      # only) reports the *target* architecture regardless of host, which
+      # is what a flag like /fsanitize=address needs to match; MSVC
+      # AddressSanitizer only supports x86, x64 and ARM64 (ARM64 as of
+      # VS 2022 17.9, as a preview) -- any other value (32-bit ARM, IA64,
+      # ARM64EC...) is simply left unmapped below, so the search for a
+      # runtime DLL naturally comes up empty and the feature is skipped,
+      # exactly as intended.
+      set(_msvc_asan_dll_arch "")
+      if(CMAKE_CXX_COMPILER_ARCHITECTURE_ID STREQUAL "x64")
+        set(_msvc_asan_dll_arch "x86_64")
+      elseif(CMAKE_CXX_COMPILER_ARCHITECTURE_ID STREQUAL "X86")
+        set(_msvc_asan_dll_arch "i386")
+      elseif(CMAKE_CXX_COMPILER_ARCHITECTURE_ID STREQUAL "ARM64")
+        set(_msvc_asan_dll_arch "aarch64")
+      endif()
+
+      set(CODAC_MSVC_ASAN_RUNTIME_DLL "")
+      if(_msvc_asan_dll_arch)
+        get_filename_component(_msvc_bin_dir "${CMAKE_CXX_COMPILER}" DIRECTORY)
+        # Visual Studio 2022 17.7 Preview 3 unified every CRT configuration
+        # (/MT, /MTd, /MD, /MDd) onto a single clang_rt.asan_dynamic-{arch}.dll.
+        # Older toolsets instead shipped a separate debug-CRT DLL for /MDd
+        # (clang_rt.asan_dbg_dynamic-{arch}.dll), which codac's default
+        # Debug configuration (/MDd) links against. Rather than pin an
+        # exact MSVC_VERSION cutoff for that switch -- a compiler-rt
+        # packaging detail, not something reported by any compiler flag --
+        # just look for whichever of the two names actually exists next to
+        # this cl.exe, newest first.
+        foreach(_dll_name
+          "clang_rt.asan_dynamic-${_msvc_asan_dll_arch}.dll"
+          "clang_rt.asan_dbg_dynamic-${_msvc_asan_dll_arch}.dll"
+        )
+          if(EXISTS "${_msvc_bin_dir}/${_dll_name}")
+            set(CODAC_MSVC_ASAN_RUNTIME_DLL "${_msvc_bin_dir}/${_dll_name}")
+            break()
+          endif()
+        endforeach()
+      endif()
+
+      if(CODAC_MSVC_ASAN_RUNTIME_DLL)
+        add_compile_options(/fsanitize=address)
+        message(STATUS "${COLOR_BLUE}MSVC AddressSanitizer enabled (runtime: ${CODAC_MSVC_ASAN_RUNTIME_DLL}).${COLOR_RESET}")
+      else()
+        message(STATUS "${COLOR_RED}No MSVC AddressSanitizer runtime found next to ${CMAKE_CXX_COMPILER} for architecture '${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}': Debug builds will not be sanitized.${COLOR_RESET}")
+      endif()
+
+      # Cached so python/src/core/CMakeLists.txt and tests/CMakeLists.txt
+      # can reuse this result (empty string if not found) without
+      # repeating the detection above.
+      set(CODAC_MSVC_ASAN_RUNTIME_DLL ${CODAC_MSVC_ASAN_RUNTIME_DLL} CACHE INTERNAL "Path to the MSVC ASan runtime DLL, empty if unavailable")
+    else()
+      add_compile_options(-Wreturn-type  -Wno-unused-parameter)
+      add_compile_options( -fno-omit-frame-pointer -g -O0  )
+      add_compile_options( -fsanitize=address -fsanitize=undefined)
+      add_link_options(-fsanitize=address,undefined)
+    endif()
   endif()
   
 
