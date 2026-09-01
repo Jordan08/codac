@@ -488,6 +488,40 @@ added to the affine error term. The code also contains dedicated domain
 checks and special cases for functions such as ``inv``, ``sqrt`` and
 ``exp``.
 
+The secant-slope construction above assumes :math:`f` is monotonic with a
+single sign of curvature over :math:`x`, so that :math:`g(t)=f(t)-\alpha t`
+has exactly one interior extremum. That assumption fails for functions
+that can have an inflection point inside :math:`x`. For those cases —
+the trigonometric functions (``sin``, ``cos``, ``tan``), their inverses
+(``asin``, ``acos``, ``atan``), the hyperbolic functions (``sinh``,
+``tanh``) and their inverses (``asinh``, ``atanh``), and ``pow(x, n)`` for
+odd integer :math:`n` — ``codac2_AffineMain.h`` uses a different,
+two-point Chebyshev construction to compute :math:`\alpha`. For
+:math:`x=[a,b]`, :math:`f` is sampled at the Chebyshev (Gauss) nodes
+:math:`\pm x_0` of the interval, with :math:`x_0=1/\sqrt2`:
+
+.. math::
+
+   x_{b0} = \frac{(b-a)x_0+(a+b)}{2}, \qquad
+   x_{b1} = \frac{-(b-a)x_0+(a+b)}{2},
+
+.. math::
+
+   c_1 = x_0\big(f(x_{b0})-f(x_{b1})\big), \qquad
+   \alpha = \frac{2c_1}{b-a}.
+
+This :math:`\alpha` is the degree-1 coefficient of the two-point discrete
+Chebyshev expansion of :math:`f` on :math:`x`, and is generally different
+from the secant slope. Once :math:`\alpha` is obtained this way,
+:math:`\beta` and :math:`\delta` are still built as above: the residual
+:math:`f(t)-\alpha t` is evaluated at the endpoints of :math:`x` and at
+the interior point(s) :math:`u` solving :math:`f'(u)=\alpha` that fall
+inside :math:`x` — a single pair :math:`\pm u` for the functions above
+other than ``sin``, ``cos`` and ``tan``, since their derivative is even,
+and one candidate per period for the periodic ``sin``, ``cos`` and
+``tan`` — and :math:`\beta`, :math:`\delta` are set to the midpoint and
+radius of the union of these residual intervals.
+
 For the MinRange construction, the implementation uses the derivative at
 the endpoint having the smallest derivative magnitude (for the monotone
 case), builds the endpoint residual band
