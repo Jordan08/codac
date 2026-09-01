@@ -178,14 +178,6 @@ def Approx(x, eps=sys.float_info.epsilon*10):
   else:
     codac_error("Approx: invalid input")
 
-# Note: Approx_Affine and Approx_AffineVector (codac2_Approx.h's
-# Approx<AffineMain<T>> / Approx<AffineMainVector<T>> specializations) are
-# deliberately not dispatched through Approx() above: their constructor
-# takes an Interval/IntervalVector, exactly like Approx_Interval/
-# Approx_IntervalVector do, so x's type alone cannot disambiguate which
-# one a caller means. Use Approx_Affine(...)/Approx_AffineVector(...)
-# directly.
-
 
 def hull(*args):
   # -1: to be defined, 0: IntervalVector, 1: IntervalMatrix

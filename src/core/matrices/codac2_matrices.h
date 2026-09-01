@@ -31,10 +31,10 @@ namespace Eigen
 
   template<typename Scalar>
   concept IsIntervalDomain = codac2::is_interval_based<Scalar>::value;
-//    concept IsIntervalDomain = std::is_same_v<Scalar,codac2::Interval>;
+  //concept IsIntervalDomain = std::is_same_v<Scalar,codac2::Interval>;
 
-  template<typename Scalar>
-  concept IsAffineDomain = codac2::is_affine_based<Scalar>::value;
+  //template<typename Scalar>
+  //concept IsAffineDomain = codac2::is_affine_based<Scalar>::value;
 
 }
 

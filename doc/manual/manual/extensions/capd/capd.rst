@@ -15,8 +15,6 @@ Note that as CAPD is a C++ only library, the content present in this page is **o
 
 .. _subsec-extensions-capd-capd-install:
 
-.. _subsec-extensions-capd-capd-install:
-
 Installing the ``codac-capd`` extension
 ---------------------------------------
 

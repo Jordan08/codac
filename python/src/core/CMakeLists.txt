@@ -40,14 +40,6 @@
     contractors/codac2_py_CtcWrapper.cpp
     contractors/codac2_py_linear_ctc.cpp
 
-    domains/affine/codac2_py_Affine.cpp
-    domains/affine/codac2_py_Affine_operations.cpp
-    domains/affine/codac2_py_AffineMatrix.cpp
-    domains/affine/codac2_py_AffineMatrixBase.h
-    domains/affine/codac2_py_AffineRow.cpp
-    domains/affine/codac2_py_AffineVariables.cpp
-    domains/affine/codac2_py_AffineVector.cpp
-    domains/affine/codac2_py_AffineVector_templ.h
     domains/ellipsoid/codac2_py_Ellipsoid.cpp
     domains/ellipsoid/codac2_py_Ellipsoid_utils.cpp
     domains/interval/codac2_py_Interval.cpp
@@ -148,7 +140,6 @@
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/actions/
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/contractors/
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/domains/
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/domains/affine/
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/domains/interval/
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/domains/paving/
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/domains/zonotope/

@@ -21,4 +21,3 @@
 #include "codac2_MatrixBase_addons_MatrixBase.h"
 #include "codac2_MatrixBase_addons_Vector.h"
 #include "codac2_MatrixBase_addons_VectorBase.h"
-#include "codac2_MatrixBase_addons_AffineMainVector.h"

@@ -17,7 +17,6 @@
 #include <codac2_IntervalVector.h>
 #include <codac2_Matrix.h>
 #include <codac2_IntervalMatrix.h>
-#include <codac2_Affine.h>
 #include <codac2_Approx.h>
 #include "codac2_py_Approx_docs.h" // Generated file from Doxygen XML (doxygen2docstring.py):
 #include "codac2_py_doc.h"
@@ -49,58 +48,6 @@ void _export_Approx(py::module& m, const string& class_name)
   ;
 }
 
-/*
- * Approx<AffineMain<T>> and Approx<AffineMainVector<T>> (codac2_Approx.h)
- * are hand-written template specializations, not instances of the generic
- * Approx<T> template above: their constructor takes the *expected*
- * Interval/IntervalVector directly (not an AffineMain<T>/AffineMainVector<T>),
- * since an affine form's own type is not what the caller wants to spell out
- * at the comparison site. _export_Approx<T>() cannot be reused for them
- * (it assumes a T-typed constructor), hence these two dedicated exporters.
- */
-
-void _export_Approx_Affine(py::module& m)
-{
-  py::class_<Approx<Affine>> exported_class(m, "Approx_Affine", APPROX_MAIN);
-  exported_class
-
-    .def(py::init<const Interval&,double>(),
-      DOC_TO_BE_DEFINED,
-      "x"_a, "eps"_a = std::numeric_limits<double>::epsilon()*10)
-
-    .def("__eq__", [](const Approx<Affine>& x1, const Affine& x2) { return x1 == x2; },
-      DOC_TO_BE_DEFINED)
-
-    .def("__repr__", [](const Approx<Affine>& x) {
-          std::ostringstream stream;
-          stream << x;
-          return string(stream.str());
-        },
-      DOC_TO_BE_DEFINED)
-  ;
-}
-
-void _export_Approx_AffineVector(py::module& m)
-{
-  py::class_<Approx<AffineVector>> exported_class(m, "Approx_AffineVector", APPROX_MAIN);
-  exported_class
-
-    .def(py::init<const IntervalVector&,double>(),
-      DOC_TO_BE_DEFINED,
-      "x"_a, "eps"_a = std::numeric_limits<double>::epsilon()*10)
-
-    .def("__eq__", [](const Approx<AffineVector>& x1, const AffineVector& x2) { return x1 == x2; },
-      DOC_TO_BE_DEFINED)
-
-    .def("__repr__", [](const Approx<AffineVector>& x) {
-          std::ostringstream stream;
-          stream << x;
-          return string(stream.str());
-        },
-      DOC_TO_BE_DEFINED)
-  ;
-}
-
 void export_Approx(py::module& m)
 {
   _export_Approx<double>(m, "Approx_double");
@@ -114,6 +61,4 @@ void export_Approx(py::module& m)
   _export_Approx<Segment>(m, "Approx_Segment");
   _export_Approx<Polygon>(m, "Approx_Polygon");
   _export_Approx<std::pair<Interval,Interval>>(m, "Approx_pair_Interval");
-  _export_Approx_Affine(m);
-  _export_Approx_AffineVector(m);
 }

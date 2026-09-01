@@ -30,12 +30,4 @@ namespace codac2
 
   template<typename T>
   constexpr bool is_sep_v = is_sep<T>::value;
-
-  //Default is_affine_based to false, specialize for affine types in codac2_AffineMain.h
-  template<typename T>
-  struct is_affine_based : std::false_type {};
-
-  template<typename T>
-  constexpr bool is_affine_based_v = is_affine_based<T>::value;
-
 }
