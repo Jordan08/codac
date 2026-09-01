@@ -5,6 +5,9 @@ on:
         tags-ignore: ['**']  # Ignore all tag pushes
     pull_request:
 
+permissions:
+    contents: write
+
 jobs:
  vcmatrix:
     runs-on: ${{ matrix.cfg.os }}

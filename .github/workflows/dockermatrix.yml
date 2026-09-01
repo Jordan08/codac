@@ -9,6 +9,9 @@ on:
         branches-ignore:
         - codac2_codac4matlab
 
+permissions:
+    contents: write
+
 jobs:
  dockermatrix:
     runs-on: ${{ matrix.cfg.os }}
