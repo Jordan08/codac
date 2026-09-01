@@ -86,7 +86,25 @@
     add_compile_options(-Wall -Wextra -Wpedantic )
   endif()
     
-  if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_CONFIGURATION_TYPES)
+    # CMAKE_BUILD_TYPE only has meaning for single-configuration generators
+    # (Makefiles, Ninja): multi-configuration generators (Visual Studio,
+    # Xcode, Ninja Multi-Config -- notably what this project's own CI
+    # drives MSVC through, via `-G "Visual Studio 17/18"` in
+    # .github/workflows/*matrix.yml) instead select the actual
+    # configuration later, at build time (cmake --build . --config
+    # Debug), not at configure time; CMAKE_BUILD_TYPE stays whatever it
+    # was defaulted to above ("Release") regardless of what configuration
+    # is later built. So this outer if() only decides whether it is worth
+    # *probing* for Debug-only capabilities at all -- true either when a
+    # single-config build was explicitly configured as Debug, or when a
+    # multi-config generator defers that choice (CMAKE_CONFIGURATION_TYPES
+    # is then non-empty) and so might still end up building a Debug
+    # configuration later. The actual compile/link options below are
+    # separately wrapped in a $<CONFIG:Debug> generator expression, which
+    # -- unlike CMAKE_BUILD_TYPE -- CMake evaluates correctly against
+    # whichever configuration is ultimately built, for both single- and
+    # multi-config generators alike.
     if(MSVC)
       # cl.exe silently ignores GCC/Clang-style "-f..."/"-g"/"-O0" flags
       # with a D9002 warning rather than failing the build, so without this
@@ -165,10 +183,10 @@
       endif()
 
       if(CODAC_MSVC_ASAN_RUNTIME_DLL)
-        add_compile_options(/fsanitize=address)
-        message(STATUS "${COLOR_BLUE}MSVC AddressSanitizer enabled (runtime: ${CODAC_MSVC_ASAN_RUNTIME_DLL}).${COLOR_RESET}")
+        add_compile_options($<$<CONFIG:Debug>:/fsanitize=address>)
+        message(STATUS "${COLOR_BLUE}MSVC AddressSanitizer will be enabled for Debug-configuration builds (runtime: ${CODAC_MSVC_ASAN_RUNTIME_DLL}).${COLOR_RESET}")
       else()
-        message(STATUS "${COLOR_RED}No MSVC AddressSanitizer runtime found next to ${CMAKE_CXX_COMPILER} for architecture '${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}': Debug builds will not be sanitized.${COLOR_RESET}")
+        message(STATUS "${COLOR_RED}No MSVC AddressSanitizer runtime found next to ${CMAKE_CXX_COMPILER} for architecture '${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}': Debug-configuration builds will not be sanitized.${COLOR_RESET}")
       endif()
 
       # Cached so python/src/core/CMakeLists.txt and tests/CMakeLists.txt
@@ -176,10 +194,25 @@
       # repeating the detection above.
       set(CODAC_MSVC_ASAN_RUNTIME_DLL ${CODAC_MSVC_ASAN_RUNTIME_DLL} CACHE INTERNAL "Path to the MSVC ASan runtime DLL, empty if unavailable")
     else()
-      add_compile_options(-Wreturn-type  -Wno-unused-parameter)
-      add_compile_options( -fno-omit-frame-pointer -g -O0  )
-      add_compile_options( -fsanitize=address -fsanitize=undefined)
-      add_link_options(-fsanitize=address,undefined)
+      # add_compile_options() (a DIRECTORY-scope property, unlike
+      # target_compile_options()) does not evaluate correctly when a single
+      # $<CONFIG:Debug> generator expression's content packs more than one
+      # flag separated by ';' -- reproduced locally with both Ninja and
+      # Unix Makefiles (CMake 3.16 and 4.4.3 alike): the embedded ';' gets
+      # split before the genexpr is fully evaluated, corrupting it into
+      # literal, unrecognized compiler arguments (e.g. the literal text
+      # "$<1:-Wreturn-type" as one broken token). target_compile_options()
+      # is not affected, but this is DIRECTORY-scope by design (it must
+      # apply project-wide, not to one target), so instead each flag gets
+      # its own single-flag generator expression below.
+      add_compile_options($<$<CONFIG:Debug>:-Wreturn-type>)
+      add_compile_options($<$<CONFIG:Debug>:-Wno-unused-parameter>)
+      add_compile_options($<$<CONFIG:Debug>:-fno-omit-frame-pointer>)
+      add_compile_options($<$<CONFIG:Debug>:-g>)
+      add_compile_options($<$<CONFIG:Debug>:-O0>)
+      add_compile_options($<$<CONFIG:Debug>:-fsanitize=address>)
+      add_compile_options($<$<CONFIG:Debug>:-fsanitize=undefined>)
+      add_link_options($<$<CONFIG:Debug>:-fsanitize=address,undefined>)
     endif()
   endif()
   
@@ -235,7 +268,7 @@
       check_cxx_compiler_flag("-mfpu=neon-vfpv4 -mfloat-abi=hard" COMPILER_SUPPORTS_FMA)
       if(COMPILER_SUPPORTS_FMA)
         add_compile_options(-mfpu=neon-vfpv4 -mfloat-abi=hard -ffp-contract=fast)
-        set(CODAC_ARCH_CXX_FLAGS "-mfpu=neon-vfpv4 -mfloat-abi=hard -ffp-contract=fast")
+        set(CODAC_ARCH_CXX_FLAGS "-mfpu=neon-vfpv4;-mfloat-abi=hard;-ffp-contract=fast")
       endif()
   elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
       check_cxx_compiler_flag("-mfma" COMPILER_SUPPORTS_FMA)

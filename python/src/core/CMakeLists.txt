@@ -172,9 +172,14 @@
   # -shared-libsan makes _core.so depend on the sanitizer runtime as
   # a proper shared library instead; that runtime is then LD_PRELOAD-ed
   # for the python tests (see tests/CMakeLists.txt).
-  if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    target_compile_options(_core PRIVATE -shared-libsan)
-    target_link_options(_core PRIVATE -shared-libsan)
+  # Not gated behind CMAKE_BUILD_TYPE (see the matching note in the root
+  # CMakeLists.txt): that variable is meaningless for multi-configuration
+  # generators, so -shared-libsan is applied via a $<CONFIG:Debug>
+  # generator expression instead, which CMake evaluates correctly for
+  # both single- and multi-config generators.
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    target_compile_options(_core PRIVATE $<$<CONFIG:Debug>:-shared-libsan>)
+    target_link_options(_core PRIVATE $<$<CONFIG:Debug>:-shared-libsan>)
   endif()
 
   # --------------------------------------------------------------
@@ -195,8 +200,17 @@
   # no-op) whenever the root CMakeLists.txt couldn't locate that runtime,
   # so /fsanitize=address was in that case never even added.
   if(MSVC AND CODAC_MSVC_ASAN_RUNTIME_DLL)
+    # CODAC_MSVC_ASAN_RUNTIME_DLL is now found regardless of which
+    # configuration will be built (see the root CMakeLists.txt), since a
+    # multi-config generator does not know that yet at configure time. So
+    # the copy itself has to stay conditional on the configuration that is
+    # actually being built, which a plain if() cannot express:
+    # $<IF:$<CONFIG:Debug>,copy_if_different,true> selects between the
+    # real "-E copy_if_different" and cmake's "-E true" (a documented
+    # no-op that ignores its extra arguments) so the DLL is only copied
+    # for a Debug-configuration build, in any generator.
     add_custom_command(TARGET _core POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CODAC_MSVC_ASAN_RUNTIME_DLL}" "${PYTHON_PACKAGE_DIR}/${PYTHON_PACKAGE_NAME}"
+      COMMAND ${CMAKE_COMMAND} -E $<IF:$<CONFIG:Debug>,copy_if_different,true> "${CODAC_MSVC_ASAN_RUNTIME_DLL}" "${PYTHON_PACKAGE_DIR}/${PYTHON_PACKAGE_NAME}"
     )
   endif()
 

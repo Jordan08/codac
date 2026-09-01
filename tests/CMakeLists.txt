@@ -329,7 +329,17 @@ set(
 
 set(PYTHON_TEST_ENV_ARGS "PYTHONPATH=${PYTHON_PACKAGE_DIR}")
 
-if(WITH_PYTHON AND CMAKE_BUILD_TYPE STREQUAL "Debug"
+# Not gated behind a plain CMAKE_BUILD_TYPE STREQUAL "Debug" check (see the
+# matching note in the root CMakeLists.txt): that variable is meaningless
+# for multi-configuration generators, which instead pick the actual
+# configuration later, at build time. CMAKE_CONFIGURATION_TYPES is set
+# precisely on those generators, so probing here also runs whenever it is
+# non-empty -- the individual LD_PRELOAD/ASAN_OPTIONS/UBSAN_OPTIONS entries
+# appended below are themselves wrapped in a $<CONFIG:Debug> generator
+# expression (see how PYTHON_TEST_ENV_ARGS is consumed via the ENVIRONMENT
+# test property further down), so they still only take effect for an
+# actual Debug-configuration test run.
+if(WITH_PYTHON AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_CONFIGURATION_TYPES)
    AND CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU" AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
 
   # This whole block is Linux-specific by construction, not just by
@@ -428,7 +438,7 @@ if(WITH_PYTHON AND CMAKE_BUILD_TYPE STREQUAL "Debug"
 
   if(SANITIZER_RT_LIBS)
     list(JOIN SANITIZER_RT_LIBS ":" SANITIZER_RT_LIBS_JOINED)
-    list(APPEND PYTHON_TEST_ENV_ARGS "LD_PRELOAD=${SANITIZER_RT_LIBS_JOINED}")
+    list(APPEND PYTHON_TEST_ENV_ARGS "$<$<CONFIG:Debug>:LD_PRELOAD=${SANITIZER_RT_LIBS_JOINED}>")
 
     # LeakSanitizer (part of ASan) flags many long-lived, process-lifetime
     # allocations made by the Python interpreter and by pybind11 module
@@ -437,8 +447,8 @@ if(WITH_PYTHON AND CMAKE_BUILD_TYPE STREQUAL "Debug"
     # well-known false-positive source for embedded Python interpreters,
     # not something codac's code controls. UBSan and ASan's other checks
     # (use-after-free, buffer overflow, UB...) remain fully active.
-    list(APPEND PYTHON_TEST_ENV_ARGS "ASAN_OPTIONS=detect_leaks=0")
-    list(APPEND PYTHON_TEST_ENV_ARGS "UBSAN_OPTIONS=print_stacktrace=1")
+    list(APPEND PYTHON_TEST_ENV_ARGS "$<$<CONFIG:Debug>:ASAN_OPTIONS=detect_leaks=0>")
+    list(APPEND PYTHON_TEST_ENV_ARGS "$<$<CONFIG:Debug>:UBSAN_OPTIONS=print_stacktrace=1>")
     message(STATUS "Python tests: LD_PRELOAD=${SANITIZER_RT_LIBS_JOINED}")
   else()
     message(WARNING
@@ -484,7 +494,11 @@ if(MSVC AND CODAC_MSVC_ASAN_RUNTIME_DLL)
   # check.
   string(REPLACE ";" "\\;" _msvc_asan_path_escaped "${_msvc_asan_dll_dir};$ENV{PATH}")
   set(CODAC_MSVC_ASAN_PATH_ENV "PATH=${_msvc_asan_path_escaped}")
-  list(APPEND PYTHON_TEST_ENV_ARGS "${CODAC_MSVC_ASAN_PATH_ENV}")
+  # CODAC_MSVC_ASAN_RUNTIME_DLL (and so CODAC_MSVC_ASAN_PATH_ENV) is now
+  # computed regardless of which configuration will be built (see the root
+  # CMakeLists.txt), so this is wrapped in $<CONFIG:Debug> to still only
+  # extend PATH for an actual Debug-configuration test run.
+  list(APPEND PYTHON_TEST_ENV_ARGS "$<$<CONFIG:Debug>:${CODAC_MSVC_ASAN_PATH_ENV}>")
 endif()
 
 # Build every test
@@ -573,28 +587,38 @@ foreach(SRC_TEST ${SRC_TESTS})
     COMMAND ${TEST_NAME}
   )
 
-  if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(_test_debug_env "UBSAN_OPTIONS=print_stacktrace=1")
-    if(CODAC_MSVC_ASAN_PATH_ENV)
-      list(APPEND _test_debug_env "${CODAC_MSVC_ASAN_PATH_ENV}")
-    endif()
-    set_tests_properties(${TEST_NAME}_cpp PROPERTIES
-      ENVIRONMENT "${_test_debug_env}"
-    )
+  # Not gated behind CMAKE_BUILD_TYPE (see the matching note in the root
+  # CMakeLists.txt): each entry is instead wrapped in a $<CONFIG:Debug>
+  # generator expression, which ENVIRONMENT evaluates correctly for both
+  # single- and multi-config generators (an entry that evaluates empty is
+  # simply ignored by ctest).
+  set(_test_debug_env "$<$<CONFIG:Debug>:UBSAN_OPTIONS=print_stacktrace=1>")
+  if(CODAC_MSVC_ASAN_PATH_ENV)
+    list(APPEND _test_debug_env "$<$<CONFIG:Debug>:${CODAC_MSVC_ASAN_PATH_ENV}>")
   endif()
+  set_tests_properties(${TEST_NAME}_cpp PROPERTIES
+    ENVIRONMENT "${_test_debug_env}"
+  )
 
   # ---------------------------------------------------------------
   # Python test
   # ---------------------------------------------------------------
 
   if(WITH_PYTHON AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${SRC_TEST}.py")
+    # PYTHON_TEST_ENV_ARGS is applied via the ENVIRONMENT test property
+    # rather than passed as `cmake -E env NAME=VALUE...` COMMAND arguments:
+    # some of its entries are conditioned on a $<CONFIG:Debug> generator
+    # expression (see above), and on a configuration where that evaluates
+    # to an empty string, `cmake -E env` would misinterpret the resulting
+    # empty argument as the start of the program to run instead of
+    # skipping it -- ENVIRONMENT does not have that problem, and already
+    # supports generator expressions natively.
     add_test(
       NAME ${TEST_NAME}_py
-      COMMAND
-        ${CMAKE_COMMAND} -E env
-        ${PYTHON_TEST_ENV_ARGS}
-        ${PYTHON_EXECUTABLE}
-        ${CMAKE_CURRENT_SOURCE_DIR}/${SRC_TEST}.py
+      COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/${SRC_TEST}.py
+    )
+    set_tests_properties(${TEST_NAME}_py PROPERTIES
+      ENVIRONMENT "${PYTHON_TEST_ENV_ARGS}"
     )
   endif()
 

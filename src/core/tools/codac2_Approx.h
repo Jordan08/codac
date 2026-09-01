@@ -41,10 +41,12 @@ namespace codac2
     	  if constexpr(std::is_same_v<T,double>) {
     		  if (std::isnan(x1) && std::isnan(x2._x)) {
     			  return true;
-    		  } else if (x2._x>=std::numeric_limits<double>::max())  {
-    			  return (x1>=std::numeric_limits<double>::max());
-    		  } else if (x2._x<=-std::numeric_limits<double>::max())  {
-    			  return (x1<=-std::numeric_limits<double>::max());
+    		  } else if (x2._x==std::numeric_limits<double>::max())  {
+    			  return (x1==std::numeric_limits<double>::max());
+    		  } else if (x2._x == -std::numeric_limits<double>::max())  {
+    			  return (x1== -std::numeric_limits<double>::max());
+           } else if (std::isinf(x2._x)) {
+            return x1 == x2._x;
     		  }  else if ((x2._x < 1.0) && (x2._x > -1.0)) {
     			  return std::fabs(x1-x2._x) < x2._eps; //absolute error
     		  } else {
