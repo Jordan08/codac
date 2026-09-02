@@ -91,7 +91,8 @@ def docstring_varname(memberdef, prefix=''):
 def get_originate_file(m):
 
     location_file = m.find(".//location").get("file").split("/")[-1]
-    return location_file.replace(".h", "_docs.h").replace("codac2_", "codac2_py_")
+    location_stem = os.path.splitext(location_file)[0]
+    return (location_stem + "_docs.h").replace("codac2_", "codac2_py_")
 
 
 if not os.path.exists(sys.argv[1]):

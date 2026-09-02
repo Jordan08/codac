@@ -404,11 +404,22 @@
         file(REMOVE ${build_header})
       endif()
 
+      # COPY_ON_ERROR: creating a symlink requires no special privilege on
+      # Linux/macOS, but on Windows it needs either an administrator prompt
+      # or Developer Mode to be enabled -- neither of which can be assumed
+      # on an arbitrary machine. Without COPY_ON_ERROR, file(CREATE_LINK)
+      # emits a FATAL_ERROR and aborts configuration entirely on such a
+      # Windows setup. With it, CMake transparently falls back to copying
+      # the header there (same strategy already used for the graphics/
+      # unsupported/capd/sympy modules below), while every platform that
+      # does support symlinks keeps the single-physical-file guarantee
+      # described above.
       file(
         CREATE_LINK
         ${srcfile}
         ${build_header}
         SYMBOLIC
+        COPY_ON_ERROR
       )
 
     endif()
@@ -442,11 +453,15 @@
     file(REMOVE ${build_core_main_header})
   endif()
 
+  # See the COPY_ON_ERROR comment above: without it, this call would abort
+  # configuration with a FATAL_ERROR on a Windows machine that has neither
+  # administrator rights nor Developer Mode enabled.
   file(
     CREATE_LINK
     ${CODAC_CORE_MAIN_HEADER}
     ${build_core_main_header}
     SYMBOLIC
+    COPY_ON_ERROR
   )
 
 
