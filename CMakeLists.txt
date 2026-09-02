@@ -279,52 +279,9 @@
       add_compile_options($<$<CONFIG:Debug>:-g>)
       add_compile_options($<$<CONFIG:Debug>:-O0>)
 
-      # MinGW-w64 GCC does not always ship ASan/UBSan import libraries for
-      # every target: the 32-bit Chocolatey toolchain used by CI currently
-      # lacks them, so a Debug link with -fsanitize=address,undefined fails
-      # late with "ld.exe: cannot find -lasan/-lubsan". Probe the compiler's
-      # own runtime search paths first and only enable sanitizers when both
-      # runtimes are actually present. Other non-MSVC toolchains keep the
-      # previous behavior.
-      set(_codac_enable_non_msvc_sanitizers TRUE)
-      if(MINGW AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-        set(_codac_mingw_asan_rt "")
-        foreach(_rt_lib_name libasan.dll.a libasan.a)
-          execute_process(
-            COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=${_rt_lib_name}
-            OUTPUT_VARIABLE _rt_lib_path
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-          )
-          if(EXISTS "${_rt_lib_path}")
-            set(_codac_mingw_asan_rt "${_rt_lib_path}")
-            break()
-          endif()
-        endforeach()
-
-        set(_codac_mingw_ubsan_rt "")
-        foreach(_rt_lib_name libubsan.dll.a libubsan.a)
-          execute_process(
-            COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=${_rt_lib_name}
-            OUTPUT_VARIABLE _rt_lib_path
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-          )
-          if(EXISTS "${_rt_lib_path}")
-            set(_codac_mingw_ubsan_rt "${_rt_lib_path}")
-            break()
-          endif()
-        endforeach()
-
-        if(NOT (_codac_mingw_asan_rt AND _codac_mingw_ubsan_rt))
-          set(_codac_enable_non_msvc_sanitizers FALSE)
-          message(STATUS "${COLOR_RED}No MinGW ASan/UBSan runtime found for ${CMAKE_CXX_COMPILER}: Debug-configuration builds will not be sanitized.${COLOR_RESET}")
-        endif()
-      endif()
-
-      if(_codac_enable_non_msvc_sanitizers)
-        add_compile_options($<$<CONFIG:Debug>:-fsanitize=address>)
-        add_compile_options($<$<CONFIG:Debug>:-fsanitize=undefined>)
-        add_link_options($<$<CONFIG:Debug>:-fsanitize=address,undefined>)
-      endif()
+      add_compile_options($<$<CONFIG:Debug>:-fsanitize=address>)
+      add_compile_options($<$<CONFIG:Debug>:-fsanitize=undefined>)
+      add_link_options($<$<CONFIG:Debug>:-fsanitize=address,undefined>)
     endif()
   endif()
   
