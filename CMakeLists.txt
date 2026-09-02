@@ -221,6 +221,37 @@
 
       if(CODAC_MSVC_ASAN_RUNTIME_DLL)
         add_compile_options($<$<CONFIG:Debug>:/fsanitize=address>)
+        # Enabling ASan on MSVC also switches on the MSVC STL's own
+        # "container annotation" instrumentation for std::string,
+        # std::vector and (recent toolsets) std::optional: it poisons
+        # their reserved-but-unused capacity so ASan can catch
+        # out-of-bounds access within it, and every translation unit
+        # linked together records, via #pragma detect_mismatch, whether it
+        # was compiled with that instrumentation on or off. gaol.lib
+        # (bundled inside the prebuilt, non-ASan IBEX package -- see the
+        # CMAKE_MSVC_RUNTIME_LIBRARY comment above for why it is not
+        # rebuilt from source here) was compiled without ASan, so its
+        # object files carry the instrumentation-off value; without this,
+        # codac's own ASan-instrumented Debug object files would carry the
+        # opposite value, and MSVC's linker would reject the mix with a
+        # second error LNK2038 ("mismatch detected for 'annotate_string' /
+        # 'annotate_vector' / 'annotate_optional'"), on top of the CRT one
+        # already addressed above. _DISABLE_STRING_ANNOTATION and
+        # _DISABLE_VECTOR_ANNOTATION are Microsoft's own documented way to
+        # turn this instrumentation back off so codac's object files match
+        # gaol.lib's; _DISABLE_OPTIONAL_ANNOTATION is added defensively for
+        # the same std::optional check (undocumented as of this writing,
+        # but following Microsoft's existing naming convention for the
+        # other two) -- worst case it is simply an unused macro if that
+        # name turns out to be wrong. Kept as three separate
+        # add_compile_definitions() calls, one flag per $<CONFIG:Debug>
+        # generator expression, for the same reason as the single-flag
+        # add_compile_options() calls further below: this is a
+        # DIRECTORY-scope property, which does not evaluate correctly when
+        # one such expression packs more than one ';'-separated item.
+        add_compile_definitions($<$<CONFIG:Debug>:_DISABLE_STRING_ANNOTATION>)
+        add_compile_definitions($<$<CONFIG:Debug>:_DISABLE_VECTOR_ANNOTATION>)
+        add_compile_definitions($<$<CONFIG:Debug>:_DISABLE_OPTIONAL_ANNOTATION>)
         message(STATUS "${COLOR_BLUE}MSVC AddressSanitizer will be enabled for Debug-configuration builds (runtime: ${CODAC_MSVC_ASAN_RUNTIME_DLL}).${COLOR_RESET}")
       else()
         message(STATUS "${COLOR_RED}No MSVC AddressSanitizer runtime found next to ${CMAKE_CXX_COMPILER} for architecture '${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}': Debug-configuration builds will not be sanitized.${COLOR_RESET}")
