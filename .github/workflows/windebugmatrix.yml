@@ -42,12 +42,12 @@ jobs:
             cfg:
             - { os: windows-2022, shell: cmd, arch: x64  , bitness: 64, runtime: mingw15, cmake_params: '-G "MinGW Makefiles" -D CMAKE_BUILD_TYPE=Debug', cmake_flags: '-fPIC', desc: 'Windows MinGW 15.2.0 x64 Debug' }
             - { os: windows-2022, shell: cmd, arch: x86  , bitness: 32, runtime: mingw15, cmake_params: '-G "MinGW Makefiles" -D CMAKE_BUILD_TYPE=Debug', cmake_flags: '-fPIC', choco_flags: '--x86', desc: 'Windows MinGW 15.2.0 x86 Debug' }
-            - { os: windows-2022, shell: cmd, arch: x64  , bitness: 64, runtime: vc17   , cmake_params: '-G "Visual Studio 17" -T v143 -A x64'  , cmake_flags: ' /MP4', desc: 'Windows Visual Studio 2022 x64 Debug' }
-            - { os: windows-2022, shell: cmd, arch: x86  , bitness: 32, runtime: vc17   , cmake_params: '-G "Visual Studio 17" -T v143 -A Win32', cmake_flags: ' /MP4', choco_flags: '--x86', desc: 'Windows Visual Studio 2022 x86 Debug' }
-            - { os: windows-11-arm, shell: cmd, arch: arm64, bitness: 64, runtime: vc17 , cmake_params: '-G "Visual Studio 17" -T v143 -A arm64', cmake_flags: ' /MP4', desc: 'Windows Visual Studio 2022 arm64 Debug' }
-            - { os: windows-2025-vs2026  , shell: cmd, arch: x64  , bitness: 64, runtime: vc18, cmake_params: '-G "Visual Studio 18" -T v145 -A x64'  , cmake_flags: ' /MP4', desc: 'Windows Visual Studio 2026 x64 Debug' }
-            - { os: windows-2025-vs2026  , shell: cmd, arch: x86  , bitness: 32, runtime: vc18, cmake_params: '-G "Visual Studio 18" -T v145 -A Win32', cmake_flags: ' /MP4', choco_flags: '--x86', desc: 'Windows Visual Studio 2026 x86 Debug' }
-            - { os: windows-11-vs2026-arm, shell: cmd, arch: arm64, bitness: 64, runtime: vc18, cmake_params: '-G "Visual Studio 18" -T v145 -A arm64', cmake_flags: ' /MP4', desc: 'Windows Visual Studio 2026 arm64 Debug' }
+            - { os: windows-2022, shell: cmd, arch: x64  , bitness: 64, runtime: vc17   , cmake_params: '-G "Visual Studio 17" -T v143 -A x64'  , cmake_flags: ' /MP4 /wd4267 /wd4244 /wd4305 /wd4996', desc: 'Windows Visual Studio 2022 x64 Debug' }
+            - { os: windows-2022, shell: cmd, arch: x86  , bitness: 32, runtime: vc17   , cmake_params: '-G "Visual Studio 17" -T v143 -A Win32', cmake_flags: ' /MP4 /wd4267 /wd4244 /wd4305 /wd4996', choco_flags: '--x86', desc: 'Windows Visual Studio 2022 x86 Debug' }
+            - { os: windows-11-arm, shell: cmd, arch: arm64, bitness: 64, runtime: vc17 , cmake_params: '-G "Visual Studio 17" -T v143 -A arm64', cmake_flags: ' /MP4 /wd4267 /wd4244 /wd4305 /wd4996', desc: 'Windows Visual Studio 2022 arm64 Debug' }
+            - { os: windows-2025-vs2026  , shell: cmd, arch: x64  , bitness: 64, runtime: vc18, cmake_params: '-G "Visual Studio 18" -T v145 -A x64'  , cmake_flags: ' /MP4 /wd4267 /wd4244 /wd4305 /wd4996', desc: 'Windows Visual Studio 2026 x64 Debug' }
+            - { os: windows-2025-vs2026  , shell: cmd, arch: x86  , bitness: 32, runtime: vc18, cmake_params: '-G "Visual Studio 18" -T v145 -A Win32', cmake_flags: ' /MP4 /wd4267 /wd4244 /wd4305 /wd4996', choco_flags: '--x86', desc: 'Windows Visual Studio 2026 x86 Debug' }
+            - { os: windows-11-vs2026-arm, shell: cmd, arch: arm64, bitness: 64, runtime: vc18, cmake_params: '-G "Visual Studio 18" -T v145 -A arm64', cmake_flags: ' /MP4 /wd4267 /wd4244 /wd4305 /wd4996', desc: 'Windows Visual Studio 2026 arm64 Debug' }
     name: ${{ matrix.cfg.desc }}
     steps:
     - uses: actions/checkout@v7
