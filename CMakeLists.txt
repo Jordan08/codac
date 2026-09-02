@@ -278,9 +278,37 @@
       add_compile_options($<$<CONFIG:Debug>:-fno-omit-frame-pointer>)
       add_compile_options($<$<CONFIG:Debug>:-g>)
       add_compile_options($<$<CONFIG:Debug>:-O0>)
-      add_compile_options($<$<CONFIG:Debug>:-fsanitize=address>)
-      add_compile_options($<$<CONFIG:Debug>:-fsanitize=undefined>)
-      add_link_options($<$<CONFIG:Debug>:-fsanitize=address,undefined>)
+
+      # -fsanitize=address,undefined is only added once we have actually
+      # confirmed that this compiler can *link* a sanitized binary, rather
+      # than unconditionally, the way this project used to. On Linux/macOS
+      # GCC/Clang, libasan/libubsan are essentially always installed
+      # alongside the compiler and this check is a formality; the case it
+      # actually guards against is MinGW-w64: the choco `mingw` package used
+      # by .github/workflows/windebugmatrix.yml does not ship libasan.a/
+      # libubsan.a at all for some GCC versions/architectures, and neither
+      # x86 (i686-w64-mingw32) nor x86_64 (x86_64-w64-mingw32) is reliably
+      # covered across the versions that package offers -- there is no
+      # version/architecture combination worth hardcoding an exception list
+      # for. Probing capability directly, exactly like the MSVC ASan
+      # runtime-DLL search above and the FMA detection further below, means
+      # a Debug configuration simply comes out unsanitized on a toolchain
+      # that lacks the runtime, instead of configuring successfully and then
+      # failing later at link time with "cannot find -lasan"/"-lubsan" on
+      # every single target.
+      include(CheckCXXSourceCompiles)
+      set(CMAKE_REQUIRED_FLAGS "-fsanitize=address,undefined")
+      check_cxx_source_compiles("int main() { return 0; }" CODAC_COMPILER_SUPPORTS_ASAN_UBSAN)
+      unset(CMAKE_REQUIRED_FLAGS)
+
+      if(CODAC_COMPILER_SUPPORTS_ASAN_UBSAN)
+        add_compile_options($<$<CONFIG:Debug>:-fsanitize=address>)
+        add_compile_options($<$<CONFIG:Debug>:-fsanitize=undefined>)
+        add_link_options($<$<CONFIG:Debug>:-fsanitize=address,undefined>)
+        message(STATUS "${COLOR_BLUE}ASan/UBSan will be enabled for Debug-configuration builds.${COLOR_RESET}")
+      else()
+        message(STATUS "${COLOR_RED}No ASan/UBSan runtime found for ${CMAKE_CXX_COMPILER}: Debug-configuration builds will not be sanitized.${COLOR_RESET}")
+      endif()
     endif()
   endif()
   
