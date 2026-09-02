@@ -34,7 +34,10 @@
 
       message(STATUS "Building API Documentation (mandatory for Python binding or for building the manual)")
 
-      execute_process(COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_INPUT} OUTPUT_QUIET)
+      execute_process(COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_INPUT} OUTPUT_QUIET RESULT_VARIABLE DOXYGEN_RESULT)
+      if(NOT DOXYGEN_RESULT EQUAL 0)
+        message(FATAL_ERROR "Doxygen failed to generate the API documentation (exit code ${DOXYGEN_RESULT}), which is required for the Python docstrings. Re-run CMake without OUTPUT_QUIET on this command to see the Doxygen errors.")
+      endif()
       add_custom_target(api COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_INPUT} OUTPUT_QUIET)
 
     endif()
