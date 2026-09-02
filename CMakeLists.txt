@@ -14,6 +14,15 @@
   #set(CMAKE_C_COMPILER "clang-18")
   #set(CMAKE_CXX_COMPILER "clang++-18")
 
+  # CMP0091 (CMake >=3.15) makes the CMAKE_MSVC_RUNTIME_LIBRARY variable set
+  # below actually control MSVC's runtime library selection, instead of
+  # CMake's older behavior of baking a hardcoded /MD.../MDd into
+  # CMAKE_<LANG>_FLAGS_<CONFIG>. It must be set to NEW before project() --
+  # afterwards is too late -- for that variable to have any effect at all.
+  if(POLICY CMP0091)
+    cmake_policy(SET CMP0091 NEW)
+  endif()
+
   project(codac VERSION ${VERSION} LANGUAGES CXX)
 
   if(NOT VERSION_ID)
@@ -85,7 +94,31 @@
   else()
     add_compile_options(-Wall -Wextra -Wpedantic )
   endif()
-    
+
+  if(MSVC)
+    # IBEX (and the gaol interval library it bundles) is only distributed
+    # to this project's CI as prebuilt Release binaries (see
+    # .github/workflows/vcmatrix.yml and .github/workflows/windebugmatrix.yml):
+    # gaol.lib is compiled with the Release CRT (/MD). MSVC's linker refuses
+    # to mix object files built against different CRT variants in the same
+    # binary -- linking that Release-CRT gaol.lib together with codac's own
+    # object files, which without this override would default to the Debug
+    # CRT (/MDd) in a Debug build, fails with error LNK2038 ("mismatch
+    # detected for 'RuntimeLibrary'/'_ITERATOR_DEBUG_LEVEL'") followed by
+    # fatal error LNK1319.
+    #
+    # Forcing every configuration onto the Release CRT keeps codac's own
+    # Debug build link-compatible with that prebuilt gaol.lib without
+    # having to rebuild IBEX/gaol from source in Debug ourselves. Release
+    # itself already defaulted to /MD, so in practice this only changes
+    # what the Debug configuration uses. Debug builds still get no
+    # optimization (/Od), full debug symbols (/Zi) and AddressSanitizer
+    # (see CODAC_MSVC_ASAN_RUNTIME_DLL below) -- what is traded away is
+    # only the *separate* debug-CRT extras that /MDd would otherwise add on
+    # top of that (its own heap debugging and iterator-debug-level checks).
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
+  endif()
+
   if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_CONFIGURATION_TYPES)
     # CMAKE_BUILD_TYPE only has meaning for single-configuration generators
     # (Makefiles, Ninja): multi-configuration generators (Visual Studio,
@@ -164,10 +197,14 @@
         get_filename_component(_msvc_bin_dir "${CMAKE_CXX_COMPILER}" DIRECTORY)
         # Visual Studio 2022 17.7 Preview 3 unified every CRT configuration
         # (/MT, /MTd, /MD, /MDd) onto a single clang_rt.asan_dynamic-{arch}.dll.
-        # Older toolsets instead shipped a separate debug-CRT DLL for /MDd
-        # (clang_rt.asan_dbg_dynamic-{arch}.dll), which codac's default
-        # Debug configuration (/MDd) links against. Rather than pin an
-        # exact MSVC_VERSION cutoff for that switch -- a compiler-rt
+        # Older toolsets instead shipped a separate debug-CRT DLL
+        # (clang_rt.asan_dbg_dynamic-{arch}.dll) for /MDd specifically.
+        # CMAKE_MSVC_RUNTIME_LIBRARY is forced to the Release CRT (/MD) for
+        # every configuration above (Debug included), so in practice only
+        # the plain, non-debug DLL is ever needed here now; the /MDd-only
+        # name is kept as a fallback purely in case that override above is
+        # ever relaxed back to the CMake default. Rather than pin an exact
+        # MSVC_VERSION cutoff for the 17.7-era switch -- a compiler-rt
         # packaging detail, not something reported by any compiler flag --
         # just look for whichever of the two names actually exists next to
         # this cl.exe, newest first.
