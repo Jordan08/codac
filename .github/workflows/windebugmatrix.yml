@@ -1,0 +1,78 @@
+# Debug builds and unit tests on Windows, with the latest MinGW and MSVC
+# toolchains, on x64, x86 and (MSVC only) arm64, on both Windows 2022 (MSVC
+# v143 / Visual Studio 2022) and the very latest Windows images (MSVC v145 /
+# Visual Studio 2026, on windows-2025-vs2026 and windows-11-vs2026-arm).
+# Unlike vcmatrix.yml/unixmatrix.yml (which build in Release mode and
+# package the result), this workflow only compiles and runs the test suite
+# in Debug configuration, so that the sanitizers enabled for Debug builds
+# (see the "if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR
+# CMAKE_CONFIGURATION_TYPES)" block in the top-level CMakeLists.txt)
+# actually get exercised on Windows. There is no MinGW entry beyond
+# windows-2022/x64/x86, and no MinGW arm64 entry at all: no such
+# configuration exists anywhere else in this repo's workflows (only
+# vc17/vc18 have an arm64 variant, and only vc17 is built on windows-2022),
+# so MinGW stays on windows-2022 here too.
+on:
+    push:
+        branches-ignore:
+        - codac2_codac4matlab
+        tags-ignore: ['**']  # Ignore all tag pushes
+    pull_request:
+        branches-ignore:
+        - codac2_codac4matlab
+
+jobs:
+ windebugmatrix:
+    runs-on: ${{ matrix.cfg.os }}
+    defaults:
+        run:
+            shell: ${{ matrix.cfg.shell }}
+    strategy:
+        fail-fast: false
+        matrix:
+            cfg:
+            - { os: windows-2022, shell: cmd, arch: x64  , bitness: 64, runtime: mingw15, cmake_params: '-G "MinGW Makefiles" -D CMAKE_BUILD_TYPE=Debug', cmake_flags: '-fPIC', desc: 'Windows MinGW 15.2.0 x64 Debug' }
+            - { os: windows-2022, shell: cmd, arch: x86  , bitness: 32, runtime: mingw15, cmake_params: '-G "MinGW Makefiles" -D CMAKE_BUILD_TYPE=Debug', cmake_flags: '-fPIC', choco_flags: '--x86', desc: 'Windows MinGW 15.2.0 x86 Debug' }
+            - { os: windows-2022, shell: cmd, arch: x64  , bitness: 64, runtime: vc17   , cmake_params: '-G "Visual Studio 17" -T v143 -A x64'  , cmake_flags: ' /MP4 /wd4267 /wd4244 /wd4305 /wd4996', desc: 'Windows Visual Studio 2022 x64 Debug' }
+            - { os: windows-2022, shell: cmd, arch: x86  , bitness: 32, runtime: vc17   , cmake_params: '-G "Visual Studio 17" -T v143 -A Win32', cmake_flags: ' /MP4 /wd4267 /wd4244 /wd4305 /wd4996', choco_flags: '--x86', desc: 'Windows Visual Studio 2022 x86 Debug' }
+            - { os: windows-11-arm, shell: cmd, arch: arm64, bitness: 64, runtime: vc17 , cmake_params: '-G "Visual Studio 17" -T v143 -A arm64', cmake_flags: ' /MP4 /wd4267 /wd4244 /wd4305 /wd4996', desc: 'Windows Visual Studio 2022 arm64 Debug' }
+            - { os: windows-2025-vs2026  , shell: cmd, arch: x64  , bitness: 64, runtime: vc18, cmake_params: '-G "Visual Studio 18" -T v145 -A x64'  , cmake_flags: ' /MP4 /wd4267 /wd4244 /wd4305 /wd4996', desc: 'Windows Visual Studio 2026 x64 Debug' }
+            - { os: windows-2025-vs2026  , shell: cmd, arch: x86  , bitness: 32, runtime: vc18, cmake_params: '-G "Visual Studio 18" -T v145 -A Win32', cmake_flags: ' /MP4 /wd4267 /wd4244 /wd4305 /wd4996', choco_flags: '--x86', desc: 'Windows Visual Studio 2026 x86 Debug' }
+            - { os: windows-11-vs2026-arm, shell: cmd, arch: arm64, bitness: 64, runtime: vc18, cmake_params: '-G "Visual Studio 18" -T v145 -A arm64', cmake_flags: ' /MP4 /wd4267 /wd4244 /wd4305 /wd4996', desc: 'Windows Visual Studio 2026 arm64 Debug' }
+    name: ${{ matrix.cfg.desc }}
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        submodules: true
+        fetch-depth: 0
+        clean: false
+    - run: echo "VERBOSE=1" >> $GITHUB_ENV
+      shell: bash
+    - run: |
+        choco install -y -r --no-progress wget
+        wget https://lebarsfa.github.io/cache/cmake_extra_tools.zip --no-check-certificate -nv
+        7z x cmake_extra_tools.zip -o"%SystemDrive%" -y
+        del /f /q cmake_extra_tools.zip
+        wget https://gist.github.com/lebarsfa/237841f9e5dad55ef192713b3b1b2f16/raw/04d77ced3457346c55f183ca12a10dbcb850e6d5/refreshenv.bashrc --no-check-certificate -nv
+        move /y refreshenv.bashrc %USERPROFILE%
+    - run: |
+        choco install -y -r --no-progress mingw --version=15.2.0 --force ${{ matrix.cfg.choco_flags }}
+        %SystemDrive%\cmake_extra_tools\pathman /as C:\ProgramData\mingw64\mingw${{ matrix.cfg.bitness }}\bin & cd. & rem Non-zero exit code...?
+        echo export BASHMINGWPATH=/c/ProgramData/mingw64/mingw${{ matrix.cfg.bitness }}/bin>>%USERPROFILE%\.bashrc
+      if: matrix.cfg.runtime=='mingw15'
+    - run: |
+        wget https://github.com/lebarsfa/ibex-lib/releases/download/ibex-2.8.9.20260819/ibex.2.8.9.20260819.nupkg --no-check-certificate -nv
+        choco install -y -r --no-progress --ignore-dependencies -s . ibex --version=2.8.9.20260819 ${{ matrix.cfg.choco_flags }} --params "'/url:https://github.com/lebarsfa/ibex-lib/releases/download/ibex-2.8.9.20260819/ibex_${{ matrix.cfg.arch }}_${{ matrix.cfg.runtime }}.zip'"
+        del /f /q ibex.2.8.9.20260819.nupkg
+    - run: |
+        if [ ${{ matrix.cfg.runtime }} = mingw15 ]; then source ~/refreshenv.bashrc ; refreshenv ; export PATH=$BASHMINGWPATH:$PATH ; fi
+        mkdir build ; cd build
+        cmake -E env CXXFLAGS="${{ matrix.cfg.cmake_flags }}" CFLAGS="${{ matrix.cfg.cmake_flags }}" cmake ${{ matrix.cfg.cmake_params }} -D CMAKE_INSTALL_PREFIX="../codac" -D BUILD_TESTS=ON ..
+        cmake --build . -j 4 --config Debug --target install
+        cd ..
+      shell: bash
+    - run: |
+        if [ ${{ matrix.cfg.runtime }} = mingw15 ]; then source ~/refreshenv.bashrc ; refreshenv ; export PATH=$BASHMINGWPATH:$PATH ; fi
+        cd build && ctest -C Debug -V --output-on-failure
+        cd ..
+      shell: bash
