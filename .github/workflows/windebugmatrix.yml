@@ -21,6 +21,16 @@
 # CMAKE_MSVC_RUNTIME_LIBRARY override in the top-level CMakeLists.txt for
 # the details of what that trades away (debug-CRT heap/iterator checking)
 # versus what it keeps (unoptimized code, debug symbols, ASan).
+#
+# The MinGW entries do not pin a single MinGW version: the choco `mingw`
+# package does not ship libasan.a/libubsan.a for every version (15.2.0 does
+# not, for x64), so codac's unconditional -fsanitize=address,undefined in
+# Debug mode fails at link time with "ld.exe: cannot find -lasan/-lubsan"
+# on those. `runtime_candidates` lists versions newest-first; the install
+# step below probes each in turn (via `g++ -print-file-name=libasan*`/
+# `libubsan*`) and keeps the first one that actually has both, so the job
+# still ends up on the newest ASan/UBSan-capable MinGW rather than one
+# fixed, possibly-unsanitized version.
 on:
     push:
         branches-ignore:
@@ -33,6 +43,8 @@ on:
 jobs:
  windebugmatrix:
     runs-on: ${{ matrix.cfg.os }}
+    env:
+        IBEX_RUNTIME: ${{ matrix.cfg.runtime }}
     defaults:
         run:
             shell: ${{ matrix.cfg.shell }}
@@ -40,8 +52,8 @@ jobs:
         fail-fast: false
         matrix:
             cfg:
-            - { os: windows-2022, shell: cmd, arch: x64  , bitness: 64, runtime: mingw15, cmake_params: '-G "MinGW Makefiles" -D CMAKE_BUILD_TYPE=Debug', cmake_flags: '-fPIC', desc: 'Windows MinGW 15.2.0 x64 Debug' }
-            - { os: windows-2022, shell: cmd, arch: x86  , bitness: 32, runtime: mingw15, cmake_params: '-G "MinGW Makefiles" -D CMAKE_BUILD_TYPE=Debug', cmake_flags: '-fPIC', choco_flags: '--x86', desc: 'Windows MinGW 15.2.0 x86 Debug' }
+            - { os: windows-2022, shell: cmd, arch: x64  , bitness: 64, runtime: mingw15, runtime_candidates: 'mingw15 mingw14 mingw13 mingw12 mingw11', cmake_params: '-G "MinGW Makefiles" -D CMAKE_BUILD_TYPE=Debug', cmake_flags: '-fPIC', desc: 'Windows MinGW x64 Debug (latest ASan/UBSan-capable)' }
+            - { os: windows-2022, shell: cmd, arch: x86  , bitness: 32, runtime: mingw15, runtime_candidates: 'mingw15 mingw14 mingw13 mingw12 mingw11', cmake_params: '-G "MinGW Makefiles" -D CMAKE_BUILD_TYPE=Debug', cmake_flags: '-fPIC', choco_flags: '--x86', desc: 'Windows MinGW x86 Debug (latest ASan/UBSan-capable)' }
             - { os: windows-2022, shell: cmd, arch: x64  , bitness: 64, runtime: vc17   , cmake_params: '-G "Visual Studio 17" -T v143 -A x64'  , cmake_flags: ' /MP4 /wd4267 /wd4244 /wd4305 /wd4996', desc: 'Windows Visual Studio 2022 x64 Debug' }
             - { os: windows-2022, shell: cmd, arch: x86  , bitness: 32, runtime: vc17   , cmake_params: '-G "Visual Studio 17" -T v143 -A Win32', cmake_flags: ' /MP4 /wd4267 /wd4244 /wd4305 /wd4996', choco_flags: '--x86', desc: 'Windows Visual Studio 2022 x86 Debug' }
             - { os: windows-11-arm, shell: cmd, arch: arm64, bitness: 64, runtime: vc17 , cmake_params: '-G "Visual Studio 17" -T v143 -A arm64', cmake_flags: ' /MP4 /wd4267 /wd4244 /wd4305 /wd4996', desc: 'Windows Visual Studio 2022 arm64 Debug' }
@@ -64,24 +76,92 @@ jobs:
         del /f /q cmake_extra_tools.zip
         wget https://gist.github.com/lebarsfa/237841f9e5dad55ef192713b3b1b2f16/raw/04d77ced3457346c55f183ca12a10dbcb850e6d5/refreshenv.bashrc --no-check-certificate -nv
         move /y refreshenv.bashrc %USERPROFILE%
+    # For MinGW, install the newest candidate in runtime_candidates whose
+    # g++ actually ships both libasan and libubsan import libraries (see
+    # the header comment for why this probes instead of pinning mingw15
+    # unconditionally): mingw15/14/13 install under
+    # C:\ProgramData\mingw64\mingw<bitness> (choco's current mingw
+    # package layout), mingw12/11 under the older
+    # C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw<bitness>
+    # layout -- both paths already used, per version, in
+    # .github/workflows/unixmatrix.yml. BASHMINGWPATH and IBEX_RUNTIME are
+    # written to $GITHUB_ENV so every later step (regardless of shell)
+    # picks them up automatically, without needing choco's own
+    # refreshenv.bashrc dance.
     - run: |
-        choco install -y -r --no-progress mingw --version=15.2.0 --force ${{ matrix.cfg.choco_flags }}
-        %SystemDrive%\cmake_extra_tools\pathman /as C:\ProgramData\mingw64\mingw${{ matrix.cfg.bitness }}\bin & cd. & rem Non-zero exit code...?
-        echo export BASHMINGWPATH=/c/ProgramData/mingw64/mingw${{ matrix.cfg.bitness }}/bin>>%USERPROFILE%\.bashrc
-      if: matrix.cfg.runtime=='mingw15'
+        set -euo pipefail
+        found_runtime=''
+        for runtime in ${{ matrix.cfg.runtime_candidates }}; do
+          case "$runtime" in
+            mingw15)
+              mingw_version='15.2.0'
+              mingw_bin="/c/ProgramData/mingw64/mingw${{ matrix.cfg.bitness }}/bin"
+              ;;
+            mingw14)
+              mingw_version='14.2.0'
+              mingw_bin="/c/ProgramData/mingw64/mingw${{ matrix.cfg.bitness }}/bin"
+              ;;
+            mingw13)
+              mingw_version='13.2.0'
+              mingw_bin="/c/ProgramData/mingw64/mingw${{ matrix.cfg.bitness }}/bin"
+              ;;
+            mingw12)
+              mingw_version='12.2.0.03042023'
+              mingw_bin="/c/ProgramData/chocolatey/lib/mingw/tools/install/mingw${{ matrix.cfg.bitness }}/bin"
+              ;;
+            mingw11)
+              mingw_version='11.2.0.07112021'
+              mingw_bin="/c/ProgramData/chocolatey/lib/mingw/tools/install/mingw${{ matrix.cfg.bitness }}/bin"
+              ;;
+            *)
+              echo "::error::Unsupported MinGW runtime candidate '$runtime'"
+              exit 1
+              ;;
+          esac
+
+          choco install -y -r --no-progress mingw --version="$mingw_version" --force ${{ matrix.cfg.choco_flags }}
+
+          if [ ! -x "$mingw_bin/g++.exe" ]; then
+            continue
+          fi
+
+          asan_path="$("$mingw_bin/g++.exe" -print-file-name=libasan.dll.a)"
+          if [ "$asan_path" = 'libasan.dll.a' ]; then
+            asan_path="$("$mingw_bin/g++.exe" -print-file-name=libasan.a)"
+          fi
+
+          ubsan_path="$("$mingw_bin/g++.exe" -print-file-name=libubsan.dll.a)"
+          if [ "$ubsan_path" = 'libubsan.dll.a' ]; then
+            ubsan_path="$("$mingw_bin/g++.exe" -print-file-name=libubsan.a)"
+          fi
+
+          if [ -f "$asan_path" ] && [ -f "$ubsan_path" ]; then
+            found_runtime="$runtime"
+            echo "BASHMINGWPATH=$mingw_bin" >> "$GITHUB_ENV"
+            echo "IBEX_RUNTIME=$runtime" >> "$GITHUB_ENV"
+            break
+          fi
+        done
+
+        if [ -z "$found_runtime" ]; then
+          echo "::error::No ASan/UBSan-capable MinGW runtime found for ${{ matrix.cfg.arch }} among: ${{ matrix.cfg.runtime_candidates }}"
+          exit 1
+        fi
+      if: startsWith(matrix.cfg.runtime, 'mingw')
+      shell: bash
     - run: |
         wget https://github.com/lebarsfa/ibex-lib/releases/download/ibex-2.8.9.20260819/ibex.2.8.9.20260819.nupkg --no-check-certificate -nv
-        choco install -y -r --no-progress --ignore-dependencies -s . ibex --version=2.8.9.20260819 ${{ matrix.cfg.choco_flags }} --params "'/url:https://github.com/lebarsfa/ibex-lib/releases/download/ibex-2.8.9.20260819/ibex_${{ matrix.cfg.arch }}_${{ matrix.cfg.runtime }}.zip'"
+        choco install -y -r --no-progress --ignore-dependencies -s . ibex --version=2.8.9.20260819 ${{ matrix.cfg.choco_flags }} --params "'/url:https://github.com/lebarsfa/ibex-lib/releases/download/ibex-2.8.9.20260819/ibex_${{ matrix.cfg.arch }}_%IBEX_RUNTIME%.zip'"
         del /f /q ibex.2.8.9.20260819.nupkg
     - run: |
-        if [ ${{ matrix.cfg.runtime }} = mingw15 ]; then source ~/refreshenv.bashrc ; refreshenv ; export PATH=$BASHMINGWPATH:$PATH ; fi
+        if [ -n "${BASHMINGWPATH:-}" ]; then export PATH="$BASHMINGWPATH:$PATH" ; fi
         mkdir build ; cd build
         cmake -E env CXXFLAGS="${{ matrix.cfg.cmake_flags }}" CFLAGS="${{ matrix.cfg.cmake_flags }}" cmake ${{ matrix.cfg.cmake_params }} -D CMAKE_INSTALL_PREFIX="../codac" -D BUILD_TESTS=ON ..
         cmake --build . -j 4 --config Debug --target install
         cd ..
       shell: bash
     - run: |
-        if [ ${{ matrix.cfg.runtime }} = mingw15 ]; then source ~/refreshenv.bashrc ; refreshenv ; export PATH=$BASHMINGWPATH:$PATH ; fi
+        if [ -n "${BASHMINGWPATH:-}" ]; then export PATH="$BASHMINGWPATH:$PATH" ; fi
         cd build && ctest -C Debug -V --output-on-failure
         cd ..
       shell: bash
