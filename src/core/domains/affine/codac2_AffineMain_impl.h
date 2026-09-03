@@ -435,34 +435,28 @@ AffineMain<T>& AffineMain<T>::Ainv_CH(const Interval& itv){
 		*this = res_itv;
 	}  else  {
 		// General case
-		double alpha, beta, ddelta, t1, t2;
-		Interval dmm(0.0), TEMP1(0.0), TEMP2(0.0), band(0.0);
 		Interval itv2 =abs(itv);
 		if (itv2.diam()<AF_EC) {
 			*this = res_itv;
 			return *this;
 		}
-		dmm = (1.0/(itv2));
-		alpha = -(dmm.diam()/itv2.diam());
+		Interval dmm = (1.0/(itv2));
+		const double alpha = -(dmm.diam()/itv2.diam());
 		if (!std::isfinite(alpha) || alpha >= 0.0) {
 			*this = res_itv;
 			return *this;
 		}
 
-		//u = 1/sqrt(-alpha);
-		TEMP1 = (1.0/Interval((itv2).lb()))-alpha*Interval((itv2).lb());
-		TEMP2 = (1.0/Interval((itv2).ub()))-alpha*Interval((itv2).ub());
-		if (TEMP1.ub()>TEMP2.ub()) {
-			band = Interval((2*sqrt(-Interval(alpha))).lb(),TEMP1.ub());
-		}
-		else {
-			band = Interval((2*sqrt(-Interval(alpha))).lb(),TEMP2.ub());
-		}
+		// band = evaluate r(x)=f(x)-alpha*x at the bounds of itv2 and at the
+		// point u=1/sqrt(-alpha) where f'(u)=alpha, with r(u)=2*sqrt(-alpha)
+		Interval band = ((1.0/Interval((itv2).lb()))-alpha*Interval((itv2).lb()))
+			 | ((1.0/Interval((itv2).ub()))-alpha*Interval((itv2).ub()));
+		band = band | (2*sqrt(-Interval(alpha)));
 
-		beta = band.mid();
-		t1 = (beta -band).ub();
-		t2 = (band -beta).ub();
-		ddelta = (t1>t2)? t1 : t2;
+		double beta = band.mid();
+		const double t1 = (beta -band).ub();
+		const double t2 = (band -beta).ub();
+		const double ddelta = (t1>t2)? t1 : t2;
 
 		if (itv.lb()<0.0) beta = -beta;
 
@@ -488,28 +482,22 @@ AffineMain<T>& AffineMain<T>::Asqrt_CH(const Interval& itv){
 		*this = res_itv;
 	}  else  {
 		// General case
-		double alpha, beta, ddelta, t1, t2;
-		Interval TEMP1(0.0), TEMP2(0.0), band(0.0);
-
-		alpha = res_itv.diam()/itv2.diam();
+		const double alpha = res_itv.diam()/itv2.diam();
 		if (!std::isfinite(alpha) || alpha <= 0.0) {
 			*this = res_itv;
 			return *this;
 		}
 
-		//u = 1/(4*alpha^2);
-		TEMP1 = res_itv.lb()-alpha*Interval(itv2.lb());
-		TEMP2 = res_itv.ub()-alpha*Interval(itv2.ub());
-		if (TEMP1.lb()>TEMP2.lb()) {
-			band = Interval(TEMP2.lb(),(1.0/(4*Interval(alpha))).ub());
-		} else {
-			band = Interval(TEMP1.lb(),(1.0/(4*Interval(alpha))).ub());
-		}
+		// band = evaluate r(x)=f(x)-alpha*x at the bounds of itv2 and at the
+		// point u=1/(4*alpha^2) where f'(u)=alpha, with r(u)=1/(4*alpha)
+		Interval band = (sqrt(Interval(itv2.lb()))-alpha*Interval(itv2.lb()))
+			 | (sqrt(Interval(itv2.ub()))-alpha*Interval(itv2.ub()));
+		band = band | (1.0/(4*Interval(alpha)));
 
-		beta = band.mid();
-		t1 = (beta -band).ub();
-		t2 = (band-beta).ub();
-		ddelta = (t1>t2)? t1 : t2;
+		const double beta = band.mid();
+		const double t1 = (beta -band).ub();
+		const double t2 = (band-beta).ub();
+		const double ddelta = (t1>t2)? t1 : t2;
 
 		*this *= alpha;
 		*this += beta;
@@ -530,27 +518,22 @@ AffineMain<T>& AffineMain<T>::Aexp_CH(const Interval& itv){
 		*this = res_itv;
 	}  else  {
 		// General case
-		double alpha, beta, ddelta, t1, t2;
-		Interval TEMP1(0.0), TEMP2(0.0), band(0.0);
-		alpha = res_itv.diam()/itv.diam();
+		const double alpha = res_itv.diam()/itv.diam();
 		if (!std::isfinite(alpha) || alpha <= 0.0) {
 			*this = res_itv;
 			return *this;
 		}
 
-		//u = log(alpha);
-		TEMP1 = res_itv.lb()-alpha*Interval(itv.lb());
-		TEMP2 = res_itv.ub()-alpha*Interval(itv.ub());
-		if (TEMP1.ub()>TEMP2.ub()) {
-			band = Interval((alpha*(1-log(Interval(alpha)))).lb(),TEMP1.ub());
-		} else {
-			band = Interval((alpha*(1-log(Interval(alpha)))).lb(),TEMP2.ub());
-		}
+		// band = evaluate r(x)=f(x)-alpha*x at the bounds of itv and at the
+		// point u=log(alpha) where f'(u)=alpha, with r(u)=alpha*(1-log(alpha))
+		Interval band = (exp(Interval(itv.lb()))-alpha*Interval(itv.lb()))
+			 | (exp(Interval(itv.ub()))-alpha*Interval(itv.ub()));
+		band = band | (alpha*(1-log(Interval(alpha))));
 
-		beta = band.mid();
-		t1 = (beta -band).ub();
-		t2 = (band -beta).ub();
-		ddelta = (t1>t2)? t1 : t2;
+		const double beta = band.mid();
+		const double t1 = (beta -band).ub();
+		const double t2 = (band -beta).ub();
+		const double ddelta = (t1>t2)? t1 : t2;
 
 		*this *= alpha;
 		*this += beta;
@@ -570,28 +553,22 @@ AffineMain<T>& AffineMain<T>::Alog_CH(const Interval& itv){
 		*this = res_itv;
 	}  else  {
 		// General case
-		double alpha, beta, ddelta, t1, t2;
-		Interval TEMP1(0.0), TEMP2(0.0), band(0.0);
-		alpha = res_itv.diam()/itv.diam();
+		const double alpha = res_itv.diam()/itv.diam();
 		if (!std::isfinite(alpha) || alpha <= 0.0) {
 			*this = res_itv;
 			return *this;
 		}
 
-		//u = 1/alpha;
-		TEMP1 = res_itv.lb()-alpha*Interval(itv.lb());
-		TEMP2 = res_itv.ub()-alpha*Interval(itv.ub());
-		if (TEMP1.lb()>TEMP2.lb()) {
-			band = Interval(TEMP2.lb(),(-log(Interval(alpha))-1).ub());
-		}
-		else {
-			band = Interval(TEMP1.lb(),(-log(Interval(alpha))-1).ub());
-		}
+		// band = evaluate r(x)=f(x)-alpha*x at the bounds of itv and at the
+		// point u=1/alpha where f'(u)=alpha, with r(u)=-log(alpha)-1
+		Interval band = (log(Interval(itv.lb()))-alpha*Interval(itv.lb()))
+			 | (log(Interval(itv.ub()))-alpha*Interval(itv.ub()));
+		band = band | (-log(Interval(alpha))-1);
 
-		beta = band.mid();
-		t1 = (beta -band).ub();
-		t2 = (band -beta).ub();
-		ddelta = (t1>t2)? t1 : t2;
+		const double beta = band.mid();
+		const double t1 = (beta -band).ub();
+		const double t2 = (band -beta).ub();
+		const double ddelta = (t1>t2)? t1 : t2;
 
 		*this *= alpha;
 		*this += beta;
@@ -644,8 +621,6 @@ AffineMain<T>& AffineMain<T>::Acos(const Interval& itv){
 		*this = res_itv;
 	}  else  {
 		// General case
-		double alpha, beta, ddelta, t1 ;//, t2;
-		Interval dmm(0.0), TEMP1(0.0), TEMP2(0.0), band(0.0);
 		if (itv.diam()>=Interval::two_pi().lb()) {
 			*this = Interval(-1,1);
 			return *this;
@@ -658,74 +633,66 @@ AffineMain<T>& AffineMain<T>::Acos(const Interval& itv){
 		// c0 = 0.5 (f(xb0)+f(xb1))
 		// c1 = x0*f(xb0)+x1*f(xb1)
 		// alpha = 2*c1/(b-a)
-		// beta = c0-c1*(a+b)/(b-a)
+		//  old : beta = c0-c1*(a+b)/(b-a)
 		//  old : ddelta = (b-a)^2 * f''(_itv)/16
-		//  new : ddelta = evaluate the error at the bound and the points when f'(x)=alpha
+		//  new : residual = evaluate the maximal error of f(x)-alpha*x at the bound and the points when f'(x)=alpha
+		//  new : beta = evaluate the mid point of the residual
+		//  new : ddelta = evaluate the radius of the residual
 
-		double x0,xb0,xb1,fxb0,fxb1,c0,c1;
+		const double x0 = 1.0/std::sqrt(2.);
+		const double xb0 = (0.5)*(itv.diam()*x0 +itv.lb()+itv.ub());
+		const double xb1 = (0.5)*(itv.diam()*(-x0) +itv.lb()+itv.ub());
+		const double fxb0 = std::cos(xb0);
+		const double fxb1 = std::cos(xb1);
+		//c0 = (0.5)*(fxb0+fxb1);
+		const double c1 = x0*fxb0-x0*fxb1;
 
-		x0 = 1.0/std::sqrt(2.);
-		xb0 = (0.5)*(itv.diam()*x0 +itv.lb()+itv.ub());
-		xb1 = (0.5)*(itv.diam()*(-x0) +itv.lb()+itv.ub());
+		const double alpha = 2*c1/(itv.diam());
 
-
-		fxb0 = std::cos(xb0);
-		fxb1 = std::cos(xb1);
-
-		c0 = (0.5)*(fxb0+fxb1);
-		c1 = x0*fxb0-x0*fxb1;
-
-		alpha  = 2*c1/(itv.diam());
-		beta   = c0-c1*((itv.lb()+itv.ub())/(itv.diam()));
-		//ddelta = ((noise_count()*Interval(TEMP1.rad())) + Interval(TEMP2.rad())).ub();
-
-		// compute the maximal error
-		ddelta= 0.0;
-		Interval u,nb_period;
-
-		// compute the error at _itv.lb() and _itv.ub() and compute the first point such as f'(u) = alpha
-
-		ddelta = (abs(cos(Interval(itv.lb()))-(alpha*Interval(itv.lb())+beta))).ub();
-		t1     = (abs(cos(Interval(itv.ub()))-(alpha*Interval(itv.ub())+beta))).ub();
-		if (t1>ddelta)  ddelta= t1;
-		
-		Interval alpha_domain = Interval(alpha) & Interval(-1.0, 1.0);
+		// compute the first point such as f'(u) = alpha
+		const Interval alpha_domain = Interval(alpha) & Interval(-1.0, 1.0);
 		if (alpha_domain.is_empty()) {
 			*this = res_itv;
 			return *this;
 		}
-		u = asin(-alpha_domain);
-		nb_period = (itv+Interval::half_pi()) / Interval::pi();
+		const Interval u = asin(-alpha_domain);
+		const Interval nb_period = (itv+Interval::half_pi()) / Interval::pi();
 
 		// Large arguments cannot be converted safely to an integer period.
-		const double period_limit =
-				static_cast<double>(std::numeric_limits<int>::max() - 2);
+		const double period_limit =	static_cast<double>(std::numeric_limits<int>::max() - 2);
 		if (!std::isfinite(nb_period.lb()) || !std::isfinite(nb_period.ub()) ||
 			nb_period.lb() < -period_limit || nb_period.ub() > period_limit) {
 			*this = res_itv;
 			return *this;
 		}
 
-		// evaluate the error at the points such that f'(u) = alpha
+		// compute the residual r(x)=f(x)-alpha*x at the bounds of itv
+		Interval residual = (cos(Interval(itv.lb()))-alpha*Interval(itv.lb()))
+						  | (cos(Interval(itv.ub()))-alpha*Interval(itv.ub()));
+
+		// evaluate the residual at the points such that f'(u) = alpha
 		int p1 = static_cast<int>(nb_period.lb()) - 2;
 		int p2 = static_cast<int>(nb_period.ub()) + 2;
 
 		int i = p1;
-
+		Interval TEMP1(0.0);
 		while (i<=p2) { // looking for a point
 			TEMP1 = (itv & (i%2==0? (u + i*Interval::pi()) : (i*Interval::pi() - u)));
 			if (!(TEMP1.is_empty())) { // check if maximize the error
-				t1 = (abs(cos(TEMP1)-(alpha*TEMP1+beta))).ub();
-				if (t1>ddelta)  ddelta= t1;
+				residual = residual | (cos(TEMP1)-alpha*TEMP1);
 			}
 			i++;
 		}
+
+		const double beta = residual.mid();
+		const double t1 = (beta-residual).ub();
+		const double t2 = (residual-beta).ub();
+		const double ddelta = (t1>t2) ? t1 : t2;
 
 		*this *= alpha;
 		*this += beta;
 		this->inflate(ddelta);
 		//saxpy(alpha, AffineMain<T>(), beta, ddelta, true,false,true,true);
-
 
 	}
 	return *this;
@@ -740,8 +707,6 @@ AffineMain<T>& AffineMain<T>::Asin(const Interval& itv){
 		*this = res_itv;
 	}  else  {
 		// General case
-		double alpha, beta, ddelta, t1;//, t2;
-		Interval dmm(0.0), TEMP1(0.0), TEMP2(0.0), band(0.0);
 		if (itv.diam()>=Interval::two_pi().lb()) {
 			*this = Interval(-1,1);
 			return *this;
@@ -754,67 +719,59 @@ AffineMain<T>& AffineMain<T>::Asin(const Interval& itv){
 		// c0 = 0.5 (f(xb0)+f(xb1))
 		// c1 = x0*f(xb0)+x1*f(xb1)
 		// alpha = 2*c1/(b-a)
-		// beta = c0-c1*(a+b)/(b-a)
+		//  old : beta = c0-c1*(a+b)/(b-a)
 		//  old : ddelta = (b-a)^2 * f''(_itv)/16
-		//  new : ddelta = evaluate the error at the bound and the points when f'(x)=alpha
+		//  new : residual = evaluate the maximal error of f(x)-alpha*x at the bound and the points when f'(x)=alpha
+		//  new : beta = evaluate the mid point of the residual
+		//  new : ddelta = evaluate the radius of the residual
+		const double x0 = 1.0/std::sqrt(2.);
+		const double xb0 = (0.5)*(itv.diam()*x0 +itv.lb()+itv.ub());
+		const double xb1 = (0.5)*(itv.diam()*(-x0) +itv.lb()+itv.ub());
+		const double fxb0 = std::sin(xb0);
+		const double fxb1 = std::sin(xb1);
+		//c0 = (0.5)*(fxb0+fxb1);
+		const double c1 = x0*fxb0-x0*fxb1;
 
-		double x0,xb0,xb1,fxb0,fxb1,c0,c1;
+		const double alpha = 2*c1/(itv.diam());
 
-		x0 = 1.0/std::sqrt(2.);
-		xb0 = (0.5)*(itv.diam()*x0 +itv.lb()+itv.ub());
-		xb1 = (0.5)*(itv.diam()*(-x0) +itv.lb()+itv.ub());
-
-
-		fxb0 = std::sin(xb0);
-		fxb1 = std::sin(xb1);
-
-		c0 = (0.5)*(fxb0+fxb1);
-		c1 = x0*fxb0-x0*fxb1;
-
-		alpha  = 2*c1/(itv.diam());
-		beta   = c0-c1*((itv.lb()+itv.ub())/(itv.diam()));
-		//ddelta = ((noise_count()*Interval(TEMP1.rad())) + Interval(TEMP2.rad())).ub();
-
-		// compute the maximal error
-		ddelta= 0.0;
-		Interval u,nb_period;
-
-		// compute the error at _itv.lb() and _itv.ub() and compute the first point such as f'(u) = alpha
-
-		ddelta = (abs(sin(Interval(itv.lb()))-(alpha*Interval(itv.lb())+beta))).ub();
-		t1     = (abs(sin(Interval(itv.ub()))-(alpha*Interval(itv.ub())+beta))).ub();
-		if (t1>ddelta)  ddelta= t1;
-		
-		Interval alpha_domain =Interval(alpha) & Interval(-1.0, 1.0);
+		// compute the first point such as f'(u) = alpha
+		const Interval alpha_domain =Interval(alpha) & Interval(-1.0, 1.0);
 		if (alpha_domain.is_empty()) {
 			*this = res_itv;
 			return *this;
 		}
-		u = acos(alpha_domain);
-		nb_period = itv / Interval::pi();
+		const Interval u = acos(alpha_domain);
+		const Interval nb_period = itv / Interval::pi();
 
-		const double period_limit =
-				static_cast<double>(std::numeric_limits<int>::max() - 2);
+		const double period_limit =	static_cast<double>(std::numeric_limits<int>::max() - 2);
 		if (!std::isfinite(nb_period.lb()) || !std::isfinite(nb_period.ub()) ||
 			nb_period.lb() < -period_limit || nb_period.ub() > period_limit) {
 			*this = res_itv;
 			return *this;
 		}
 
-		// evaluate the error at the points such that f'(u) = alpha
+		// compute the residual r(x)=f(x)-alpha*x at the bounds of itv
+		Interval residual = (sin(Interval(itv.lb()))-alpha*Interval(itv.lb()))
+						  | (sin(Interval(itv.ub()))-alpha*Interval(itv.ub()));
+
+		// evaluate the residual at the points such that f'(u) = alpha
 		int p1 = static_cast<int>(nb_period.lb()) - 2;
 		int p2 = static_cast<int>(nb_period.ub()) + 2;
 
 		int i = p1;
-
+		Interval TEMP1(0.0);
 		while (i<=p2) { // looking for a point
 			TEMP1 = (itv & (i%2==0? (u + i*Interval::pi()) : ((i+1)*Interval::pi() - u)));
 			if (!(TEMP1.is_empty())) {
-				t1 = (abs(sin(TEMP1)-(alpha*TEMP1+beta))).ub();
-				if (t1>ddelta)  ddelta= t1;
+				residual = residual | (sin(TEMP1)-alpha*TEMP1);
 			}
 			i++;
 		}
+
+		const double beta = residual.mid();
+		const double t1 = (beta-residual).ub();
+		const double t2 = (residual-beta).ub();
+		const double ddelta = (t1>t2) ? t1 : t2;
 
 		*this *= alpha;
 		*this += beta;
@@ -835,8 +792,6 @@ AffineMain<T>& AffineMain<T>::Atan(const Interval& itv){
 		*this = res_itv;
 	}  else  {
 		// General case
-		double alpha, beta, ddelta, t1;//, t2;
-		Interval dmm(0.0), TEMP1(0.0), TEMP2(0.0), band(0.0);
 		if (itv.diam()>=Interval::two_pi().lb()) {
 			*this = Interval(-1,1);
 			return *this;
@@ -849,35 +804,22 @@ AffineMain<T>& AffineMain<T>::Atan(const Interval& itv){
 		// c0 = 0.5 (f(xb0)+f(xb1))
 		// c1 = x0*f(xb0)+x1*f(xb1)
 		// alpha = 2*c1/(b-a)
-		// beta = c0-c1*(a+b)/(b-a)
+		//  old : beta = c0-c1*(a+b)/(b-a)
 		//  old : ddelta = (b-a)^2 * f''(_itv)/16
-		//  new : ddelta = evaluate the error at the bound and the points when f'(x)=alpha
+		//  new : residual = evaluate the maximal error of f(x)-alpha*x at the bound and the points when f'(x)=alpha
+		//  new : beta = evaluate the mid point of the residual
+		//  new : ddelta = evaluate the radius of the residual
+		const double x0 = 1.0/std::sqrt(2.);
+		const double xb0 = (0.5)*(itv.diam()*  x0  +itv.lb()+itv.ub());
+		const double xb1 = (0.5)*(itv.diam()*(-x0) +itv.lb()+itv.ub());
+		const double fxb0 = std::tan(xb0);
+		const double fxb1 = std::tan(xb1);
+		//c0 = (0.5)*(fxb0+fxb1);
+		const double c1 = x0*fxb0-x0*fxb1;
 
-		double x0,xb0,xb1,fxb0,fxb1,c0,c1;
+		const double alpha = 2*c1/(itv.diam());
 
-		x0 = 1.0/std::sqrt(2.);
-		xb0 = (0.5)*(itv.diam()*  x0  +itv.lb()+itv.ub());
-		xb1 = (0.5)*(itv.diam()*(-x0) +itv.lb()+itv.ub());
-
-		fxb0 = std::tan(xb0);
-		fxb1 = std::tan(xb1);
-
-		c0 = (0.5)*(fxb0+fxb1);
-		c1 = x0*fxb0-x0*fxb1;
-
-		alpha  = 2*c1/(itv.diam());
-		beta   = c0-c1*((itv.lb()+itv.ub())/(itv.diam()));
-		//ddelta = ((noise_count()*Interval(TEMP1.rad())) + Interval(TEMP2.rad())).ub();
-
-		// compute the maximal error
-		ddelta= 0.0;
-		Interval u,nb_period;
-
-		// compute the error at _itv.lb() and _itv.ub() and compute the first point such as f'(u) = alpha
-
-		ddelta = (abs(tan(Interval(itv.lb()))-(alpha*Interval(itv.lb())+beta))).ub();
-		t1     = (abs(tan(Interval(itv.ub()))-(alpha*Interval(itv.ub())+beta))).ub();
-		if (t1>ddelta)  ddelta= t1;
+		// compute the first point such as f'(u) = alpha
 		if (!std::isfinite(alpha) || alpha < 1.0) {
 			*this = res_itv;
 			return *this;
@@ -887,36 +829,42 @@ AffineMain<T>& AffineMain<T>::Atan(const Interval& itv){
 			*this = res_itv;
 			return *this;
 		}
-		u = acos(cosine_domain);
-		nb_period = itv / Interval::pi();
+		const Interval u = acos(cosine_domain);
+		const Interval nb_period = itv / Interval::pi();
 
-		const double period_limit =
-				static_cast<double>(std::numeric_limits<int>::max() - 2);
+		const double period_limit = static_cast<double>(std::numeric_limits<int>::max() - 2);
 		if (!std::isfinite(nb_period.lb()) || !std::isfinite(nb_period.ub()) ||
 			nb_period.lb() < -period_limit || nb_period.ub() > period_limit) {
 			*this = res_itv;
 			return *this;
 		}
 
-		// evaluate the error at the points such that f'(u) = alpha
+		// compute the residual r(x)=f(x)-alpha*x at the bounds of itv
+		Interval residual = (tan(Interval(itv.lb()))-alpha*Interval(itv.lb()))
+						  | (tan(Interval(itv.ub()))-alpha*Interval(itv.ub()));
+
+		// evaluate the residual at the points such that f'(u) = alpha
 		int p1 = static_cast<int>(nb_period.lb()) - 2;
 		int p2 = static_cast<int>(nb_period.ub()) + 2;
 
 		int i = p1;
-
+		Interval TEMP1(0.0);
 		while (i<=p2) { // looking for a point
 			TEMP1 = (itv & ( i*Interval::pi() + u));
 			if ((!(TEMP1.is_empty()))) {
-				t1 = (abs(tan(TEMP1)-(alpha*TEMP1+beta))).ub();
-				if (t1>ddelta)  ddelta= t1;
+				residual = residual | (tan(TEMP1)-alpha*TEMP1);
 			}
 			TEMP1 = (itv & ( i*Interval::pi() - u ));
 			if ((!(TEMP1.is_empty()))) {
-				t1 = (abs(tan(TEMP1)-(alpha*TEMP1+beta))).ub();
-				if (t1>ddelta)  ddelta= t1;
+				residual = residual | (tan(TEMP1)-alpha*TEMP1);
 			}
 			i++;
 		}
+
+		const double beta = residual.mid();
+		const double t1 = (beta-residual).ub();
+		const double t2 = (residual-beta).ub();
+		const double ddelta = (t1>t2) ? t1 : t2;
 
 		*this *= alpha;
 		*this += beta;
@@ -929,72 +877,74 @@ AffineMain<T>& AffineMain<T>::Atan(const Interval& itv){
 
 template<class T>
 AffineMain<T>& AffineMain<T>::Aacos(const Interval& itv) {
-  const Interval domain = itv & Interval(-1.0, 1.0);
-  const Interval res_itv = acos(domain);
-  if (res_itv.is_empty() || res_itv.is_unbounded() || !is_active() ||
-      domain.diam() < AF_EC) {
-    *this = res_itv;
-    return *this;
-  }
+	const Interval domain = itv & Interval(-1.0, 1.0);
+	const Interval res_itv = acos(domain);
+	if (res_itv.is_empty() || res_itv.is_unbounded() || !is_active() ||
+		domain.diam() < AF_EC) {
+		*this = res_itv;
+	} else {
 
-	//  pour _itv = [a,b]
-	// x0 = 1/sqrt(2)
-	// x1= - x0
-	// xb0 = 0.5*((b-a)*x0 +(a+b))
-	// xb1 = 0.5*((b-a)*x1 +(a+b))
-	// c0 = 0.5 (f(xb0)+f(xb1))
-	// c1 = x0*f(xb0)+x1*f(xb1)
-	// alpha = 2*c1/(b-a)
-	//  old : beta = c0-c1*(a+b)/(b-a)
-	//  old : ddelta = (b-a)^2 * f''(_itv)/16
-	//  new : residual = evaluate the maximal error  of f(x)-alpha*x at the bound and the points when f'(x)=alpha
-	//  new : beta = evaluate the mid point of the rseidual
-	//  new : ddelta = evaluate the radius of the residual
-  const double x0 = 1.0/std::sqrt(2.0);
-  const double xb0 = 0.5*(domain.diam()*x0 + domain.lb() + domain.ub());
-  const double xb1 = 0.5*(-domain.diam()*x0 + domain.lb() + domain.ub());
-  const double fxb0 = std::acos(xb0);
-  const double fxb1 = std::acos(xb1);
-  const double c0 = 0.5*(fxb0 + fxb1);
-  const double c1 = x0*(fxb0 - fxb1);
-  const double alpha = 2.0*c1/domain.diam();
+		//  pour _itv = [a,b]
+		// x0 = 1/sqrt(2)
+		// x1= - x0
+		// xb0 = 0.5*((b-a)*x0 +(a+b))
+		// xb1 = 0.5*((b-a)*x1 +(a+b))
+		// c0 = 0.5 (f(xb0)+f(xb1))
+		// c1 = x0*f(xb0)+x1*f(xb1)
+		// alpha = 2*c1/(b-a)
+		//  old : beta = c0-c1*(a+b)/(b-a)
+		//  old : ddelta = (b-a)^2 * f''(_itv)/16
+		//  new : residual = evaluate the maximal error  of f(x)-alpha*x at the bound and the points when f'(x)=alpha
+		//  new : beta = evaluate the mid point of the rseidual
+		//  new : ddelta = evaluate the radius of the residual
+		const double x0 = 1.0/std::sqrt(2.0);
+		const double xb0 = 0.5*(domain.diam()*x0 + domain.lb() + domain.ub());
+		const double xb1 = 0.5*(-domain.diam()*x0 + domain.lb() + domain.ub());
+		const double fxb0 = std::acos(xb0);
+		const double fxb1 = std::acos(xb1);
+		//const double c0 = 0.5*(fxb0 + fxb1);
+		const double c1 = x0*(fxb0 - fxb1);
+		const double alpha = 2.0*c1/domain.diam();
 
-  if (!std::isfinite(alpha) || alpha > -1.0) {
-    *this = res_itv;
-    return *this;
-  }
+		if (!std::isfinite(alpha) || alpha > -1.0) {
+			*this = res_itv;
+			return *this;
+		}
 
-  const Interval left  =  (acos(Interval(domain.lb())) - alpha*Interval(domain.lb()));
-  const Interval right =  (acos(Interval(domain.ub())) - alpha*Interval(domain.ub()));
-  Interval residual = left | right;
+		const Interval left  =  (acos(Interval(domain.lb())) - alpha*Interval(domain.lb()));
+		const Interval right =  (acos(Interval(domain.ub())) - alpha*Interval(domain.ub())); 
+		Interval residual = left | right;
 
-  // acos'(u)=-1/sqrt(1-u^2)=alpha gives u=+-sqrt(1-1/alpha^2).
-  const Interval critical = sqrt(1.0 - 1.0/sqr(Interval(alpha)));
+		// acos'(u)=-1/sqrt(1-u^2)=alpha gives u=+-sqrt(1-1/alpha^2).
+		const Interval critical = sqrt(1.0 - 1.0/sqr(Interval(alpha)));
+		Interval TEMP1(0.0);
+		for (const Interval& candidate : {critical, -critical}) {
+			TEMP1 = candidate & domain;
+			if (!TEMP1.is_empty()) {
+				residual = residual | (acos(TEMP1) - alpha*TEMP1);
+			}
+		}
 
-  for (const Interval& candidate : {critical, -critical}) {
-    const Interval point = candidate & domain;
-    if (!point.is_empty()) {
-      residual = residual | (acos(point) - alpha*point);
-    }
-  }
-
-  const double beta = residual.mid();
-  const double ddelta = residual.rad();
-  *this *= alpha;
-  *this += beta;
-  this->inflate(ddelta);
-  return *this;
+		const double beta = residual.mid();
+		const double t1 = (beta-residual).ub();
+		const double t2 = (residual-beta).ub();
+		const double ddelta =  (t1>t2) ? t1 : t2;
+		*this *= alpha;
+		*this += beta;
+		this->inflate(ddelta);
+	}
+	return *this;
 }
 
 template<class T>
 AffineMain<T>& AffineMain<T>::Aasin(const Interval& itv) {
-  const Interval domain = itv & Interval(-1.0, 1.0);
-  const Interval res_itv = asin(domain);
-  if (res_itv.is_empty() || res_itv.is_unbounded() || !is_active() ||
-      domain.diam() < AF_EC) {
-    *this = res_itv;
-    return *this;
-  }
+	const Interval domain = itv & Interval(-1.0, 1.0);
+	const Interval res_itv = asin(domain);
+	if (res_itv.is_empty() || res_itv.is_unbounded() || !is_active() ||
+		domain.diam() < AF_EC) {
+		*this = res_itv;
+		return *this;
+	}
 
 	//  pour _itv = [a,b]
 	// x0 = 1/sqrt(2)
@@ -1009,50 +959,52 @@ AffineMain<T>& AffineMain<T>::Aasin(const Interval& itv) {
 	//  new : residual = evaluate the maximal error  of f(x)-alpha*x at the bound and the points when f'(x)=alpha
 	//  new : beta = evaluate the mid point of the rseidual
 	//  new : ddelta = evaluate the radius of the residual
-  const double x0 = 1.0/std::sqrt(2.0);
-  const double xb0 = 0.5*(domain.diam()*x0 + domain.lb() + domain.ub());
-  const double xb1 = 0.5*(-domain.diam()*x0 + domain.lb() + domain.ub());
-  const double fxb0 = std::asin(xb0);
-  const double fxb1 = std::asin(xb1);
-  const double c0 = 0.5*(fxb0 + fxb1);
-  const double c1 = x0*(fxb0 - fxb1);
-  const double alpha = 2.0*c1/domain.diam();
+	const double x0 = 1.0/std::sqrt(2.0);
+	const double xb0 = 0.5*(domain.diam()*x0 + domain.lb() + domain.ub());
+	const double xb1 = 0.5*(-domain.diam()*x0 + domain.lb() + domain.ub());
+	const double fxb0 = std::asin(xb0);
+	const double fxb1 = std::asin(xb1);
+	//const double c0 = 0.5*(fxb0 + fxb1);
+	const double c1 = x0*(fxb0 - fxb1);
+	const double alpha = 2.0*c1/domain.diam();
 
-  if (!std::isfinite(alpha) || alpha < 1.0) {
-    *this = res_itv;
-    return *this;
-  }
+	if (!std::isfinite(alpha) || alpha < 1.0) {
+		*this = res_itv;
+		return *this;
+	}
 
-  const Interval left  =  (asin(Interval(domain.lb())) - alpha*Interval(domain.lb()));
-  const Interval right =  (asin(Interval(domain.ub())) - alpha*Interval(domain.ub()));
-  Interval residual = left | right;
+	const Interval left  =  (asin(Interval(domain.lb())) - alpha*Interval(domain.lb()));
+	const Interval right =  (asin(Interval(domain.ub())) - alpha*Interval(domain.ub()));
+	Interval residual = left | right;
 
-  // asin'(u)=1/sqrt(1-u^2)=alpha gives u=+-sqrt(1-1/alpha^2).
-  const Interval critical = sqrt(1.0 - 1.0/sqr(Interval(alpha)));
+	// asin'(u)=1/sqrt(1-u^2)=alpha gives u=+-sqrt(1-1/alpha^2).
+	const Interval critical = sqrt(1.0 - 1.0/sqr(Interval(alpha)));
+	Interval TEMP1(0.0);
+	for (const Interval& candidate : {critical, -critical}) {
+		TEMP1  = candidate & domain;
+		if (!TEMP1.is_empty()) {
+			residual = residual | (asin(TEMP1) - alpha*TEMP1);
+		}
+	}
 
-  for (const Interval& candidate : {critical, -critical}) {
-    const Interval point = candidate & domain;
-    if (!point.is_empty()) {
-      residual = residual | (asin(point) - alpha*point);
-    }
-  }
-
-  const double beta = residual.mid();
-  const double ddelta = residual.rad();
-  *this *= alpha;
-  *this += beta;
-  this->inflate(ddelta);
-  return *this;
+	const double beta = residual.mid();
+	const double t1 = (beta-residual).ub();
+	const double t2 = (residual-beta).ub();
+	const double ddelta =  (t1>t2) ? t1 : t2;
+	*this *= alpha;
+	*this += beta;
+	this->inflate(ddelta);
+	return *this;
 }
 
 template<class T>
 AffineMain<T>& AffineMain<T>::Aatan(const Interval& itv) {
-  const Interval res_itv = atan(itv);
-  if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() ||
-      !is_active() || itv.diam() < AF_EC) {
-    *this = res_itv;
-    return *this;
-  }
+	const Interval res_itv = atan(itv);
+	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() ||
+		!is_active() || itv.diam() < AF_EC) {
+		*this = res_itv;
+		return *this;
+	}
 
 	//  pour _itv = [a,b]
 	// x0 = 1/sqrt(2)
@@ -1067,44 +1019,62 @@ AffineMain<T>& AffineMain<T>::Aatan(const Interval& itv) {
 	//  new : residual = evaluate the maximal error  of f(x)-alpha*x at the bound and the points when f'(x)=alpha
 	//  new : beta = evaluate the mid point of the rseidual
 	//  new : ddelta = evaluate the radius of the residual
-  const double x0 = 1.0/std::sqrt(2.0);
-  const double xb0 = 0.5*(itv.diam()*x0 + itv.lb() + itv.ub());
-  const double xb1 = 0.5*(-itv.diam()*x0 + itv.lb() + itv.ub());
-  const double fxb0 = std::atan(xb0);
-  const double fxb1 = std::atan(xb1);
-  const double c0 = 0.5*(fxb0 + fxb1);
-  const double c1 = x0*(fxb0 - fxb1);
-  const double alpha = 2.0*c1/itv.diam();
+	const double x0 = 1.0/std::sqrt(2.0);
+	const double xb0 = 0.5*(itv.diam()*x0 + itv.lb() + itv.ub());
+	const double xb1 = 0.5*(-itv.diam()*x0 + itv.lb() + itv.ub());
+	const double fxb0 = std::atan(xb0);
+	const double fxb1 = std::atan(xb1);
+	//const double c0 = 0.5*(fxb0 + fxb1);
+	const double c1 = x0*(fxb0 - fxb1);
+	const double alpha = 2.0*c1/itv.diam();
 
-  if (!std::isfinite(alpha) || alpha <= 0.0 || alpha > 1.0) {
-    *this = res_itv;
-    return *this;
-  }
+	if (!std::isfinite(alpha) || alpha <= 0.0 || alpha > 1.0) {
+		*this = res_itv;
+		return *this;
+	}
 
-  const Interval left  =  (atan(Interval(itv.lb())) - alpha*Interval(itv.lb()));
-  const Interval right =  (atan(Interval(itv.ub())) - alpha*Interval(itv.ub()));
-  Interval residual = left | right;
+	const Interval left  =  (atan(Interval(itv.lb())) - alpha*Interval(itv.lb()));
+	const Interval right =  (atan(Interval(itv.ub())) - alpha*Interval(itv.ub()));
+	Interval residual = left | right;
 
-  // atan'(u)=1/(1+u^2)=alpha gives u=+-sqrt(1/alpha-1).
-  const Interval critical = sqrt(1.0/Interval(alpha) - 1.0);
+	// atan'(u)=1/(1+u^2)=alpha gives u=+-sqrt(1/alpha-1).
+	const Interval critical = sqrt(1.0/Interval(alpha) - 1.0);
+	Interval TEMP1(0.0);
+	for (const Interval& candidate : {critical, -critical}) {
+		TEMP1  = candidate & itv;
+		if (!TEMP1.is_empty()) {
+			residual = residual | (atan(TEMP1) - alpha*TEMP1);
+		}
+	}
 
-  for (const Interval& candidate : {critical, -critical}) {
-    const Interval point = candidate & itv;
-    if (!point.is_empty()) {
-      residual = residual | (atan(point) - alpha*point);
-    }
-  }
-
-  const double beta = residual.mid();
-  const double ddelta = residual.rad();
-  *this *= alpha;
-  *this += beta;
-  this->inflate(ddelta);
-  return *this;
+	const double beta = residual.mid();
+	const double t1 = (beta-residual).ub();
+	const double t2 = (residual-beta).ub();
+	const double ddelta =  (t1>t2) ? t1 : t2;
+	*this *= alpha;
+	*this += beta;
+	this->inflate(ddelta);
+	return *this;
 }
 
 template<class T>
-AffineMain<T>& AffineMain<T>::Acosh(const Interval& itv){
+inline AffineMain<T>& AffineMain<T>::Acosh(const Interval& itv){
+	switch (mode) {
+	case Affine_Mode::AF_Lin_Chebyshev:
+		this->Acosh_CH(itv);
+		break;
+	case Affine_Mode::AF_Lin_MinRange:
+		this->Acosh_MR(itv);
+		break;
+	default:
+		*this = cosh(itv);
+		break;
+	}
+	return *this;
+}
+
+template<class T>
+AffineMain<T>& AffineMain<T>::Acosh_CH(const Interval& itv){
 	Interval res_itv = cosh(itv);
 
 	// Particular case
@@ -1112,25 +1082,19 @@ AffineMain<T>& AffineMain<T>::Acosh(const Interval& itv){
 		*this = res_itv;
 	}  else  {
 		// General case
-		double alpha, beta, ddelta, t1, t2;
-		Interval TEMP1(0.0), TEMP2(0.0), band(0.0);
-		alpha = ((cosh(Interval(itv.ub()))-cosh(Interval(itv.lb())))/itv.diam()).lb();
+		const double alpha = ((cosh(Interval(itv.ub()))-cosh(Interval(itv.lb())))/itv.diam()).lb();
 
-		//u = asinh(alpha);
-		TEMP1 = cosh(Interval(itv.lb()))-alpha*Interval(itv.lb());
-		TEMP2 = cosh(Interval(itv.ub()))-alpha*Interval(itv.ub());
-		if (TEMP1.ub()>TEMP2.ub()) {
-			// cosh(asinh(alpha)) = sqrt(sqr(alpha)+1)
-			band = Interval((sqrt(pow(Interval(alpha),2)+1)-alpha*asinh(Interval(alpha))).lb(),TEMP1.ub());
-		}
-		else {
-			band = Interval((sqrt(pow(Interval(alpha),2)+1)-alpha*asinh(Interval(alpha))).lb(),TEMP2.ub());
-		}
+		// band = evaluate r(x)=f(x)-alpha*x at the bounds of itv and at the
+		// point u=asinh(alpha) where f'(u)=alpha. As cosh(asinh(alpha)) =
+		// sqrt(sqr(alpha)+1), r(u) = sqrt(sqr(alpha)+1)-alpha*asinh(alpha)
+		Interval band = (cosh(Interval(itv.lb()))-alpha*Interval(itv.lb()))
+					 | (cosh(Interval(itv.ub()))-alpha*Interval(itv.ub()));
+		band = band | (sqrt(sqr(Interval(alpha))+1)-alpha*asinh(Interval(alpha)));
 
-		beta = band.mid();
-		t1 = (beta -band).ub();
-		t2 = (band -beta).ub();
-		ddelta = (t1>t2)? t1 : t2;
+		const double beta = band.mid();
+		const double t1 = (beta -band).ub();
+		const double t2 = (band -beta).ub();
+		const double ddelta = (t1>t2)? t1 : t2;
 
 		*this *= alpha;
 		*this += beta;
@@ -1144,12 +1108,12 @@ AffineMain<T>& AffineMain<T>::Acosh(const Interval& itv){
 
 template<class T>
 AffineMain<T>& AffineMain<T>::Asinh(const Interval& itv) {
-  const Interval res_itv = sinh(itv);
-  if (res_itv.is_empty() || res_itv.is_unbounded() || !is_active() ||
-      itv.diam() < AF_EC) {
-    *this = res_itv;
-    return *this;
-  }
+	const Interval res_itv = sinh(itv);
+	if (res_itv.is_empty() || res_itv.is_unbounded() || !is_active() ||
+		itv.diam() < AF_EC) {
+		*this = res_itv;
+		return *this;
+	}
 
 	//  pour _itv = [a,b]
 	// x0 = 1/sqrt(2)
@@ -1164,50 +1128,52 @@ AffineMain<T>& AffineMain<T>::Asinh(const Interval& itv) {
 	//  new : residual = evaluate the maximal error  of f(x)-alpha*x at the bound and the points when f'(x)=alpha
 	//  new : beta = evaluate the mid point of the rseidual
 	//  new : ddelta = evaluate the radius of the residual
-  const double x0 = 1.0/std::sqrt(2.0);
-  const double xb0 = 0.5*(itv.diam()*x0 + itv.lb() + itv.ub());
-  const double xb1 = 0.5*(-itv.diam()*x0 + itv.lb() + itv.ub());
-  const double fxb0 = std::sinh(xb0);
-  const double fxb1 = std::sinh(xb1);
-  const double c0 = 0.5*(fxb0 + fxb1);
-  const double c1 = x0*(fxb0 - fxb1);
-  const double alpha = 2.0*c1/itv.diam();
+	const double x0 = 1.0/std::sqrt(2.0);
+	const double xb0 = 0.5*(itv.diam()*x0 + itv.lb() + itv.ub());
+	const double xb1 = 0.5*(-itv.diam()*x0 + itv.lb() + itv.ub());
+	const double fxb0 = std::sinh(xb0);
+	const double fxb1 = std::sinh(xb1);
+	//const double c0 = 0.5*(fxb0 + fxb1);
+	const double c1 = x0*(fxb0 - fxb1);
+	const double alpha = 2.0*c1/itv.diam();
 
-  if (!std::isfinite(alpha) || alpha < 1.0) {
-    *this = res_itv;
-    return *this;
-  }
+	if (!std::isfinite(alpha) || alpha < 1.0) {
+		*this = res_itv;
+		return *this;
+	}
 
-  const Interval left  =  (sinh(Interval(itv.lb())) - alpha*Interval(itv.lb()));
-  const Interval right =  (sinh(Interval(itv.ub())) - alpha*Interval(itv.ub()));
-  Interval residual = left | right;
+	const Interval left  =  (sinh(Interval(itv.lb())) - alpha*Interval(itv.lb()));
+	const Interval right =  (sinh(Interval(itv.ub())) - alpha*Interval(itv.ub()));
+	Interval residual = left | right;
 
-  // sinh'(u)=cosh(u)=alpha gives u=+-acosh(alpha).
-  const Interval critical = acosh(Interval(alpha));
+	// sinh'(u)=cosh(u)=alpha gives u=+-acosh(alpha).
+	const Interval critical = acosh(Interval(alpha));
+	Interval TEMP1(0.0);
+	for (const Interval& candidate : {critical, -critical}) {
+		TEMP1 = candidate & itv;
+		if (!TEMP1.is_empty()) {
+			residual = residual | (sinh(TEMP1) - alpha*TEMP1);
+		}
+	}
 
-  for (const Interval& candidate : {critical, -critical}) {
-    const Interval point = candidate & itv;
-    if (!point.is_empty()) {
-      residual = residual | (sinh(point) - alpha*point);
-    }
-  }
-
-  const double beta = residual.mid();
-  const double ddelta = residual.rad();
-  *this *= alpha;
-  *this += beta;
-  this->inflate(ddelta);
-  return *this;
+	const double beta = residual.mid();
+	const double t1 = (beta-residual).ub();
+	const double t2 = (residual-beta).ub();
+	const double ddelta =  (t1>t2) ? t1 : t2;
+	*this *= alpha;
+	*this += beta;
+	this->inflate(ddelta);
+	return *this;
 }
 
 template<class T>
 AffineMain<T>& AffineMain<T>::Atanh(const Interval& itv) {
-  const Interval res_itv = tanh(itv);
-  if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() ||
-      !is_active() || itv.diam() < AF_EC) {
-    *this = res_itv;
-    return *this;
-  }
+	const Interval res_itv = tanh(itv);
+	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() ||
+		!is_active() || itv.diam() < AF_EC) {
+		*this = res_itv;
+		return *this;
+	}
 
 	//  pour _itv = [a,b]
 	// x0 = 1/sqrt(2)
@@ -1222,40 +1188,42 @@ AffineMain<T>& AffineMain<T>::Atanh(const Interval& itv) {
 	//  new : residual = evaluate the maximal error  of f(x)-alpha*x at the bound and the points when f'(x)=alpha
 	//  new : beta = evaluate the mid point of the rseidual
 	//  new : ddelta = evaluate the radius of the residual
-  const double x0 = 1.0/std::sqrt(2.0);
-  const double xb0 = 0.5*(itv.diam()*x0 + itv.lb() + itv.ub());
-  const double xb1 = 0.5*(-itv.diam()*x0 + itv.lb() + itv.ub());
-  const double fxb0 = std::tanh(xb0);
-  const double fxb1 = std::tanh(xb1);
-  const double c0 = 0.5*(fxb0 + fxb1);
-  const double c1 = x0*(fxb0 - fxb1);
-  const double alpha = 2.0*c1/itv.diam();
+	const double x0 = 1.0/std::sqrt(2.0);
+	const double xb0 = 0.5*(itv.diam()*x0 + itv.lb() + itv.ub());
+	const double xb1 = 0.5*(-itv.diam()*x0 + itv.lb() + itv.ub());
+	const double fxb0 = std::tanh(xb0);
+	const double fxb1 = std::tanh(xb1);
+	//const double c0 = 0.5*(fxb0 + fxb1);
+	const double c1 = x0*(fxb0 - fxb1);
+	const double alpha = 2.0*c1/itv.diam();
 
-  if (!std::isfinite(alpha) || alpha <= 0.0 || alpha > 1.0) {
-    *this = res_itv;
-    return *this;
-  }
+	if (!std::isfinite(alpha) || alpha <= 0.0 || alpha > 1.0) {
+		*this = res_itv;
+		return *this;
+	}
 
-  const Interval left  =  (tanh(Interval(itv.lb())) - alpha*Interval(itv.lb()));
-  const Interval right =  (tanh(Interval(itv.ub())) - alpha*Interval(itv.ub()));
-  Interval residual = left | right;
+	const Interval left  =  (tanh(Interval(itv.lb())) - alpha*Interval(itv.lb()));
+	const Interval right =  (tanh(Interval(itv.ub())) - alpha*Interval(itv.ub()));
+	Interval residual = left | right;
 
-  // tanh'(u)=1/cosh(u)^2=alpha gives u=+-acosh(1/sqrt(alpha)).
-  const Interval critical = acosh(1.0/sqrt(Interval(alpha)));
+	// tanh'(u)=1/cosh(u)^2=alpha gives u=+-acosh(1/sqrt(alpha)).
+	const Interval critical = acosh(1.0/sqrt(Interval(alpha)));
+	Interval TEMP1(0.0);
+	for (const Interval& candidate : {critical, -critical}) {
+		TEMP1 = candidate & itv;
+		if (!TEMP1.is_empty()) {
+			residual = residual | (tanh(TEMP1) - alpha*TEMP1);
+		}
+	}
 
-  for (const Interval& candidate : {critical, -critical}) {
-    const Interval point = candidate & itv;
-    if (!point.is_empty()) {
-      residual = residual | (tanh(point) - alpha*point);
-    }
-  }
-
-  const double beta = residual.mid();
-  const double ddelta = residual.rad();
-  *this *= alpha;
-  *this += beta;
-  this->inflate(ddelta);
-  return *this;
+	const double beta = residual.mid();
+	const double t1 = (beta-residual).ub();
+	const double t2 = (residual-beta).ub();
+	const double ddelta =  (t1>t2) ? t1 : t2;
+	*this *= alpha;
+	*this += beta;
+	this->inflate(ddelta);
+	return *this;
 }
 
 
@@ -1265,50 +1233,52 @@ AffineMain<T>& AffineMain<T>::Atanh(const Interval& itv) {
 // alpha = diam(res_itv)/diam(domain) is always > 0.
 template<class T>
 AffineMain<T>& AffineMain<T>::Aacosh(const Interval& itv ) {
-  const Interval domain = itv & Interval(1.0, oo);
-  const Interval res_itv = acosh(domain);
+	const Interval domain = itv & Interval(1.0, oo);
+	const Interval res_itv = acosh(domain);
 
-  // The model is built on the real domain intersection. Tests below check
-  // that applying it to the original affine form still encloses all values
-  // belonging to that valid domain when the input is only partly admissible.
-  if (res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (domain.diam() < AF_EC)) {
-    *this = res_itv;
-    return *this;
-  }
+	// The model is built on the real domain intersection. Tests below check
+	// that applying it to the original affine form still encloses all values
+	// belonging to that valid domain when the input is only partly admissible.
+	if (res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (domain.diam() < AF_EC)) {
+		*this = res_itv;
+		return *this;
+	}
 
-  const double alpha = res_itv.diam()/domain.diam();
-  if (!std::isfinite(alpha) || alpha <= 0.0) {
-    *this = res_itv;
-    return *this;
-  }
+	const double alpha = res_itv.diam()/domain.diam();
+	if (!std::isfinite(alpha) || alpha <= 0.0) {
+		*this = res_itv;
+		return *this;
+	}
 
-  const Interval left = acosh(Interval(domain.lb())) - alpha*Interval(domain.lb());
-  const Interval right = acosh(Interval(domain.ub())) - alpha*Interval(domain.ub());
-  Interval band = left | right;
+	const Interval left = acosh(Interval(domain.lb())) - alpha*Interval(domain.lb());
+	const Interval right = acosh(Interval(domain.ub())) - alpha*Interval(domain.ub());
+	Interval band = left | right;
 
-  // acosh'(u)=alpha gives u=sqrt(1+1/alpha^2).
-  const Interval candidate = sqrt(1.0 + 1.0/sqr(Interval(alpha))) & domain;
-  if (!candidate.is_empty()) {
-    band = band | (acosh(candidate) - alpha*candidate);
-  }
+	// acosh'(u)=alpha gives u=sqrt(1+1/alpha^2).
+	const Interval candidate = sqrt(1.0 + 1.0/sqr(Interval(alpha))) & domain;
+	if (!candidate.is_empty()) {
+		band = band | (acosh(candidate) - alpha*candidate);
+	}
 
-  const double beta = band.mid();
-  const double ddelta = band.rad();
-  *this *= alpha;
-  *this += beta;
-  this->inflate(ddelta);
-  return *this;
+	const double beta = band.mid();
+	const double t1 = (beta-band).ub();
+	const double t2 = (band-beta).ub();
+	const double ddelta =  (t1>t2) ? t1 : t2;
+	*this *= alpha;
+	*this += beta;
+	this->inflate(ddelta);
+	return *this;
 }
 
 
 template<class T>
 AffineMain<T>& AffineMain<T>::Aasinh(const Interval& itv) {
-  const Interval res_itv = asinh(itv);
-  if (res_itv.is_empty() || res_itv.is_unbounded() || !is_active() ||
-      itv.diam() < AF_EC) {
-    *this = res_itv;
-    return *this;
-  }
+	const Interval res_itv = asinh(itv);
+	if (res_itv.is_empty() || res_itv.is_unbounded() || !is_active() ||
+		itv.diam() < AF_EC) {
+		*this = res_itv;
+		return *this;
+	}
 
 	//  pour _itv = [a,b]
 	// x0 = 1/sqrt(2)
@@ -1323,40 +1293,42 @@ AffineMain<T>& AffineMain<T>::Aasinh(const Interval& itv) {
 	//  new : residual = evaluate the maximal error  of f(x)-alpha*x at the bound and the points when f'(x)=alpha
 	//  new : beta = evaluate the mid point of the rseidual
 	//  new : ddelta = evaluate the radius of the residual
-  const double x0 = 1.0/std::sqrt(2.0);
-  const double xb0 = 0.5*(itv.diam()*x0 + itv.lb() + itv.ub());
-  const double xb1 = 0.5*(-itv.diam()*x0 + itv.lb() + itv.ub());
-  const double fxb0 = std::asinh(xb0);
-  const double fxb1 = std::asinh(xb1);
-  const double c0 = 0.5*(fxb0 + fxb1);
-  const double c1 = x0*(fxb0 - fxb1);
-  const double alpha = 2.0*c1/itv.diam();
+	const double x0 = 1.0/std::sqrt(2.0);
+	const double xb0 = 0.5*(itv.diam()*x0 + itv.lb() + itv.ub());
+	const double xb1 = 0.5*(-itv.diam()*x0 + itv.lb() + itv.ub());
+	const double fxb0 = std::asinh(xb0);
+	const double fxb1 = std::asinh(xb1);
+	//const double c0 = 0.5*(fxb0 + fxb1);
+	const double c1 = x0*(fxb0 - fxb1);
+	const double alpha = 2.0*c1/itv.diam();
 
-  if (!std::isfinite(alpha) || alpha <= 0.0 || alpha > 1.0) {
-    *this = res_itv;
-    return *this;
-  }
+	if (!std::isfinite(alpha) || alpha <= 0.0 || alpha > 1.0) {
+		*this = res_itv;
+		return *this;
+	}
 
-  const Interval left  =  (asinh(Interval(itv.lb())) - alpha*Interval(itv.lb()));
-  const Interval right =  (asinh(Interval(itv.ub())) - alpha*Interval(itv.ub()));
-  Interval residual = left | right;
+	const Interval left  =  (asinh(Interval(itv.lb())) - alpha*Interval(itv.lb()));
+	const Interval right =  (asinh(Interval(itv.ub())) - alpha*Interval(itv.ub()));
+	Interval residual = left | right;
 
-  // asinh'(u)=alpha gives u=+-sqrt(1/alpha^2-1).
-  const Interval critical = sqrt(1.0/sqr(Interval(alpha)) - 1.0);
+	// asinh'(u)=alpha gives u=+-sqrt(1/alpha^2-1).
+	const Interval critical = sqrt(1.0/sqr(Interval(alpha)) - 1.0);
+	Interval TEMP1(0.0);
+	for (const Interval& candidate : {critical, -critical}) {
+		TEMP1 = candidate & itv;
+		if (!TEMP1.is_empty()) {
+			residual = residual | (asinh(TEMP1) - alpha*TEMP1);
+		}
+	}
 
-  for (const Interval& candidate : {critical, -critical}) {
-    const Interval point = candidate & itv;
-    if (!point.is_empty()) {
-      residual = residual | (asinh(point) - alpha*point);
-    }
-  }
-
-  const double beta = residual.mid();
-  const double ddelta = residual.rad();
-  *this *= alpha;
-  *this += beta;
-  this->inflate(ddelta);
-  return *this;
+	const double beta = residual.mid();
+	const double t1 = (beta-residual).ub();
+	const double t2 = (residual-beta).ub();
+	const double ddelta =  (t1>t2) ? t1 : t2;
+	*this *= alpha;
+	*this += beta;
+	this->inflate(ddelta);
+	return *this;
 }
 
 
@@ -1366,49 +1338,51 @@ AffineMain<T>& AffineMain<T>::Aasinh(const Interval& itv) {
 // (mean value theorem), guaranteeing 1-1/alpha >= 0 below.
 template<class T>
 inline AffineMain<T>&
-AffineMain<T>::Aatanh(const Interval& itv)
-{
-  const Interval domain = itv & Interval(-1.0, 1.0);
-  const Interval res_itv = atanh(itv);
-  if (domain != itv || res_itv.is_empty() || res_itv.is_unbounded() ||
-      !is_active() || itv.diam() < AF_EC) {
-    *this = res_itv;
-    return *this;
-  }
+AffineMain<T>::Aatanh(const Interval& itv) {
+	const Interval domain = itv & Interval(-1.0, 1.0);
+	const Interval res_itv = atanh(itv);
+	if (domain != itv || res_itv.is_empty() || res_itv.is_unbounded() ||
+		!is_active() || itv.diam() < AF_EC) {
+		*this = res_itv;
+		return *this;
+	}
 
-  const double x0 = 1.0/std::sqrt(2.0);
-  const double xb0 = 0.5*(itv.diam()*x0 + itv.lb() + itv.ub());
-  const double xb1 = 0.5*(-itv.diam()*x0 + itv.lb() + itv.ub());
-  const double fxb0 = std::atanh(xb0);
-  const double fxb1 = std::atanh(xb1);
-  const double c0 = 0.5*(fxb0 + fxb1);
-  const double c1 = x0*(fxb0 - fxb1);
-  const double alpha = 2.0*c1/itv.diam();
+	const double x0 = 1.0/std::sqrt(2.0);
+	const double xb0 = 0.5*(itv.diam()*x0 + itv.lb() + itv.ub());
+	const double xb1 = 0.5*(-itv.diam()*x0 + itv.lb() + itv.ub());
+	const double fxb0 = std::atanh(xb0);
+	const double fxb1 = std::atanh(xb1);
+	//const double c0 = 0.5*(fxb0 + fxb1);
+	const double c1 = x0*(fxb0 - fxb1);
+	const double alpha = 2.0*c1/itv.diam();
 
-  if (!std::isfinite(alpha) || alpha < 1.0) {
-    *this = res_itv;
-    return *this;
-  }
+	if (!std::isfinite(alpha) || alpha < 1.0) {
+		*this = res_itv;
+		return *this;
+	}
 
-  const Interval left  =  (atanh(Interval(itv.lb())) - alpha*Interval(itv.lb()));
-  const Interval right =  (atanh(Interval(itv.ub())) - alpha*Interval(itv.ub()));
-  Interval residual = left | right;
+	const Interval left  =  (atanh(Interval(itv.lb())) - alpha*Interval(itv.lb()));
+	const Interval right =  (atanh(Interval(itv.ub())) - alpha*Interval(itv.ub()));
+	Interval residual = left | right;
 
-  // atanh'(u)=alpha gives u=+-sqrt(1-1/alpha).
-  const Interval critical = sqrt(1.0 - 1.0/Interval(alpha));
-  for (const Interval& candidate : {critical, -critical}) {
-    const Interval point = candidate & itv;
-    if (!point.is_empty()) {
-      residual = residual | (atanh(point) - alpha*point);
-    }
-  }
+	// atanh'(u)=alpha gives u=+-sqrt(1-1/alpha).
+	const Interval critical = sqrt(1.0 - 1.0/Interval(alpha));
+	Interval TEMP1(0.0);
+	for (const Interval& candidate : {critical, -critical}) {
+		TEMP1 = candidate & itv;
+		if (!TEMP1.is_empty()) {
+			residual = residual | (atanh(TEMP1) - alpha*TEMP1);
+		}
+	}
 
-  const double beta = residual.mid();
-  const double ddelta = residual.rad();
-  *this *= alpha;
-  *this += beta;
-  this->inflate(ddelta);
-  return *this;
+	const double beta = residual.mid();
+	const double t1 = (beta-residual).ub();
+	const double t2 = (residual-beta).ub();
+	const double ddelta =  (t1>t2) ? t1 : t2;
+	*this *= alpha;
+	*this += beta;
+	this->inflate(ddelta);
+	return *this;
 }
 
 
@@ -1482,59 +1456,32 @@ inline AffineMain<T>& AffineMain<T>::Aabs(const Interval& itv){
 		*this = res_itv;
 	}  else  {
 		// General case
-		double alpha, beta, ddelta, t1, t2;
-		Interval TEMP1(0.0), TEMP2(0.0), band(0.0);
 
-		alpha = ((abs(Interval(itv.ub()))-abs(Interval(itv.lb())))/itv.diam()).ub();
+		const double alpha = ((abs(Interval(itv.ub()))-abs(Interval(itv.lb())))/itv.diam()).ub();
 
-		TEMP1 = res_itv.lb()-alpha*Interval(itv.lb());
-		TEMP2 = res_itv.ub()-alpha*Interval(itv.ub());
-		if (TEMP1.ub()>TEMP2.ub()) {
-			// u = 0
-			band = Interval(0.0,TEMP1.ub());
-		}
-		else {
-			band = Interval(0.0,TEMP2.ub());
-		}
+		// band = evaluate r(x)=f(x)-alpha*x at the bounds of itv and at the
+		// only non-differentiable point u=0, which lies in itv here and
+		// gives the minimum r(0)=0
+		Interval band = (abs(Interval(itv.lb()))-alpha*Interval(itv.lb()))
+			 | (abs(Interval(itv.ub()))-alpha*Interval(itv.ub()));
+		band = band | Interval(0.0);
 
-		beta = band.mid();
-		ddelta = band.rad();
-
+		const double beta = band.mid();
+		const double t1 = (beta-band).ub();
+		const double t2 = (band-beta).ub();
+		const double ddelta =  (t1>t2) ? t1 : t2;
 		*this *= alpha;
 		*this += beta;
 		this->inflate(ddelta);
 		//saxpy(alpha, AffineMain<T>(), beta, ddelta, true,false,true,true);
-
-
 	}
 	return *this;
 }
 
 
-namespace detail {
-
-/** Portable integer power for finite scalar interpolation points. */
-inline double affine_powi(double base, unsigned int exponent)
-{
-  double result = 1.0;
-  while (exponent != 0U) {
-    if ((exponent & 1U) != 0U) {
-      result *= base;
-    }
-    exponent >>= 1U;
-    if (exponent != 0U) {
-      base *= base;
-    }
-  }
-  return result;
-}
-
-} // namespace detail
-
 template<class T>
 inline AffineMain<T>& AffineMain<T>::Apow(int n, const Interval& itv) {
 	//	std::cout << "in power "<<std::endl;
-
 	// Particular case
 	if (itv.is_empty()||itv.is_unbounded()) {
 		*this = pow(itv,n);
@@ -1559,45 +1506,33 @@ inline AffineMain<T>& AffineMain<T>::Apow(int n, const Interval& itv) {
 			}
 
 		} else if (n % 2 == 0) {
-			// alpha = (F(sup(x)) - F(inf(x)))/diam(X)
-			// u = (f')^{-1}(alpha)
-			// d_a = f(inf(x)) -alpha*inf(X)
-			// d_b = f(sup(x)) -alpha*sup(x)
-			// d_min = min(d_a,d_b)
-			// d_max = f(u) - alpha*u
-			// beta = Interval(d_min,d_max).mid()
-			// zeta = Interval(d_min,d_max).rad()
-			double alpha, beta, ddelta, t1, t2;
-			Interval dmm(0.0), TEMP1(0.0), TEMP2(0.0), band(0.0);
-
-			dmm = pow(itv, n);
-			const double f_lb = detail::affine_powi(itv.lb(), static_cast<unsigned int>(n));
-			const double f_ub = detail::affine_powi(itv.ub(), static_cast<unsigned int>(n));
-			alpha = (f_ub - f_lb)/itv.diam();
-			if (!std::isfinite(f_lb) || !std::isfinite(f_ub) ||
-					!std::isfinite(alpha)) {
+			// alpha = (f(sup(x)) - f(inf(x)))/diam(x)
+			// f is convex for n even, so the residual r(x)=f(x)-alpha*x is
+			// maximal at a bound of x and minimal at the point u where
+			// f'(u)=alpha, i.e. u = (alpha/n)^(1/(n-1))
+			// band   = evaluate r at the bounds of x and at u
+			// beta   = evaluate the mid point of the band
+			// ddelta = evaluate the radius of the band
+			const double f_lb = std::pow(itv.lb(), static_cast<unsigned int>(n));
+			const double f_ub = std::pow(itv.ub(), static_cast<unsigned int>(n));
+			const double alpha = (f_ub - f_lb)/itv.diam();
+			if (!std::isfinite(f_lb) || !std::isfinite(f_ub) ||	!std::isfinite(alpha)) {
 				*this = pow(itv, n);
 				return *this;
 			}
 
-			TEMP1 = Interval(f_lb) - alpha * Interval(itv.lb());
-			TEMP2 = Interval(f_ub) - alpha * Interval(itv.ub());
-			// u = (alpha/n)^(1/(n-1))
-			if (TEMP1.ub() > TEMP2.ub()) {
-				TEMP2 = Interval(alpha) / n;
-				band = Interval(
-						((1 - n) * TEMP2 * (root(TEMP2, n - 1))).lb(),
-						TEMP1.ub());
-			} else {
-				TEMP1 = Interval(alpha) / n;
-				band = Interval(
-						((1 - n) * TEMP1 * (root(TEMP1, n - 1))).lb(),
-						TEMP2.ub());
-			}
+			Interval band =	(pow(Interval(itv.lb()), n) - alpha*Interval(itv.lb())) |
+							(pow(Interval(itv.ub()), n) - alpha*Interval(itv.ub()));
 
-			beta = band.mid();
-			ddelta = band.rad();
+			// u = (alpha/n)^(1/(n-1)) always belongs to itv (mean value
+			// theorem), and r(u) = u^n - alpha*u = (1-n)*(alpha/n)*u
+			const Interval critical = Interval(alpha) / n;
+			band = band | ((1 - n) * critical * (root(critical, n - 1)));
 
+			const double beta = band.mid();
+			const double t1 = (beta-band).ub();
+			const double t2 = (band-beta).ub();
+			const double ddelta =  (t1>t2) ? t1 : t2;
 			*this *= alpha;
 			*this += beta;
 			this->inflate(ddelta);
@@ -1612,51 +1547,44 @@ inline AffineMain<T>& AffineMain<T>::Apow(int n, const Interval& itv) {
 			// c0 = 0.5 (f(xb0)+f(xb1))
 			// c1 = x0*f(xb0)+x1*f(xb1)
 			// alpha = 2*c1/(b-a)
-			// beta = c0-c1*(a+b)/(b-a)
+			//  old : beta = c0-c1*(a+b)/(b-a)
 			//  old : ddelta = (b-a)^2 * f''(_itv)/16
-			//  new : ddelta = evaluate the error at the bound and the points when f'(x)=alpha
+			//  new : residual = evaluate the maximal error of f(x)-alpha*x at the bound and the points when f'(x)=alpha
+			//  new : beta = evaluate the mid point of the residual
+			//  new : ddelta = evaluate the radius of the residual
 
-			Interval  TEMP1, TEMP2;
-			double alpha, beta, ddelta, t1, x0, xb0, xb1, fxb0, fxb1, c0, c1;
+			const double x0  = 1.0/std::sqrt(2.);
+			const double xb0 = (0.5) * (itv.diam() * ( x0) + itv.lb() + itv.ub());
+			const double xb1 = (0.5) * (itv.diam() * (-x0) + itv.lb() + itv.ub());
+			const double fxb0 = std::pow(xb0, static_cast<unsigned int>(n));
+			const double fxb1 = std::pow(xb1, static_cast<unsigned int>(n));
+			//const double c0 = (0.5) * (fxb0 + fxb1);
+			const double c1 = x0 * fxb0 - x0 * fxb1;
 
-			x0  = 1.0/std::sqrt(2.);
-			xb0 = (0.5) * (itv.diam() * ( x0) + itv.lb() + itv.ub());
-			xb1 = (0.5) * (itv.diam() * (-x0) + itv.lb() + itv.ub());
-			fxb0 = detail::affine_powi(xb0, static_cast<unsigned int>(n));
-			fxb1 = detail::affine_powi(xb1, static_cast<unsigned int>(n));
-			c0 = (0.5) * (fxb0 + fxb1);
-			c1 = x0 * fxb0 - x0 * fxb1;
-
-			alpha = 2 * c1 / (itv.diam());
-			beta  = c0 - c1 * ((itv.lb() + itv.ub()) / (itv.diam()));
-			if (!std::isfinite(fxb0) || !std::isfinite(fxb1) ||
-					!std::isfinite(alpha) || !std::isfinite(beta)) {
+			const double alpha = 2 * c1 / (itv.diam());
+			if (!std::isfinite(fxb0) || !std::isfinite(fxb1) ||	!std::isfinite(alpha)) {
 				*this = pow(itv, n);
 				return *this;
 			}
-			//ddelta = ((_n_noise * Interval(TEMP1.rad())) + Interval(TEMP2.rad())).ub(); //
 
-			// compute the maximal error
+			// compute the residual r(x)=f(x)-alpha*x at the bounds of itv
+			Interval residual =	(pow(Interval(itv.lb()), n) - alpha*Interval(itv.lb())) |
+								(pow(Interval(itv.ub()), n) - alpha*Interval(itv.ub()));
 
-			// compute the error at _itv.lb() and _itv.ub()
-			ddelta = (abs(
-					pow(Interval(itv.lb()), n)
-					- (alpha * Interval(itv.lb()) + beta))).ub();
-			t1 = (abs(
-					pow(Interval(itv.ub()), n)
-					- (alpha * Interval(itv.ub()) + beta))).ub();
-			if (t1 > ddelta) ddelta= t1 ;
-			// u = (alpha/n)^(1/(n-1))
-			TEMP2 = pow(Interval(alpha) / n, 1.0 / Interval(n - 1));
-			if (!((TEMP2 & itv).is_empty())) {
-				t1 = (abs(pow(TEMP2, n) - (alpha * TEMP2 + beta))).ub();
-				if (t1 > ddelta) ddelta= t1 ;
-			}
-			if (!(((-TEMP2) & itv).is_empty())) {
-				t1 = (abs(pow(-TEMP2, n) - (alpha * (-TEMP2) + beta))).ub();
-				if (t1 > ddelta) ddelta= t1 ;
+			// f'(u)=n*u^(n-1)=alpha gives u=+-(alpha/n)^(1/(n-1)).
+			const Interval critical = pow(Interval(alpha) / n, 1.0 / Interval(n - 1));
+			Interval TEMP1(0.0);
+			for (const Interval& candidate : {critical, -critical}) {
+				TEMP1 = candidate & itv;
+				if (!TEMP1.is_empty()) {
+					residual = residual | (pow(TEMP1, n) - alpha*TEMP1);
+				}
 			}
 
+			const double beta = residual.mid();
+			const double t1 = (beta-residual).ub();
+			const double t2 = (residual-beta).ub();
+			const double ddelta =  (t1>t2) ? t1 : t2;
 			*this *= alpha;
 			*this += beta;
 			this->inflate(ddelta);
@@ -1724,7 +1652,7 @@ inline AffineMain<T>& AffineMain<T>::Aroot(int n, const Interval& itv) {
 	}
 	else {
 		// Odd root across zero. The derivative is singular at zero, but the
-		// extrema of r(x)=root(x,n)-alpha*x-beta are the endpoints, zero,
+		// extrema of r(x)=root(x,n)-alpha*x are the endpoints, zero,
 		// and the two points where root'(x)=alpha.
 		const Interval root_itv = root(itv, n);
 		const double alpha = root_itv.diam()/itv.diam();
@@ -1732,25 +1660,27 @@ inline AffineMain<T>& AffineMain<T>::Aroot(int n, const Interval& itv) {
 			return *this = root_itv;
 		}
 
-		Interval residual =
-				(root(Interval(itv.lb()), n) - alpha*Interval(itv.lb())) |
-				(root(Interval(itv.ub()), n) - alpha*Interval(itv.ub()));
+		Interval residual = (root(Interval(itv.lb()), n) - alpha*Interval(itv.lb())) |
+							(root(Interval(itv.ub()), n) - alpha*Interval(itv.ub()));
 		residual = residual | Interval(0.0); // residual at x=0
 
-		const double exponent =
-				static_cast<double>(n)/static_cast<double>(n-1);
-		const Interval critical =
-				pow(Interval::one()/(static_cast<double>(n)*alpha), exponent);
+		// root'(u)=alpha gives u=+-(1/(n*alpha))^(n/(n-1))
+		const double exponent = static_cast<double>(n)/static_cast<double>(n-1);
+		const Interval critical = pow(Interval::one()/(static_cast<double>(n)*alpha), exponent);
 
+		Interval TEMP1(0.0);
 		for (const Interval& candidate : {critical, -critical}) {
-			const Interval point = candidate & itv;
-			if (!point.is_empty()) {
-				residual = residual | (root(point, n) - alpha*point);
+			TEMP1 = candidate & itv;
+			if (!TEMP1.is_empty()) {
+				residual = residual | (root(TEMP1, n) - alpha*TEMP1);
 			}
 		}
 
 		const double beta = residual.mid();
-		const double ddelta = residual.rad();
+		const double t1 = (beta-residual).ub();
+		const double t2 = (residual-beta).ub();
+		const double ddelta =  (t1>t2) ? t1 : t2;
+
 		*this *= alpha;
 		*this += beta;
 		this->inflate(ddelta);
@@ -1781,44 +1711,30 @@ inline AffineMain<T>& AffineMain<T>::Asqrt_MR(const Interval& itv) {
 	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam()<AF_EC)) {
 		*this = res_itv;
 	}  else  {  // _actif && b
-
-		double alpha, beta, ddelta, t1, t2;
-		Interval dmm(0.0), TEMP1(0.0), TEMP2(0.0), band(0.0), itv2;
-
-		if (itv.lb()<0) {
-			itv2 = Interval(0.0,itv.ub());
-		} else {
-			itv2 =itv;
-		}
-
-		dmm = sqrt(itv2);
+		const Interval itv2 = itv & Interval(0.0, oo);
+		const Interval dmm = sqrt(itv2);
+		Interval band(0.0);
+		double alpha;
 		if (itv2.diam()< AF_EC) {
 			alpha = 0.0;
 			band =dmm;
-		}
-		else {
+		} else {
 			alpha = (1.0/(2.0*dmm)).lb();  // compute the derivative
 			if (alpha<=0) {
 				alpha = 0.0;
 				band = dmm;
-			}
-			else {
-				TEMP1 = Interval(dmm.lb()) -alpha*itv2.lb();
-				TEMP2 = Interval(dmm.ub()) -alpha*itv2.ub();
-				if (TEMP1.lb()>TEMP2.ub()) {
-					band = Interval(TEMP2.lb(),TEMP1.ub());
-					// normally this case never happen
-				}
-				else {
-					band = Interval(TEMP1.lb(),TEMP2.ub());
-				}
+			} else {
+				// alpha is the smallest slope on itv2, so r(x)=f(x)-alpha*x is
+				// monotonic there: the band is the hull of r at both bounds
+				band = (sqrt(Interval(itv2.lb())) -alpha*Interval(itv2.lb()))
+					 | (sqrt(Interval(itv2.ub())) -alpha*Interval(itv2.ub()));
 			}
 		}
 
-		beta = band.mid();
-		t1 = (beta -band).ub();
-		t2 = (band -beta).ub();
-		ddelta = (t1>t2)? t1 : t2;
+		const double beta = band.mid();
+		const double t1 = (beta -band).ub();
+		const double t2 = (band -beta).ub();
+		const double ddelta = (t1>t2)? t1 : t2;
 
 		*this *= alpha;
 		*this += beta;
@@ -1836,39 +1752,28 @@ AffineMain<T>& AffineMain<T>::Aexp_MR(const Interval& itv) {
 	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam()<AF_EC)) {
 		*this = res_itv;
 	}  else  {  // _actif && b
-
-		double alpha, beta, ddelta, t1, t2;
-		Interval dmm(0.0), TEMP1(0.0), TEMP2(0.0), band(0.0), itv2;
-
-
-		dmm = res_itv;
+		double alpha = 0.0;
+		Interval band(0.0);
 		if (itv.diam()< AF_EC) {
 			alpha = 0.0;
-			band =dmm;
-		}
-		else {
-			alpha = dmm.lb();  // compute the derivative
+			band = res_itv;
+		} else {
+			alpha = res_itv.lb();  // compute the derivative
 			if (alpha<=0) {
 				alpha = 0.0;
-				band = dmm;
-			}
-			else {
-				TEMP1 = Interval(dmm.lb()) -alpha*itv.lb();
-				TEMP2 = Interval(dmm.ub()) -alpha*itv.ub();
-				if (TEMP1.lb()>TEMP2.ub()) {
-					band = Interval(TEMP2.lb(),TEMP1.ub());
-					// normally this case never happen
-				}
-				else {
-					band = Interval(TEMP1.lb(),TEMP2.ub());
-				}
+				band = res_itv;
+			} else {
+				// alpha is the smallest slope on itv, so r(x)=f(x)-alpha*x is
+				// monotonic there: the band is the hull of r at both bounds
+				band = (exp(Interval(itv.lb())) -alpha*Interval(itv.lb()))
+					 | (exp(Interval(itv.ub())) -alpha*Interval(itv.ub()));
 			}
 		}
 
-		beta = band.mid();
-		t1 = (beta -band).ub();
-		t2 = (band -beta).ub();
-		ddelta = (t1>t2)? t1 : t2;
+		const double beta = band.mid();
+		const double t1 = (beta -band).ub();
+		const double t2 = (band -beta).ub();
+		const double ddelta = (t1>t2)? t1 : t2;
 
 		*this *= alpha;
 		*this += beta;
@@ -1876,8 +1781,6 @@ AffineMain<T>& AffineMain<T>::Aexp_MR(const Interval& itv) {
 		//saxpy(alpha, AffineMain<T>(), beta, ddelta, true,false,true,true);
 
 	}
-
-
 	return *this;
 }
 
@@ -1889,37 +1792,27 @@ AffineMain<T>& AffineMain<T>::Alog_MR(const Interval& itv) {
 		*this = res_itv;
 	}  else  {  // _actif && b
 
-		double alpha, beta, ddelta, t1, t2;
-		Interval dmm(0.0), TEMP1(0.0), TEMP2(0.0), band(0.0), itv2;
-
-		dmm = res_itv;
+		double alpha = 0.0;
+		Interval band(0.0);
 		if (itv.diam()< AF_EC) {
 			alpha = 0.0;
-			band =dmm;
-		}
-		else {
+			band =res_itv;
+		} else {
 			alpha = (1.0/itv).lb();  // compute the derivative
 			if (alpha<=0) {
 				alpha = 0.0;
-				band = dmm;
-			}
-			else {
-				TEMP1 = Interval(dmm.lb()) -alpha*itv.lb();
-				TEMP2 = Interval(dmm.ub()) -alpha*itv.ub();
-				if (TEMP1.lb()>TEMP2.ub()) {
-					band = Interval(TEMP2.lb(),TEMP1.ub());
-					// normally this case never happen
-				}
-				else {
-					band = Interval(TEMP1.lb(),TEMP2.ub());
-				}
+				band = res_itv;
+			} else {
+				// alpha is the smallest slope on itv, so r(x)=f(x)-alpha*x is
+				// monotonic there: the band is the hull of r at both bounds
+				band = (log(Interval(itv.lb())) -alpha*Interval(itv.lb()))
+					 | (log(Interval(itv.ub())) -alpha*Interval(itv.ub()));
 			}
 		}
-
-		beta = band.mid();
-		t1 = (beta -band).ub();
-		t2 = (band -beta).ub();
-		ddelta = (t1>t2)? t1 : t2;
+		const double beta = band.mid();
+		const double t1 = (beta -band).ub();
+		const double t2 = (band -beta).ub();
+		const double ddelta = (t1>t2)? t1 : t2;
 
 		*this *= alpha;
 		*this += beta;
@@ -1933,46 +1826,93 @@ AffineMain<T>& AffineMain<T>::Alog_MR(const Interval& itv) {
 }
 
 template<class T>
+AffineMain<T>& AffineMain<T>::Acosh_MR(const Interval& itv) {
+
+	Interval res_itv = cosh(itv);
+	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam()<AF_EC)) {
+		*this = res_itv;
+	}  else  {  // _actif && b
+		double alpha = 0.0;
+		Interval band(0.0);
+		if (itv.diam()< AF_EC) {
+			alpha = 0.0;
+		} else if (0.0 <= itv.lb()) {
+			// cosh is increasing on itv: the smallest slope is at the lower
+			// bound, rounded downward so that sinh(x)>=alpha holds on all itv
+			alpha = sinh(Interval(itv.lb())).lb();  // compute the derivative
+		} else if (itv.ub() <= 0.0) {
+			// cosh is decreasing on itv: the slope of smallest magnitude is at
+			// the upper bound and is negative, rounded upward so that
+			// sinh(x)<=alpha holds on all itv
+			alpha = sinh(Interval(itv.ub())).ub();  // compute the derivative
+		} else {
+			// the minimum of cosh is reached inside itv, so the smallest slope
+			// is zero and the affine form degenerates into the interval image
+			alpha = 0.0;
+		}
+		if (alpha == 0.0) {
+			band = res_itv;
+		} else {
+			// alpha is the smallest slope on itv, so r(x)=f(x)-alpha*x is
+			// monotonic there: the band is the hull of r at both bounds
+			band = (cosh(Interval(itv.lb())) -alpha*Interval(itv.lb()))
+				 | (cosh(Interval(itv.ub())) -alpha*Interval(itv.ub()));
+		}
+
+		const double beta = band.mid();
+		const double t1 = (beta -band).ub();
+		const double t2 = (band -beta).ub();
+		const double ddelta = (t1>t2)? t1 : t2;
+
+		*this *= alpha;
+		*this += beta;
+		this->inflate(ddelta);
+
+	}
+	return *this;
+}
+
+template<class T>
 AffineMain<T>& AffineMain<T>::Ainv_MR(const Interval& itv) {
-  const Interval res_itv = 1.0/itv;
-  if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() ||
-      !is_active() || itv.diam() < AF_EC) {
-    *this = res_itv;
-    return *this;
-  }
+	const Interval res_itv = 1.0/itv;
+	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() || !is_active() || itv.diam() < AF_EC) {
+		*this = res_itv;
+		return *this;
+	}
 
-  // On either side of zero, 1/x is decreasing. The endpoint farthest from
-  // zero has the derivative of smallest magnitude and gives the MinRange
-  // slope. Keep the negative slope instead of collapsing it to zero.
-  const double endpoint = (itv.lb() > 0.0) ? itv.ub() : itv.lb();
-  const Interval derivative = -1.0/sqr(Interval(endpoint));
-  const double alpha = derivative.mid();
-  if (!std::isfinite(alpha) || alpha >= 0.0) {
-    *this = res_itv;
-    return *this;
-  }
+	// On either side of zero, 1/x is decreasing. The endpoint farthest from
+	// zero has the derivative of smallest magnitude and gives the MinRange
+	// slope. Keep the negative slope instead of collapsing it to zero.
+	const double endpoint = (itv.lb() > 0.0) ? itv.ub() : itv.lb();
+	const double alpha = (-1.0/sqr(Interval(endpoint))).mid();
+	if (!std::isfinite(alpha) || alpha >= 0.0) {
+		*this = res_itv;
+		return *this;
+	}
 
-  Interval band =
-      (1.0/Interval(itv.lb()) - alpha*Interval(itv.lb())) |
-      (1.0/Interval(itv.ub()) - alpha*Interval(itv.ub()));
+	Interval band = (1.0/Interval(itv.lb()) - alpha*Interval(itv.lb())) |
+					(1.0/Interval(itv.ub()) - alpha*Interval(itv.ub()));
 
-  // If rounding moved the stationary point slightly inside the interval,
-  // include it explicitly in the residual range.
-  const Interval stationary_abs = sqrt(-1.0/Interval(alpha));
-  for (const Interval& candidate : {stationary_abs, -stationary_abs}) {
-    const Interval point = candidate & itv;
-    if (!point.is_empty()) {
-      band = band | (1.0/point - alpha*point);
-    }
-  }
+	// If rounding moved the stationary point slightly inside the interval,
+	// include it explicitly in the residual range.
+	const Interval stationary_abs = sqrt(-1.0/Interval(alpha));
+	Interval TEMP1(0.0);
+	for (const Interval& candidate : {stationary_abs, -stationary_abs}) {
+		TEMP1 = candidate & itv;
+		if (!TEMP1.is_empty()) {
+			band = band | (1.0/TEMP1 - alpha*TEMP1);
+		}
+	}
 
-  const double beta = band.mid();
-  const double ddelta = band.rad();
+	const double beta = band.mid();
+	const double t1 = (beta -band).ub();
+	const double t2 = (band -beta).ub();
+	const double ddelta = (t1>t2)? t1 : t2;
 
-  *this *= alpha;
-  *this += beta;
-  this->inflate(ddelta);
-  return *this;
+	*this *= alpha;
+	*this += beta;
+	this->inflate(ddelta);
+	return *this;
 }
 
 

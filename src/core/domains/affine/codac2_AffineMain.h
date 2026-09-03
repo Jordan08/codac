@@ -994,6 +994,13 @@ public:
 	 */
 		AffineMain<T>&  Alog_CH(const Interval& itv);
 	/**
+	 * \brief Internal helper that computes the hyperbolic cosine using Chebyshev linearization of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Acosh_CH(const Interval& itv);
+	/**
 	 * \brief Internal helper that computes the inverse using MinRange linearization of the current affine form. *
 	 * \param itv interval enclosure of the input
 	 *
@@ -1021,6 +1028,13 @@ public:
 	 * \return reference to this affine form
 	 */
 		AffineMain<T>&  Alog_MR(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the hyperbolic cosine using MinRange linearization of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Acosh_MR(const Interval& itv);
 	/**
 	 * \brief Internal helper that computes the inverse hyperbolic cosine of the current affine form. *
 	 * \param itv interval enclosure of the input
