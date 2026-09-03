@@ -693,7 +693,8 @@ TEST_CASE("AffineForm arithmetic operators and elementary functions")
 	  AffineTVarVector ax(1);
 	  ax[0] = Interval::pi();
 	  AffineT y=tan(-ax[0]);
-	  CHECK(y==Approx<AffineT>(Interval(0), ERROR));
+	  CHECK(y.lb() > -1e-12);
+	  CHECK(y.ub() <  1e-12);
 	  CHECK(y.contains(0.));
 	  CHECK(y.diam() < 1e-8);
   }
@@ -1748,4 +1749,3 @@ TEST_CASE("mig, mag, smag, smig and volume delegate to the interval enclosure")
   CHECK(ax[2].mig() == 1.0);
   CHECK(ax[0].mag() == 5.0);
 }
-
