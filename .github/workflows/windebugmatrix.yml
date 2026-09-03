@@ -106,7 +106,7 @@ jobs:
         if [ -n "${BASHMINGWPATH:-}" ]; then export PATH="$BASHMINGWPATH:$PATH" ; fi
         cd build && ctest -C Debug -V --output-on-failure
         cd ..
-      if: "!startsWith(matrix.cfg.runtime, 'mingw')"
+      if: ${{ !startsWith(matrix.cfg.runtime, 'mingw') }}
       shell: bash
     - run: |
         echo "Skipping ctest for MinGW Debug in this workflow."
