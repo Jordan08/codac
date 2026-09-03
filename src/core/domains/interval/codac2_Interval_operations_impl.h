@@ -42,12 +42,16 @@ namespace codac2
     if(p == -oo || p == oo)
       return Interval::empty();
 
-    else
-    {
-      Interval y = gaol::pow(x,p);
-      gaol::round_upward();
-      return y;
-    }
+    // gaol ne fournit que pow(interval,int) et pow(interval,interval).
+    // Pour passer un double, il faut utiliser la surcharge interval.
+    if(std::trunc(p) == p &&
+      p >= static_cast<double>(std::numeric_limits<int>::min()) &&
+      p <= static_cast<double>(std::numeric_limits<int>::max()))
+      return pow(x, static_cast<int>(p));
+
+    Interval y = gaol::pow(x, Interval(p));
+    gaol::round_upward();
+    return y;
   }
 
   inline Interval pow(const Interval& x, const Interval& p)

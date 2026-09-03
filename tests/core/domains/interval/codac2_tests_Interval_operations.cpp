@@ -293,6 +293,31 @@ TEST_CASE("Interval operations")
   CHECK_pow(Interval(2,oo), 3, Interval(8,oo));
   CHECK_pow(Interval(-10,10), -2, Interval(1.0/100,oo), std::numeric_limits<double>::epsilon());
 
+  // Non-regression: pow(Interval,double) used to reach gaol through its
+  // pow(interval,int) overload (double->int is a standard conversion, while
+  // double->interval is a user-defined one), so the exponent was silently
+  // truncated: pow([4,4],1.5) returned [4,4] and pow([4,4],0.5) returned [1,1].
+  CHECK(Approx(pow(Interval(4),0.5)) == Interval(2));
+  CHECK(Approx(pow(Interval(4),1.5)) == Interval(8));
+  CHECK(Approx(pow(Interval(4,9),0.5)) == Interval(2,3));
+  CHECK(Approx(pow(Interval(4),-0.5)) == Interval(0.5));
+  CHECK(Approx(pow(Interval(0,4),0.5)) == Interval(0,2));
+  CHECK(Approx(pow(Interval(2,3),1.5)) == pow(Interval(2,3),Interval(1.5)));
+
+  // An exponent that happens to be an integer must keep the integer semantics,
+  // which is defined for a negative base as well
+  CHECK(pow(Interval(-2,3),3.0) == pow(Interval(-2,3),3));
+  CHECK(pow(Interval(-2,3),3.0) == Interval(-8,27));
+  CHECK(pow(Interval(-2),2.0) == Interval(4));
+  CHECK(pow(Interval(2,3),4.0) == Interval(16,81));
+  CHECK(pow(Interval(4),0.0) == Interval::one());
+  CHECK(Approx(pow(Interval(-10,10),-2.0), std::numeric_limits<double>::epsilon()) == Interval(1.0/100,oo));
+
+  // Infinite exponents and the empty set are unchanged
+  CHECK(pow(Interval(4),oo) == Interval::empty());
+  CHECK(pow(Interval(4),-oo) == Interval::empty());
+  CHECK(pow(Interval::empty(),1.5) == Interval::empty());
+
   CHECK(root(Interval(0,1),-1) == Interval(1.0,oo));
   CHECK(Approx(root(Interval(-27,-8),3)) == Interval(-3,-2));
   CHECK(root(Interval(-4,1),2) == Interval(0,1));
