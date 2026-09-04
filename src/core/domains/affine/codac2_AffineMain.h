@@ -1270,6 +1270,39 @@ protected:
 	inline static constexpr double AF_EC = 0x1p-55;
 	inline static constexpr double AF_EE = 2.0;
 
+	/**
+	 * \brief Smallest width of a domain on which a slope can still be computed.
+	 *
+	 * Every linearization deduces its slope from function values sampled at
+	 * points of the form 0.5*(diam*x0 + lb + ub): the perturbation diam*x0 is
+	 * added to a quantity of magnitude 2*mag(itv), so it disappears in the
+	 * rounding of that sum as soon as the width of the domain falls below the
+	 * unit in the last place of the domain itself. Two samples that collapse
+	 * onto the same double, or that are separated by a rounded distance rather
+	 * than by the intended one, give a slope which is pure rounding noise: on
+	 * tan(-pi) it comes out as 0 or as 10 depending on the last bits returned
+	 * by the tangent of the host library, and the affine form is then a hundred
+	 * times wider than the domain it linearizes.
+	 *
+	 * AF_EC alone cannot detect this, being an absolute threshold: it only
+	 * recognizes domains that are narrow around zero. The relative bound below
+	 * comes from the rounding of that sum. Each sample carries an absolute
+	 * error of about eps*mag(itv) while the two of them are meant to be
+	 * 2^-0.5*diam apart, so the slope is affected by a relative error of about
+	 * 2.83*eps*mag(itv)/diam, which reaches 1 as soon as the width of the
+	 * domain drops to 2.83*eps*mag(itv). Rounding that bound up to eight units
+	 * in the last place of the domain keeps a safety factor of about three;
+	 * below it the sampling carries no information at all and the natural
+	 * interval evaluation must be used instead. Measured on tan around the
+	 * first multiples of pi, this brings the width of the affine result back to
+	 * that of the interval evaluation, where the slope noise made it up to
+	 * three times larger just above the old threshold.
+	 */
+	inline static double min_diam_for_slope(const Interval& itv) {
+		const double relative = 0x1p-49*itv.mag();
+		return (relative>AF_EC) ? relative : AF_EC;
+	}
+
 
 	/**
 	 * \brief Encodes the current affine-state mode.

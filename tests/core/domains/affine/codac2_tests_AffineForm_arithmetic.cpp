@@ -967,6 +967,83 @@ TEST_CASE("Large and exceptional arguments")
 		CHECK_NOTHROW(floor(x[0]));
 		CHECK_NOTHROW(ceil(x[0]));
 	}
+
+	// The smallest int has no representable opposite, so root(itv,n) used to
+	// reduce it to -n and overflow. n being even there, the root is defined
+	// on the non-negative part only, where root(x,n) = exp(log(x)/n).
+	const int int_min = std::numeric_limits<int>::min();
+
+	for (const Interval& input : {
+		Interval(1.0,2.0), Interval(0.5,100.0),
+		Interval(-3.0,4.0), Interval(-5.0,-1.0)}) {
+
+		AffineTVarVector x(IntervalVector({input}));
+		const Interval reference =
+				exp(log(input & Interval(0.0,oo))
+					/ Interval(static_cast<double>(int_min)));
+
+		CAPTURE(input, reference);
+		const AffineT y = root(x[0], int_min);
+
+		if (reference.is_empty())
+			CHECK(y.is_empty());
+		else {
+			REQUIRE_FALSE(y.is_empty());
+			CHECK(y.itv().is_superset(reference));
+		}
+	}
+
+	// An interval wider than one period contains a pole, so the tangent must
+	// stay unbounded rather than fall back on the [-1,1] of sine and cosine.
+	for (const Interval& input : {
+		Interval(0.0,10.0), Interval(-20.0,20.0), Interval(-oo,oo)}) {
+
+		AffineTVarVector x(IntervalVector({input}));
+		CAPTURE(input);
+		CHECK(tan(x[0]).itv().is_superset(tan(input)));
+	}
+}
+
+
+
+
+TEST_CASE("Domain narrower than its own rounding is not linearized")
+{
+	// A linearization reads its slope from two samples separated by a fraction
+	// of the width of the domain. Once that width falls under a few units in
+	// the last place of the domain itself, the separation is dominated by the
+	// rounding of the midpoint and the slope is pure noise: on tan(-pi) it came
+	// out as 0 with the tangent of glibc and as 10 with the one of the Windows
+	// runtime, where the affine form ended up fifty times wider than the
+	// tangent of the domain. Such a domain must be evaluated by interval
+	// arithmetic instead, which shows here as an affine form whose noise
+	// coefficient is exactly zero, on every host library.
+	//
+	// The multiples of pi are the interesting centres: the tangent nearly
+	// vanishes there, so the two samples cancel each other. Zero itself is left
+	// out, being the one centre whose magnitude makes the absolute threshold
+	// AF_EC govern instead of the relative one.
+	for (int k : {-3,-2,-1,1,2,3}) {
+
+		const double centre = (k*Interval::pi()).mid();
+		const double ulp_of_centre = std::ldexp(std::fabs(centre), -52);
+
+		for (int u = 0 ; u <= 2 ; u++) {
+
+			Interval input(centre);
+			if (u > 0)
+				input.inflate(std::ldexp(ulp_of_centre, u-1));
+
+			AffineTVarVector x(IntervalVector({input}));
+			const AffineT y = tan(x[0]);
+			const Interval reference = tan(input);
+
+			CAPTURE(k, u, input, reference, y);
+			CHECK(y.itv().is_superset(reference));
+			CHECK(y.noise(0) == 0.0);
+			CHECK(y.itv().diam() <= 2.0*reference.diam() + ulp_of_centre);
+		}
+	}
 }
 
 

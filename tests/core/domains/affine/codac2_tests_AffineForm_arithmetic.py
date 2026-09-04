@@ -777,6 +777,65 @@ class TestAffineFormArithmetic(unittest.TestCase):
       floor(x[0])
       ceil(x[0])
 
+    # The smallest int has no representable opposite, so root(itv,n) used to
+    # reduce it to -n and overflow. n being even there, the root is defined on
+    # the non-negative part only, where root(x,n) = exp(log(x)/n).
+    int_min = -2147483648
+
+    for input in [Interval(1.0,2.0), Interval(0.5,100.0),
+                  Interval(-3.0,4.0), Interval(-5.0,-1.0)]:
+      x = AffineVariables(IntervalVector([input]))
+      reference = exp(log(input & Interval(0.0,oo)) / Interval(float(int_min)))
+      y = root(x[0], int_min)
+      if reference.is_empty():
+        self.assertTrue(y.is_empty(), str(input))
+      else:
+        self.assertFalse(y.is_empty(), str(input))
+        self.assertTrue(y.itv().is_superset(reference), str(input))
+
+    # An interval wider than one period contains a pole, so the tangent must
+    # stay unbounded rather than fall back on the [-1,1] of sine and cosine.
+    for input in [Interval(0.0,10.0), Interval(-20.0,20.0), Interval(-oo,oo)]:
+      x = AffineVariables(IntervalVector([input]))
+      self.assertTrue(tan(x[0]).itv().is_superset(tan(input)), str(input))
+
+  def test_domain_narrower_than_its_own_rounding(self):
+
+    # A linearization reads its slope from two samples separated by a fraction
+    # of the width of the domain. Once that width falls under a few units in
+    # the last place of the domain itself, the separation is dominated by the
+    # rounding of the midpoint and the slope is pure noise: on tan(-pi) it came
+    # out as 0 with the tangent of glibc and as 10 with the one of the Windows
+    # runtime, where the affine form ended up fifty times wider than the
+    # tangent of the domain. Such a domain must be evaluated by interval
+    # arithmetic instead, which shows here as an affine form whose noise
+    # coefficient is exactly zero, on every host library.
+    #
+    # The multiples of pi are the interesting centres: the tangent nearly
+    # vanishes there, so the two samples cancel each other. Zero itself is left
+    # out, being the one centre whose magnitude makes the absolute threshold
+    # govern instead of the relative one.
+    for k in [-3,-2,-1,1,2,3]:
+
+      centre = (Interval(float(k))*Interval.pi()).mid()
+      ulp_of_centre = math.ldexp(math.fabs(centre), -52)
+
+      for u in range(0,3):
+
+        input = Interval(centre)
+        if u > 0:
+          input.inflate(math.ldexp(ulp_of_centre, u-1))
+
+        x = AffineVariables(IntervalVector([input]))
+        y = tan(x[0])
+        reference = tan(input)
+
+        message = str((k,u,input,reference))
+        self.assertTrue(y.itv().is_superset(reference), message)
+        self.assertEqual(y.noise(0), 0.0, message)
+        self.assertLessEqual(y.itv().diam(),
+                             2.0*reference.diam() + ulp_of_centre, message)
+
   def test_floor_and_ceil_of_noninteger_singleton(self):
 
     variables = AffineVariables(IntervalVector([[1.5], [-1.5], [2.0]]))

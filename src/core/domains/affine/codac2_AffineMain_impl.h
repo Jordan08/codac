@@ -431,12 +431,12 @@ AffineMain<T>& AffineMain<T>::Ainv_CH(const Interval& itv){
 	Interval res_itv = 1.0/(itv);
 
 	// Particular case
-	if ((itv.is_unbounded()) || res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam()<AF_EC)) {
+	if ((itv.is_unbounded()) || res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam() < min_diam_for_slope(itv))) {
 		*this = res_itv;
 	}  else  {
 		// General case
 		Interval itv2 =abs(itv);
-		if (itv2.diam()<AF_EC) {
+		if (itv2.diam() < min_diam_for_slope(itv2)) {
 			*this = res_itv;
 			return *this;
 		}
@@ -478,7 +478,7 @@ AffineMain<T>& AffineMain<T>::Asqrt_CH(const Interval& itv){
 	Interval res_itv = sqrt(itv2);
 
 	// Particular case
-	if (res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv2.diam()<AF_EC)) {
+	if (res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv2.diam() < min_diam_for_slope(itv2))) {
 		*this = res_itv;
 	}  else  {
 		// General case
@@ -514,7 +514,7 @@ AffineMain<T>& AffineMain<T>::Aexp_CH(const Interval& itv){
 	Interval res_itv = exp(itv);
 
 	// Particular case
-	if (res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam()<AF_EC)) {
+	if (res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam() < min_diam_for_slope(itv))) {
 		*this = res_itv;
 	}  else  {
 		// General case
@@ -549,7 +549,7 @@ AffineMain<T>& AffineMain<T>::Alog_CH(const Interval& itv){
 	Interval res_itv = log(itv);
 
 	// Particular case
-	if (res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam()<AF_EC)) {
+	if (res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam() < min_diam_for_slope(itv))) {
 		*this = res_itv;
 	}  else  {
 		// General case
@@ -617,7 +617,7 @@ AffineMain<T>& AffineMain<T>::Acos(const Interval& itv){
 	Interval res_itv = cos(itv);
 
 	// Particular case
-	if (res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam()<AF_EC)) {
+	if (res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam() < min_diam_for_slope(itv))) {
 		*this = res_itv;
 	}  else  {
 		// General case
@@ -703,7 +703,7 @@ AffineMain<T>& AffineMain<T>::Asin(const Interval& itv){
 	Interval res_itv = sin(itv);
 
 	// Particular case
-	if (res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam()<AF_EC)) {
+	if (res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam() < min_diam_for_slope(itv))) {
 		*this = res_itv;
 	}  else  {
 		// General case
@@ -788,12 +788,17 @@ AffineMain<T>& AffineMain<T>::Atan(const Interval& itv){
 	Interval res_itv = tan(itv);
 
 	// Particular case
-	if (res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam()<AF_EC)) {
+	if (res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam() < min_diam_for_slope(itv))) {
 		*this = res_itv;
 	}  else  {
-		// General case
+		// General case.
+		// An interval wider than one period necessarily contains a pole, so
+		// tan(itv) is unbounded and the case has normally been handled by the
+		// guard above. Keep a defensive fallback rather than an assertion, so
+		// that an interval library returning a bounded value here would only
+		// lose precision, never soundness.
 		if (itv.diam()>=Interval::two_pi().lb()) {
-			*this = Interval(-1,1);
+			*this = res_itv;
 			return *this;
 		}
 		//  pour _itv = [a,b]
@@ -896,7 +901,7 @@ AffineMain<T>& AffineMain<T>::Aacos_CH(const Interval& itv) {
 	const Interval domain = itv & Interval(-1.0, 1.0);
 	const Interval res_itv = acos(domain);
 	if (res_itv.is_empty() || res_itv.is_unbounded() || !is_active() ||
-		domain.diam() < AF_EC) {
+		domain.diam() < min_diam_for_slope(domain)) {
 		*this = res_itv;
 	} else {
 
@@ -973,7 +978,7 @@ AffineMain<T>& AffineMain<T>::Aasin_CH(const Interval& itv) {
 	const Interval domain = itv & Interval(-1.0, 1.0);
 	const Interval res_itv = asin(domain);
 	if (res_itv.is_empty() || res_itv.is_unbounded() || !is_active() ||
-		domain.diam() < AF_EC) {
+		domain.diam() < min_diam_for_slope(domain)) {
 		*this = res_itv;
 		return *this;
 	}
@@ -1049,7 +1054,7 @@ template<class T>
 AffineMain<T>& AffineMain<T>::Aatan_CH(const Interval& itv) {
 	const Interval res_itv = atan(itv);
 	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() ||
-		!is_active() || itv.diam() < AF_EC) {
+		!is_active() || itv.diam() < min_diam_for_slope(itv)) {
 		*this = res_itv;
 		return *this;
 	}
@@ -1126,7 +1131,7 @@ AffineMain<T>& AffineMain<T>::Acosh_CH(const Interval& itv){
 	Interval res_itv = cosh(itv);
 
 	// Particular case
-	if (res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam()<AF_EC)) {
+	if (res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam() < min_diam_for_slope(itv))) {
 		*this = res_itv;
 	}  else  {
 		// General case
@@ -1174,7 +1179,7 @@ template<class T>
 AffineMain<T>& AffineMain<T>::Asinh_CH(const Interval& itv) {
 	const Interval res_itv = sinh(itv);
 	if (res_itv.is_empty() || res_itv.is_unbounded() || !is_active() ||
-		itv.diam() < AF_EC) {
+		itv.diam() < min_diam_for_slope(itv)) {
 		*this = res_itv;
 		return *this;
 	}
@@ -1250,7 +1255,7 @@ template<class T>
 AffineMain<T>& AffineMain<T>::Atanh_CH(const Interval& itv) {
 	const Interval res_itv = tanh(itv);
 	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() ||
-		!is_active() || itv.diam() < AF_EC) {
+		!is_active() || itv.diam() < min_diam_for_slope(itv)) {
 		*this = res_itv;
 		return *this;
 	}
@@ -1335,7 +1340,7 @@ AffineMain<T>& AffineMain<T>::Aacosh_CH(const Interval& itv ) {
 	// The model is built on the real domain intersection. Tests below check
 	// that applying it to the original affine form still encloses all values
 	// belonging to that valid domain when the input is only partly admissible.
-	if (res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (domain.diam() < AF_EC)) {
+	if (res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (domain.diam() < min_diam_for_slope(domain))) {
 		*this = res_itv;
 		return *this;
 	}
@@ -1387,7 +1392,7 @@ template<class T>
 AffineMain<T>& AffineMain<T>::Aasinh_CH(const Interval& itv) {
 	const Interval res_itv = asinh(itv);
 	if (res_itv.is_empty() || res_itv.is_unbounded() || !is_active() ||
-		itv.diam() < AF_EC) {
+		itv.diam() < min_diam_for_slope(itv)) {
 		*this = res_itv;
 		return *this;
 	}
@@ -1470,7 +1475,7 @@ AffineMain<T>::Aatanh_CH(const Interval& itv) {
 	const Interval domain = itv & Interval(-1.0, 1.0);
 	const Interval res_itv = atanh(itv);
 	if (domain != itv || res_itv.is_empty() || res_itv.is_unbounded() ||
-		!is_active() || itv.diam() < AF_EC) {
+		!is_active() || itv.diam() < min_diam_for_slope(itv)) {
 		*this = res_itv;
 		return *this;
 	}
@@ -1580,7 +1585,7 @@ inline AffineMain<T>& AffineMain<T>::Aabs(const Interval& itv){
 		this->Aneg();
 		return *this;
 	}
-	if (res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam()<AF_EC)) {
+	if (res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam() < min_diam_for_slope(itv))) {
 		*this = res_itv;
 	}  else  {
 		// General case
@@ -1615,7 +1620,7 @@ inline AffineMain<T>& AffineMain<T>::Apow(int n, const Interval& itv) {
 		*this = pow(itv,n);
 	} else if (!is_active()) {
 		*this = pow(itv,n);
-	} else if (itv.diam()< AF_EC) {
+	} else if (itv.diam() < min_diam_for_slope(itv)) {
 		*this = pow(itv,n);
 	} else {
 		// General Case
@@ -1748,7 +1753,7 @@ template<class T>
 inline AffineMain<T>& AffineMain<T>::Apow_MR(int n, const Interval& itv) {
 
 	Interval res_itv = pow(itv,n);
-	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam()<AF_EC)) {
+	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam() < min_diam_for_slope(itv))) {
 		*this = res_itv;
 	}  else  {  // _actif && b
 		double alpha = 0.0;
@@ -1797,7 +1802,7 @@ template<class T>
 inline AffineMain<T>& AffineMain<T>::Aroot_MR(int n, const Interval& itv) {
 
 	Interval res_itv = root(itv,n);
-	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam()<AF_EC)) {
+	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam() < min_diam_for_slope(itv))) {
 		*this = res_itv;
 	}  else  {  // _actif && b
 		double alpha = 0.0;
@@ -1864,7 +1869,12 @@ inline AffineMain<T>& AffineMain<T>::Aroot(int n, const Interval& itv) {
 	}
 	else if (n<0) {
 		if (n == std::numeric_limits<int>::min()) {
-			return *this = root(itv, n);
+			// |n| is not representable as an int, and root(itv,n) computes -n,
+			// which overflows. As n is even here, the root is only defined on
+			// the non-negative part of itv, where the identity
+			// root(x,n) = exp(log(x)/n) is rigorous.
+			return *this = exp(log(itv & Interval(0.0,oo))
+					/ Interval(static_cast<double>(n)));
 		}
 		this->Aroot(-n,itv);
 		this->Ainv(root(itv,-n));
@@ -1947,14 +1957,14 @@ template<class T>
 inline AffineMain<T>& AffineMain<T>::Asqrt_MR(const Interval& itv) {
 
 	Interval res_itv = sqrt(itv);
-	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam()<AF_EC)) {
+	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam() < min_diam_for_slope(itv))) {
 		*this = res_itv;
 	}  else  {  // _actif && b
 		const Interval itv2 = itv & Interval(0.0, oo);
 		const Interval dmm = sqrt(itv2);
 		Interval band(0.0);
 		double alpha;
-		if (itv2.diam()< AF_EC) {
+		if (itv2.diam() < min_diam_for_slope(itv2)) {
 			alpha = 0.0;
 			band =dmm;
 		} else {
@@ -1988,12 +1998,12 @@ template<class T>
 AffineMain<T>& AffineMain<T>::Aexp_MR(const Interval& itv) {
 
 	Interval res_itv = exp(itv);
-	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam()<AF_EC)) {
+	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam() < min_diam_for_slope(itv))) {
 		*this = res_itv;
 	}  else  {  // _actif && b
 		double alpha = 0.0;
 		Interval band(0.0);
-		if (itv.diam()< AF_EC) {
+		if (itv.diam() < min_diam_for_slope(itv)) {
 			alpha = 0.0;
 			band = res_itv;
 		} else {
@@ -2027,13 +2037,13 @@ template<class T>
 AffineMain<T>& AffineMain<T>::Alog_MR(const Interval& itv) {
 
 	Interval res_itv = log(itv);
-	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam()<AF_EC)) {
+	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam() < min_diam_for_slope(itv))) {
 		*this = res_itv;
 	}  else  {  // _actif && b
 
 		double alpha = 0.0;
 		Interval band(0.0);
-		if (itv.diam()< AF_EC) {
+		if (itv.diam() < min_diam_for_slope(itv)) {
 			alpha = 0.0;
 			band =res_itv;
 		} else {
@@ -2068,12 +2078,12 @@ template<class T>
 AffineMain<T>& AffineMain<T>::Acosh_MR(const Interval& itv) {
 
 	Interval res_itv = cosh(itv);
-	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam()<AF_EC)) {
+	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam() < min_diam_for_slope(itv))) {
 		*this = res_itv;
 	}  else  {  // _actif && b
 		double alpha = 0.0;
 		Interval band(0.0);
-		if (itv.diam()< AF_EC) {
+		if (itv.diam() < min_diam_for_slope(itv)) {
 			alpha = 0.0;
 		} else if (0.0 <= itv.lb()) {
 			// cosh is increasing on itv: the smallest slope is at the lower
@@ -2115,12 +2125,12 @@ template<class T>
 AffineMain<T>& AffineMain<T>::Atanh_MR(const Interval& itv) {
 
 	Interval res_itv = tanh(itv);
-	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam()<AF_EC)) {
+	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam() < min_diam_for_slope(itv))) {
 		*this = res_itv;
 	}  else  {  // _actif && b
 		double alpha = 0.0;
 		Interval band(0.0);
-		if (itv.diam()< AF_EC) {
+		if (itv.diam() < min_diam_for_slope(itv)) {
 			alpha = 0.0;
 			band = res_itv;
 		} else {
@@ -2157,12 +2167,12 @@ template<class T>
 AffineMain<T>& AffineMain<T>::Aatan_MR(const Interval& itv) {
 
 	Interval res_itv = atan(itv);
-	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam()<AF_EC)) {
+	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam() < min_diam_for_slope(itv))) {
 		*this = res_itv;
 	}  else  {  // _actif && b
 		double alpha = 0.0;
 		Interval band(0.0);
-		if (itv.diam()< AF_EC) {
+		if (itv.diam() < min_diam_for_slope(itv)) {
 			alpha = 0.0;
 			band = res_itv;
 		} else {
@@ -2200,12 +2210,12 @@ AffineMain<T>& AffineMain<T>::Aasin_MR(const Interval& itv) {
 
 	const Interval domain = itv & Interval(-1.0,1.0);
 	Interval res_itv = asin(domain);
-	if (res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (domain.diam()<AF_EC)) {
+	if (res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (domain.diam() < min_diam_for_slope(domain))) {
 		*this = res_itv;
 	}  else  {  // _actif && b
 		double alpha = 0.0;
 		Interval band(0.0);
-		if (domain.diam()< AF_EC) {
+		if (domain.diam() < min_diam_for_slope(domain)) {
 			alpha = 0.0;
 			band = res_itv;
 		} else {
@@ -2243,12 +2253,12 @@ AffineMain<T>& AffineMain<T>::Aacos_MR(const Interval& itv) {
 
 	const Interval domain = itv & Interval(-1.0,1.0);
 	Interval res_itv = acos(domain);
-	if (res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (domain.diam()<AF_EC)) {
+	if (res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (domain.diam() < min_diam_for_slope(domain))) {
 		*this = res_itv;
 	}  else  {  // _actif && b
 		double alpha = 0.0;
 		Interval band(0.0);
-		if (domain.diam()< AF_EC) {
+		if (domain.diam() < min_diam_for_slope(domain)) {
 			alpha = 0.0;
 			band = res_itv;
 		} else {
@@ -2285,7 +2295,7 @@ template<class T>
 AffineMain<T>& AffineMain<T>::Asinh_MR(const Interval& itv) {
 
 	Interval res_itv = sinh(itv);
-	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam()<AF_EC)) {
+	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam() < min_diam_for_slope(itv))) {
 		*this = res_itv;
 	}  else  {  // _actif && b
 		double alpha = 0.0;
@@ -2322,7 +2332,7 @@ template<class T>
 AffineMain<T>& AffineMain<T>::Aasinh_MR(const Interval& itv) {
 
 	Interval res_itv = asinh(itv);
-	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam()<AF_EC)) {
+	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam() < min_diam_for_slope(itv))) {
 		*this = res_itv;
 	}  else  {  // _actif && b
 		double alpha = 0.0;
@@ -2359,7 +2369,7 @@ AffineMain<T>& AffineMain<T>::Aacosh_MR(const Interval& itv) {
 
 	const Interval domain = itv & Interval(1.0, oo);
 	Interval res_itv = acosh(domain);
-	if (res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (domain.diam()<AF_EC)) {
+	if (res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (domain.diam() < min_diam_for_slope(domain))) {
 		*this = res_itv;
 	}  else  {  // _actif && b
 		double alpha = 0.0;
@@ -2396,7 +2406,7 @@ AffineMain<T>& AffineMain<T>::Aatanh_MR(const Interval& itv) {
 
 	const Interval domain = itv & Interval(-1.0, 1.0);
 	Interval res_itv = atanh(domain);
-	if (res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (domain.diam()<AF_EC)) {
+	if (res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (domain.diam() < min_diam_for_slope(domain))) {
 		*this = res_itv;
 	}  else  {  // _actif && b
 		double alpha = 0.0;
@@ -2431,7 +2441,7 @@ AffineMain<T>& AffineMain<T>::Aatanh_MR(const Interval& itv) {
 template<class T>
 AffineMain<T>& AffineMain<T>::Ainv_MR(const Interval& itv) {
 	const Interval res_itv = 1.0/itv;
-	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() || !is_active() || itv.diam() < AF_EC) {
+	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() || !is_active() || itv.diam() < min_diam_for_slope(itv)) {
 		*this = res_itv;
 		return *this;
 	}
