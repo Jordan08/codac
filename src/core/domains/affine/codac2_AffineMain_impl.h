@@ -876,7 +876,23 @@ AffineMain<T>& AffineMain<T>::Atan(const Interval& itv){
 }
 
 template<class T>
-AffineMain<T>& AffineMain<T>::Aacos(const Interval& itv) {
+inline AffineMain<T>& AffineMain<T>::Aacos(const Interval& itv){
+	switch (mode) {
+	case Affine_Mode::AF_Lin_Chebyshev:
+		this->Aacos_CH(itv);
+		break;
+	case Affine_Mode::AF_Lin_MinRange:
+		this->Aacos_MR(itv);
+		break;
+	default:
+		*this = acos(itv);
+		break;
+	}
+	return *this;
+}
+
+template<class T>
+AffineMain<T>& AffineMain<T>::Aacos_CH(const Interval& itv) {
 	const Interval domain = itv & Interval(-1.0, 1.0);
 	const Interval res_itv = acos(domain);
 	if (res_itv.is_empty() || res_itv.is_unbounded() || !is_active() ||
@@ -937,7 +953,23 @@ AffineMain<T>& AffineMain<T>::Aacos(const Interval& itv) {
 }
 
 template<class T>
-AffineMain<T>& AffineMain<T>::Aasin(const Interval& itv) {
+inline AffineMain<T>& AffineMain<T>::Aasin(const Interval& itv){
+	switch (mode) {
+	case Affine_Mode::AF_Lin_Chebyshev:
+		this->Aasin_CH(itv);
+		break;
+	case Affine_Mode::AF_Lin_MinRange:
+		this->Aasin_MR(itv);
+		break;
+	default:
+		*this = asin(itv);
+		break;
+	}
+	return *this;
+}
+
+template<class T>
+AffineMain<T>& AffineMain<T>::Aasin_CH(const Interval& itv) {
 	const Interval domain = itv & Interval(-1.0, 1.0);
 	const Interval res_itv = asin(domain);
 	if (res_itv.is_empty() || res_itv.is_unbounded() || !is_active() ||
@@ -998,7 +1030,23 @@ AffineMain<T>& AffineMain<T>::Aasin(const Interval& itv) {
 }
 
 template<class T>
-AffineMain<T>& AffineMain<T>::Aatan(const Interval& itv) {
+inline AffineMain<T>& AffineMain<T>::Aatan(const Interval& itv){
+	switch (mode) {
+	case Affine_Mode::AF_Lin_Chebyshev:
+		this->Aatan_CH(itv);
+		break;
+	case Affine_Mode::AF_Lin_MinRange:
+		this->Aatan_MR(itv);
+		break;
+	default:
+		*this = atan(itv);
+		break;
+	}
+	return *this;
+}
+
+template<class T>
+AffineMain<T>& AffineMain<T>::Aatan_CH(const Interval& itv) {
 	const Interval res_itv = atan(itv);
 	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() ||
 		!is_active() || itv.diam() < AF_EC) {
@@ -1107,7 +1155,23 @@ AffineMain<T>& AffineMain<T>::Acosh_CH(const Interval& itv){
 }
 
 template<class T>
-AffineMain<T>& AffineMain<T>::Asinh(const Interval& itv) {
+inline AffineMain<T>& AffineMain<T>::Asinh(const Interval& itv){
+	switch (mode) {
+	case Affine_Mode::AF_Lin_Chebyshev:
+		this->Asinh_CH(itv);
+		break;
+	case Affine_Mode::AF_Lin_MinRange:
+		this->Asinh_MR(itv);
+		break;
+	default:
+		*this = sinh(itv);
+		break;
+	}
+	return *this;
+}
+
+template<class T>
+AffineMain<T>& AffineMain<T>::Asinh_CH(const Interval& itv) {
 	const Interval res_itv = sinh(itv);
 	if (res_itv.is_empty() || res_itv.is_unbounded() || !is_active() ||
 		itv.diam() < AF_EC) {
@@ -1167,7 +1231,23 @@ AffineMain<T>& AffineMain<T>::Asinh(const Interval& itv) {
 }
 
 template<class T>
-AffineMain<T>& AffineMain<T>::Atanh(const Interval& itv) {
+inline AffineMain<T>& AffineMain<T>::Atanh(const Interval& itv){
+	switch (mode) {
+	case Affine_Mode::AF_Lin_Chebyshev:
+		this->Atanh_CH(itv);
+		break;
+	case Affine_Mode::AF_Lin_MinRange:
+		this->Atanh_MR(itv);
+		break;
+	default:
+		*this = tanh(itv);
+		break;
+	}
+	return *this;
+}
+
+template<class T>
+AffineMain<T>& AffineMain<T>::Atanh_CH(const Interval& itv) {
 	const Interval res_itv = tanh(itv);
 	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() ||
 		!is_active() || itv.diam() < AF_EC) {
@@ -1232,7 +1312,23 @@ AffineMain<T>& AffineMain<T>::Atanh(const Interval& itv) {
 // (min), tangent intercept (max)]. Since acosh is strictly increasing,
 // alpha = diam(res_itv)/diam(domain) is always > 0.
 template<class T>
-AffineMain<T>& AffineMain<T>::Aacosh(const Interval& itv ) {
+inline AffineMain<T>& AffineMain<T>::Aacosh(const Interval& itv){
+	switch (mode) {
+	case Affine_Mode::AF_Lin_Chebyshev:
+		this->Aacosh_CH(itv);
+		break;
+	case Affine_Mode::AF_Lin_MinRange:
+		this->Aacosh_MR(itv);
+		break;
+	default:
+		*this = acosh(itv);
+		break;
+	}
+	return *this;
+}
+
+template<class T>
+AffineMain<T>& AffineMain<T>::Aacosh_CH(const Interval& itv ) {
 	const Interval domain = itv & Interval(1.0, oo);
 	const Interval res_itv = acosh(domain);
 
@@ -1272,7 +1368,23 @@ AffineMain<T>& AffineMain<T>::Aacosh(const Interval& itv ) {
 
 
 template<class T>
-AffineMain<T>& AffineMain<T>::Aasinh(const Interval& itv) {
+inline AffineMain<T>& AffineMain<T>::Aasinh(const Interval& itv){
+	switch (mode) {
+	case Affine_Mode::AF_Lin_Chebyshev:
+		this->Aasinh_CH(itv);
+		break;
+	case Affine_Mode::AF_Lin_MinRange:
+		this->Aasinh_MR(itv);
+		break;
+	default:
+		*this = asinh(itv);
+		break;
+	}
+	return *this;
+}
+
+template<class T>
+AffineMain<T>& AffineMain<T>::Aasinh_CH(const Interval& itv) {
 	const Interval res_itv = asinh(itv);
 	if (res_itv.is_empty() || res_itv.is_unbounded() || !is_active() ||
 		itv.diam() < AF_EC) {
@@ -1337,8 +1449,24 @@ AffineMain<T>& AffineMain<T>::Aasinh(const Interval& itv) {
 // without bound towards the domain edges +-1, so alpha is always >= 1
 // (mean value theorem), guaranteeing 1-1/alpha >= 0 below.
 template<class T>
+inline AffineMain<T>& AffineMain<T>::Aatanh(const Interval& itv){
+	switch (mode) {
+	case Affine_Mode::AF_Lin_Chebyshev:
+		this->Aatanh_CH(itv);
+		break;
+	case Affine_Mode::AF_Lin_MinRange:
+		this->Aatanh_MR(itv);
+		break;
+	default:
+		*this = atanh(itv);
+		break;
+	}
+	return *this;
+}
+
+template<class T>
 inline AffineMain<T>&
-AffineMain<T>::Aatanh(const Interval& itv) {
+AffineMain<T>::Aatanh_CH(const Interval& itv) {
 	const Interval domain = itv & Interval(-1.0, 1.0);
 	const Interval res_itv = atanh(itv);
 	if (domain != itv || res_itv.is_empty() || res_itv.is_unbounded() ||
@@ -1505,90 +1633,19 @@ inline AffineMain<T>& AffineMain<T>::Apow(int n, const Interval& itv) {
 				this->Ainv(pow(itv,-n));
 			}
 
-		} else if (n % 2 == 0) {
-			// alpha = (f(sup(x)) - f(inf(x)))/diam(x)
-			// f is convex for n even, so the residual r(x)=f(x)-alpha*x is
-			// maximal at a bound of x and minimal at the point u where
-			// f'(u)=alpha, i.e. u = (alpha/n)^(1/(n-1))
-			// band   = evaluate r at the bounds of x and at u
-			// beta   = evaluate the mid point of the band
-			// ddelta = evaluate the radius of the band
-			const double f_lb = std::pow(itv.lb(), static_cast<unsigned int>(n));
-			const double f_ub = std::pow(itv.ub(), static_cast<unsigned int>(n));
-			const double alpha = (f_ub - f_lb)/itv.diam();
-			if (!std::isfinite(f_lb) || !std::isfinite(f_ub) ||	!std::isfinite(alpha)) {
-				*this = pow(itv, n);
-				return *this;
-			}
-
-			Interval band =	(pow(Interval(itv.lb()), n) - alpha*Interval(itv.lb())) |
-							(pow(Interval(itv.ub()), n) - alpha*Interval(itv.ub()));
-
-			// u = (alpha/n)^(1/(n-1)) always belongs to itv (mean value
-			// theorem), and r(u) = u^n - alpha*u = (1-n)*(alpha/n)*u
-			const Interval critical = Interval(alpha) / n;
-			band = band | ((1 - n) * critical * (root(critical, n - 1)));
-
-			const double beta = band.mid();
-			const double t1 = (beta-band).ub();
-			const double t2 = (band-beta).ub();
-			const double ddelta =  (t1>t2) ? t1 : t2;
-			*this *= alpha;
-			*this += beta;
-			this->inflate(ddelta);
-			//saxpy(alpha, AffineMain<T>(), beta, ddelta, true,false,true,true);
-
 		} else {
-			// for _itv = [a,b]
-			// x0 = 1/sqrt(2)
-			// x1= - x0
-			// xb0 = 0.5*((b-a)*x0 +(a+b))
-			// xb1 = 0.5*((b-a)*x1 +(a+b))
-			// c0 = 0.5 (f(xb0)+f(xb1))
-			// c1 = x0*f(xb0)+x1*f(xb1)
-			// alpha = 2*c1/(b-a)
-			//  old : beta = c0-c1*(a+b)/(b-a)
-			//  old : ddelta = (b-a)^2 * f''(_itv)/16
-			//  new : residual = evaluate the maximal error of f(x)-alpha*x at the bound and the points when f'(x)=alpha
-			//  new : beta = evaluate the mid point of the residual
-			//  new : ddelta = evaluate the radius of the residual
-
-			const double x0  = 1.0/std::sqrt(2.);
-			const double xb0 = (0.5) * (itv.diam() * ( x0) + itv.lb() + itv.ub());
-			const double xb1 = (0.5) * (itv.diam() * (-x0) + itv.lb() + itv.ub());
-			const double fxb0 = std::pow(xb0, static_cast<unsigned int>(n));
-			const double fxb1 = std::pow(xb1, static_cast<unsigned int>(n));
-			//const double c0 = (0.5) * (fxb0 + fxb1);
-			const double c1 = x0 * fxb0 - x0 * fxb1;
-
-			const double alpha = 2 * c1 / (itv.diam());
-			if (!std::isfinite(fxb0) || !std::isfinite(fxb1) ||	!std::isfinite(alpha)) {
-				*this = pow(itv, n);
-				return *this;
+			// General case, n>=3: the linearization depends on the mode
+			switch (mode) {
+			case Affine_Mode::AF_Lin_Chebyshev:
+				this->Apow_CH(n,itv);
+				break;
+			case Affine_Mode::AF_Lin_MinRange:
+				this->Apow_MR(n,itv);
+				break;
+			default:
+				*this = pow(itv,n);
+				break;
 			}
-
-			// compute the residual r(x)=f(x)-alpha*x at the bounds of itv
-			Interval residual =	(pow(Interval(itv.lb()), n) - alpha*Interval(itv.lb())) |
-								(pow(Interval(itv.ub()), n) - alpha*Interval(itv.ub()));
-
-			// f'(u)=n*u^(n-1)=alpha gives u=+-(alpha/n)^(1/(n-1)).
-			const Interval critical = pow(Interval(alpha) / n, 1.0 / Interval(n - 1));
-			Interval TEMP1(0.0);
-			for (const Interval& candidate : {critical, -critical}) {
-				TEMP1 = candidate & itv;
-				if (!TEMP1.is_empty()) {
-					residual = residual | (pow(TEMP1, n) - alpha*TEMP1);
-				}
-			}
-
-			const double beta = residual.mid();
-			const double t1 = (beta-residual).ub();
-			const double t2 = (residual-beta).ub();
-			const double ddelta =  (t1>t2) ? t1 : t2;
-			*this *= alpha;
-			*this += beta;
-			this->inflate(ddelta);
-			//saxpy(alpha, AffineMain<T>(), beta, ddelta, true,false,true,true);
 		}
 
 	}
@@ -1596,6 +1653,183 @@ inline AffineMain<T>& AffineMain<T>::Apow(int n, const Interval& itv) {
 	return *this;
 }
 
+
+template<class T>
+inline AffineMain<T>& AffineMain<T>::Apow_CH(int n, const Interval& itv) {
+	if (n % 2 == 0) {
+		// alpha = (f(sup(x)) - f(inf(x)))/diam(x)
+		// f is convex for n even, so the residual r(x)=f(x)-alpha*x is
+		// maximal at a bound of x and minimal at the point u where
+		// f'(u)=alpha, i.e. u = (alpha/n)^(1/(n-1))
+		// band   = evaluate r at the bounds of x and at u
+		// beta   = evaluate the mid point of the band
+		// ddelta = evaluate the radius of the band
+		const double f_lb = std::pow(itv.lb(), static_cast<unsigned int>(n));
+		const double f_ub = std::pow(itv.ub(), static_cast<unsigned int>(n));
+		const double alpha = (f_ub - f_lb)/itv.diam();
+		if (!std::isfinite(f_lb) || !std::isfinite(f_ub) ||	!std::isfinite(alpha)) {
+			*this = pow(itv, n);
+			return *this;
+		}
+
+		Interval band =	(pow(Interval(itv.lb()), n) - alpha*Interval(itv.lb())) |
+						(pow(Interval(itv.ub()), n) - alpha*Interval(itv.ub()));
+
+		// u = (alpha/n)^(1/(n-1)) always belongs to itv (mean value
+		// theorem), and r(u) = u^n - alpha*u = (1-n)*(alpha/n)*u
+		const Interval critical = Interval(alpha) / n;
+		band = band | ((1 - n) * critical * (root(critical, n - 1)));
+
+		const double beta = band.mid();
+		const double t1 = (beta-band).ub();
+		const double t2 = (band-beta).ub();
+		const double ddelta =  (t1>t2) ? t1 : t2;
+		*this *= alpha;
+		*this += beta;
+		this->inflate(ddelta);
+		//saxpy(alpha, AffineMain<T>(), beta, ddelta, true,false,true,true);
+
+	} else {
+		// for _itv = [a,b]
+		// x0 = 1/sqrt(2)
+		// x1= - x0
+		// xb0 = 0.5*((b-a)*x0 +(a+b))
+		// xb1 = 0.5*((b-a)*x1 +(a+b))
+		// c0 = 0.5 (f(xb0)+f(xb1))
+		// c1 = x0*f(xb0)+x1*f(xb1)
+		// alpha = 2*c1/(b-a)
+		//  old : beta = c0-c1*(a+b)/(b-a)
+		//  old : ddelta = (b-a)^2 * f''(_itv)/16
+		//  new : residual = evaluate the maximal error of f(x)-alpha*x at the bound and the points when f'(x)=alpha
+		//  new : beta = evaluate the mid point of the residual
+		//  new : ddelta = evaluate the radius of the residual
+
+		const double x0  = 1.0/std::sqrt(2.);
+		const double xb0 = (0.5) * (itv.diam() * ( x0) + itv.lb() + itv.ub());
+		const double xb1 = (0.5) * (itv.diam() * (-x0) + itv.lb() + itv.ub());
+		const double fxb0 = std::pow(xb0, static_cast<unsigned int>(n));
+		const double fxb1 = std::pow(xb1, static_cast<unsigned int>(n));
+		//const double c0 = (0.5) * (fxb0 + fxb1);
+		const double c1 = x0 * fxb0 - x0 * fxb1;
+
+		const double alpha = 2 * c1 / (itv.diam());
+		if (!std::isfinite(fxb0) || !std::isfinite(fxb1) ||	!std::isfinite(alpha)) {
+			*this = pow(itv, n);
+			return *this;
+		}
+
+		// compute the residual r(x)=f(x)-alpha*x at the bounds of itv
+		Interval residual =	(pow(Interval(itv.lb()), n) - alpha*Interval(itv.lb())) |
+							(pow(Interval(itv.ub()), n) - alpha*Interval(itv.ub()));
+
+		// f'(u)=n*u^(n-1)=alpha gives u=+-(alpha/n)^(1/(n-1)).
+		const Interval critical = pow(Interval(alpha) / n, 1.0 / Interval(n - 1));
+		Interval TEMP1(0.0);
+		for (const Interval& candidate : {critical, -critical}) {
+			TEMP1 = candidate & itv;
+			if (!TEMP1.is_empty()) {
+				residual = residual | (pow(TEMP1, n) - alpha*TEMP1);
+			}
+		}
+
+		const double beta = residual.mid();
+		const double t1 = (beta-residual).ub();
+		const double t2 = (residual-beta).ub();
+		const double ddelta =  (t1>t2) ? t1 : t2;
+		*this *= alpha;
+		*this += beta;
+		this->inflate(ddelta);
+		//saxpy(alpha, AffineMain<T>(), beta, ddelta, true,false,true,true);
+	}
+	return *this;
+}
+
+template<class T>
+inline AffineMain<T>& AffineMain<T>::Apow_MR(int n, const Interval& itv) {
+
+	Interval res_itv = pow(itv,n);
+	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam()<AF_EC)) {
+		*this = res_itv;
+	}  else  {  // _actif && b
+		double alpha = 0.0;
+		Interval band(0.0);
+		// f'(x)=n*x^(n-1)
+		if (n % 2 == 1) {
+			// n-1 is even, so f is increasing and its slope is smallest at the
+			// point of itv closest to zero, rounded downward
+			alpha = (n*pow(Interval(itv.mig()),n-1)).lb();
+		} else if (0.0 <= itv.lb()) {
+			// f is increasing on itv: the smallest slope is at the lower bound
+			alpha = (n*pow(Interval(itv.lb()),n-1)).lb();
+		} else if (itv.ub() <= 0.0) {
+			// f is decreasing on itv: the slope of smallest magnitude is at the
+			// upper bound and is negative, rounded upward
+			alpha = (n*pow(Interval(itv.ub()),n-1)).ub();
+		} else {
+			// the minimum of an even power is reached inside itv, so the
+			// smallest slope is zero
+			alpha = 0.0;
+		}
+		if (!std::isfinite(alpha) || alpha == 0.0) {
+			alpha = 0.0;
+			band = res_itv;
+		} else {
+			// alpha is the slope of smallest magnitude on itv, so r(x)=f(x)-alpha*x
+			// is monotonic there: the band is the hull of r at both bounds
+			band = (pow(Interval(itv.lb()),n) -alpha*Interval(itv.lb()))
+				 | (pow(Interval(itv.ub()),n) -alpha*Interval(itv.ub()));
+		}
+
+		const double beta = band.mid();
+		const double t1 = (beta -band).ub();
+		const double t2 = (band -beta).ub();
+		const double ddelta = (t1>t2)? t1 : t2;
+
+		*this *= alpha;
+		*this += beta;
+		this->inflate(ddelta);
+
+	}
+	return *this;
+}
+
+template<class T>
+inline AffineMain<T>& AffineMain<T>::Aroot_MR(int n, const Interval& itv) {
+
+	Interval res_itv = root(itv,n);
+	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam()<AF_EC)) {
+		*this = res_itv;
+	}  else  {  // _actif && b
+		double alpha = 0.0;
+		Interval band(0.0);
+		// root'(x)=|x|^(1/n-1)/n decreases with |x| for an odd index, so the
+		// smallest slope is reached at the bound of itv farthest from zero,
+		// rounded downward. It is written root(m,n)/(n*m) to avoid a negative
+		// exponent.
+		const Interval m(itv.mag());
+		alpha = (root(m,n)/(n*m)).lb();  // compute the derivative
+		if (!std::isfinite(alpha) || alpha <= 0.0) {
+			alpha = 0.0;
+			band = res_itv;
+		} else {
+			// alpha is the smallest slope on itv, so r(x)=f(x)-alpha*x is
+			// monotonic there: the band is the hull of r at both bounds
+			band = (root(Interval(itv.lb()),n) -alpha*Interval(itv.lb()))
+				 | (root(Interval(itv.ub()),n) -alpha*Interval(itv.ub()));
+		}
+
+		const double beta = band.mid();
+		const double t1 = (beta -band).ub();
+		const double t2 = (band -beta).ub();
+		const double ddelta = (t1>t2)? t1 : t2;
+
+		*this *= alpha;
+		*this += beta;
+		this->inflate(ddelta);
+
+	}
+	return *this;
+}
 
 template<class T>
 inline AffineMain<T>& AffineMain<T>::Apow(double d, const Interval& itv) {
@@ -1639,6 +1873,11 @@ inline AffineMain<T>& AffineMain<T>::Aroot(int n, const Interval& itv) {
 	else if (n % 2 == 0) {
 		this->Apow(Interval::one()/n,itv);
 		return *this; // the negative part of x should be removed
+	}
+	else if (mode == Affine_Mode::AF_Lin_MinRange) {
+		// an odd root is increasing on the whole of R, so a single
+		// MinRange linearization covers the three cases below
+		return this->Aroot_MR(n,itv);
 	}
 	else if (0 <= itv.lb()) {
 		this->Apow(Interval::one()/n,itv);
@@ -1857,6 +2096,323 @@ AffineMain<T>& AffineMain<T>::Acosh_MR(const Interval& itv) {
 			// monotonic there: the band is the hull of r at both bounds
 			band = (cosh(Interval(itv.lb())) -alpha*Interval(itv.lb()))
 				 | (cosh(Interval(itv.ub())) -alpha*Interval(itv.ub()));
+		}
+
+		const double beta = band.mid();
+		const double t1 = (beta -band).ub();
+		const double t2 = (band -beta).ub();
+		const double ddelta = (t1>t2)? t1 : t2;
+
+		*this *= alpha;
+		*this += beta;
+		this->inflate(ddelta);
+
+	}
+	return *this;
+}
+
+template<class T>
+AffineMain<T>& AffineMain<T>::Atanh_MR(const Interval& itv) {
+
+	Interval res_itv = tanh(itv);
+	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam()<AF_EC)) {
+		*this = res_itv;
+	}  else  {  // _actif && b
+		double alpha = 0.0;
+		Interval band(0.0);
+		if (itv.diam()< AF_EC) {
+			alpha = 0.0;
+			band = res_itv;
+		} else {
+			// tanh'(x)=1-tanh(x)^2 decreases with |x|, so the smallest slope is
+			// reached at the bound of itv farthest from zero, rounded downward
+			// so that tanh'(x)>=alpha holds on all itv
+			alpha = (1.0-sqr(tanh(Interval(itv.mag())))).lb();  // compute the derivative
+			if (!std::isfinite(alpha) || alpha <= 0.0) {
+				// a slope rounded down to zero or below leaves a constant band
+				alpha = 0.0;
+				band = res_itv;
+			} else {
+				// alpha is the smallest slope on itv, so r(x)=f(x)-alpha*x is
+				// monotonic there: the band is the hull of r at both bounds
+				band = (tanh(Interval(itv.lb())) -alpha*Interval(itv.lb()))
+					 | (tanh(Interval(itv.ub())) -alpha*Interval(itv.ub()));
+			}
+		}
+
+		const double beta = band.mid();
+		const double t1 = (beta -band).ub();
+		const double t2 = (band -beta).ub();
+		const double ddelta = (t1>t2)? t1 : t2;
+
+		*this *= alpha;
+		*this += beta;
+		this->inflate(ddelta);
+
+	}
+	return *this;
+}
+
+template<class T>
+AffineMain<T>& AffineMain<T>::Aatan_MR(const Interval& itv) {
+
+	Interval res_itv = atan(itv);
+	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam()<AF_EC)) {
+		*this = res_itv;
+	}  else  {  // _actif && b
+		double alpha = 0.0;
+		Interval band(0.0);
+		if (itv.diam()< AF_EC) {
+			alpha = 0.0;
+			band = res_itv;
+		} else {
+			// atan'(x)=1/(1+x^2) decreases with |x|, so the smallest slope is
+			// reached at the bound of itv farthest from zero, rounded downward
+			// so that atan'(x)>=alpha holds on all itv
+			alpha = (1.0/(1.0+sqr(Interval(itv.mag())))).lb();  // compute the derivative
+			if (!std::isfinite(alpha) || alpha <= 0.0) {
+				// a slope rounded down to zero or below leaves a constant band
+				alpha = 0.0;
+				band = res_itv;
+			} else {
+				// alpha is the smallest slope on itv, so r(x)=f(x)-alpha*x is
+				// monotonic there: the band is the hull of r at both bounds
+				band = (atan(Interval(itv.lb())) -alpha*Interval(itv.lb()))
+					 | (atan(Interval(itv.ub())) -alpha*Interval(itv.ub()));
+			}
+		}
+
+		const double beta = band.mid();
+		const double t1 = (beta -band).ub();
+		const double t2 = (band -beta).ub();
+		const double ddelta = (t1>t2)? t1 : t2;
+
+		*this *= alpha;
+		*this += beta;
+		this->inflate(ddelta);
+
+	}
+	return *this;
+}
+
+template<class T>
+AffineMain<T>& AffineMain<T>::Aasin_MR(const Interval& itv) {
+
+	const Interval domain = itv & Interval(-1.0,1.0);
+	Interval res_itv = asin(domain);
+	if (res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (domain.diam()<AF_EC)) {
+		*this = res_itv;
+	}  else  {  // _actif && b
+		double alpha = 0.0;
+		Interval band(0.0);
+		if (domain.diam()< AF_EC) {
+			alpha = 0.0;
+			band = res_itv;
+		} else {
+			// asin'(x)=1/sqrt(1-x^2) grows with |x|, so the smallest slope is
+			// reached at the point of itv closest to zero, rounded downward
+			// so that asin'(x)>=alpha holds on all itv
+			alpha = (1.0/sqrt(1.0-sqr(Interval(domain.mig())))).lb();  // compute the derivative
+			if (!std::isfinite(alpha) || alpha == 0.0) {
+				alpha = 0.0;
+				band = res_itv;
+			} else {
+				// alpha is the slope of smallest magnitude on itv, so
+				// r(x)=f(x)-alpha*x is monotonic there: the band is the hull
+				// of r at both bounds
+				band = (asin(Interval(domain.lb())) -alpha*Interval(domain.lb()))
+					 | (asin(Interval(domain.ub())) -alpha*Interval(domain.ub()));
+			}
+		}
+
+		const double beta = band.mid();
+		const double t1 = (beta -band).ub();
+		const double t2 = (band -beta).ub();
+		const double ddelta = (t1>t2)? t1 : t2;
+
+		*this *= alpha;
+		*this += beta;
+		this->inflate(ddelta);
+
+	}
+	return *this;
+}
+
+template<class T>
+AffineMain<T>& AffineMain<T>::Aacos_MR(const Interval& itv) {
+
+	const Interval domain = itv & Interval(-1.0,1.0);
+	Interval res_itv = acos(domain);
+	if (res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (domain.diam()<AF_EC)) {
+		*this = res_itv;
+	}  else  {  // _actif && b
+		double alpha = 0.0;
+		Interval band(0.0);
+		if (domain.diam()< AF_EC) {
+			alpha = 0.0;
+			band = res_itv;
+		} else {
+			// acos'(x)=-1/sqrt(1-x^2) is negative and its magnitude grows with
+			// |x|, so the slope of smallest magnitude is reached at the point of
+			// itv closest to zero, rounded upward so that acos'(x)<=alpha on all itv
+			alpha = (-1.0/sqrt(1.0-sqr(Interval(domain.mig())))).ub();  // compute the derivative
+			if (!std::isfinite(alpha) || alpha == 0.0) {
+				alpha = 0.0;
+				band = res_itv;
+			} else {
+				// alpha is the slope of smallest magnitude on itv, so
+				// r(x)=f(x)-alpha*x is monotonic there: the band is the hull
+				// of r at both bounds
+				band = (acos(Interval(domain.lb())) -alpha*Interval(domain.lb()))
+					 | (acos(Interval(domain.ub())) -alpha*Interval(domain.ub()));
+			}
+		}
+
+		const double beta = band.mid();
+		const double t1 = (beta -band).ub();
+		const double t2 = (band -beta).ub();
+		const double ddelta = (t1>t2)? t1 : t2;
+
+		*this *= alpha;
+		*this += beta;
+		this->inflate(ddelta);
+
+	}
+	return *this;
+}
+
+template<class T>
+AffineMain<T>& AffineMain<T>::Asinh_MR(const Interval& itv) {
+
+	Interval res_itv = sinh(itv);
+	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam()<AF_EC)) {
+		*this = res_itv;
+	}  else  {  // _actif && b
+		double alpha = 0.0;
+		Interval band(0.0);
+		// sinh'(x)=cosh(x) grows with |x|, so the smallest slope is reached at
+		// the point of itv closest to zero, rounded downward so that
+		// sinh'(x)>=alpha holds on all itv
+		alpha = cosh(Interval(itv.mig())).lb();  // compute the derivative
+		if (!std::isfinite(alpha) || alpha <= 0.0) {
+			// a slope rounded down to zero or below leaves a constant band
+			alpha = 0.0;
+			band = res_itv;
+		} else {
+			// alpha is the smallest slope on the domain, so r(x)=f(x)-alpha*x
+			// is monotonic there: the band is the hull of r at both bounds
+			band = (sinh(Interval(itv.lb())) -alpha*Interval(itv.lb()))
+				 | (sinh(Interval(itv.ub())) -alpha*Interval(itv.ub()));
+		}
+
+		const double beta = band.mid();
+		const double t1 = (beta -band).ub();
+		const double t2 = (band -beta).ub();
+		const double ddelta = (t1>t2)? t1 : t2;
+
+		*this *= alpha;
+		*this += beta;
+		this->inflate(ddelta);
+
+	}
+	return *this;
+}
+
+template<class T>
+AffineMain<T>& AffineMain<T>::Aasinh_MR(const Interval& itv) {
+
+	Interval res_itv = asinh(itv);
+	if (itv.is_unbounded() || res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (itv.diam()<AF_EC)) {
+		*this = res_itv;
+	}  else  {  // _actif && b
+		double alpha = 0.0;
+		Interval band(0.0);
+		// asinh'(x)=1/sqrt(1+x^2) decreases with |x|, so the smallest slope is
+		// reached at the bound of itv farthest from zero, rounded downward
+		alpha = (1.0/sqrt(1.0+sqr(Interval(itv.mag())))).lb();  // compute the derivative
+		if (!std::isfinite(alpha) || alpha <= 0.0) {
+			// a slope rounded down to zero or below leaves a constant band
+			alpha = 0.0;
+			band = res_itv;
+		} else {
+			// alpha is the smallest slope on the domain, so r(x)=f(x)-alpha*x
+			// is monotonic there: the band is the hull of r at both bounds
+			band = (asinh(Interval(itv.lb())) -alpha*Interval(itv.lb()))
+				 | (asinh(Interval(itv.ub())) -alpha*Interval(itv.ub()));
+		}
+
+		const double beta = band.mid();
+		const double t1 = (beta -band).ub();
+		const double t2 = (band -beta).ub();
+		const double ddelta = (t1>t2)? t1 : t2;
+
+		*this *= alpha;
+		*this += beta;
+		this->inflate(ddelta);
+
+	}
+	return *this;
+}
+
+template<class T>
+AffineMain<T>& AffineMain<T>::Aacosh_MR(const Interval& itv) {
+
+	const Interval domain = itv & Interval(1.0, oo);
+	Interval res_itv = acosh(domain);
+	if (res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (domain.diam()<AF_EC)) {
+		*this = res_itv;
+	}  else  {  // _actif && b
+		double alpha = 0.0;
+		Interval band(0.0);
+		// acosh'(x)=1/sqrt(x^2-1) decreases with x, so the smallest slope is
+		// reached at the upper bound of the domain, rounded downward
+		alpha = (1.0/sqrt(sqr(Interval(domain.ub()))-1.0)).lb();  // compute the derivative
+		if (!std::isfinite(alpha) || alpha <= 0.0) {
+			// a slope rounded down to zero or below leaves a constant band
+			alpha = 0.0;
+			band = res_itv;
+		} else {
+			// alpha is the smallest slope on the domain, so r(x)=f(x)-alpha*x
+			// is monotonic there: the band is the hull of r at both bounds
+			band = (acosh(Interval(domain.lb())) -alpha*Interval(domain.lb()))
+				 | (acosh(Interval(domain.ub())) -alpha*Interval(domain.ub()));
+		}
+
+		const double beta = band.mid();
+		const double t1 = (beta -band).ub();
+		const double t2 = (band -beta).ub();
+		const double ddelta = (t1>t2)? t1 : t2;
+
+		*this *= alpha;
+		*this += beta;
+		this->inflate(ddelta);
+
+	}
+	return *this;
+}
+
+template<class T>
+AffineMain<T>& AffineMain<T>::Aatanh_MR(const Interval& itv) {
+
+	const Interval domain = itv & Interval(-1.0, 1.0);
+	Interval res_itv = atanh(domain);
+	if (res_itv.is_empty() || res_itv.is_unbounded() || (!is_active()) || (domain.diam()<AF_EC)) {
+		*this = res_itv;
+	}  else  {  // _actif && b
+		double alpha = 0.0;
+		Interval band(0.0);
+		// atanh'(x)=1/(1-x^2) grows with |x|, so the smallest slope is reached
+		// at the point of the domain closest to zero, rounded downward
+		alpha = (1.0/(1.0-sqr(Interval(domain.mig())))).lb();  // compute the derivative
+		if (!std::isfinite(alpha) || alpha <= 0.0) {
+			// a slope rounded down to zero or below leaves a constant band
+			alpha = 0.0;
+			band = res_itv;
+		} else {
+			// alpha is the smallest slope on the domain, so r(x)=f(x)-alpha*x
+			// is monotonic there: the band is the hull of r at both bounds
+			band = (atanh(Interval(domain.lb())) -alpha*Interval(domain.lb()))
+				 | (atanh(Interval(domain.ub())) -alpha*Interval(domain.ub()));
 		}
 
 		const double beta = band.mid();

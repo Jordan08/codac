@@ -1001,6 +1001,62 @@ public:
 	 */
 		AffineMain<T>&  Acosh_CH(const Interval& itv);
 	/**
+	 * \brief Internal helper that computes the hyperbolic tangent using Chebyshev linearization of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Atanh_CH(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the arctangent using Chebyshev linearization of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Aatan_CH(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the arcsine using Chebyshev linearization of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Aasin_CH(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the arccosine using Chebyshev linearization of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Aacos_CH(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the hyperbolic sine using Chebyshev linearization of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Asinh_CH(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the inverse hyperbolic sine using Chebyshev linearization of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Aasinh_CH(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the inverse hyperbolic cosine using Chebyshev linearization of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Aacosh_CH(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the inverse hyperbolic tangent using Chebyshev linearization of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Aatanh_CH(const Interval& itv);
+	/**
 	 * \brief Internal helper that computes the inverse using MinRange linearization of the current affine form. *
 	 * \param itv interval enclosure of the input
 	 *
@@ -1035,6 +1091,86 @@ public:
 	 * \return reference to this affine form
 	 */
 		AffineMain<T>&  Acosh_MR(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the hyperbolic tangent using MinRange linearization of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Atanh_MR(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the arctangent using MinRange linearization of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Aatan_MR(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the arcsine using MinRange linearization of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Aasin_MR(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the arccosine using MinRange linearization of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Aacos_MR(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the hyperbolic sine using MinRange linearization of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Asinh_MR(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the inverse hyperbolic sine using MinRange linearization of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Aasinh_MR(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the inverse hyperbolic cosine using MinRange linearization of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Aacosh_MR(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes the inverse hyperbolic tangent using MinRange linearization of the current affine form. *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Aatanh_MR(const Interval& itv);
+	/**
+	 * \brief Internal helper that computes an integer power using Chebyshev linearization of the current affine form. *
+	 * \param n integer exponent, at least 3
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Apow_CH(int n, const Interval& itv);
+	/**
+	 * \brief Internal helper that computes an integer power using MinRange linearization of the current affine form. *
+	 * \param n integer exponent, at least 3
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Apow_MR(int n, const Interval& itv);
+	/**
+	 * \brief Internal helper that computes an odd integer root using MinRange linearization of the current affine form. *
+	 * \param n odd integer index, at least 3
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>&  Aroot_MR(int n, const Interval& itv);
 	/**
 	 * \brief Internal helper that computes the inverse hyperbolic cosine of the current affine form. *
 	 * \param itv interval enclosure of the input
