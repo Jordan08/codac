@@ -304,6 +304,21 @@ class TestInterval_operations(unittest.TestCase):
     self.assertTrue(pow(Interval(4),0.0) == Interval(1))
     self.assertTrue(Approx(pow(Interval(-10,10),-2.0), sys.float_info.epsilon) == Interval(1.0/100,oo))
 
+    # A non-integer power is real-valued only for a non-negative base: gaol
+    # computes it on the magnitude instead, and used to return [-1,2] here.
+    self.assertTrue(pow(Interval(-4,-1),0.5) == Interval.empty())
+    self.assertTrue(pow(Interval(-4,-1),Interval(0.5)) == Interval.empty())
+    self.assertTrue(pow(Interval(-4,-1),0.5) == sqrt(Interval(-4,-1)))
+    self.assertTrue(Approx(pow(Interval(-4,9),0.5)) == Interval(0,3))
+    self.assertTrue(pow(Interval(-4,9),0.5).lb() >= 0.0)
+    self.assertTrue(Approx(pow(Interval(-2,3),Interval(1,2))) == Interval(0,9))
+
+    # A negative base stays valid at an integer exponent, whichever
+    # overload spells it
+    self.assertTrue(pow(Interval(-2,3),Interval(3)) == Interval(-8,27))
+    self.assertTrue(pow(Interval(-2,3),Interval(3)) == pow(Interval(-2,3),3))
+    self.assertTrue(pow(Interval(-2,3),Interval(2)) == Interval(0,9))
+
     # Infinite exponents and the empty set are unchanged
     self.assertTrue(pow(Interval(4),oo) == Interval.empty())
     self.assertTrue(pow(Interval(4),-oo) == Interval.empty())

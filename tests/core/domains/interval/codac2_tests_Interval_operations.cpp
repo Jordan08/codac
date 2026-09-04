@@ -313,6 +313,21 @@ TEST_CASE("Interval operations")
   CHECK(pow(Interval(4),0.0) == Interval::one());
   CHECK(Approx(pow(Interval(-10,10),-2.0), std::numeric_limits<double>::epsilon()) == Interval(1.0/100,oo));
 
+  // A non-integer power is real-valued only for a non-negative base: gaol
+  // computes it on the magnitude instead, and used to return [-1,2] here.
+  CHECK(pow(Interval(-4,-1),0.5) == Interval::empty());
+  CHECK(pow(Interval(-4,-1),Interval(0.5)) == Interval::empty());
+  CHECK(pow(Interval(-4,-1),0.5) == sqrt(Interval(-4,-1)));
+  CHECK(Approx(pow(Interval(-4,9),0.5)) == Interval(0,3));
+  CHECK(pow(Interval(-4,9),0.5).lb() >= 0.0);
+  CHECK(Approx(pow(Interval(-2,3),Interval(1,2))) == Interval(0,9));
+
+  // A negative base stays valid at an integer exponent, whichever
+  // overload spells it
+  CHECK(pow(Interval(-2,3),Interval(3)) == Interval(-8,27));
+  CHECK(pow(Interval(-2,3),Interval(3)) == pow(Interval(-2,3),3));
+  CHECK(pow(Interval(-2,3),Interval(2)) == Interval(0,9));
+
   // Infinite exponents and the empty set are unchanged
   CHECK(pow(Interval(4),oo) == Interval::empty());
   CHECK(pow(Interval(4),-oo) == Interval::empty());
