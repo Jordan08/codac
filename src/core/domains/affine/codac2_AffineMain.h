@@ -829,6 +829,29 @@ public:
 	 */
 		AffineMain<T>& Asqr(const Interval& itv);
 	/**
+	 * \brief Previous AF2 square, kept for reference and not used.
+	 *
+	 * It bounds the quadratic remainder by the AF2 formula, centred on
+	 * sum(a_i^2)/2 with radius (sum|a_i|)^2 - sum(a_i^2)/2, which the
+	 * Chebyshev bound of Asqr always improves upon.
+	 *
+	 * \param itv interval enclosure of the input
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>& Asqr_AF2(const Interval& itv);
+	/**
+	 * \brief Previous AF2 product, kept for reference and not used.
+	 *
+	 * It bounds the quadratic remainder by the AF2 formula alone, without
+	 * the polarisation bound that operator*= now intersects it with.
+	 *
+	 * \param y second operand
+	 *
+	 * \return reference to this affine form
+	 */
+		AffineMain<T>& Amul_AF2(const AffineMain<T>& y);
+	/**
 	 * \brief Internal helper that computes the negation of the current affine form.
 	 *
 	 * \return reference to this affine form

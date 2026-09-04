@@ -15,6 +15,7 @@
 
 #include "codac2_Affine2_fAF2.h"
 
+#include <algorithm>
 #include <cassert>
 
 #include "codac2_AffineMain.h"
@@ -543,6 +544,181 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator*=(const AffineMain<AF_fAF2>& 
 			if (_n_noise < y.noise_count()) {
 				this->resize_noise(y.noise_count());
 			}
+			double Sx, Sy, Sxy, Sz, Sp, Sm, ttt, sss, ppp, tmp, xVal0, eee;
+			std::unique_ptr<double[]> xTmp;
+
+			xTmp = std::make_unique<double[]>(_n_noise + 1);
+			Sx=0.0; Sy=0.0; Sxy=0.0; Sz=0.0; Sp=0.0; Sm=0.0; ttt=0.0; sss=0.0; ppp=0.0; tmp=0.0; xVal0=0.0; eee=0.0;
+
+			// These accumulators may later be multiplied by quantities at the
+			// opposite scale. Do not discard them using an absolute threshold.
+			// For example, 1e-300 * 1e300 contributes at order one.
+			for (Index i = 1; i <= _n_noise; i++) {
+				ppp = 0.0;
+
+				if (i <= y.noise_count()) {
+					eee = _elt.twoProd(_elt._val[i], y._elt._val[i], &ppp);
+					ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
+
+					eee = _elt.twoSum(Sz, ppp, &tmp);
+					ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
+					Sz = tmp;
+
+					eee = _elt.twoSum(Sxy, std::fabs(ppp), &tmp);
+					ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
+					Sxy = tmp;
+				}
+
+				eee = _elt.twoSum(Sx, std::fabs(_elt._val[i]), &tmp);
+				ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
+				Sx = tmp;
+
+				if (i <= y.noise_count()) {
+					eee = _elt.twoSum(Sy, std::fabs(y._elt._val[i]), &tmp);
+					ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
+					Sy = tmp;
+				}
+				// polarisation: u*v = ((u+v)^2-(u-v)^2)/4 needs the radii of
+				// u+v and u-v, hence these two extra sums
+				{
+					const double bi = (i <= y.noise_count())? y._elt._val[i] : 0.0;
+					eee = _elt.twoSum(Sp, std::fabs(_elt._val[i]+bi), &tmp);
+					ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
+					Sp = tmp;
+					eee = _elt.twoSum(Sm, std::fabs(_elt._val[i]-bi), &tmp);
+					ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
+					Sm = tmp;
+				}
+			}
+
+			xVal0 = _elt._val[0];
+			// RES = X%T(0) * res
+			for (Index i = 0; i <= _n_noise; i++) {
+				eee = _elt.twoProd(_elt._val[i],y._elt._val[0], &ppp);
+				ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
+				_elt._val[i] = ppp;
+
+				if (std::fabs(_elt._val[i]) < AF_EC) {
+					sss = (1+2*AF_EM)*(sss+ std::fabs(_elt._val[i]));
+					_elt._val[i] = 0.0;
+				}
+			}
+
+			// Xtmp = X%T(0) * Y
+			xTmp[0] = 0.0;
+			for (Index i = 1; i <= y.noise_count(); i++) {
+				eee = _elt.twoProd(xVal0,y._elt._val[i], &ppp);
+				ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
+				xTmp[i] = ppp;
+
+				if (std::fabs(xTmp[i]) < AF_EC) {
+					sss = (1+2*AF_EM)*(sss+ std::fabs(xTmp[i]));
+					xTmp[i] = 0.0;
+				}
+
+			}
+
+			//RES =  RES + Xtmp = ( Y%(0) * X ) + ( X%T(0) * Y - X%T(0)*Y%(0) )
+			for (Index i = 0; i <= y.noise_count(); i++) {
+
+				eee = _elt.twoSum(_elt._val[i],xTmp[i], &tmp);
+				ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
+				_elt._val[i] = tmp;
+
+				if (std::fabs(_elt._val[i]) < AF_EC) {
+					sss = (1+2*AF_EM)*(sss+ std::fabs(_elt._val[i]));
+					_elt._val[i] = 0.0;
+				}
+
+			}
+
+			// The quadratic remainder u*v, with u=sum(a_i.e_i) and
+			// v=sum(b_i.e_i), admits two valid bands. Neither one dominates,
+			// so the tightest is their intersection.
+			//   B1 = Sz/2 +- (Sx.Sy - Sxy/2)            the AF2 band
+			//   B2 = [-Sm^2/4 , Sp^2/4]                 by polarisation,
+			//        u*v = ((u+v)^2-(u-v)^2)/4, each square lying in [0,S^2]
+			// qbeta is the mid point of the intersection, qdelta its radius.
+			// On a square, u=v gives Sm=0 and Sp=2.Sx, hence [0,Sx^2], the
+			// Chebyshev band, which always beats B1.
+			// The accumulated errors behave like two extra independent noise
+			// symbols of coefficients _err, so they enter every radius below.
+			const double sxe = (1+2*AF_EM)*(Sx + _elt._err);
+			const double sye = (1+2*AF_EM)*(Sy + y._elt._err);
+			const double spe = (1+2*AF_EM)*(Sp + _elt._err + y._elt._err);
+			const double sme = (1+2*AF_EM)*(Sm + _elt._err + y._elt._err);
+			double qlo, qhi;
+			{
+				const double r1 = (1+2*AF_EM)*(sxe*sye) - (1-2*AF_EM)*(0.5*Sxy);
+				const double c1 = 0.5*Sz;   // exact
+				qlo = c1 - r1;   qlo -= 2*AF_EM*std::fabs(qlo);
+				qhi = c1 + r1;   qhi += 2*AF_EM*std::fabs(qhi);
+				const double lo2 = -(1+2*AF_EM)*(0.25*(sme*sme));
+				const double hi2 =  (1+2*AF_EM)*(0.25*(spe*spe));
+				if (lo2 > qlo) qlo = lo2;
+				if (hi2 < qhi) qhi = hi2;
+				if (qhi < qlo) {   // rounding made the intersection empty
+					qlo = c1 - r1;   qlo -= 2*AF_EM*std::fabs(qlo);
+					qhi = c1 + r1;   qhi += 2*AF_EM*std::fabs(qhi);
+				}
+			}
+			const double qbeta = 0.5*(qlo+qhi);
+			const double qdelta = (1+2*AF_EM)*std::max(qbeta-qlo, qhi-qbeta);
+
+			eee = _elt.twoSum(_elt._val[0],qbeta, &tmp);
+			ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
+			_elt._val[0] = tmp;
+
+			if (std::fabs(_elt._val[0]) < AF_EC) {
+				sss = (1+2*AF_EM)*(sss+ std::fabs(_elt._val[0]));
+				_elt._val[0] = 0.0;
+			}
+
+			// qdelta already covers the cross terms, the accumulated errors
+			// having been folded into the radii above.
+			const double xerr = _elt._err, yerr = y._elt._err;
+
+			_elt._err = (1+ 2*AF_EM) * (
+					((1+ 2*AF_EM) *std::fabs(y._elt._val[0]) * xerr)  +
+					((1+ 2*AF_EM) *std::fabs(xVal0) * yerr)  +
+					((1+ 2*AF_EM) * qdelta)  +
+					//					(AF_EE * (AF_EM * ttt))  +
+					(AF_EE * (ttt))  +
+					(AF_EE * sss)
+			);
+
+
+			bool b = (_elt._err<oo);
+			for (Index i=0;i<=_n_noise;i++) {
+				b &= (std::fabs(_elt._val[i])<oo);
+			}
+			if (!b) *this = Interval();
+		}
+
+	} else { // y or x is not a valid affine form. So we multiply y.itv() such as an interval
+		*this = (itv() * y.itv());
+	}
+
+	return *this;
+}
+
+
+// Kept for reference, not used: the AF2 product as it was before the
+// polarisation bound was added to operator*=.
+template<>
+AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::Amul_AF2(const AffineMain<AF_fAF2>& y) {
+
+	if (is_active() && (y.is_active())) {
+		if (y.is_degenerated()) {
+			*this *= y._elt._val[0];
+		}	else if (is_degenerated()) {
+			double tmp = _elt._val[0];
+			*this = y;
+			*this *= tmp;
+		} else 	 {
+			if (_n_noise < y.noise_count()) {
+				this->resize_noise(y.noise_count());
+			}
 			double Sx, Sy, Sxy, Sz, ttt, sss, ppp, tmp, xVal0, eee;
 			std::unique_ptr<double[]> xTmp;
 
@@ -688,6 +864,109 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator*=(const Interval& y) {
 
 template<>
 AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::Asqr(const Interval& itv) {
+
+	if (	(!is_active())||
+			itv.is_empty()||
+			itv.is_unbounded()||
+			(itv.diam() < AF_EC)  ) {
+		*this = pow(itv,2);
+
+	} else  {
+
+		double Sx, ttt, sss, ppp, x0, eee,tmp;
+		Sx = 0; ttt = 0; sss = 0; ppp = 0; x0 = 0; eee =0.0; tmp =0.0;
+
+		// compute the error. The Chebyshev band below only needs sum|a_i|,
+		// unlike the AF2 band of Asqr_AF2 which also needed sum(a_i^2).
+		for (Index i = 1; i <= _n_noise; i++) {
+
+			eee = _elt.twoSum(Sx,std::fabs(_elt._val[i]), &tmp);
+			ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
+			Sx = tmp;
+
+			if (std::fabs(Sx) < AF_EC) {
+				sss = (1+2*AF_EM)*(sss+ std::fabs(Sx));
+				Sx = 0.0;
+			}
+
+		}
+		// compute 2*_elt._val[0]*(*this)
+		x0 = _elt._val[0];
+
+		eee = _elt.twoProd(x0,x0, &ppp);
+		ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
+		_elt._val[0] = ppp;
+
+		if (std::fabs(_elt._val[0]) < AF_EC) {
+			sss = (1+2*AF_EM)*(sss+ std::fabs(_elt._val[0]));
+			_elt._val[0] = 0.0;
+		}
+
+		// compute 2*_elt._val[0]*(*this)
+		for (Index i = 1; i <= _n_noise; i++) {
+
+			eee = _elt.twoProd((2*x0),_elt._val[i], &ppp);
+			ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
+			_elt._val[i] = ppp;
+
+			if (std::fabs(_elt._val[i]) < AF_EC) {
+				sss = (1+2*AF_EM)*(sss+ std::fabs(_elt._val[i]));
+				_elt._val[i] = 0.0;
+			}
+
+		}
+
+		// Chebyshev bound of the quadratic remainder: with u=sum(a_i.e_i),
+		// u^2 lies in [0,Sx^2], which is a band centred on Sx^2/2 with radius
+		// Sx^2/2. The AF2 band, centred on sum(a_i^2)/2 with radius
+		// Sx^2-sum(a_i^2)/2, always contains it, so no intersection is needed.
+		// This is what operator*= obtains by polarisation on x*x.
+		// The accumulated error behaves like an extra independent noise symbol
+		// of coefficient _err, so it belongs inside the radius.
+		const double sxe = (1+2*AF_EM)*(Sx + _elt._err);
+		const double qhalf = 0.5*((1+2*AF_EM)*(sxe*sxe));   // mid and radius
+
+		eee = _elt.twoSum(_elt._val[0],qhalf, &tmp);
+		ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
+		_elt._val[0] = tmp;
+
+		if (std::fabs(_elt._val[0]) < AF_EC) {
+			sss = (1+2*AF_EM)*(sss+ std::fabs(_elt._val[0]));
+			_elt._val[0] = 0.0;
+		}
+
+		// qhalf already covers the cross terms, the accumulated error having
+		// been folded into the radius above.
+		const double xerr = _elt._err;
+
+		_elt._err = (1+ 2*AF_EM) * (
+				((1+ 2*AF_EM) *2*std::fabs(x0) * xerr)  +
+				((1+ 2*AF_EM) * qhalf)  +
+//					(AF_EE * (AF_EM * ttt))  +
+				(AF_EE * (ttt))  +
+				(AF_EE * sss)
+				);
+
+		{
+			bool b = (_elt._err<oo);
+			for (Index i=0;i<=_n_noise;i++) {
+				b &= (std::fabs(_elt._val[i])<oo);
+			}
+			if (!b) {
+				*this = Interval();
+			}
+		}
+
+	}
+
+	return *this;
+}
+
+
+// Kept for reference, not used: the AF2 square as it was before the
+// Chebyshev bound was adopted in Asqr.
+template<>
+AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::Asqr_AF2(const Interval& itv) {
 
 	if (	(!is_active())||
 			itv.is_empty()||
