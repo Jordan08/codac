@@ -1749,3 +1749,205 @@ TEST_CASE("mig, mag, smag, smig and volume delegate to the interval enclosure")
   CHECK(ax[0].mag() == 5.0);
 }
 
+
+// Evaluates a one-variable affine form at a given noise value eps in [-1,1].
+// This is the linearization itself, as opposed to itv() which is its range
+// over the whole box.
+template<class T>
+Interval affine_eval_at(const AffineMain<T>& y, double eps)
+{
+  // A form that fell back to its interval enclosure keeps no noise symbol,
+  // and noise(0) asserts in that case.
+  if(!y.is_active() || y.noise_count() < 1)
+    return y.itv();
+
+  return Interval(y.mid()) + Interval(y.noise(0))*Interval(eps)
+       + Interval(-y.err(), y.err());
+}
+
+// Checks the property that makes affine arithmetic sound under composition:
+// at every point of the box, the linearization must enclose the function.
+// This is strictly stronger than checking the image, which only constrains
+// the hull and would accept a linearization with a wrong slope.
+template<class AffineFunction, class IntervalFunction>
+void CHECK_POINTWISE_LINEARIZATION(
+  const char* operation_name,
+  const Interval& input,
+  const Interval& domain,
+  AffineFunction affine_function,
+  IntervalFunction interval_function,
+  int sample_count = 200)
+{
+  CAPTURE(operation_name, input, domain);
+  AffineTVarVector variables(IntervalVector({input}));
+  const AffineT y = affine_function(variables[0]);
+  const Interval reference = interval_function(input & domain);
+
+  if(reference.is_empty())
+  {
+    CHECK(y.is_empty());
+    return;
+  }
+
+  REQUIRE_FALSE(y.is_empty());
+  CHECK(y.itv().is_superset(reference));
+
+  if(input.is_unbounded() || y.itv().is_unbounded())
+    return;
+
+  for(int k = 0 ; k <= sample_count ; k++)
+  {
+    const double eps = -1.0 + (2.0*k)/sample_count;
+    const Interval x =
+      (Interval(input.mid()) + Interval(input.rad())*Interval(eps)) & input & domain;
+    if(x.is_empty())
+      continue;
+
+    // The interval image of the singleton is the oracle: a scalar std::*
+    // result may differ from the outward-rounded interval implementation.
+    const Interval fx = interval_function(x);
+    if(fx.is_empty() || fx.is_unbounded())
+      continue;
+
+    const Interval y_at_eps = affine_eval_at<AA>(y, eps);
+    if(y_at_eps.is_unbounded())
+      continue;
+
+    CAPTURE(eps, x, fx, y_at_eps);
+    CHECK(y_at_eps.is_superset(fx));
+  }
+}
+
+
+TEST_CASE("Every linearization encloses the function at each point of the box")
+{
+  using Mode = AffineT::Affine_Mode;
+
+  for(const Mode mode : { AffineT::AF_Lin_Chebyshev, AffineT::AF_Lin_MinRange })
+  {
+    AffineT::change_mode(mode);
+    CAPTURE(static_cast<int>(mode));
+
+    for(const Interval& input : { Interval(0.5,3.0), Interval(1.e-3,1.e3), Interval(-4.0,-0.25) })
+      CHECK_POINTWISE_LINEARIZATION("inv", input, Interval(-oo,oo),
+        [](const AffineT& x) { return inv(x); },
+        [](const Interval& x) { return 1.0/x; });
+
+    for(const Interval& input : { Interval(-4.0,3.0), Interval(0.25,5.0), Interval(-1.e6,1.e6) })
+      CHECK_POINTWISE_LINEARIZATION("sqr", input, Interval(-oo,oo),
+        [](const AffineT& x) { return sqr(x); },
+        [](const Interval& x) { return sqr(x); });
+
+    for(const Interval& input : { Interval(0.0,4.0), Interval(1.e-6,1.e6), Interval(-1.0,4.0) })
+      CHECK_POINTWISE_LINEARIZATION("sqrt", input, Interval(0.0,oo),
+        [](const AffineT& x) { return sqrt(x); },
+        [](const Interval& x) { return sqrt(x); });
+
+    for(const Interval& input : { Interval(-20.0,20.0), Interval(-1.0,1.0), Interval(-700.0,-600.0) })
+      CHECK_POINTWISE_LINEARIZATION("exp", input, Interval(-oo,oo),
+        [](const AffineT& x) { return exp(x); },
+        [](const Interval& x) { return exp(x); });
+
+    for(const Interval& input : { Interval(1.e-6,1.e6), Interval(0.25,4.0), Interval(-1.0,4.0) })
+      CHECK_POINTWISE_LINEARIZATION("log", input, Interval(0.0,oo),
+        [](const AffineT& x) { return log(x); },
+        [](const Interval& x) { return log(x); });
+
+    for(const Interval& input : { Interval(-8.0,27.0), Interval(-3.0,2.0), Interval(0.5,4.0) })
+      CHECK_POINTWISE_LINEARIZATION("pow(x,3)", input, Interval(-oo,oo),
+        [](const AffineT& x) { return pow(x,3); },
+        [](const Interval& x) { return pow(x,3); });
+
+    for(const Interval& input : { Interval(-2.0,3.0), Interval(1.0,5.0), Interval(-6.0,-2.0) })
+      CHECK_POINTWISE_LINEARIZATION("pow(x,4)", input, Interval(-oo,oo),
+        [](const AffineT& x) { return pow(x,4); },
+        [](const Interval& x) { return pow(x,4); });
+
+    for(const Interval& input : { Interval(0.5,4.0), Interval(-4.0,-0.5) })
+      CHECK_POINTWISE_LINEARIZATION("pow(x,-2)", input, Interval(-oo,oo),
+        [](const AffineT& x) { return pow(x,-2); },
+        [](const Interval& x) { return pow(x,-2); });
+
+    for(const Interval& input : { Interval(0.25,9.0), Interval(1.e-3,1.e3) })
+      CHECK_POINTWISE_LINEARIZATION("pow(x,1.5)", input, Interval(0.0,oo),
+        [](const AffineT& x) { return pow(x,1.5); },
+        [](const Interval& x) { return pow(x,1.5); });
+
+    for(const Interval& input : { Interval(0.0,9.0), Interval(-1.0,9.0) })
+      CHECK_POINTWISE_LINEARIZATION("root(x,2)", input, Interval(0.0,oo),
+        [](const AffineT& x) { return root(x,2); },
+        [](const Interval& x) { return root(x,2); });
+
+    for(const Interval& input : { Interval(-8.0,27.0), Interval(-3.0,2.0), Interval(1.0,8.0) })
+      CHECK_POINTWISE_LINEARIZATION("root(x,3)", input, Interval(-oo,oo),
+        [](const AffineT& x) { return root(x,3); },
+        [](const Interval& x) { return root(x,3); });
+
+    for(const Interval& input : { Interval(-1.0,1.0), Interval(2.0,5.0), Interval(-12.0,-8.0) })
+      CHECK_POINTWISE_LINEARIZATION("cos", input, Interval(-oo,oo),
+        [](const AffineT& x) { return cos(x); },
+        [](const Interval& x) { return cos(x); });
+
+    for(const Interval& input : { Interval(-1.0,1.0), Interval(2.0,5.0), Interval(-12.0,-8.0) })
+      CHECK_POINTWISE_LINEARIZATION("sin", input, Interval(-oo,oo),
+        [](const AffineT& x) { return sin(x); },
+        [](const Interval& x) { return sin(x); });
+
+    for(const Interval& input : { Interval(-1.4,1.4), Interval(0.1,0.9), Interval(-0.5,1.2) })
+      CHECK_POINTWISE_LINEARIZATION("tan", input, Interval(-oo,oo),
+        [](const AffineT& x) { return tan(x); },
+        [](const Interval& x) { return tan(x); });
+
+    for(const Interval& input : { Interval(-0.9,0.9), Interval(-1.0,1.0), Interval(-2.0,0.5) })
+      CHECK_POINTWISE_LINEARIZATION("acos", input, Interval(-1.0,1.0),
+        [](const AffineT& x) { return acos(x); },
+        [](const Interval& x) { return acos(x); });
+
+    for(const Interval& input : { Interval(-0.9,0.9), Interval(-1.0,1.0), Interval(-0.5,2.0) })
+      CHECK_POINTWISE_LINEARIZATION("asin", input, Interval(-1.0,1.0),
+        [](const AffineT& x) { return asin(x); },
+        [](const Interval& x) { return asin(x); });
+
+    for(const Interval& input : { Interval(-20.0,20.0), Interval(-1.0,1.0), Interval(3.0,9.0) })
+      CHECK_POINTWISE_LINEARIZATION("atan", input, Interval(-oo,oo),
+        [](const AffineT& x) { return atan(x); },
+        [](const Interval& x) { return atan(x); });
+
+    for(const Interval& input : { Interval(-3.0,5.0), Interval(1.0,4.0), Interval(-6.0,-2.0) })
+      CHECK_POINTWISE_LINEARIZATION("cosh", input, Interval(-oo,oo),
+        [](const AffineT& x) { return cosh(x); },
+        [](const Interval& x) { return cosh(x); });
+
+    for(const Interval& input : { Interval(-3.0,5.0), Interval(1.0,4.0) })
+      CHECK_POINTWISE_LINEARIZATION("sinh", input, Interval(-oo,oo),
+        [](const AffineT& x) { return sinh(x); },
+        [](const Interval& x) { return sinh(x); });
+
+    for(const Interval& input : { Interval(-3.0,5.0), Interval(-8.0,8.0) })
+      CHECK_POINTWISE_LINEARIZATION("tanh", input, Interval(-oo,oo),
+        [](const AffineT& x) { return tanh(x); },
+        [](const Interval& x) { return tanh(x); });
+
+    for(const Interval& input : { Interval(1.0,9.0), Interval(2.0,20.0), Interval(-1.0,3.0) })
+      CHECK_POINTWISE_LINEARIZATION("acosh", input, Interval(1.0,oo),
+        [](const AffineT& x) { return acosh(x); },
+        [](const Interval& x) { return acosh(x); });
+
+    for(const Interval& input : { Interval(-8.0,8.0), Interval(1.0,20.0) })
+      CHECK_POINTWISE_LINEARIZATION("asinh", input, Interval(-oo,oo),
+        [](const AffineT& x) { return asinh(x); },
+        [](const Interval& x) { return asinh(x); });
+
+    for(const Interval& input : { Interval(-0.9,0.9), Interval(-0.5,0.999), Interval(-2.0,0.5) })
+      CHECK_POINTWISE_LINEARIZATION("atanh", input, Interval(-1.0,1.0),
+        [](const AffineT& x) { return atanh(x); },
+        [](const Interval& x) { return atanh(x); });
+
+    for(const Interval& input : { Interval(-4.0,3.0), Interval(1.0,5.0), Interval(-5.0,-1.0) })
+      CHECK_POINTWISE_LINEARIZATION("abs", input, Interval(-oo,oo),
+        [](const AffineT& x) { return abs(x); },
+        [](const Interval& x) { return abs(x); });
+  }
+
+  AffineT::change_mode(AffineT::AF_Lin_Chebyshev);
+}

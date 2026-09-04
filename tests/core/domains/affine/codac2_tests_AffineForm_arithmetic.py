@@ -1146,5 +1146,134 @@ class TestAffineFormArithmetic(unittest.TestCase):
     self.assertTrue(ax[0].mag() == 5.0)
 
 
+  def affine_eval_at(self, y, eps):
+    # Evaluates a one-variable affine form at a given noise value eps in
+    # [-1,1]. This is the linearization itself, as opposed to itv() which is
+    # its range over the whole box.
+    # A form that fell back to its interval enclosure keeps no noise symbol,
+    # and noise(0) asserts in that case.
+    if not y.is_active() or y.noise_count() < 1:
+      return y.itv()
+    return Interval(y.mid()) + Interval(y.noise(0))*Interval(eps) \
+         + Interval(-y.err(), y.err())
+
+  def check_pointwise_linearization(self, name, input, domain,
+                                    affine_function, interval_function,
+                                    sample_count = 50):
+    # At every point of the box, the linearization must enclose the function.
+    # This is strictly stronger than checking the image, which only constrains
+    # the hull and would accept a linearization with a wrong slope.
+    variables = AffineVariables(IntervalVector([input]))
+    y = affine_function(variables[0])
+    reference = interval_function(input & domain)
+
+    if reference.is_empty():
+      self.assertTrue(y.is_empty(), name)
+      return
+
+    self.assertFalse(y.is_empty(), name)
+    self.assertTrue(y.itv().is_superset(reference), name)
+
+    if input.is_unbounded() or y.itv().is_unbounded():
+      return
+
+    for k in range(sample_count+1):
+      eps = -1.0 + (2.0*k)/sample_count
+      x = (Interval(input.mid()) + Interval(input.rad())*Interval(eps)) \
+          & input & domain
+      if x.is_empty():
+        continue
+      fx = interval_function(x)
+      if fx.is_empty() or fx.is_unbounded():
+        continue
+      y_at_eps = self.affine_eval_at(y, eps)
+      if y_at_eps.is_unbounded():
+        continue
+      self.assertTrue(y_at_eps.is_superset(fx),
+                      "%s input=%s eps=%g x=%s f(x)=%s y=%s"
+                      % (name, input, eps, x, fx, y_at_eps))
+
+  def test_every_linearization_encloses_the_function_at_each_point(self):
+
+    modes = [Affine.Affine_Mode.AF_Lin_Chebyshev, Affine.Affine_Mode.AF_Lin_MinRange]
+
+    for mode in modes:
+      Affine.change_mode(mode)
+
+      for input in [Interval(0.5,3.0), Interval(1.e-3,1.e3), Interval(-4.0,-0.25)]:
+        self.check_pointwise_linearization("inv", input, Interval(-oo,oo), inv, lambda x: 1.0/x)
+
+      for input in [Interval(-4.0,3.0), Interval(0.25,5.0), Interval(-1.e6,1.e6)]:
+        self.check_pointwise_linearization("sqr", input, Interval(-oo,oo), sqr, sqr)
+
+      for input in [Interval(0.0,4.0), Interval(1.e-6,1.e6), Interval(-1.0,4.0)]:
+        self.check_pointwise_linearization("sqrt", input, Interval(0.0,oo), sqrt, sqrt)
+
+      for input in [Interval(-20.0,20.0), Interval(-1.0,1.0), Interval(-700.0,-600.0)]:
+        self.check_pointwise_linearization("exp", input, Interval(-oo,oo), exp, exp)
+
+      for input in [Interval(1.e-6,1.e6), Interval(0.25,4.0), Interval(-1.0,4.0)]:
+        self.check_pointwise_linearization("log", input, Interval(0.0,oo), log, log)
+
+      for input in [Interval(-8.0,27.0), Interval(-3.0,2.0), Interval(0.5,4.0)]:
+        self.check_pointwise_linearization("pow(x,3)", input, Interval(-oo,oo), lambda x: pow(x,3), lambda x: pow(x,3))
+
+      for input in [Interval(-2.0,3.0), Interval(1.0,5.0), Interval(-6.0,-2.0)]:
+        self.check_pointwise_linearization("pow(x,4)", input, Interval(-oo,oo), lambda x: pow(x,4), lambda x: pow(x,4))
+
+      for input in [Interval(0.5,4.0), Interval(-4.0,-0.5)]:
+        self.check_pointwise_linearization("pow(x,-2)", input, Interval(-oo,oo), lambda x: pow(x,-2), lambda x: pow(x,-2))
+
+      for input in [Interval(0.25,9.0), Interval(1.e-3,1.e3)]:
+        self.check_pointwise_linearization("pow(x,1.5)", input, Interval(0.0,oo), lambda x: pow(x,1.5), lambda x: pow(x,1.5))
+
+      for input in [Interval(0.0,9.0), Interval(-1.0,9.0)]:
+        self.check_pointwise_linearization("root(x,2)", input, Interval(0.0,oo), lambda x: root(x,2), lambda x: root(x,2))
+
+      for input in [Interval(-8.0,27.0), Interval(-3.0,2.0), Interval(1.0,8.0)]:
+        self.check_pointwise_linearization("root(x,3)", input, Interval(-oo,oo), lambda x: root(x,3), lambda x: root(x,3))
+
+      for input in [Interval(-1.0,1.0), Interval(2.0,5.0), Interval(-12.0,-8.0)]:
+        self.check_pointwise_linearization("cos", input, Interval(-oo,oo), cos, cos)
+
+      for input in [Interval(-1.0,1.0), Interval(2.0,5.0), Interval(-12.0,-8.0)]:
+        self.check_pointwise_linearization("sin", input, Interval(-oo,oo), sin, sin)
+
+      for input in [Interval(-1.4,1.4), Interval(0.1,0.9), Interval(-0.5,1.2)]:
+        self.check_pointwise_linearization("tan", input, Interval(-oo,oo), tan, tan)
+
+      for input in [Interval(-0.9,0.9), Interval(-1.0,1.0), Interval(-2.0,0.5)]:
+        self.check_pointwise_linearization("acos", input, Interval(-1.0,1.0), acos, acos)
+
+      for input in [Interval(-0.9,0.9), Interval(-1.0,1.0), Interval(-0.5,2.0)]:
+        self.check_pointwise_linearization("asin", input, Interval(-1.0,1.0), asin, asin)
+
+      for input in [Interval(-20.0,20.0), Interval(-1.0,1.0), Interval(3.0,9.0)]:
+        self.check_pointwise_linearization("atan", input, Interval(-oo,oo), atan, atan)
+
+      for input in [Interval(-3.0,5.0), Interval(1.0,4.0), Interval(-6.0,-2.0)]:
+        self.check_pointwise_linearization("cosh", input, Interval(-oo,oo), cosh, cosh)
+
+      for input in [Interval(-3.0,5.0), Interval(1.0,4.0)]:
+        self.check_pointwise_linearization("sinh", input, Interval(-oo,oo), sinh, sinh)
+
+      for input in [Interval(-3.0,5.0), Interval(-8.0,8.0)]:
+        self.check_pointwise_linearization("tanh", input, Interval(-oo,oo), tanh, tanh)
+
+      for input in [Interval(1.0,9.0), Interval(2.0,20.0), Interval(-1.0,3.0)]:
+        self.check_pointwise_linearization("acosh", input, Interval(1.0,oo), acosh, acosh)
+
+      for input in [Interval(-8.0,8.0), Interval(1.0,20.0)]:
+        self.check_pointwise_linearization("asinh", input, Interval(-oo,oo), asinh, asinh)
+
+      for input in [Interval(-0.9,0.9), Interval(-0.5,0.999), Interval(-2.0,0.5)]:
+        self.check_pointwise_linearization("atanh", input, Interval(-1.0,1.0), atanh, atanh)
+
+      for input in [Interval(-4.0,3.0), Interval(1.0,5.0), Interval(-5.0,-1.0)]:
+        self.check_pointwise_linearization("abs", input, Interval(-oo,oo), abs, abs)
+
+    Affine.change_mode(Affine.Affine_Mode.AF_Lin_Chebyshev)
+
+
 if __name__ ==  '__main__':
   unittest.main()
