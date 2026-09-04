@@ -114,4 +114,43 @@ jobs:
         cd build && ctest -C Debug -V --output-on-failure
         cd ..
       shell: bash
+    # A test killed by a signal loses everything it had written to its
+    # block-buffered standard output, so ctest reports the signal and nothing
+    # else. That is all this job has ever shown for the tests that crash on it,
+    # every one of them a user of Eigen's matrix product (arithmetic_mul and
+    # arithmetic_div crash where arithmetic_add and arithmetic_sub pass), and a
+    # bare signal says nothing about where. Re-running the first few failures
+    # under gdb prints the faulting frame, which is the one thing missing to
+    # diagnose them. The step reports rather than judges: it only runs after a
+    # failure, and never turns a green job red on its own.
+    - name: Backtrace of the failed tests
+      if: failure()
+      continue-on-error: true
+      run: |
+        if [ -n "${BASHMINGWPATH:-}" ]; then export PATH="$BASHMINGWPATH:$PATH" ; fi
+
+        if ! command -v gdb > /dev/null 2>&1 ; then
+          echo "No gdb in this toolchain, skipping the backtraces."
+          exit 0
+        fi
+
+        failed=build/Testing/Temporary/LastTestsFailed.log
+        if [ ! -f "$failed" ] ; then
+          echo "ctest recorded no failed test, nothing to trace."
+          exit 0
+        fi
+
+        cd build
+        # LastTestsFailed.log holds one "<index>:<test name>" per line; the C++
+        # tests are the "<target>_cpp" ones and their executable is the target
+        # itself, next to the tests directory of this single-configuration
+        # build. Three backtraces are plenty to identify a common frame, and
+        # keep this step short.
+        sed 's/^[0-9]*://' "../$failed" | grep '_cpp$' | head -3 | while read -r name ; do
+          exe="tests/${name%_cpp}.exe"
+          [ -f "$exe" ] || continue
+          echo "===================== $exe ====================="
+          gdb -batch -ex "set confirm off" -ex run -ex "bt 40" --args "./$exe" 2>&1 | tail -60
+        done
+      shell: bash
 
