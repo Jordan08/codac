@@ -104,7 +104,7 @@
   if(MSVC AND CMAKE_VS_PLATFORM_NAME STREQUAL "ARM64")
     # Work around an Eigen packet-math overload ambiguity seen with MSVC arm64
     # in mixed-scalar matrix products (for instance AffineMain × Interval tests).
-    add_compile_definitions(EIGEN_DONT_VECTORIZE)
+    add_compile_definitions($<$<CONFIG:Debug>:EIGEN_DONT_VECTORIZE>)
   endif()
 
 #  # Check that the compiler supports c++20
