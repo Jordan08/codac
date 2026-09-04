@@ -366,6 +366,31 @@
         add_compile_options(-mfpu=neon-vfpv4 -mfloat-abi=hard -ffp-contract=fast)
         set(CODAC_ARCH_CXX_FLAGS "-mfpu=neon-vfpv4;-mfloat-abi=hard;-ffp-contract=fast")
       endif()
+  elseif(WIN32 AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+      # -mfma turns AVX on, and AVX asks for a 32-byte aligned stack, which GCC
+      # targeting Windows cannot deliver: the x64 calling convention there only
+      # guarantees 16 bytes and GCC does not realign on entry, so any spill of a
+      # 256-bit register faults. Eigen's own AVX helpers are where this lands --
+      # segment_mask_4x64() computes a load mask entirely in registers, has no
+      # memory operand of its own, and still died on SIGSEGV in 32 of the 87
+      # tests of the MinGW x64 Debug job of .github/workflows/windebugmatrix.yml,
+      # every one of them through a partial packet load. The same build in
+      # Release survives only because -O3 inlines those helpers and keeps their
+      # values in registers, where -Os spills them: a matter of luck, not of
+      # correctness. The 32-bit MinGW job is spared because GCC realigns the
+      # stack there as a matter of course.
+      #
+      # Leaving the flag out on this toolchain costs very little. Codac compiles
+      # with -ffp-contract=off, so no fused multiply-add is generated from
+      # ordinary arithmetic anyway; what is given up is Eigen using 256-bit
+      # packets, and only on Windows/GCC. It also protects the users of the
+      # MinGW packages this project publishes: CODAC_ARCH_CXX_FLAGS is
+      # re-exported through codac-config.cmake, so they would otherwise inherit
+      # the flag and the same crash in their own Debug builds.
+      check_cxx_compiler_flag("-mfma" COMPILER_SUPPORTS_FMA)
+      if(COMPILER_SUPPORTS_FMA)
+        message(STATUS "FMA is supported but left disabled: GCC targeting Windows cannot align the stack for the AVX code it enables.")
+      endif()
   elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
       check_cxx_compiler_flag("-mfma" COMPILER_SUPPORTS_FMA)
       if(COMPILER_SUPPORTS_FMA)
