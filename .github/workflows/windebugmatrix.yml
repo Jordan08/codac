@@ -45,6 +45,13 @@ on:
 jobs:
  windebugmatrix:
     runs-on: ${{ matrix.cfg.os }}
+    # A test binary that cannot load a DLL it needs does not always fail fast:
+    # on the Visual Studio 2026 images every test of the suite instead sat
+    # until ctest's own 1500 s timeout, so the job kept going for the six hours
+    # GitHub allows before killing it, twice per run. Two hours is well above
+    # the twenty minutes a healthy job takes here and turns such a hang into a
+    # quick red job rather than a day of runner time.
+    timeout-minutes: 120
     env:
         IBEX_RUNTIME: ${{ matrix.cfg.runtime }}
     defaults:
