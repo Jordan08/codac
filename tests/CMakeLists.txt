@@ -507,11 +507,18 @@ if(MSVC AND CODAC_MSVC_ASAN_RUNTIME_DLL)
   # check.
   string(REPLACE ";" "\\;" _msvc_asan_path_escaped "${_msvc_asan_dll_dir};$ENV{PATH}")
   set(CODAC_MSVC_ASAN_PATH_ENV "PATH=${_msvc_asan_path_escaped}")
-  # CODAC_MSVC_ASAN_RUNTIME_DLL (and so CODAC_MSVC_ASAN_PATH_ENV) is now
-  # computed regardless of which configuration will be built (see the root
-  # CMakeLists.txt), so this is wrapped in $<CONFIG:Debug> to still only
-  # extend PATH for an actual Debug-configuration test run.
-  list(APPEND PYTHON_TEST_ENV_ARGS "$<$<CONFIG:Debug>:${CODAC_MSVC_ASAN_PATH_ENV}>")
+  # Appended for every configuration rather than wrapped in a $<CONFIG:Debug>
+  # generator expression. `cmake -E env` reads its arguments as VAR=value
+  # assignments up to the first one that is not, which it then takes for the
+  # command to run: an element that a generator expression reduced to nothing
+  # leaves an empty argument in the middle of the list, and the command becomes
+  # the empty string. CODAC_MSVC_ASAN_RUNTIME_DLL is computed whatever the
+  # configuration (see the root CMakeLists.txt), so on MSVC the element was
+  # always there and always empty outside Debug -- every Python test of
+  # .github/workflows/vcmatrix.yml died on "no such file or directory" while
+  # the C++ ones passed. Prepending the sanitizer directory to PATH costs a
+  # Release run nothing, which is what the C++ tests below already rely on.
+  list(APPEND PYTHON_TEST_ENV_ARGS "${CODAC_MSVC_ASAN_PATH_ENV}")
 endif()
 
 # Build every test
