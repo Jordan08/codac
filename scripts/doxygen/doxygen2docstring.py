@@ -27,6 +27,17 @@ def normalize_template_label(str_template_label):
     .replace(" >", "") \
     .replace(">", "")
 
+# Turns the definition text of a declaration into the name of the macro that
+# will carry its docstring. That text comes from doxygen, so anything doxygen
+# words differently from one version to the next has to be removed here, or the
+# macro ends up named differently depending on which doxygen ran and the
+# bindings that spell the name out no longer compile. "typedef" is one of those:
+# older doxygen writes the definition of an alias as "using X = typedef Y"
+# where newer ones write "using X = Y", which is what gave
+# USING_AFFINEMAINMATRIX_EQ_TYPEDEF_EIGEN_MATRIX_... on the CentOS manylinux
+# images of .github/workflows/dockercentos.yml against the
+# USING_AFFINEMAINMATRIX_EQ_EIGEN_MATRIX_... expected by
+# python/src/core/domains/affine/codac2_py_AffineMatrix.cpp.
 def normalize_label(str_label):
 
   str_label = str_label \
@@ -35,6 +46,7 @@ def normalize_label(str_label):
 
   return normalize_template_label(str_label) \
     .replace("constexpr ", "") \
+    .replace("typedef ", "") \
     .replace("codac::", "") \
     .replace("codac2::", "") \
     .replace("std::", "") \
