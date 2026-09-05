@@ -85,9 +85,14 @@ jobs:
     # plain g++ of macOS being a symlink to AppleClang. The version is therefore
     # resolved here rather than pinned, and written to the environment for the
     # later steps.
+    # Catch2 is deliberately not installed from Homebrew: the bottle is built
+    # with AppleClang against libc++, so the GCC jobs cannot link it -- the same
+    # standard-library split that makes them rebuild IBEX below, showing up as
+    # undefined std::__1:: symbols at link time. Leaving it out lets
+    # tests/CMakeLists.txt fetch Catch2 and build it with the compiler of the
+    # job, which is correct for every entry of this matrix.
     - name: Toolchain
       run: |
-        brew install catch2
         if [ "${{ matrix.cfg.compiler }}" = "gcc" ]; then
           brew install gcc
           GCC_MAJOR=$(brew list --versions gcc | awk '{print $2}' | cut -d. -f1)
