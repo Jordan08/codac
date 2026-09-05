@@ -51,7 +51,30 @@ jobs:
     #  if: runner.os=='macOS'
     - run: brew install catch2 # Issues with binary packages when cross-compiling...
       if: (runner.os=='macOS')&&(matrix.cfg.cross!=true)
-    - run: brew install graphviz ; brew install --formula doxygen ; python -m pip install --upgrade pip ; pip install --upgrade wheel setuptools sphinx breathe sphinx_rtd_theme sphinx-tabs sphinx-issues sphinx-reredirects furo sphinx-math-dollar sphinx_togglebutton sympy
+    # Doxygen is taken from the project's own release rather than from Homebrew,
+    # which only ever offers the newest version. Doxygen 1.18.0, the one Homebrew
+    # currently installs, segfaults on the macOS Intel runners while parsing this
+    # project's headers, and does so before writing doc/api/xml/index.xml, so
+    # cmake cannot even configure -- doc/CMakeLists.txt tolerates a crash that
+    # still produced usable XML, but there is nothing to salvage here. The arm64
+    # runners survive the same version, which is why only these jobs went red.
+    #
+    # Both architectures are pinned to the same version on purpose: the names of
+    # the docstring macros are derived from the text doxygen produces, so two
+    # versions across the matrix mean two sets of names and bindings that compile
+    # on one runner and not on the other (scripts/doxygen/doxygen2docstring.py).
+    - run: |
+        brew install graphviz
+        DOXYGEN_VERSION=1.17.0
+        if [ "${{ matrix.cfg.arch }}" = "arm64" ]; then DOXYGEN_ARCH=arm ; else DOXYGEN_ARCH=intel ; fi
+        curl -fsSL -o doxygen.zip "https://github.com/doxygen/doxygen/releases/download/Release_${DOXYGEN_VERSION//./_}/doxygen-${DOXYGEN_VERSION}-mac-${DOXYGEN_ARCH}.zip"
+        unzip -q doxygen.zip -d "$HOME/doxygen"
+        rm -f doxygen.zip
+        chmod +x "$HOME/doxygen/doxygen-${DOXYGEN_VERSION}/doxygen"
+        echo "$HOME/doxygen/doxygen-${DOXYGEN_VERSION}" >> "$GITHUB_PATH"
+        "$HOME/doxygen/doxygen-${DOXYGEN_VERSION}/doxygen" --version
+        python -m pip install --upgrade pip
+        pip install --upgrade wheel setuptools sphinx breathe sphinx_rtd_theme sphinx-tabs sphinx-issues sphinx-reredirects furo sphinx-math-dollar sphinx_togglebutton sympy
       if: runner.os=='macOS'
     - run: |
         wget https://github.com/lebarsfa/ibex-lib/releases/download/ibex-2.8.9.20260819/ibex_${{ matrix.cfg.arch }}_${{ matrix.cfg.runtime }}.zip --no-check-certificate -nv
