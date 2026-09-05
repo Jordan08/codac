@@ -87,13 +87,16 @@ jobs:
       with:
         python-version: '3.13'
 
-    # The package list mirrors the one tests.yml installs for a Python-enabled
-    # build (pybind11 and the doxygen pair the docstrings are generated from),
-    # minus what only a from-source IBEX needs, since IBEX comes prebuilt below.
+    # doxygen and graphviz are what the docstrings of the bindings are generated
+    # from. pybind11 is deliberately not installed from the distribution: codac
+    # asks for 3.0.1 and fetches that version itself when it is not found, which
+    # is what every other workflow of this directory ends up using, whereas the
+    # package of the newest Ubuntu got picked up first and left codac-sympy
+    # linking a pybind11::pybind11 target that its CMake config does not define.
     - name: Toolchain and dependencies
       run: |
         sudo apt-get -q update
-        sudo apt-get -y install ${{ matrix.cfg.packages }} cmake catch2 pybind11-dev doxygen graphviz dpkg-dev || true
+        sudo apt-get -y install ${{ matrix.cfg.packages }} cmake catch2 doxygen graphviz dpkg-dev || true
         ${{ matrix.cfg.cxx }} --version
 
     # The same prebuilt IBEX package as unixmatrix.yml. It is a Release build
