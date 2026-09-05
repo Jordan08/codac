@@ -150,15 +150,7 @@ jobs:
           exe="tests/${name%_cpp}.exe"
           [ -f "$exe" ] || continue
           echo "===================== $exe ====================="
-          # The faulting instruction and the stack pointer next to it tell a
-          # misaligned 32-byte access apart from anything else: GCC targeting
-          # Windows only guarantees a 16-byte aligned stack, so a spilled AVX
-          # register read back with vmovdqa/vmovaps faults on an rsp that is
-          # not a multiple of 32.
-          gdb -batch -ex "set confirm off" -ex run \
-              -ex "x/2i \$pc" -ex "info registers rsp" \
-              -ex "p/x \$_siginfo._sifields._sigfault.si_addr" \
-              -ex "bt 12" --args "./$exe" 2>&1 | tail -40
+          gdb -batch -ex "set confirm off" -ex run -ex "bt 40" --args "./$exe" 2>&1 | tail -60
         done
       shell: bash
 
