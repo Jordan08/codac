@@ -19,6 +19,34 @@
 
 #pragma once
 
+/* Eigen's blocked product kernel accumulates in two different ways. When
+ * EIGEN_HAS_SINGLE_INSTRUCTION_MADD is defined it writes c = pmadd(a,b,c),
+ * which is exactly the fused multiply-add the accumulator expects. Otherwise
+ * it multiplies into a temporary declared with the type of the right-hand
+ * operand, tmp = pmul(a,tmp), then adds it with padd(c,tmp). That second path
+ * is a register-allocation workaround for compilers without a fused
+ * multiply-add, and it silently assumes that the product has the type of the
+ * right-hand operand. Codac breaks that assumption everywhere it multiplies
+ * matrices of two different scalar types -- a Matrix by an IntervalMatrix, an
+ * IntervalMatrix by an AffineMatrix -- since the product of an affine form by
+ * an interval is an affine form, not an interval. The kernel then either fails
+ * to compile (no padd overload accepts the two types) or, worse, narrows the
+ * product down to the type of the right-hand operand and loses the affine
+ * correlations.
+ *
+ * Every architecture Eigen vectorizes defines the macro in its packet-math
+ * header, so this path is normally unreachable. MSVC on arm64 is the exception:
+ * Eigen only enables NEON on __ARM_NEON, which that compiler does not define,
+ * so the whole library falls back on scalar packets and the arm64 builds fail
+ * to compile the affine matrix products. Defining the macro here selects the
+ * pmadd path unconditionally, which is the one all the other targets already
+ * take, and keeps the same results everywhere. It must be defined before Eigen
+ * is included, hence its position at the very top of this file.
+ */
+#ifndef EIGEN_HAS_SINGLE_INSTRUCTION_MADD
+#define EIGEN_HAS_SINGLE_INSTRUCTION_MADD
+#endif
+
 #include <type_traits>
 #include "codac2_Interval.h"
 #include "codac2_Interval_operations.h"

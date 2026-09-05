@@ -278,9 +278,37 @@
       add_compile_options($<$<CONFIG:Debug>:-fno-omit-frame-pointer>)
       add_compile_options($<$<CONFIG:Debug>:-g>)
       add_compile_options($<$<CONFIG:Debug>:-O0>)
-      add_compile_options($<$<CONFIG:Debug>:-fsanitize=address>)
-      add_compile_options($<$<CONFIG:Debug>:-fsanitize=undefined>)
-      add_link_options($<$<CONFIG:Debug>:-fsanitize=address,undefined>)
+
+      # -fsanitize=address,undefined is only added once we have actually
+      # confirmed that this compiler can *link* a sanitized binary, rather
+      # than unconditionally, the way this project used to. On Linux/macOS
+      # GCC/Clang, libasan/libubsan are essentially always installed
+      # alongside the compiler and this check is a formality; the case it
+      # actually guards against is MinGW-w64: the choco `mingw` package used
+      # by .github/workflows/windebugmatrix.yml does not ship libasan.a/
+      # libubsan.a at all for some GCC versions/architectures, and neither
+      # x86 (i686-w64-mingw32) nor x86_64 (x86_64-w64-mingw32) is reliably
+      # covered across the versions that package offers -- there is no
+      # version/architecture combination worth hardcoding an exception list
+      # for. Probing capability directly, exactly like the MSVC ASan
+      # runtime-DLL search above and the FMA detection further below, means
+      # a Debug configuration simply comes out unsanitized on a toolchain
+      # that lacks the runtime, instead of configuring successfully and then
+      # failing later at link time with "cannot find -lasan"/"-lubsan" on
+      # every single target.
+      include(CheckCXXSourceCompiles)
+      set(CMAKE_REQUIRED_FLAGS "-fsanitize=address,undefined")
+      check_cxx_source_compiles("int main() { return 0; }" CODAC_COMPILER_SUPPORTS_ASAN_UBSAN)
+      unset(CMAKE_REQUIRED_FLAGS)
+
+      if(CODAC_COMPILER_SUPPORTS_ASAN_UBSAN)
+        add_compile_options($<$<CONFIG:Debug>:-fsanitize=address>)
+        add_compile_options($<$<CONFIG:Debug>:-fsanitize=undefined>)
+        add_link_options($<$<CONFIG:Debug>:-fsanitize=address,undefined>)
+        message(STATUS "${COLOR_BLUE}ASan/UBSan will be enabled for Debug-configuration builds.${COLOR_RESET}")
+      else()
+        message(STATUS "${COLOR_RED}No ASan/UBSan runtime found for ${CMAKE_CXX_COMPILER}: Debug-configuration builds will not be sanitized.${COLOR_RESET}")
+      endif()
     endif()
   endif()
   
@@ -337,6 +365,31 @@
       if(COMPILER_SUPPORTS_FMA)
         add_compile_options(-mfpu=neon-vfpv4 -mfloat-abi=hard -ffp-contract=fast)
         set(CODAC_ARCH_CXX_FLAGS "-mfpu=neon-vfpv4;-mfloat-abi=hard;-ffp-contract=fast")
+      endif()
+  elseif(WIN32 AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+      # -mfma turns AVX on, and AVX asks for a 32-byte aligned stack, which GCC
+      # targeting Windows cannot deliver: the x64 calling convention there only
+      # guarantees 16 bytes and GCC does not realign on entry, so any spill of a
+      # 256-bit register faults. Eigen's own AVX helpers are where this lands --
+      # segment_mask_4x64() computes a load mask entirely in registers, has no
+      # memory operand of its own, and still died on SIGSEGV in 32 of the 87
+      # tests of the MinGW x64 Debug job of .github/workflows/windebugmatrix.yml,
+      # every one of them through a partial packet load. The same build in
+      # Release survives only because -O3 inlines those helpers and keeps their
+      # values in registers, where -Os spills them: a matter of luck, not of
+      # correctness. The 32-bit MinGW job is spared because GCC realigns the
+      # stack there as a matter of course.
+      #
+      # Leaving the flag out on this toolchain costs very little. Codac compiles
+      # with -ffp-contract=off, so no fused multiply-add is generated from
+      # ordinary arithmetic anyway; what is given up is Eigen using 256-bit
+      # packets, and only on Windows/GCC. It also protects the users of the
+      # MinGW packages this project publishes: CODAC_ARCH_CXX_FLAGS is
+      # re-exported through codac-config.cmake, so they would otherwise inherit
+      # the flag and the same crash in their own Debug builds.
+      check_cxx_compiler_flag("-mfma" COMPILER_SUPPORTS_FMA)
+      if(COMPILER_SUPPORTS_FMA)
+        message(STATUS "FMA is supported but left disabled: GCC targeting Windows cannot align the stack for the AVX code it enables.")
       endif()
   elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
       check_cxx_compiler_flag("-mfma" COMPILER_SUPPORTS_FMA)

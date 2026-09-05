@@ -1,6 +1,7 @@
 :orphan:
 
 Geometric contractors
+=====================
 
 .. toctree::
 

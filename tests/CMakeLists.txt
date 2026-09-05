@@ -494,11 +494,18 @@ if(MSVC AND CODAC_MSVC_ASAN_RUNTIME_DLL)
   # check.
   string(REPLACE ";" "\\;" _msvc_asan_path_escaped "${_msvc_asan_dll_dir};$ENV{PATH}")
   set(CODAC_MSVC_ASAN_PATH_ENV "PATH=${_msvc_asan_path_escaped}")
-  # CODAC_MSVC_ASAN_RUNTIME_DLL (and so CODAC_MSVC_ASAN_PATH_ENV) is now
-  # computed regardless of which configuration will be built (see the root
-  # CMakeLists.txt), so this is wrapped in $<CONFIG:Debug> to still only
-  # extend PATH for an actual Debug-configuration test run.
-  list(APPEND PYTHON_TEST_ENV_ARGS "$<$<CONFIG:Debug>:${CODAC_MSVC_ASAN_PATH_ENV}>")
+  # Appended for every configuration rather than wrapped in a $<CONFIG:Debug>
+  # generator expression. `cmake -E env` reads its arguments as VAR=value
+  # assignments up to the first one that is not, which it then takes for the
+  # command to run: an element that a generator expression reduced to nothing
+  # leaves an empty argument in the middle of the list, and the command becomes
+  # the empty string. CODAC_MSVC_ASAN_RUNTIME_DLL is computed whatever the
+  # configuration (see the root CMakeLists.txt), so on MSVC the element was
+  # always there and always empty outside Debug -- every Python test of
+  # .github/workflows/vcmatrix.yml died on "no such file or directory" while
+  # the C++ ones passed. Prepending the sanitizer directory to PATH costs a
+  # Release run nothing, which is what the C++ tests below already rely on.
+  list(APPEND PYTHON_TEST_ENV_ARGS "${CODAC_MSVC_ASAN_PATH_ENV}")
 endif()
 
 # Build every test
@@ -587,38 +594,52 @@ foreach(SRC_TEST ${SRC_TESTS})
     COMMAND ${TEST_NAME}
   )
 
-  # Not gated behind CMAKE_BUILD_TYPE (see the matching note in the root
-  # CMakeLists.txt): each entry is instead wrapped in a $<CONFIG:Debug>
-  # generator expression, which ENVIRONMENT evaluates correctly for both
-  # single- and multi-config generators (an entry that evaluates empty is
-  # simply ignored by ctest).
-  set(_test_debug_env "$<$<CONFIG:Debug>:UBSAN_OPTIONS=print_stacktrace=1>")
-  if(CODAC_MSVC_ASAN_PATH_ENV)
-    list(APPEND _test_debug_env "$<$<CONFIG:Debug>:${CODAC_MSVC_ASAN_PATH_ENV}>")
+  # The MSVC AddressSanitizer runtime is a DLL that has to be discoverable at
+  # load time by every binary compiled with /fsanitize=address. Without it on
+  # PATH a Debug test executable cannot even start: Windows fails the process
+  # creation with 0xC0000135 (STATUS_DLL_NOT_FOUND) before a single assertion
+  # runs, which is how the whole C++ suite came out red on the MSVC Debug jobs
+  # of .github/workflows/windebugmatrix.yml. CODAC_MSVC_ASAN_PATH_ENV carries
+  # that directory and was so far handed to the Python tests only.
+  #
+  # It is set here for every configuration rather than for Debug alone: the
+  # multi-configuration generators MSVC is driven through choose their
+  # configuration at build time, so neither CMAKE_BUILD_TYPE (empty for them)
+  # nor a plain if() can tell Debug from Release at this point, and prepending
+  # a toolchain directory to PATH is harmless to a Release run. That same
+  # reason is why CMAKE_BUILD_TYPE must not gate it, as it used to: under a
+  # Visual Studio generator the test below is simply never taken.
+  #
+  # UBSAN_OPTIONS, on the other hand, is only meaningful to the GCC/Clang
+  # single-configuration builds, where CMAKE_BUILD_TYPE does hold the answer.
+  set(_cpp_test_env "")
+
+  if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    list(APPEND _cpp_test_env "UBSAN_OPTIONS=print_stacktrace=1")
   endif()
-  set_tests_properties(${TEST_NAME}_cpp PROPERTIES
-    ENVIRONMENT "${_test_debug_env}"
-  )
+
+  if(CODAC_MSVC_ASAN_PATH_ENV)
+    list(APPEND _cpp_test_env "${CODAC_MSVC_ASAN_PATH_ENV}")
+  endif()
+
+  if(_cpp_test_env)
+    set_tests_properties(${TEST_NAME}_cpp PROPERTIES
+      ENVIRONMENT "${_cpp_test_env}"
+    )
+  endif()
 
   # ---------------------------------------------------------------
   # Python test
   # ---------------------------------------------------------------
 
   if(WITH_PYTHON AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${SRC_TEST}.py")
-    # PYTHON_TEST_ENV_ARGS is applied via the ENVIRONMENT test property
-    # rather than passed as `cmake -E env NAME=VALUE...` COMMAND arguments:
-    # some of its entries are conditioned on a $<CONFIG:Debug> generator
-    # expression (see above), and on a configuration where that evaluates
-    # to an empty string, `cmake -E env` would misinterpret the resulting
-    # empty argument as the start of the program to run instead of
-    # skipping it -- ENVIRONMENT does not have that problem, and already
-    # supports generator expressions natively.
     add_test(
       NAME ${TEST_NAME}_py
-      COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/${SRC_TEST}.py
-    )
-    set_tests_properties(${TEST_NAME}_py PROPERTIES
-      ENVIRONMENT "${PYTHON_TEST_ENV_ARGS}"
+      COMMAND
+        ${CMAKE_COMMAND} -E env
+        ${PYTHON_TEST_ENV_ARGS}
+        ${PYTHON_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/${SRC_TEST}.py
     )
   endif()
 
