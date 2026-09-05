@@ -1,12 +1,8 @@
 # This file checks that the lib runs on ARM
 on:
     push:
-        branches:
-        - codac1
-        - codac2
-        # The following is implied by above selection...
-        #branches-ignore:
-        #- codac2_codac4matlab
+        branches-ignore:
+        - codac2_codac4matlab
         tags-ignore: ['**']  # Ignore all tag pushes
     pull_request:
         branches-ignore:
