@@ -56,25 +56,9 @@ if(BUILD_TESTS AND TEST_EXAMPLES)
     16_visibility/main
     custom_sep/coloration
     custom_sep/custom_ctc
+    custom_sep/custom_sep
     ellipsoid_example/main
   )
-
-  # custom_sep/custom_sep.py is left out until two defects it runs into are
-  # settled, rather than being edited into passing, which would hide them:
-  #
-  #  - it ends on "for bi in c[1].boxes()" while p.connected_subsets() returns a
-  #    single subset holding a single box, so the script raises IndexError. The
-  #    set it paves -- the complement of an annulus and of a bar -- looks like it
-  #    has two connected components, the disc minus the bar and the ring outside
-  #    radius 4, so which of the example and connected_subsets() is wrong is an
-  #    open question.
-  #
-  #  - its own comment tells the reader to call
-  #    connected_subsets(PavingInOut.outer_complem), and PavingInOut does not
-  #    exist in the Python bindings: the class and its node values (outer,
-  #    outer_complem, inner, bound, all of codac2_Paving.h) are only bound
-  #    indirectly, through SepWrapper_PavingInOut and the figure methods. The
-  #    example documents an API a Python user cannot reach.
 
   set(CODAC_EXAMPLE_LIBRARIES ${PROJECT_NAME}-core ${PROJECT_NAME}-graphics)
 
