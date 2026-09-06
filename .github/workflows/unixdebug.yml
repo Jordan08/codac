@@ -212,8 +212,27 @@ jobs:
         echo "--- and among a C++ test binary's ---"
         BIN=tests/codac2_tests_core_domains_affine_AffineForm_base
         [ -f "$BIN" ] && { ldd "$BIN" | grep -iE "asan|ubsan|clang_rt" || echo "  none" ; }
-        echo "--- one Python test, capped at 60 s (2.05 s on the GCC jobs) ---"
-        ctest -R "codac2_tests_core_domains_affine_AffineForm_base_py" --timeout 60 -V 2>&1 | tail -30 || true
+        # Importing the module is what hangs, so it is tried directly, both
+        # ways, with a short deadline. The suite preloads the runtime because
+        # the interpreter is not instrumented; but Clang 21 already makes the
+        # module depend on that same shared runtime, so the preload may now be
+        # redundant, and making the dependency resolvable may be all that is
+        # needed. These two lines say which.
+        case "$(uname -m)" in x86_64) A=x86_64 ;; aarch64) A=aarch64 ;; *) A=$(uname -m) ;; esac
+        RT=$(${{ matrix.cfg.cxx }} -print-file-name=libclang_rt.asan-$A.so 2>/dev/null || true)
+        echo "asan runtime: ${RT:-unknown}"
+        export PYTHONPATH=$PWD/python/python_package
+        export ASAN_OPTIONS=detect_leaks=0
+        if [ -f "$RT" ]; then
+          echo "--- import with the runtime directory on LD_LIBRARY_PATH, no preload ---"
+          ( export LD_LIBRARY_PATH="$(dirname "$RT"):$LD_LIBRARY_PATH" ; \
+            timeout 30 python -c "import codac; print('import ok')" ) || echo "  -> failed or timed out (exit $?)"
+          echo "--- import with LD_PRELOAD, which is what the suite does ---"
+          ( export LD_PRELOAD="$RT" ; \
+            timeout 30 python -c "import codac; print('import ok')" ) || echo "  -> failed or timed out (exit $?)"
+        else
+          echo "no shared asan runtime for this toolchain, nothing to compare"
+        fi
 
     # The unit tests and the examples are the same ctest suite: examples are
     # registered as tests by examples/CMakeLists.txt, so this one command runs
