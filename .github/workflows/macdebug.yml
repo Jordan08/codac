@@ -70,6 +70,7 @@ jobs:
             - { os: macos-26      , arch: arm64 , runtime: tahoe  , compiler: gcc       , with_python: 'OFF', desc: 'macOS Tahoe GCC arm64 Debug ASan+UBSan' }
             - { os: macos-15-intel, arch: x86_64, runtime: sequoia, compiler: gcc       , with_python: 'OFF', desc: 'macOS Sequoia GCC x86_64 Debug ASan+UBSan' }
             - { os: macos-26      , arch: arm64 , runtime: tahoe  , compiler: appleclang, with_python: 'OFF', desc: 'macOS Tahoe AppleClang arm64 Debug ASan+UBSan' }
+            - { os: macos-26      , arch: arm64 , runtime: tahoe  , compiler: llvm      , with_python: 'OFF', desc: 'macOS Tahoe LLVM Clang arm64 Debug ASan+UBSan' }
     name: ${{ matrix.cfg.desc }}
     steps:
     - uses: actions/checkout@v7
@@ -93,21 +94,37 @@ jobs:
     # job, which is correct for every entry of this matrix.
     - name: Toolchain
       run: |
-        if [ "${{ matrix.cfg.compiler }}" = "gcc" ]; then
-          brew install gcc
-          GCC_MAJOR=$(brew list --versions gcc | awk '{print $2}' | cut -d. -f1)
-          echo "CC=gcc-${GCC_MAJOR}" >> "$GITHUB_ENV"
-          echo "CXX=g++-${GCC_MAJOR}" >> "$GITHUB_ENV"
-        else
-          echo "CC=clang" >> "$GITHUB_ENV"
-          echo "CXX=clang++" >> "$GITHUB_ENV"
-        fi
+        case "${{ matrix.cfg.compiler }}" in
+          gcc)
+            brew install gcc
+            GCC_MAJOR=$(brew list --versions gcc | awk '{print $2}' | cut -d. -f1)
+            echo "CC=gcc-${GCC_MAJOR}" >> "$GITHUB_ENV"
+            echo "CXX=g++-${GCC_MAJOR}" >> "$GITHUB_ENV"
+            ;;
+          llvm)
+            # Upstream Clang, which is a different compiler from the AppleClang
+            # of the entry above: its own release cycle, its own diagnostics and
+            # its own sanitizer runtimes. Homebrew keeps it out of the way of the
+            # system toolchain, so it has to be named by its prefix, and it needs
+            # to be pointed at its own libc++ -- the formula says as much -- or
+            # it compiles against headers newer than the library it links.
+            brew install llvm
+            LLVM_PREFIX=$(brew --prefix llvm)
+            echo "CC=$LLVM_PREFIX/bin/clang" >> "$GITHUB_ENV"
+            echo "CXX=$LLVM_PREFIX/bin/clang++" >> "$GITHUB_ENV"
+            echo "LDFLAGS=-L$LLVM_PREFIX/lib/c++ -Wl,-rpath,$LLVM_PREFIX/lib/c++" >> "$GITHUB_ENV"
+            ;;
+          *)
+            echo "CC=clang" >> "$GITHUB_ENV"
+            echo "CXX=clang++" >> "$GITHUB_ENV"
+            ;;
+        esac
 
     - name: Compiler version
       run: $CXX --version
 
     - name: Cache IBEX built from source
-      if: matrix.cfg.compiler == 'gcc'
+      if: matrix.cfg.compiler != 'appleclang'
       uses: actions/cache@v4
       with:
         path: ~/ibex-lib
@@ -119,7 +136,7 @@ jobs:
     # re-runs its install step.
     - name: IBEX
       run: |
-        if [ "${{ matrix.cfg.compiler }}" = "gcc" ]; then
+        if [ "${{ matrix.cfg.compiler }}" != "appleclang" ]; then
           bash scripts/dependencies/install_ibex.sh
           echo "CMAKE_PREFIX_PATH=$HOME/ibex-lib/build_install" >> "$GITHUB_ENV"
         else

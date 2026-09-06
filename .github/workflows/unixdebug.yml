@@ -75,6 +75,7 @@ jobs:
             - { os: ubuntu-26.04    , arch: x86_64, runtime: resolute, cc: gcc      , cxx: g++      , packages: 'g++'  , build_type: Debug  , with_python: 'ON' , coverage: false, desc: 'Ubuntu 26.04 GCC x86_64 Debug ASan+UBSan' }
             - { os: ubuntu-26.04-arm, arch: arm64 , runtime: resolute, cc: gcc      , cxx: g++      , packages: 'g++'  , build_type: Debug  , with_python: 'ON' , coverage: false, desc: 'Ubuntu 26.04 GCC arm64 Debug ASan+UBSan' }
             - { os: ubuntu-26.04    , arch: x86_64, runtime: resolute, cc: clang    , cxx: clang++  , packages: 'clang', build_type: Debug  , with_python: 'ON' , coverage: false, test_timeout: 300, desc: 'Ubuntu 26.04 Clang x86_64 Debug ASan+UBSan' }
+            - { os: ubuntu-26.04-arm, arch: arm64 , runtime: resolute, cc: clang    , cxx: clang++  , packages: 'clang', build_type: Debug  , with_python: 'ON' , coverage: false, test_timeout: 300, desc: 'Ubuntu 26.04 Clang arm64 Debug ASan+UBSan' }
             - { os: ubuntu-26.04    , arch: x86_64, runtime: resolute, cc: gcc      , cxx: g++      , packages: 'g++'  , build_type: Release, with_python: 'ON' , coverage: true , desc: 'Ubuntu 26.04 GCC x86_64 Release coverage' }
     name: ${{ matrix.cfg.desc }}
     steps:
