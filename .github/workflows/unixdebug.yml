@@ -178,6 +178,43 @@ jobs:
         fi
         echo "Sanitizers enabled."
 
+    # Every Python test of the Clang jobs runs into the per-test timeout, while
+    # the GCC jobs of this same matrix -- same image, same interpreter, same
+    # preload -- pass them in a couple of seconds, and a local Clang 18 build
+    # does too. Since even a test that does almost nothing times out, the wait
+    # is in starting the interpreter and importing the module, not in test code.
+    #
+    # The suspect is how each toolchain provides the AddressSanitizer runtime:
+    # GCC links libasan.so dynamically, Clang links its runtime statically into
+    # executables and not at all into shared libraries, which is why the
+    # interpreter has to preload it (see tests/CMakeLists.txt). Preloading the
+    # shared runtime into a process whose module already carries another copy
+    # puts two of them in one address space, which is a known way to hang at
+    # startup. ldd answers that directly, and one short test says whether the
+    # hang is there at all -- in a minute rather than in the six hours the full
+    # suite takes to reach the same conclusion.
+    #
+    # It runs on the GCC jobs too, so that both sides of the comparison are
+    # printed side by side, and it never fails the job: it is a probe.
+    - name: Sanitizer runtime probe
+      if: matrix.cfg.build_type == 'Debug'
+      continue-on-error: true
+      run: |
+        cd build
+        echo "--- compiler ---"
+        ${{ matrix.cfg.cxx }} --version | head -1
+        echo "--- symbolizer ---"
+        command -v llvm-symbolizer || echo "llvm-symbolizer: not on PATH"
+        echo "--- sanitizer runtime among the python module dependencies ---"
+        MOD=$(find python -name "_core*.so" | head -1)
+        echo "module: ${MOD:-not found}"
+        [ -n "$MOD" ] && { ldd "$MOD" | grep -iE "asan|ubsan|clang_rt" || echo "  none" ; }
+        echo "--- and among a C++ test binary's ---"
+        BIN=tests/codac2_tests_core_domains_affine_AffineForm_base
+        [ -f "$BIN" ] && { ldd "$BIN" | grep -iE "asan|ubsan|clang_rt" || echo "  none" ; }
+        echo "--- one Python test, capped at 60 s (2.05 s on the GCC jobs) ---"
+        ctest -R "codac2_tests_core_domains_affine_AffineForm_base_py" --timeout 60 -V 2>&1 | tail -30 || true
+
     # The unit tests and the examples are the same ctest suite: examples are
     # registered as tests by examples/CMakeLists.txt, so this one command runs
     # both, and a sanitizer report in either fails the job.
