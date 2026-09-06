@@ -167,4 +167,29 @@ jobs:
     - name: Unit tests and examples
       run: |
         cd build
-        ctest --output-on-failure
+        ctest -V --output-on-failure 2>&1 | tee ctest.log
+
+    # ctest is run verbose so that everything the sanitizers print reaches the
+    # log. ASan and UBSan do not agree on what a diagnostic costs: a leak or a
+    # buffer overflow aborts the process and fails the test, but a UBSan runtime
+    # error only prints and lets the run continue, so a test can pass having
+    # reported dozens of undefined behaviours. Without -V that output is thrown
+    # away for every test that passes -- which is precisely the output worth
+    # reading here.
+    - name: Sanitizer diagnostics
+      if: always()
+      run: |
+        log=build/ctest.log
+        [ -f "$log" ] || { echo "No ctest output to scan." ; exit 0 ; }
+        # A digest, because the verbose log of the whole suite is far too long
+        # to scan by eye. The step reports rather than judges: it never fails
+        # the job, the tests themselves decide that.
+        n=$(grep -cE "runtime error:|ERROR: AddressSanitizer|ERROR: LeakSanitizer|SUMMARY: (Address|Undefined|Leak)Sanitizer" "$log" || true)
+        echo "Sanitizer diagnostics found: $n"
+        if [ "$n" -gt 0 ]; then
+          echo "--- distinct messages, most frequent first ---"
+          grep -hoE "runtime error: .*|ERROR: (Address|Leak)Sanitizer: [a-z-]+" "$log" \
+            | sed -E "s/0x[0-9a-f]+/0xADDR/g" | sort | uniq -c | sort -rn | head -40
+          echo "--- first occurrences in context ---"
+          grep -nE "runtime error:|ERROR: (Address|Leak)Sanitizer" "$log" | head -20
+        fi
