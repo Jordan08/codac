@@ -218,6 +218,13 @@ jobs:
         # necessary and correct. What is left between that working import and
         # the tests, which all run into the timeout, is UBSAN_OPTIONS=
         # print_stacktrace=1 -- while llvm-symbolizer is not on PATH here.
+        #
+        # Each run is force-killed rather than merely asked to stop: the hung
+        # process ignores SIGTERM outright -- a first attempt with a plain
+        # "timeout 90" was still waiting on it two hours later -- which is why
+        # ctest's own deadline appears to work where that did not, ctest
+        # escalating to SIGKILL. Without -k the first variant never returns and
+        # the two it is meant to be compared against never run at all.
         # Sanitizers asked for a stack trace with no symbolizer to run fall back
         # on spawning one per frame, which is slow enough to look like a hang;
         # GCC does not need it, symbolizing in process, which would explain why
@@ -237,15 +244,15 @@ jobs:
 
           echo "--- 1. as the suite runs it: print_stacktrace=1, no symbolizer ---"
           ( export UBSAN_OPTIONS=print_stacktrace=1 ; \
-            time timeout 90 python "$TEST" >/dev/null 2>&1 ) || echo "  -> failed or timed out (exit $?)"
+            time timeout -k 10 60 python "$TEST" >/dev/null 2>&1 ) || echo "  -> failed or timed out (exit $?)"
 
           echo "--- 2. same, without print_stacktrace ---"
           ( unset UBSAN_OPTIONS ; \
-            time timeout 90 python "$TEST" >/dev/null 2>&1 ) || echo "  -> failed or timed out (exit $?)"
+            time timeout -k 10 60 python "$TEST" >/dev/null 2>&1 ) || echo "  -> failed or timed out (exit $?)"
 
           echo "--- 3. print_stacktrace=1 with the symbolizer named explicitly ---"
           ( export UBSAN_OPTIONS="print_stacktrace=1:external_symbolizer_path=$SYM" ; \
-            time timeout 90 python "$TEST" >/dev/null 2>&1 ) || echo "  -> failed or timed out (exit $?)"
+            time timeout -k 10 60 python "$TEST" >/dev/null 2>&1 ) || echo "  -> failed or timed out (exit $?)"
         else
           echo "no shared asan runtime or test file here, nothing to compare"
         fi
