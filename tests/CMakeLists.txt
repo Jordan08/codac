@@ -421,11 +421,22 @@ if(WITH_PYTHON AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_CONFIGURATION_TYP
       endif()
     endif()
 
+    # The ASan runtime only, deliberately: built with -fsanitize=address,
+    # undefined, Clang puts the UndefinedBehaviorSanitizer inside the ASan
+    # runtime, and ships libclang_rt.ubsan_standalone-* for the builds that
+    # use UBSan on its own. Preloading both therefore loads two copies of the
+    # same initialisation and the same interceptors into one process. Clang 18
+    # tolerated it; Clang 21 wedges the interpreter so thoroughly that even
+    # SIGKILL does not remove it, which is what made every Python test of the
+    # Clang jobs of .github/workflows/unixdebug.yml run into its timeout while
+    # the GCC jobs of the same matrix passed them in about two seconds --
+    # GCC's libasan and libubsan being genuinely separate libraries, designed
+    # to be loaded together. Preloading ASan alone still gives both sets of
+    # checks, since one runtime implements them both.
     set(_sanitizer_rt_candidates "")
     if(_sanitizer_rt_arch)
       set(_sanitizer_rt_candidates
         libclang_rt.asan-${_sanitizer_rt_arch}.so
-        libclang_rt.ubsan_standalone-${_sanitizer_rt_arch}.so
       )
     endif()
 
