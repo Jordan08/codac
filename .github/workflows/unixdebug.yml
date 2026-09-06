@@ -74,7 +74,7 @@ jobs:
             # has already taken this repository's CI down with a 504.
             - { os: ubuntu-26.04    , arch: x86_64, runtime: resolute, cc: gcc      , cxx: g++      , packages: 'g++'  , build_type: Debug  , with_python: 'ON' , coverage: false, desc: 'Ubuntu 26.04 GCC x86_64 Debug ASan+UBSan' }
             - { os: ubuntu-26.04-arm, arch: arm64 , runtime: resolute, cc: gcc      , cxx: g++      , packages: 'g++'  , build_type: Debug  , with_python: 'ON' , coverage: false, desc: 'Ubuntu 26.04 GCC arm64 Debug ASan+UBSan' }
-            - { os: ubuntu-26.04    , arch: x86_64, runtime: resolute, cc: clang    , cxx: clang++  , packages: 'clang', build_type: Debug  , with_python: 'ON' , coverage: false, desc: 'Ubuntu 26.04 Clang x86_64 Debug ASan+UBSan' }
+            - { os: ubuntu-26.04    , arch: x86_64, runtime: resolute, cc: clang    , cxx: clang++  , packages: 'clang', build_type: Debug  , with_python: 'ON' , coverage: false, test_timeout: 300, desc: 'Ubuntu 26.04 Clang x86_64 Debug ASan+UBSan' }
             - { os: ubuntu-26.04    , arch: x86_64, runtime: resolute, cc: gcc      , cxx: g++      , packages: 'g++'  , build_type: Release, with_python: 'ON' , coverage: true , desc: 'Ubuntu 26.04 GCC x86_64 Release coverage' }
     name: ${{ matrix.cfg.desc }}
     steps:
@@ -183,7 +183,17 @@ jobs:
     - name: Unit tests and examples
       run: |
         cd build
-        ctest --output-on-failure
+        # ctest's own default here is 1500 s per test, which is far above what
+        # any test of this suite needs even instrumented -- the slowest of them
+        # takes under three minutes on a developer machine under ASan. Where a
+        # job sets test_timeout, that bound is tightened so that a test which
+        # stops progressing is reported as the one at fault, with its output,
+        # instead of the job being killed hours later with nothing to read.
+        TIMEOUT_FLAG=""
+        if [ -n "${{ matrix.cfg.test_timeout }}" ]; then
+          TIMEOUT_FLAG="--timeout ${{ matrix.cfg.test_timeout }}"
+        fi
+        ctest --output-on-failure $TIMEOUT_FLAG
 
     - name: Coverage report
       if: matrix.cfg.coverage
