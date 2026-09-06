@@ -220,10 +220,13 @@ jobs:
         echo "Sanitizer diagnostics found: $n"
         if [ "$n" -gt 0 ]; then
           echo "--- distinct messages, most frequent first ---"
+          # awk rather than head: this shell runs with pipefail, and head
+          # closing the pipe early makes sort die on SIGPIPE, which failed the
+          # step -- the one thing it was written never to do.
           grep -hoE "runtime error: .*|ERROR: (Address|Leak)Sanitizer: [a-z-]+" "$log" \
-            | sed -E "s/0x[0-9a-f]+/0xADDR/g" | sort | uniq -c | sort -rn | head -40
+            | sed -E "s/0x[0-9a-f]+/0xADDR/g" | sort | uniq -c | sort -rn | awk 'NR<=40'
           echo "--- first occurrences in context ---"
-          grep -nE "runtime error:|ERROR: (Address|Leak)Sanitizer" "$log" | head -20
+          grep -nE "runtime error:|ERROR: (Address|Leak)Sanitizer" "$log" | awk 'NR<=20'
         fi
 
     - name: Coverage report
