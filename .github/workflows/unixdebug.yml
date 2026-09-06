@@ -236,22 +236,27 @@ jobs:
         UB=$(${{ matrix.cfg.cxx }} -print-file-name=libclang_rt.ubsan_standalone-$A.so 2>/dev/null || true)
         TEST=../tests/core/domains/affine/codac2_tests_AffineForm_base.py
         if [ -f "$RT" ] && [ -f "$TEST" ]; then
+          # LD_PRELOAD is set inside each run below and never at this level:
+          # exported here it would apply to every command of the step, and
+          # preloading the sanitizer runtimes into uninstrumented utilities
+          # hangs them -- a first attempt did exactly that and stalled on the
+          # dirname of the next line, never reaching the runs it was measuring.
           export PYTHONPATH=$PWD/python/python_package
-          export LD_PRELOAD="$RT:$UB"
           export ASAN_OPTIONS=detect_leaks=0
-          SYM=$(dirname "$(dirname "$(dirname "$(dirname "$(dirname "$RT")")")")")/bin/llvm-symbolizer
+          PRELOAD="$RT:$UB"
+          SYM="${RT%/lib/clang/*}/bin/llvm-symbolizer"
           echo "symbolizer candidate: $SYM  (exists: $([ -x "$SYM" ] && echo yes || echo no))"
 
           echo "--- 1. as the suite runs it: print_stacktrace=1, no symbolizer ---"
-          ( export UBSAN_OPTIONS=print_stacktrace=1 ; \
+          ( export LD_PRELOAD="$PRELOAD" UBSAN_OPTIONS=print_stacktrace=1 ; \
             time timeout -k 10 60 python "$TEST" >/dev/null 2>&1 ) || echo "  -> failed or timed out (exit $?)"
 
           echo "--- 2. same, without print_stacktrace ---"
-          ( unset UBSAN_OPTIONS ; \
+          ( export LD_PRELOAD="$PRELOAD" ; unset UBSAN_OPTIONS ; \
             time timeout -k 10 60 python "$TEST" >/dev/null 2>&1 ) || echo "  -> failed or timed out (exit $?)"
 
           echo "--- 3. print_stacktrace=1 with the symbolizer named explicitly ---"
-          ( export UBSAN_OPTIONS="print_stacktrace=1:external_symbolizer_path=$SYM" ; \
+          ( export LD_PRELOAD="$PRELOAD" UBSAN_OPTIONS="print_stacktrace=1:external_symbolizer_path=$SYM" ; \
             time timeout -k 10 60 python "$TEST" >/dev/null 2>&1 ) || echo "  -> failed or timed out (exit $?)"
         else
           echo "no shared asan runtime or test file here, nothing to compare"
