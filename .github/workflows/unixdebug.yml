@@ -212,26 +212,42 @@ jobs:
         echo "--- and among a C++ test binary's ---"
         BIN=tests/codac2_tests_core_domains_affine_AffineForm_base
         [ -f "$BIN" ] && { ldd "$BIN" | grep -iE "asan|ubsan|clang_rt" || echo "  none" ; }
-        # Importing the module is what hangs, so it is tried directly, both
-        # ways, with a short deadline. The suite preloads the runtime because
-        # the interpreter is not instrumented; but Clang 21 already makes the
-        # module depend on that same shared runtime, so the preload may now be
-        # redundant, and making the dependency resolvable may be all that is
-        # needed. These two lines say which.
+        # Importing the module is not what is slow: under LD_PRELOAD it works at
+        # once, and without it ASan refuses outright ("runtime does not come
+        # first in initial library list"), so the preload the suite does is both
+        # necessary and correct. What is left between that working import and
+        # the tests, which all run into the timeout, is UBSAN_OPTIONS=
+        # print_stacktrace=1 -- while llvm-symbolizer is not on PATH here.
+        # Sanitizers asked for a stack trace with no symbolizer to run fall back
+        # on spawning one per frame, which is slow enough to look like a hang;
+        # GCC does not need it, symbolizing in process, which would explain why
+        # only the Clang jobs are affected. The three runs below time the real
+        # test file with the real environment, then without that option, then
+        # with the symbolizer of this very toolchain pointed at explicitly.
         case "$(uname -m)" in x86_64) A=x86_64 ;; aarch64) A=aarch64 ;; *) A=$(uname -m) ;; esac
         RT=$(${{ matrix.cfg.cxx }} -print-file-name=libclang_rt.asan-$A.so 2>/dev/null || true)
-        echo "asan runtime: ${RT:-unknown}"
-        export PYTHONPATH=$PWD/python/python_package
-        export ASAN_OPTIONS=detect_leaks=0
-        if [ -f "$RT" ]; then
-          echo "--- import with the runtime directory on LD_LIBRARY_PATH, no preload ---"
-          ( export LD_LIBRARY_PATH="$(dirname "$RT"):$LD_LIBRARY_PATH" ; \
-            timeout 30 python -c "import codac; print('import ok')" ) || echo "  -> failed or timed out (exit $?)"
-          echo "--- import with LD_PRELOAD, which is what the suite does ---"
-          ( export LD_PRELOAD="$RT" ; \
-            timeout 30 python -c "import codac; print('import ok')" ) || echo "  -> failed or timed out (exit $?)"
+        UB=$(${{ matrix.cfg.cxx }} -print-file-name=libclang_rt.ubsan_standalone-$A.so 2>/dev/null || true)
+        TEST=../tests/core/domains/affine/codac2_tests_AffineForm_base.py
+        if [ -f "$RT" ] && [ -f "$TEST" ]; then
+          export PYTHONPATH=$PWD/python/python_package
+          export LD_PRELOAD="$RT:$UB"
+          export ASAN_OPTIONS=detect_leaks=0
+          SYM=$(dirname "$(dirname "$(dirname "$(dirname "$(dirname "$RT")")")")")/bin/llvm-symbolizer
+          echo "symbolizer candidate: $SYM  (exists: $([ -x "$SYM" ] && echo yes || echo no))"
+
+          echo "--- 1. as the suite runs it: print_stacktrace=1, no symbolizer ---"
+          ( export UBSAN_OPTIONS=print_stacktrace=1 ; \
+            time timeout 90 python "$TEST" >/dev/null 2>&1 ) || echo "  -> failed or timed out (exit $?)"
+
+          echo "--- 2. same, without print_stacktrace ---"
+          ( unset UBSAN_OPTIONS ; \
+            time timeout 90 python "$TEST" >/dev/null 2>&1 ) || echo "  -> failed or timed out (exit $?)"
+
+          echo "--- 3. print_stacktrace=1 with the symbolizer named explicitly ---"
+          ( export UBSAN_OPTIONS="print_stacktrace=1:external_symbolizer_path=$SYM" ; \
+            time timeout 90 python "$TEST" >/dev/null 2>&1 ) || echo "  -> failed or timed out (exit $?)"
         else
-          echo "no shared asan runtime for this toolchain, nothing to compare"
+          echo "no shared asan runtime or test file here, nothing to compare"
         fi
 
     # The unit tests and the examples are the same ctest suite: examples are
