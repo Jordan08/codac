@@ -189,10 +189,18 @@ jobs:
       if: matrix.cfg.coverage
       run: |
         cd build
-        # --exclude keeps the report to codac's own sources: Eigen and Catch2
-        # are pulled into the build tree by FetchContent and would otherwise
-        # dominate a report meant to say what the tests of this project reach.
+        gcovr --version
+        # --exclude shapes the report, but gcovr still reads the coverage data
+        # of everything it finds: --gcov-exclude is what keeps it from parsing
+        # the dependencies FetchContent puts in the build tree. That matters
+        # beyond noise, Eigen being where it first choked -- gcov reports
+        # negative hit counts on heavily inlined -O3 code, and gcovr treats
+        # those as fatal by default. codac's own templated headers can produce
+        # the same artefact, so it is downgraded to a warning rather than
+        # relied upon never happening.
         gcovr --root .. \
+              --gcov-exclude '.*/_deps/.*' \
+              --gcov-ignore-parse-errors=negative_hits.warn_once_per_file \
               --exclude '.*/_deps/.*' \
               --exclude '.*/tests/.*' \
               --exclude '.*/examples/.*' \
