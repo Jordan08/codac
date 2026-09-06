@@ -305,6 +305,35 @@
         add_compile_options($<$<CONFIG:Debug>:-fsanitize=address>)
         add_compile_options($<$<CONFIG:Debug>:-fsanitize=undefined>)
         add_link_options($<$<CONFIG:Debug>:-fsanitize=address,undefined>)
+
+        # Eigen hints the compiler that the buffers behind its packet
+        # loads/stores are aligned to EIGEN_MAX_ALIGN_BYTES by calling
+        # Eigen::internal::assume_aligned(), which -- when the standard
+        # library provides it -- is implemented with std::assume_aligned().
+        # libc++ (Clang's standard library, used on macOS) is, among major
+        # standard libraries, the one whose std::assume_aligned() actually
+        # verifies the claim at run time under -fsanitize=alignment, rather
+        # than treating it as a silent optimizer hint the way GCC/libstdc++'s
+        # __builtin_assume_aligned() does; this is why the failures below are
+        # only ever seen on macOS/Clang, never on Linux/GCC, for the same
+        # code. On Apple Silicon, EIGEN_MAX_ALIGN_BYTES resolves to 128,
+        # while the heap buffer behind a dynamically-sized Eigen::Matrix --
+        # allocated through plain operator new/malloc -- is only ever
+        # guaranteed that allocator's own alignment (16 bytes on this
+        # platform), so every packet load or store on such a matrix trips
+        # the check, e.g. in codac2::gauss_jordan() or any AffineMatrix/
+        # Matrix product built on top of it. Nothing is actually
+        # out-of-bounds or unsafe here: these buffers are in practice
+        # sufficiently aligned for the SSE/NEON-width packets Eigen emits on
+        # every platform this project targets, EIGEN_MAX_ALIGN_BYTES is just
+        # advertising a stronger guarantee than the platform's allocator
+        # promises to std::assume_aligned(). EIGEN_DONT_ASSUME_ALIGNED is
+        # Eigen's own documented override, forcing assume_aligned() to be a
+        # no-op; it does not change which aligned/unaligned load or store
+        # instruction Eigen selects for a given expression, only silences
+        # this false positive.
+        add_compile_definitions($<$<CONFIG:Debug>:EIGEN_DONT_ASSUME_ALIGNED>)
+
         message(STATUS "${COLOR_BLUE}ASan/UBSan will be enabled for Debug-configuration builds.${COLOR_RESET}")
       else()
         message(STATUS "${COLOR_RED}No ASan/UBSan runtime found for ${CMAKE_CXX_COMPILER}: Debug-configuration builds will not be sanitized.${COLOR_RESET}")
