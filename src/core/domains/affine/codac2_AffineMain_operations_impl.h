@@ -12,7 +12,7 @@
  */
 
 #pragma once
-
+#include "codac2_AffineMain.h"
 // Inline functions
 
 namespace codac2 {

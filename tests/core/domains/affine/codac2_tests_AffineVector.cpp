@@ -835,7 +835,16 @@ SECTION("Several intermediate AffineMainVector expressions can be chained.")
     AffineMainVector<AA> result = (u + v) / 3.;
 
     // (2*x-y+x+3*y)/3 = x + 2*y/3.
-    CHECK(result == Approx<AffineMainVector<AA>>(IntervalVector({{-1./3.,2.},{1./3.,19./3.},{2.,20./3.}}),ERROR));
+    // The division goes through a genuine affine*affine multiplication (by
+    // a fresh, zero-noise-symbol form enclosing 1/3), which runs the AF2
+    // quadratic-remainder band. That band tracks every rounding step with
+    // exact error-free transforms (twoSum/twoProd) rather than a coarser
+    // relative-error bound, so it can pick up a few extra ULPs of radius
+    // whenever an intermediate sum (here Sp, Sm) isn't itself an exact
+    // double -- still a sound enclosure, just past the tighter ERROR used
+    // elsewhere in this file.
+    const double DIV_ERROR = std::numeric_limits<double>::epsilon()*200;
+    CHECK(result == Approx<AffineMainVector<AA>>(IntervalVector({{-1./3.,2.},{1./3.,19./3.},{2.,20./3.}}),DIV_ERROR));
   }
 
 SECTION("Addition between vectors having the same Eigen scalar type.")

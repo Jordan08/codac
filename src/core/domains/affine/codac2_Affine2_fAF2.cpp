@@ -48,7 +48,7 @@ AffineVarMain<AF_fAF2>::AffineVarMain() :
 		_var(-1) {}
 
 template<>
-AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator=(const Interval& x) {
+void AffineMain<AF_fAF2>::assign_interval_core(const Interval& x) {
 	assert(_n_noise >= 0);
 	if (x.is_empty()) {
 		_status = AffineStatus::Empty;
@@ -82,6 +82,12 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator=(const Interval& x) {
 			_elt._err	= x.rad();
 		}
 	}
+}
+
+template<>
+AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator=(const Interval& x) {
+	assert(_n_noise >= 0);
+	assign_interval_core(x);
 	return *this;
 }
 
@@ -92,35 +98,13 @@ AffineVarMain<AF_fAF2>& AffineVarMain<AF_fAF2>::operator=(const Interval& x) {
 	assert(_n_noise >= 0);
 	assert(_var >= 0);
 	assert(_var < _n_noise);
-	if (x.is_empty()) {
-		this->_status = AffineStatus::Empty;
-		this->_elt._err = 0.0;
-	} else if (x.ub()>= oo && x.lb()<= -oo ) {
-		this->_status = AffineStatus::AllReals;
-		this->_elt._err = 0.0;
-	} else if (x.ub()>= oo ) {
-		this->_status = AffineStatus::UpperUnbounded;
-		if (x.lb()>= std::numeric_limits<double>::max()) this->_elt._err = std::numeric_limits<double>::max();
-		else this->_elt._err = x.lb();
-	} else if (x.lb()<= -oo ) {
-		this->_status = AffineStatus::LowerUnbounded;
-		if (x.ub()<= -std::numeric_limits<double>::max()) this->_elt._err = -std::numeric_limits<double>::max();
-		else this->_elt._err = x.ub();
-	} else  {
-		if (this->_elt._val==nullptr) { this->_elt._val = std::make_unique<double[]>(_n_noise+1); }
-		this->_elt._val[0] = x.mid();
-		for (Index i=1; i<=_n_noise;i++) {
-			this->_elt._val[i] =0;
-		}
-		if ( x.is_degenerated()) {
-			this->_status = AffineStatus::Degenerate;
-			this->_elt._err = 0.0;
-		} else {
-			this->_status = AffineStatus::Active;
-			this->_elt._val[_var+1] = x.rad();
-			this->_elt._err = 0.0;  // uncertainty fully captured in _val[_var+1]
-		}
-	} 
+	this->assign_interval_core(x);
+	if (this->is_active()) {
+		// The radius the shared core left in _elt._err belongs on this
+		// variable's own dedicated noise symbol instead.
+		this->_elt._val[_var+1] = this->_elt._err;
+		this->_elt._err = 0.0;  // uncertainty fully captured in _val[_var+1]
+	}
 	return *this;
 }
 
@@ -388,11 +372,10 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator+=(double beta) {
 	}
 
 	if (_status==AffineStatus::Active) {
-		double temp, ttt, sss, eee;
-		ttt=0.0;
-		sss=0.0;
-		eee = _elt.twoSum(_elt._val[0],beta,&temp);
-		ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
+		double temp;
+		const double eee = _elt.twoSum(_elt._val[0],beta,&temp);
+		const double ttt = (1+2*AF_EM)*std::fabs(eee);
+		double sss = 0.0;
 		if (std::fabs(temp)<AF_EC) {
 			sss = (1+2*AF_EM)*(sss+std::fabs(temp));
 			_elt._val[0] = 0.0;
@@ -421,11 +404,10 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::inflate(double ddelta) {
 		if (is_active()) {
 			if ((ddelta)<oo) {
 				_status=AffineStatus::Active;
-				double temp, ttt, sss, eee;
-				ttt=0.0;
-				sss=0.0;
-				eee = _elt.twoSum(_elt._err,std::fabs(ddelta), &temp);
-				ttt = (1+2*AF_EM)*(std::fabs(eee));
+				double temp;
+				const double eee = _elt.twoSum(_elt._err,std::fabs(ddelta), &temp);
+				const double ttt = (1+2*AF_EM)*std::fabs(eee);
+				double sss = 0.0;
 				if (std::fabs(temp)<AF_EC) {
 					sss = (1+2*AF_EM)*(std::fabs(temp));
 					temp =0;
@@ -484,17 +466,18 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator+=(const AffineMain<AF_fAF2>& 
 		if (y.is_degenerated()) {
 			*this += y._elt._val[0];
 		} else if (is_degenerated()) {
-			double tmp = _elt._val[0];
+			const double tmp = _elt._val[0];
 			*this = y;
 			*this += tmp;
 		} else {
-			if (_n_noise < y.noise_count()) {
-				this->resize_noise(y.noise_count());
+			const Index yn = y.noise_count();   // y is const throughout: read it once, not once per iteration
+			if (_n_noise < yn) {
+				this->resize_noise(yn);
 			}
 			double temp, ttt, sss, eee;
 			ttt=0.0;
 			sss=0.0;
-			for(Index i=0;i<=y.noise_count();i++) {
+			for(Index i=0;i<=yn;i++) {
 				eee = _elt.twoSum(_elt._val[i], y._elt._val[i], &temp);
 				ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
 				if (std::fabs(temp)<AF_EC) {
@@ -527,8 +510,19 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator+=(const AffineMain<AF_fAF2>& 
  * see  Equation(17)  of
  * X.-H. Vu, D. Sam-Haroud, and B. Faltings. Combining multiple inclusion representa-
 tions in numerical constraint propagation. In Tools with Artificial Intelligence, IEEE
-International Conference on, pages 458–467, Los Alamitos, CA, USA, 2004. IEEE Com-
-puter Society.
+International Conference on, pages 458–467, Los Alamitos, CA, USA, 2004. IEEE Computer Society.
+Adding from Jordan NININ:
+	The quadratic remainder u*v, with u=sum(a_i.e_i) and
+	v=sum(b_i.e_i), admits two valid bands. Neither one dominates,
+	so the tightest is their intersection.
+		B1 = Sz/2 +- (Sx.Sy - Sxy/2)            the AF2 band
+		B2 = [-Sm^2/4 , Sp^2/4]                 by polarisation,
+			u*v = ((u+v)^2-(u-v)^2)/4, each square lying in [0,S^2]
+	qbeta is the mid point of the intersection, qdelta its radius.
+	On a square, u=v gives Sm=0 and Sp=2.Sx, hence [0,Sx^2], the
+	Chebyshev band, which always beats B1.
+	The accumulated errors behave like two extra independent noise
+	symbols of coefficients _err, so they enter every radius below.
  */
 template<>
 AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator*=(const AffineMain<AF_fAF2>& y) {
@@ -537,27 +531,34 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator*=(const AffineMain<AF_fAF2>& 
 		if (y.is_degenerated()) {
 			*this *= y._elt._val[0];
 		}	else if (is_degenerated()) {
-			double tmp = _elt._val[0];
+			const double tmp = _elt._val[0];
 			*this = y;
 			*this *= tmp;
 		} else 	 {
-			if (_n_noise < y.noise_count()) {
-				this->resize_noise(y.noise_count());
+			const Index yn = y.noise_count();   // y is const throughout: read it once, not once per iteration
+			if (_n_noise < yn) {
+				this->resize_noise(yn);
 			}
-			double Sx, Sy, Sxy, Sz, Sp, Sm, ttt, sss, ppp, tmp, xVal0, eee;
+			double Sx, Sy, Sxy, Sz, Sp, Sm, ttt, sss, ppp, tmp, eee;
 			std::unique_ptr<double[]> xTmp;
 
 			xTmp = std::make_unique<double[]>(_n_noise + 1);
-			Sx=0.0; Sy=0.0; Sxy=0.0; Sz=0.0; Sp=0.0; Sm=0.0; ttt=0.0; sss=0.0; ppp=0.0; tmp=0.0; xVal0=0.0; eee=0.0;
+			Sx=0.0; Sy=0.0; Sxy=0.0; Sz=0.0; Sp=0.0; Sm=0.0; ttt=0.0; sss=0.0; ppp=0.0; tmp=0.0; eee=0.0;
 
 			// These accumulators may later be multiplied by quantities at the
 			// opposite scale. Do not discard them using an absolute threshold.
 			// For example, 1e-300 * 1e300 contributes at order one.
 			for (Index i = 1; i <= _n_noise; i++) {
 				ppp = 0.0;
+				// Each of _elt._val[i] and (when in range) y._elt._val[i] was
+				// re-read from the array up to four times per iteration below;
+				// reading them once here gives the identical value every time
+				// (nothing writes to either array within this loop).
+				const double ai = _elt._val[i];
+				const double bi = (i <= yn)? y._elt._val[i] : 0.0;
 
-				if (i <= y.noise_count()) {
-					eee = _elt.twoProd(_elt._val[i], y._elt._val[i], &ppp);
+				if (i <= yn) {
+					eee = _elt.twoProd(ai, bi, &ppp);
 					ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
 
 					eee = _elt.twoSum(Sz, ppp, &tmp);
@@ -569,29 +570,28 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator*=(const AffineMain<AF_fAF2>& 
 					Sxy = tmp;
 				}
 
-				eee = _elt.twoSum(Sx, std::fabs(_elt._val[i]), &tmp);
+				eee = _elt.twoSum(Sx, std::fabs(ai), &tmp);
 				ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
 				Sx = tmp;
 
-				if (i <= y.noise_count()) {
-					eee = _elt.twoSum(Sy, std::fabs(y._elt._val[i]), &tmp);
+				if (i <= yn) {
+					eee = _elt.twoSum(Sy, std::fabs(bi), &tmp);
 					ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
 					Sy = tmp;
 				}
 				// polarisation: u*v = ((u+v)^2-(u-v)^2)/4 needs the radii of
 				// u+v and u-v, hence these two extra sums
 				{
-					const double bi = (i <= y.noise_count())? y._elt._val[i] : 0.0;
-					eee = _elt.twoSum(Sp, std::fabs(_elt._val[i]+bi), &tmp);
+					eee = _elt.twoSum(Sp, std::fabs(ai+bi), &tmp);
 					ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
 					Sp = tmp;
-					eee = _elt.twoSum(Sm, std::fabs(_elt._val[i]-bi), &tmp);
+					eee = _elt.twoSum(Sm, std::fabs(ai-bi), &tmp);
 					ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
 					Sm = tmp;
 				}
 			}
 
-			xVal0 = _elt._val[0];
+			const double xVal0 = _elt._val[0];
 			// RES = X%T(0) * res
 			for (Index i = 0; i <= _n_noise; i++) {
 				eee = _elt.twoProd(_elt._val[i],y._elt._val[0], &ppp);
@@ -606,7 +606,7 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator*=(const AffineMain<AF_fAF2>& 
 
 			// Xtmp = X%T(0) * Y
 			xTmp[0] = 0.0;
-			for (Index i = 1; i <= y.noise_count(); i++) {
+			for (Index i = 1; i <= yn; i++) {
 				eee = _elt.twoProd(xVal0,y._elt._val[i], &ppp);
 				ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
 				xTmp[i] = ppp;
@@ -619,7 +619,7 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator*=(const AffineMain<AF_fAF2>& 
 			}
 
 			//RES =  RES + Xtmp = ( Y%(0) * X ) + ( X%T(0) * Y - X%T(0)*Y%(0) )
-			for (Index i = 0; i <= y.noise_count(); i++) {
+			for (Index i = 0; i <= yn; i++) {
 
 				eee = _elt.twoSum(_elt._val[i],xTmp[i], &tmp);
 				ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
@@ -643,27 +643,88 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator*=(const AffineMain<AF_fAF2>& 
 			// Chebyshev band, which always beats B1.
 			// The accumulated errors behave like two extra independent noise
 			// symbols of coefficients _err, so they enter every radius below.
-			const double sxe = (1+2*AF_EM)*(Sx + _elt._err);
-			const double sye = (1+2*AF_EM)*(Sy + y._elt._err);
-			const double spe = (1+2*AF_EM)*(Sp + _elt._err + y._elt._err);
-			const double sme = (1+2*AF_EM)*(Sm + _elt._err + y._elt._err);
+			// Every add/sub/mul below goes through twoSum/twoProd, exactly
+			// like the loops above -- but their residuals are kept out of
+			// the shared ttt (whose AF_EE penalty at the very end of the
+			// function is calibrated for compounding over the _n_noise
+			// loops above, not for this fixed handful of steps): they are
+			// tracked in their own qerr instead, folded straight into
+			// qdelta below, which already carries its own AF_EM margin at
+			// its point of use.
+			double qerr = 0.0;
+			eee = _elt.twoSum(Sx, _elt._err, &tmp);
+			qerr = (1+2*AF_EM)*(qerr+std::fabs(eee));
+			const double sxe = tmp;
+
+			eee = _elt.twoSum(Sy, y._elt._err, &tmp);
+			qerr = (1+2*AF_EM)*(qerr+std::fabs(eee));
+			const double sye = tmp;
+
+			eee = _elt.twoSum(_elt._err, y._elt._err, &tmp);
+			qerr = (1+2*AF_EM)*(qerr+std::fabs(eee));
+			const double erry = tmp;   // _elt._err + y._elt._err, shared below
+
+			eee = _elt.twoSum(Sp, erry, &tmp);
+			qerr = (1+2*AF_EM)*(qerr+std::fabs(eee));
+			const double spe = tmp;
+
+			eee = _elt.twoSum(Sm, erry, &tmp);
+			qerr = (1+2*AF_EM)*(qerr+std::fabs(eee));
+			const double sme = tmp;
+
 			double qlo, qhi;
 			{
-				const double r1 = (1+2*AF_EM)*(sxe*sye) - (1-2*AF_EM)*(0.5*Sxy);
+				eee = _elt.twoProd(sxe, sye, &ppp);
+				qerr = (1+2*AF_EM)*(qerr+std::fabs(eee));
+				const double sxy_hat = ppp;   // sxe*sye
+
+				const double half_Sxy = 0.5*Sxy;   // exact: power-of-two scaling
+
+				eee = _elt.twoSum(sxy_hat, -half_Sxy, &tmp);
+				qerr = (1+2*AF_EM)*(qerr+std::fabs(eee));
+				const double r1 = tmp;
+
 				const double c1 = 0.5*Sz;   // exact
-				qlo = c1 - r1;   qlo -= 2*AF_EM*std::fabs(qlo);
-				qhi = c1 + r1;   qhi += 2*AF_EM*std::fabs(qhi);
-				const double lo2 = -(1+2*AF_EM)*(0.25*(sme*sme));
-				const double hi2 =  (1+2*AF_EM)*(0.25*(spe*spe));
+
+				eee = _elt.twoSum(c1, -r1, &tmp);
+				qerr = (1+2*AF_EM)*(qerr+std::fabs(eee));
+				qlo = tmp;
+
+				eee = _elt.twoSum(c1, r1, &tmp);
+				qerr = (1+2*AF_EM)*(qerr+std::fabs(eee));
+				qhi = tmp;
+
+				const double qlo1 = qlo, qhi1 = qhi;   // B1 band, kept for the empty-intersection fallback
+
+				eee = _elt.twoProd(sme, sme, &ppp);
+				qerr = (1+2*AF_EM)*(qerr+std::fabs(eee));
+				const double lo2 = -0.25*ppp;   // exact: power-of-two scaling
+
+				eee = _elt.twoProd(spe, spe, &ppp);
+				qerr = (1+2*AF_EM)*(qerr+std::fabs(eee));
+				const double hi2 = 0.25*ppp;   // exact: power-of-two scaling
+
 				if (lo2 > qlo) qlo = lo2;
 				if (hi2 < qhi) qhi = hi2;
-				if (qhi < qlo) {   // rounding made the intersection empty
-					qlo = c1 - r1;   qlo -= 2*AF_EM*std::fabs(qlo);
-					qhi = c1 + r1;   qhi += 2*AF_EM*std::fabs(qhi);
+				if (qhi < qlo) {   // B1 and B2 failed to overlap: fall back to B1 alone
+					qlo = qlo1;
+					qhi = qhi1;
 				}
 			}
-			const double qbeta = 0.5*(qlo+qhi);
-			const double qdelta = (1+2*AF_EM)*std::max(qbeta-qlo, qhi-qbeta);
+
+			eee = _elt.twoSum(qlo, qhi, &tmp);
+			qerr = (1+2*AF_EM)*(qerr+std::fabs(eee));
+			const double qbeta = 0.5*tmp;   // exact: power-of-two scaling
+
+			eee = _elt.twoSum(qbeta, -qlo, &tmp);
+			qerr = (1+2*AF_EM)*(qerr+std::fabs(eee));
+			const double d_lo = tmp;
+
+			eee = _elt.twoSum(qhi, -qbeta, &tmp);
+			qerr = (1+2*AF_EM)*(qerr+std::fabs(eee));
+			const double d_hi = tmp;
+
+			const double qdelta = std::max(d_lo, d_hi) + qerr;
 
 			eee = _elt.twoSum(_elt._val[0],qbeta, &tmp);
 			ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
@@ -676,7 +737,8 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::operator*=(const AffineMain<AF_fAF2>& 
 
 			// qdelta already covers the cross terms, the accumulated errors
 			// having been folded into the radii above.
-			const double xerr = _elt._err, yerr = y._elt._err;
+			const double xerr = _elt._err;
+			const double yerr = y._elt._err;
 
 			_elt._err = (1+ 2*AF_EM) * (
 					((1+ 2*AF_EM) *std::fabs(y._elt._val[0]) * xerr)  +
@@ -712,27 +774,34 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::Amul_AF2(const AffineMain<AF_fAF2>& y)
 		if (y.is_degenerated()) {
 			*this *= y._elt._val[0];
 		}	else if (is_degenerated()) {
-			double tmp = _elt._val[0];
+			const double tmp = _elt._val[0];
 			*this = y;
 			*this *= tmp;
 		} else 	 {
-			if (_n_noise < y.noise_count()) {
-				this->resize_noise(y.noise_count());
+			const Index yn = y.noise_count();   // y is const throughout: read it once, not once per iteration
+			if (_n_noise < yn) {
+				this->resize_noise(yn);
 			}
-			double Sx, Sy, Sxy, Sz, ttt, sss, ppp, tmp, xVal0, eee;
+			double Sx, Sy, Sxy, Sz, ttt, sss, ppp, tmp, eee;
 			std::unique_ptr<double[]> xTmp;
 
 			xTmp = std::make_unique<double[]>(_n_noise + 1);
-			Sx=0.0; Sy=0.0; Sxy=0.0; Sz=0.0; ttt=0.0; sss=0.0; ppp=0.0; tmp=0.0; xVal0=0.0; eee=0.0;
+			Sx=0.0; Sy=0.0; Sxy=0.0; Sz=0.0; ttt=0.0; sss=0.0; ppp=0.0; tmp=0.0; eee=0.0;
 
 			// These accumulators may later be multiplied by quantities at the
 			// opposite scale. Do not discard them using an absolute threshold.
 			// For example, 1e-300 * 1e300 contributes at order one.
 			for (Index i = 1; i <= _n_noise; i++) {
 				ppp = 0.0;
+				// _elt._val[i] and (when in range) y._elt._val[i] were each
+				// re-read from the array up to twice per iteration below;
+				// reading them once here gives the identical value every
+				// time (nothing writes to either array within this loop).
+				const double ai = _elt._val[i];
+				const double bi = (i <= yn)? y._elt._val[i] : 0.0;
 
-				if (i <= y.noise_count()) {
-					eee = _elt.twoProd(_elt._val[i], y._elt._val[i], &ppp);
+				if (i <= yn) {
+					eee = _elt.twoProd(ai, bi, &ppp);
 					ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
 
 					eee = _elt.twoSum(Sz, ppp, &tmp);
@@ -744,18 +813,18 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::Amul_AF2(const AffineMain<AF_fAF2>& y)
 					Sxy = tmp;
 				}
 
-				eee = _elt.twoSum(Sx, std::fabs(_elt._val[i]), &tmp);
+				eee = _elt.twoSum(Sx, std::fabs(ai), &tmp);
 				ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
 				Sx = tmp;
 
-				if (i <= y.noise_count()) {
-					eee = _elt.twoSum(Sy, std::fabs(y._elt._val[i]), &tmp);
+				if (i <= yn) {
+					eee = _elt.twoSum(Sy, std::fabs(bi), &tmp);
 					ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
 					Sy = tmp;
 				}
 			}
 
-			xVal0 = _elt._val[0];
+			const double xVal0 = _elt._val[0];
 			// RES = X%T(0) * res
 			for (Index i = 0; i <= _n_noise; i++) {
 				eee = _elt.twoProd(_elt._val[i],y._elt._val[0], &ppp);
@@ -770,7 +839,7 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::Amul_AF2(const AffineMain<AF_fAF2>& y)
 
 			// Xtmp = X%T(0) * Y
 			xTmp[0] = 0.0;
-			for (Index i = 1; i <= y.noise_count(); i++) {
+			for (Index i = 1; i <= yn; i++) {
 				eee = _elt.twoProd(xVal0,y._elt._val[i], &ppp);
 				ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
 				xTmp[i] = ppp;
@@ -783,7 +852,7 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::Amul_AF2(const AffineMain<AF_fAF2>& y)
 			}
 
 			//RES =  RES + Xtmp = ( Y%(0) * X ) + ( X%T(0) * Y - X%T(0)*Y%(0) )
-			for (Index i = 0; i <= y.noise_count(); i++) {
+			for (Index i = 0; i <= yn; i++) {
 
 				eee = _elt.twoSum(_elt._val[i],xTmp[i], &tmp);
 				ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
@@ -798,8 +867,9 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::Amul_AF2(const AffineMain<AF_fAF2>& y)
 
 			eee = _elt.twoProd(0.5,Sz, &ppp);
 			ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
+			const double half_Sz = ppp;
 
-			eee = _elt.twoSum(_elt._val[0],ppp, &tmp);
+			eee = _elt.twoSum(_elt._val[0],half_Sz, &tmp);
 			ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
 			_elt._val[0] = tmp;
 
@@ -810,15 +880,17 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::Amul_AF2(const AffineMain<AF_fAF2>& y)
 
 			eee = _elt.twoSum(_elt._err,Sx, &tmp);
 			ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
+			const double xerr_Sx = tmp;   // _elt._err + Sx
 
 			eee = _elt.twoSum(y._elt._err,Sy, &ppp);
 			ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
+			const double yerr_Sy = ppp;   // y._elt._err + Sy
 
 
 			_elt._err = (1+ 2*AF_EM) * (
 					((1+ 2*AF_EM) *std::fabs(y._elt._val[0]) * _elt._err)  +
 					((1+ 2*AF_EM) *std::fabs(xVal0) * y._elt._err)  +
-					((1+ 2*AF_EM) *(tmp * ppp)) +
+					((1+ 2*AF_EM) *(xerr_Sx * yerr_Sy)) +
 					((1- 2*AF_EM) *(-0.5) *  Sxy)  +
 					//					(AF_EE * (AF_EM * ttt))  +
 					(AF_EE * (ttt))  +
@@ -873,8 +945,8 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::Asqr(const Interval& itv) {
 
 	} else  {
 
-		double Sx, ttt, sss, ppp, x0, eee,tmp;
-		Sx = 0; ttt = 0; sss = 0; ppp = 0; x0 = 0; eee =0.0; tmp =0.0;
+		double Sx, ttt, sss, ppp, eee,tmp;
+		Sx = 0; ttt = 0; sss = 0; ppp = 0; eee =0.0; tmp =0.0;
 
 		// compute the error. The Chebyshev band below only needs sum|a_i|,
 		// unlike the AF2 band of Asqr_AF2 which also needed sum(a_i^2).
@@ -891,7 +963,7 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::Asqr(const Interval& itv) {
 
 		}
 		// compute 2*_elt._val[0]*(*this)
-		x0 = _elt._val[0];
+		const double x0 = _elt._val[0];
 
 		eee = _elt.twoProd(x0,x0, &ppp);
 		ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
@@ -903,9 +975,10 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::Asqr(const Interval& itv) {
 		}
 
 		// compute 2*_elt._val[0]*(*this)
+		const double x0_2 = 2*x0;   // exact: power-of-two scaling, loop-invariant
 		for (Index i = 1; i <= _n_noise; i++) {
 
-			eee = _elt.twoProd((2*x0),_elt._val[i], &ppp);
+			eee = _elt.twoProd(x0_2,_elt._val[i], &ppp);
 			ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
 			_elt._val[i] = ppp;
 
@@ -922,9 +995,20 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::Asqr(const Interval& itv) {
 		// Sx^2-sum(a_i^2)/2, always contains it, so no intersection is needed.
 		// This is what operator*= obtains by polarisation on x*x.
 		// The accumulated error behaves like an extra independent noise symbol
-		// of coefficient _err, so it belongs inside the radius.
-		const double sxe = (1+2*AF_EM)*(Sx + _elt._err);
-		const double qhalf = 0.5*((1+2*AF_EM)*(sxe*sxe));   // mid and radius
+		// of coefficient _err, so it belongs inside the radius. Like above,
+		// the add and the square go through twoSum/twoProd; their residuals
+		// are tracked in their own qerr rather than the shared ttt (whose
+		// AF_EE penalty is calibrated for the _n_noise loop above, not this
+		// fixed pair of steps) and folded straight into the radius term of
+		// _elt._err below.
+		double qerr = 0.0;
+		eee = _elt.twoSum(Sx, _elt._err, &tmp);
+		qerr = (1+2*AF_EM)*(qerr+std::fabs(eee));
+		const double sxe = tmp;
+
+		eee = _elt.twoProd(sxe, sxe, &ppp);
+		qerr = (1+2*AF_EM)*(qerr+std::fabs(eee));
+		const double qhalf = 0.5*ppp;   // exact: power-of-two scaling; mid and radius
 
 		eee = _elt.twoSum(_elt._val[0],qhalf, &tmp);
 		ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
@@ -941,7 +1025,7 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::Asqr(const Interval& itv) {
 
 		_elt._err = (1+ 2*AF_EM) * (
 				((1+ 2*AF_EM) *2*std::fabs(x0) * xerr)  +
-				((1+ 2*AF_EM) * qhalf)  +
+				((1+ 2*AF_EM) * (qhalf + qerr))  +
 //					(AF_EE * (AF_EM * ttt))  +
 				(AF_EE * (ttt))  +
 				(AF_EE * sss)
@@ -976,8 +1060,8 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::Asqr_AF2(const Interval& itv) {
 
 	} else  {
 
-		double Sx, Sx2, ttt, sss, ppp, x0, eee,tmp;
-		Sx = 0; Sx2 = 0; ttt = 0; sss = 0; ppp = 0; x0 = 0; eee =0.0; tmp =0.0;
+		double Sx, Sx2, ttt, sss, ppp, eee,tmp;
+		Sx = 0; Sx2 = 0; ttt = 0; sss = 0; ppp = 0; eee =0.0; tmp =0.0;
 
 		// compute the error
 		for (Index i = 1; i <= _n_noise; i++) {
@@ -1005,7 +1089,7 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::Asqr_AF2(const Interval& itv) {
 
 		}
 		// compute 2*_elt._val[0]*(*this)
-		x0 = _elt._val[0];
+		const double x0 = _elt._val[0];
 
 		eee = _elt.twoProd(x0,x0, &ppp);
 		ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
@@ -1017,9 +1101,10 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::Asqr_AF2(const Interval& itv) {
 		}
 
 		// compute 2*_elt._val[0]*(*this)
+		const double x0_2 = 2*x0;   // exact: power-of-two scaling, loop-invariant
 		for (Index i = 1; i <= _n_noise; i++) {
 
-			eee = _elt.twoProd((2*x0),_elt._val[i], &ppp);
+			eee = _elt.twoProd(x0_2,_elt._val[i], &ppp);
 			ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
 			_elt._val[i] = ppp;
 
@@ -1032,8 +1117,9 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::Asqr_AF2(const Interval& itv) {
 
 		eee = _elt.twoProd(0.5,Sx2, &ppp);
 		ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
+		const double half_Sx2 = ppp;
 
-		eee = _elt.twoSum(_elt._val[0],ppp, &tmp);
+		eee = _elt.twoSum(_elt._val[0],half_Sx2, &tmp);
 		ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
 		_elt._val[0] = tmp;
 
@@ -1044,10 +1130,11 @@ AffineMain<AF_fAF2>& AffineMain<AF_fAF2>::Asqr_AF2(const Interval& itv) {
 
 		eee = _elt.twoSum(_elt._err,Sx, &tmp);
 		ttt = (1+2*AF_EM)*(ttt+std::fabs(eee));
+		const double xerr_Sx = tmp;   // _elt._err + Sx
 
 		_elt._err = (1+ 2*AF_EM) * (
 				((1+ 2*AF_EM) *2*std::fabs(x0) * _elt._err)  +
-				((1+ 2*AF_EM) *(tmp * tmp)) +
+				((1+ 2*AF_EM) *(xerr_Sx * xerr_Sx)) +
 				((1- 2*AF_EM) *(-0.5) *  Sx2)  +
 //					(AF_EE * (AF_EM * ttt))  +
 				(AF_EE * (ttt))  +
@@ -1089,8 +1176,8 @@ void AffineMain<AF_fAF2>::compact(double tol)
   		if (std::fabs(_elt._val[i])<tol) {
   			double temp=0.0;
   			double sss=0.0;
-  			double eee = _elt.twoSum(_elt._err,std::fabs(_elt._val[i]), &temp);
-  			double ttt = (1+2*AF_EM)*(std::fabs(eee));
+  			const double eee = _elt.twoSum(_elt._err,std::fabs(_elt._val[i]), &temp);
+  			const double ttt = (1+2*AF_EM)*std::fabs(eee);
   			if (std::fabs(temp)<AF_EC) {
   				sss = (1+2*AF_EM)*(std::fabs(temp));
   				temp =0;

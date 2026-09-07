@@ -1331,6 +1331,24 @@ protected:
 	 */
 	void resize_noise(Index n);
 
+	/**
+	 * \brief Shared status-dispatch core of \c operator=(const Interval&).
+	 *
+	 * Sets \c _status and \c _elt from \p x exactly as the generic
+	 * \c operator=(const Interval&) does: empty, doubly/singly unbounded,
+	 * degenerate, or active with \c _elt._err holding the radius of \p x.
+	 * \c AffineVarMain<T>::operator=(const Interval&) calls this for every
+	 * case and then, only for the active one, moves that radius onto its
+	 * own dedicated noise symbol instead of leaving it in \c _elt._err --
+	 * the two operators must stay distinct, since that final move is what
+	 * gives an affine variable its identity, but the status dispatch above
+	 * it is otherwise identical and not worth duplicating.
+	 *
+	 * \param x interval value
+	 * \note Implemented in codac2_Affine2_fAF2.cpp (for T = AF_fAF2).
+	 */
+	void assign_interval_core(const Interval& x);
+
 };
 
 
