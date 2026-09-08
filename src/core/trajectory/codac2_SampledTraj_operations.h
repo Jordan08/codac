@@ -14,6 +14,12 @@
 
 namespace codac2
 {
+  // These macros stand in for the body of the functions declared below. Doxygen
+  // parses this header to produce the Python docstrings, and it cannot name a
+  // function whose body it does not recognise, so every macro used that way is
+  // listed in EXPAND_AS_DEFINED in doc/api/Doxyfile.in. Add any new one there
+  // too, otherwise the bindings lose the docstring identifiers they expect and
+  // stop compiling.
   #define macro_unary_traj(f) \
   { \
     auto y = x1; \
