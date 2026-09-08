@@ -130,6 +130,15 @@ if(BUILD_TESTS AND TEST_EXAMPLES)
       )
     endif()
 
+    # The examples are part of the ctest suite here, so `make check` -- which
+    # rebuilds the suite before running it -- has to build them too. Without
+    # this it would run ctest against executables that may not exist yet, the
+    # way it does for the unit tests through the same call in
+    # tests/CMakeLists.txt.
+    if(TARGET check)
+      add_dependencies(check ${EXAMPLE_NAME})
+    endif()
+
   endforeach()
 
   if(WITH_PYTHON)

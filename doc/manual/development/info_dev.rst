@@ -70,7 +70,7 @@ If you simply want to use the latest Codac release in Python, you can download t
       cd $HOME
       git clone https://github.com/doxygen/doxygen
       cd doxygen
-      git checkout Release_1_17_0 # 1.16.1 is the oldest that works; 1.18.0 is known to break
+      git checkout Release_1_17_0 # 1.16.1 is the oldest that works; 1.18.0 is known to break on MacOS intel
       mkdir build ; cd build
       cmake -DCMAKE_INSTALL_PREFIX=$HOME/doxygen/build_install ..
       make ; make install
@@ -114,15 +114,6 @@ If you simply want to use the latest Codac release in Python, you can download t
       git clone https://github.com/codac-team/codac $HOME/codac
       cd $HOME/codac
 
-   .. admonition:: Using Codac v2 simultaneously with Codac v1
-
-      In case you want to use the two versions of Codac in the same Python script, you will have to compile the binaries of Codac v2 under a different name in order to avoid ``import`` conflicts. Things are already prepared in the branch ``codac2_renamed``, you can therefore:
-   
-      .. code-block:: bash
-         
-         git checkout codac2_renamed
-
-      Note that you will then have to ``import codac2`` instead of ``import codac`` in your Python scripts.
 
    In addition to the ``-fPIC`` options, you will have to configure ``WITH_PYTHON=ON`` and ``PYBIND11_FINDPYTHON=OFF``. Note that CMake will automatically get the `pybind11 <https://pybind11.readthedocs.io>`_ files required for the binding. Also, you will have to configure ``BUILD_TESTS=ON`` if you want to run the unit tests.
    
@@ -186,12 +177,21 @@ from the build directory:
    cd $HOME/codac/build
    ctest --output-on-failure
 
-``make check`` is the same thing, preceded by a rebuild of whatever is out of
-date, which is usually what you want after editing a source file:
+Two ``make`` targets wrap it, and they are not interchangeable:
 
 .. code-block:: bash
 
-   make check
+   make test    # what CMake provides: runs ctest on the build tree as it stands
+   make check   # rebuilds the suite first, and prints the output of what failed
+
+``make check`` is the one to use after editing a source file. ``make test`` runs
+whatever executables are already there, so it happily reports a pass on the
+previous build of a test you have just changed. Both accept ``ARGS`` to forward
+options to ctest, with the Makefile generator:
+
+.. code-block:: bash
+
+   make check ARGS="-R AffineVector"
 
 Every entry of the suite exists in up to two flavours, one per language: a C++
 test, and -- when the build has ``WITH_PYTHON=ON`` and a Python file of the same
@@ -271,7 +271,7 @@ them.
 
    mkdir build_debug ; cd build_debug
    cmake -D CMAKE_BUILD_TYPE=Debug -D BUILD_TESTS=ON -D TEST_EXAMPLES=ON ..
-   make -j 4
+   make 
    ctest -V --output-on-failure
 
 Two things are worth knowing about it.
@@ -305,7 +305,7 @@ integration test:
 .. code-block:: bash
 
    cmake -D BUILD_TESTS=ON -D TEST_EXAMPLES=ON -D WITH_PYTHON=ON ..
-   make -j 4
+   make 
    ctest -R codac2_examples
 
 The names follow the same rule as the tests, from the path under ``examples/``:
@@ -337,7 +337,7 @@ configure there.
    cmake -D CMAKE_BUILD_TYPE=Release \
          -D WITH_COVERAGE=ON \
          -D BUILD_TESTS=ON -D TEST_EXAMPLES=ON -D WITH_PYTHON=ON ..
-   make -j 4
+   make 
    make coverage
 
 ``make coverage`` runs the whole CTest suite and turns the counters ``gcov``
