@@ -20,10 +20,20 @@ To build this manual using Sphinx, follow these steps:
    ``sphinx_togglebutton`` and ``sphinx_rtd_theme``, the sixth one,
    ``sphinx.ext.mathjax``, shipping with Sphinx itself -- plus ``furo``, which is
    the theme the manual is actually rendered with (``html_theme``). Adding an
-   extension to ``conf.py.in`` means adding its package here as well. Sphinx itself comes from ``pip`` rather
-   than from the distribution's ``sphinx-common`` package, so that Sphinx and its
-   extensions are installed by the same tool and cannot end up in two
-   incompatible versions.
+   extension to ``conf.py.in`` means adding its package here as well. Sphinx
+   itself comes from ``pip`` rather than from the distribution's
+   ``sphinx-common`` package, so that Sphinx and its extensions are installed by
+   the same tool and cannot end up in two incompatible versions.
+
+   Building the manual asks for a more recent Python than building the binding
+   does. The current Sphinx requires **Python 3.12 or newer**, and the current
+   ``sphinx-math-dollar``, ``sphinx-tabs`` and ``breathe`` require 3.11, 3.10 and
+   3.9 respectively. Nothing fails on an older interpreter, and that is precisely
+   what makes it worth knowing: ``pip`` quietly falls back to whatever release
+   still supports it, so on Python 3.8 the command line above installs Sphinx
+   7.1.2 and ``furo`` 2024.8.6 rather than the current ones. When the manual
+   renders differently on two machines, comparing ``pip list`` is the first thing
+   to do.
 
 2. **Building the manual**: After configuring the CMake project, the manual can be build with:
 
