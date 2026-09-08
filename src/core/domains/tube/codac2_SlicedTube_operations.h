@@ -142,7 +142,7 @@ namespace codac2
    */
   template<typename T>
   inline SlicedTube<T>& operator|=(SlicedTube<T>& x1, const SlicedTube<T>& x2)
-    macro_member_binary_tube_tube(operator_tube_union<T>);
+    macro_member_binary_tube_tube(operator_tube_union<T>)
 
   /**
    * \brief Pointwise hull-union of two tubes with the same codomain type.
@@ -158,7 +158,7 @@ namespace codac2
    */
   template<typename T>
   inline SlicedTube<T> operator|(const SlicedTube<T>& x1, const SlicedTube<T>& x2)
-    macro_binary_tube_tube(operator_tube_union<T>,x1);
+    macro_binary_tube_tube(operator_tube_union<T>,x1)
 
   /**
    * \brief Pointwise intersection assignment of two tubes with the same codomain type.
@@ -174,7 +174,7 @@ namespace codac2
    */
   template<typename T>
   inline SlicedTube<T>& operator&=(SlicedTube<T>& x1, const SlicedTube<T>& x2)
-    macro_member_binary_tube_tube(operator_tube_intersection<T>);
+    macro_member_binary_tube_tube(operator_tube_intersection<T>)
 
   /**
    * \brief Pointwise intersection of two tubes with the same codomain type.
@@ -190,7 +190,7 @@ namespace codac2
    */
   template<typename T>
   inline SlicedTube<T> operator&(const SlicedTube<T>& x1, const SlicedTube<T>& x2)
-    macro_binary_tube_tube(operator_tube_intersection<T>,x1);
+    macro_binary_tube_tube(operator_tube_intersection<T>,x1)
 
   /**
    * \brief Unary plus.
@@ -221,7 +221,7 @@ namespace codac2
    */
   template<typename T>
   inline SlicedTube<T> operator+(const SlicedTube<T>& x1, const SlicedTube<T>& x2)
-    macro_binary_tube_tube(operator_tube_add<T>,x1);
+    macro_binary_tube_tube(operator_tube_add<T>,x1)
 
   /**
    * \brief Pointwise sum of a tube and a constant object with matching codomain type.
@@ -238,7 +238,7 @@ namespace codac2
   template<typename T, typename Q>
     requires NonSlicedTube<Q>
   inline SlicedTube<T> operator+(const SlicedTube<T>& x1, const Q& x2)
-    macro_binary_tube_real(operator_tube_add<T>);
+    macro_binary_tube_real(operator_tube_add<T>)
 
   /**
    * \brief Pointwise sum of a constant object and a tube with matching codomain type.
@@ -255,7 +255,7 @@ namespace codac2
   template<typename T, typename Q>
     requires NonSlicedTube<Q>
   inline SlicedTube<T> operator+(const Q& x1, const SlicedTube<T>& x2)
-    macro_binary_real_tube(operator_tube_add<T>);
+    macro_binary_real_tube(operator_tube_add<T>)
 
   /**
    * \brief Pointwise addition assignment with a constant object of matching codomain type.
@@ -267,7 +267,7 @@ namespace codac2
   template<typename T, typename Q>
     requires NonSlicedTube<Q>
   inline SlicedTube<T>& operator+=(SlicedTube<T>& x1, const Q& x2)
-    macro_member_binary_tube_real(operator_tube_add<T>);
+    macro_member_binary_tube_real(operator_tube_add<T>)
 
   /**
    * \brief Pointwise addition assignment with a tube of the same codomain type.
@@ -278,7 +278,7 @@ namespace codac2
    */
   template<typename T>
   inline SlicedTube<T>& operator+=(SlicedTube<T>& x1, const SlicedTube<T>& x2)
-    macro_member_binary_tube_tube(operator_tube_add<T>);
+    macro_member_binary_tube_tube(operator_tube_add<T>)
 
   /**
    * \brief Unary minus.
@@ -309,7 +309,7 @@ namespace codac2
    */
   template<typename T>
   inline SlicedTube<T> operator-(const SlicedTube<T>& x1, const SlicedTube<T>& x2)
-    macro_binary_tube_tube(operator_tube_sub<T>,x1);
+    macro_binary_tube_tube(operator_tube_sub<T>,x1)
 
   /**
    * \brief Pointwise difference between a tube and a constant object with matching codomain type.
@@ -326,7 +326,7 @@ namespace codac2
   template<typename T, typename Q>
     requires NonSlicedTube<Q>
   inline SlicedTube<T> operator-(const SlicedTube<T>& x1, const Q& x2)
-    macro_binary_tube_real(operator_tube_sub<T>);
+    macro_binary_tube_real(operator_tube_sub<T>)
 
   /**
    * \brief Pointwise difference between a constant object and a tube with matching codomain type.
@@ -343,7 +343,7 @@ namespace codac2
   template<typename T, typename Q>
     requires NonSlicedTube<Q>
   inline SlicedTube<T> operator-(const Q& x1, const SlicedTube<T>& x2)
-    macro_binary_real_tube(operator_tube_sub<T>);
+    macro_binary_real_tube(operator_tube_sub<T>)
 
   /**
    * \brief Pointwise subtraction assignment with a constant object of matching codomain type.
@@ -355,7 +355,7 @@ namespace codac2
   template<typename T, typename Q>
     requires NonSlicedTube<Q>
   inline SlicedTube<T>& operator-=(SlicedTube<T>& x1, const Q& x2)
-    macro_member_binary_tube_real(operator_tube_sub<T>);
+    macro_member_binary_tube_real(operator_tube_sub<T>)
 
   /**
    * \brief Pointwise subtraction assignment with a tube of the same codomain type.
@@ -366,7 +366,7 @@ namespace codac2
    */
   template<typename T>
   inline SlicedTube<T>& operator-=(SlicedTube<T>& x1, const SlicedTube<T>& x2)
-    macro_member_binary_tube_tube(operator_tube_sub<T>);
+    macro_member_binary_tube_tube(operator_tube_sub<T>)
 
   /**
    * \brief Pointwise multiplication of a scalar interval and a tube.
@@ -383,7 +383,7 @@ namespace codac2
   template<typename T>
     requires (!std::is_same_v<T, double>)
   inline SlicedTube<T> operator*(const Interval& x1, const SlicedTube<T>& x2)
-    macro_binary_real_tube(operator_tube_scal_mul<T>);
+    macro_binary_real_tube(operator_tube_scal_mul<T>)
 
   /**
    * \brief Pointwise multiplication of a tube by a scalar interval.
@@ -400,7 +400,7 @@ namespace codac2
   template<typename T>
     requires (!std::is_same_v<T, double>)
   inline SlicedTube<T> operator*(const SlicedTube<T>& x1, const Interval& x2)
-    macro_binary_tube_real(operator_tube_mul_scal<T>);
+    macro_binary_tube_real(operator_tube_mul_scal<T>)
 
   /**
    * \brief Pointwise multiplication of two scalar interval tubes.
@@ -412,7 +412,7 @@ namespace codac2
    * \return The resulting scalar interval tube.
    */
   inline SlicedTube<Interval> operator*(const SlicedTube<Interval>& x1, const SlicedTube<Interval>& x2)
-    macro_binary_tube_tube(operator_tube_mul<Interval>,x1);
+    macro_binary_tube_tube(operator_tube_mul<Interval>,x1)
 
   /**
    * \brief Pointwise multiplication of two interval-vector tubes.
@@ -424,7 +424,7 @@ namespace codac2
    * \return The resulting interval-vector tube.
    */
   inline SlicedTube<IntervalVector> operator*(const SlicedTube<IntervalVector>& x1, const SlicedTube<IntervalVector>& x2)
-    macro_binary_tube_tube(operator_tube_mul<IntervalVector>,x1);
+    macro_binary_tube_tube(operator_tube_mul<IntervalVector>,x1)
 
   /**
    * \brief Pointwise multiplication of two interval-matrix tubes.
@@ -436,7 +436,7 @@ namespace codac2
    * \return The resulting interval-matrix tube.
    */
   inline SlicedTube<IntervalMatrix> operator*(const SlicedTube<IntervalMatrix>& x1, const SlicedTube<IntervalMatrix>& x2)
-    macro_binary_tube_tube(operator_tube_mul<IntervalMatrix>,x1);
+    macro_binary_tube_tube(operator_tube_mul<IntervalMatrix>,x1)
 
   /**
    * \brief Pointwise multiplication of a scalar interval tube and a non-scalar tube.
@@ -452,7 +452,7 @@ namespace codac2
   template<typename T>
     requires NonScalarTubeCodomain<T>
   inline SlicedTube<T> operator*(const SlicedTube<Interval>& x1, const SlicedTube<T>& x2)
-    macro_binary_tube_tube(operator_tube_mul<T>,x2);
+    macro_binary_tube_tube(operator_tube_mul<T>,x2)
 
   /**
    * \brief Pointwise multiplication of a non-scalar tube and a scalar interval tube.
@@ -468,7 +468,7 @@ namespace codac2
   template<typename T>
     requires NonScalarTubeCodomain<T>
   inline SlicedTube<T> operator*(const SlicedTube<T>& x1, const SlicedTube<Interval>& x2)
-    macro_binary_tube_tube(operator_tube_mul<T>,x1);
+    macro_binary_tube_tube(operator_tube_mul<T>,x1)
 
   /**
    * \brief Pointwise multiplication of a tube and a constant object with matching codomain type.
@@ -485,7 +485,7 @@ namespace codac2
   template<typename T, typename Q>
     requires NonSlicedTube<Q>
   inline SlicedTube<T> operator*(const SlicedTube<T>& x1, const Q& x2)
-    macro_binary_tube_real(operator_tube_mul<T>);
+    macro_binary_tube_real(operator_tube_mul<T>)
 
   /**
    * \brief Pointwise multiplication of a constant object and a tube with matching codomain type.
@@ -502,7 +502,7 @@ namespace codac2
   template<typename T, typename Q>
     requires NonSlicedTube<Q>
   inline SlicedTube<T> operator*(const Q& x1, const SlicedTube<T>& x2)
-    macro_binary_real_tube(operator_tube_mul<T>);
+    macro_binary_real_tube(operator_tube_mul<T>)
 
   /**
    * \brief Pointwise multiplication of an interval-matrix tube by an interval-vector tube.
@@ -514,7 +514,7 @@ namespace codac2
    * \return The resulting interval-vector tube.
    */
   inline SlicedTube<IntervalVector> operator*(const SlicedTube<IntervalMatrix>& x1, const SlicedTube<IntervalVector>& x2)
-    macro_binary_tube_tube(operator_tube_mul_vec,x2);
+    macro_binary_tube_tube(operator_tube_mul_vec,x2)
 
   /**
    * \brief Pointwise multiplication assignment with a constant object of matching codomain type.
@@ -526,7 +526,7 @@ namespace codac2
   template<typename T, typename Q>
     requires NonSlicedTube<Q>
   inline SlicedTube<T>& operator*=(SlicedTube<T>& x1, const Q& x2)
-    macro_member_binary_tube_real(operator_tube_mul<T>);
+    macro_member_binary_tube_real(operator_tube_mul<T>)
 
   /**
    * \brief Pointwise multiplication assignment with a tube of the same codomain type.
@@ -537,7 +537,7 @@ namespace codac2
    */
   template<typename T>
   inline SlicedTube<T>& operator*=(SlicedTube<T>& x1, const SlicedTube<T>& x2)
-    macro_member_binary_tube_tube(operator_tube_mul<T>);
+    macro_member_binary_tube_tube(operator_tube_mul<T>)
 
   /**
    * \brief Pointwise multiplication assignment by a scalar interval tube.
@@ -553,7 +553,7 @@ namespace codac2
   template<typename T>
     requires NonScalarTubeCodomain<T>
   inline SlicedTube<T>& operator*=(SlicedTube<T>& x1, const SlicedTube<Interval>& x2)
-    macro_member_binary_tube_tube(operator_tube_mul<T>);
+    macro_member_binary_tube_tube(operator_tube_mul<T>)
 
   /**
    * \brief Pointwise division of a tube by a scalar interval.
@@ -570,7 +570,7 @@ namespace codac2
   template<typename T>
     requires (!std::is_same_v<T, double>)
   inline SlicedTube<T> operator/(const SlicedTube<T>& x1, const Interval& x2)
-    macro_binary_tube_real(operator_tube_div_scal<T>);
+    macro_binary_tube_real(operator_tube_div_scal<T>)
 
   /**
    * \brief Pointwise division of two scalar interval tubes.
@@ -582,7 +582,7 @@ namespace codac2
    * \return The resulting scalar interval tube.
    */
   inline SlicedTube<Interval> operator/(const SlicedTube<Interval>& x1, const SlicedTube<Interval>& x2)
-    macro_binary_tube_tube(operator_tube_div<Interval>,x1);
+    macro_binary_tube_tube(operator_tube_div<Interval>,x1)
 
   /**
    * \brief Pointwise division of a non-scalar tube by a scalar interval tube.
@@ -598,7 +598,7 @@ namespace codac2
   template<typename T>
     requires NonScalarTubeCodomain<T>
   inline SlicedTube<T> operator/(const SlicedTube<T>& x1, const SlicedTube<Interval>& x2)
-    macro_binary_tube_tube(operator_tube_div<T>,x1);
+    macro_binary_tube_tube(operator_tube_div<T>,x1)
 
   /**
    * \brief Pointwise division of a tube by a constant object with matching codomain type.
@@ -615,7 +615,7 @@ namespace codac2
   template<typename T, typename Q>
     requires NonSlicedTube<Q>
   inline SlicedTube<T> operator/(const SlicedTube<T>& x1, const Q& x2)
-    macro_binary_tube_real(operator_tube_div<T>);
+    macro_binary_tube_real(operator_tube_div<T>)
 
   /**
    * \brief Pointwise division of a constant object by a tube with matching codomain type.
@@ -632,7 +632,7 @@ namespace codac2
   template<typename T, typename Q>
     requires NonSlicedTube<Q>
   inline SlicedTube<T> operator/(const Q& x1, const SlicedTube<T>& x2)
-    macro_binary_real_tube(operator_tube_div<T>);
+    macro_binary_real_tube(operator_tube_div<T>)
 
   /**
    * \brief Pointwise division assignment with a constant object of matching codomain type.
@@ -644,7 +644,7 @@ namespace codac2
   template<typename T, typename Q>
     requires NonSlicedTube<Q>
   inline SlicedTube<T>& operator/=(SlicedTube<T>& x1, const Q& x2)
-    macro_member_binary_tube_real(operator_tube_div<T>);
+    macro_member_binary_tube_real(operator_tube_div<T>)
 
   /**
    * \brief Pointwise division assignment with a tube of the same codomain type.
@@ -655,7 +655,7 @@ namespace codac2
    */
   template<typename T>
   inline SlicedTube<T>& operator/=(SlicedTube<T>& x1, const SlicedTube<T>& x2)
-    macro_member_binary_tube_tube(operator_tube_div<T>);
+    macro_member_binary_tube_tube(operator_tube_div<T>)
 
   /**
    * \brief Pointwise division assignment by a scalar interval tube.
@@ -671,7 +671,7 @@ namespace codac2
   template<typename T>
     requires NonScalarTubeCodomain<T>
   inline SlicedTube<T>& operator/=(SlicedTube<T>& x1, const SlicedTube<Interval>& x2)
-    macro_member_binary_tube_tube(operator_tube_div<T>);
+    macro_member_binary_tube_tube(operator_tube_div<T>)
 
   /**
    * \brief Pointwise square of a scalar interval tube.

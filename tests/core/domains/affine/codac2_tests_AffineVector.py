@@ -607,8 +607,17 @@ class TestAffineVector(unittest.TestCase):
     result = (u + v) / 3.
 
     # (2*x-y+x+3*y)/3 = x + 2*y/3.
+    # The division goes through a genuine affine*affine multiplication (by
+    # a fresh, zero-noise-symbol form enclosing 1/3), which runs the AF2
+    # quadratic-remainder band. That band tracks every rounding step with
+    # exact error-free transforms (twoSum/twoProd) rather than a coarser
+    # relative-error bound, so it can pick up a few extra ULPs of radius
+    # whenever an intermediate sum (here Sp, Sm) isn't itself an exact
+    # double -- still a sound enclosure, just past the tighter ERROR used
+    # elsewhere in this file. Mirrors DIV_ERROR of the C++ test.
+    DIV_ERROR = sys.float_info.epsilon*200
     self.assertTrue(result == Approx_AffineVector(
-      IntervalVector([[-1./3.,2.],[1./3.,19./3.],[2.,20./3.]]), ERROR))
+      IntervalVector([[-1./3.,2.],[1./3.,19./3.],[2.,20./3.]]), DIV_ERROR))
 
   def test_product_by_interval_scalar(self):
 

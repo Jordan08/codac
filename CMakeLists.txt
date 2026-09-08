@@ -221,6 +221,15 @@
 
       if(CODAC_MSVC_ASAN_RUNTIME_DLL)
         add_compile_options($<$<CONFIG:Debug>:/fsanitize=address>)
+        # Incremental linking cannot be combined with ASan: the linker drops
+        # /INCREMENTAL as soon as an input module carries ASan metadata, and
+        # says so once per link (warning LNK4300, 870 times across the five
+        # MSVC Debug jobs of .github/workflows/windebugmatrix.yml, VS 2022 and
+        # VS 2026 alike). Asking for it off removes the cause rather than the
+        # message, and leaves LNK4300 free to report any other option ASan
+        # would silently disable. One item per generator expression, for the
+        # DIRECTORY-scope reason explained below.
+        add_link_options($<$<CONFIG:Debug>:/INCREMENTAL:NO>)
         # Enabling ASan on MSVC also switches on the MSVC STL's own
         # "container annotation" instrumentation for std::string,
         # std::vector and (recent toolsets) std::optional: it poisons
@@ -274,7 +283,6 @@
       # apply project-wide, not to one target), so instead each flag gets
       # its own single-flag generator expression below.
       add_compile_options($<$<CONFIG:Debug>:-Wreturn-type>)
-      add_compile_options($<$<CONFIG:Debug>:-Wno-unused-parameter>)
       add_compile_options($<$<CONFIG:Debug>:-fno-omit-frame-pointer>)
       add_compile_options($<$<CONFIG:Debug>:-g>)
       add_compile_options($<$<CONFIG:Debug>:-O0>)
@@ -392,7 +400,23 @@
         message(STATUS "FMA is supported but left disabled: GCC targeting Windows cannot align the stack for the AVX code it enables.")
       endif()
   elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
-      check_cxx_compiler_flag("-mfma" COMPILER_SUPPORTS_FMA)
+      # Probe what -mfma does, not whether the driver accepts it. Clang accepts
+      # an ISA flag it cannot honour -- on arm64 it takes -mfma, ignores it, and
+      # merely warns -- so check_cxx_compiler_flag() reports success and every
+      # translation unit then carries a flag with no effect. That is where the
+      # 1138 -Wunused-command-line-argument warnings of the macOS arm64 jobs came
+      # from. __FMA__ is defined only when FMA is actually turned on for the
+      # target, so compiling against it asks the question we mean to ask, and
+      # keeps working for any future ISA flag handled the same way.
+      include(CheckCXXSourceCompiles)
+      set(CMAKE_REQUIRED_FLAGS "-mfma")
+      check_cxx_source_compiles("
+        #ifndef __FMA__
+        #error -mfma was accepted but had no effect on this target
+        #endif
+        int main() { return 0; }"
+        COMPILER_SUPPORTS_FMA)
+      unset(CMAKE_REQUIRED_FLAGS)
       if(COMPILER_SUPPORTS_FMA)
         add_compile_options(-mfma )
         set(CODAC_ARCH_CXX_FLAGS "-mfma")
@@ -444,6 +468,40 @@
 
 
 ################################################################################
+# Treating dependencies' headers as system headers
+################################################################################
+
+  # This project compiles with /W4 or -Wall -Wextra -Wpedantic, and a dependency
+  # pulled in with FetchContent inherits that level: its headers are ordinary
+  # include directories, not system ones. Eigen and Catch2 alone accounted for
+  # about 8300 MSVC warnings per job (C4459, C5054, C4308, C4324) and the 557
+  # -Wc2y-extensions Clang reports for Catch2's __COUNTER__, drowning the
+  # handful of warnings that actually belong to Codac.
+  #
+  # FetchContent_Declare(... SYSTEM) does exactly this, but only since CMake
+  # 3.25, while this project accepts 3.14. Setting the property by hand is
+  # equivalent and has worked for far longer: the compiler then receives
+  # -isystem (or /external:I, which CMake already emits for the Visual Studio
+  # generator alongside /external:W0).
+  function(codac_mark_target_system tgt)
+    if(NOT TARGET ${tgt})
+      return()
+    endif()
+    # A property cannot be set on an ALIAS, so resolve it to the target it names
+    # (Eigen exports Eigen3::Eigen as an alias of eigen).
+    get_target_property(_aliased ${tgt} ALIASED_TARGET)
+    if(_aliased)
+      set(tgt ${_aliased})
+    endif()
+    get_target_property(_inc ${tgt} INTERFACE_INCLUDE_DIRECTORIES)
+    if(_inc)
+      set_target_properties(${tgt} PROPERTIES
+                            INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${_inc}")
+    endif()
+  endfunction()
+
+
+################################################################################
 # Looking for Eigen3
 ################################################################################
 
@@ -458,6 +516,9 @@
     FetchContent_Declare(Eigen3 URL http://github.com/codac-team/eigen/archive/refs/heads/eigen-5.0.zip)
     #FetchContent_Declare(Eigen3 URL ${CMAKE_CURRENT_SOURCE_DIR}/3rd/eigen-a0dc3994bd5d4e804dab58decb78c56a5af516ba.zip) # If needed to be self-contained...
     FetchContent_MakeAvailable(Eigen3)
+    # Only needed for the FetchContent path: a target coming from
+    # find_package() is IMPORTED, and CMake already treats those as system.
+    codac_mark_target_system(Eigen3::Eigen)
   endif()
   # Adds Eigen3::Eigen
 
