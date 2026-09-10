@@ -74,17 +74,19 @@
 
     # Copying _static files of Sphinx to build directories
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/manual/_static")
-      file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/manual/_static/"
-           DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/manual/_static/"
-           DIRECTORY
+      execute_process(
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+          "${CMAKE_CURRENT_SOURCE_DIR}/manual/_static"
+          "${CMAKE_CURRENT_BINARY_DIR}/manual/_static"
       )
     endif()
 
     # Copying tmp files
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/manual/tmp")
-      file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/manual/tmp/"
-           DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/manual/tmp/"
-           DIRECTORY
+      execute_process(
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+          "${CMAKE_CURRENT_SOURCE_DIR}/manual/tmp"
+          "${CMAKE_CURRENT_BINARY_DIR}/manual/tmp"
       )
     endif()
 
