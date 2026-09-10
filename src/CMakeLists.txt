@@ -6,6 +6,14 @@
 # Compiling sources
 # =================
 
+  # Emptied here, then appended to by each module below through
+  # codac_publish_include_dirs(). It is a cache entry, so it survives a
+  # reconfigure: without this reset it would grow a duplicate of every
+  # directory on each run, and would keep the directories of a module that has
+  # since been switched off (capd, sympy).
+  set(CODAC_SOURCE_INCLUDE_DIRS "" CACHE INTERNAL
+      "Directories holding the public headers of the codac modules")
+
   add_subdirectory(core)
   add_subdirectory(graphics)
   add_subdirectory(unsupported)

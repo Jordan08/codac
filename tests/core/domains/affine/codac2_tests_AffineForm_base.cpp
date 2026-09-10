@@ -22,6 +22,7 @@
 #include <cmath>
 #include <limits>
 #include <sstream>
+#include <stdexcept>
 #include <type_traits>
 #include <vector>
 #include "codac2_Affine.h"
@@ -1137,3 +1138,283 @@ TEST_CASE("AffineMain size(), init() and init_from_list() reinitialize in place"
 }
 
 
+
+
+TEST_CASE("AffineForm inequality operators compare the interval enclosures")
+{
+  AffineTVarVector ax(2);
+  ax[0] = Interval(1.0, 2.0);
+  ax[1] = Interval(1.0, 3.0);
+
+  // operator!= is the negation of operator==, and like it compares the
+  // interval enclosures only: two affine forms with the same enclosure but
+  // unrelated dependencies still compare equal.
+  CHECK(ax[0] != ax[1]);
+  CHECK_FALSE(ax[0] != ax[0]);
+
+  CHECK(ax[0] != Interval(1.0, 3.0));
+  CHECK_FALSE(ax[0] != Interval(1.0, 2.0));
+
+  CHECK(ax[0] != 1.0);
+  CHECK_FALSE(AffineT(Interval(4.0)) != 4.0);
+
+  // Two forms built on different noise symbols but with the same enclosure.
+  CHECK(AffineT(ax[0]) == AffineT(Interval(1.0, 2.0)));
+  CHECK_FALSE(AffineT(ax[0]) != AffineT(Interval(1.0, 2.0)));
+}
+
+
+TEST_CASE("AffineForm set-relation predicates also accept an Interval argument")
+{
+  // The predicates taking an Interval are separate overloads from the ones
+  // taking an AffineMain, each forwarding to the matching Interval method.
+  // The suite above only exercised the affine-argument ones for several of
+  // them, so the interval-argument overloads are covered here.
+  AffineTVarVector ax(3);
+  ax[0] = Interval(1.0, 2.0);
+  ax[1] = Interval(0.0, 3.0);
+  ax[2] = Interval(5.0, 6.0);
+
+  CHECK(ax[0].is_strict_subset(Interval(0.0, 3.0)));
+  CHECK_FALSE(ax[0].is_strict_subset(Interval(1.0, 2.0)));
+
+  CHECK(ax[1].is_strict_superset(Interval(1.0, 2.0)));
+  CHECK_FALSE(ax[1].is_strict_superset(Interval(0.0, 3.0)));
+
+  CHECK(ax[0].intersects(Interval(1.5, 4.0)));
+  CHECK_FALSE(ax[0].intersects(Interval(5.0, 6.0)));
+
+  CHECK(ax[0].overlaps(Interval(1.5, 4.0)));
+  CHECK_FALSE(ax[0].overlaps(Interval(2.0, 4.0)));   // touching bounds only
+
+  CHECK(ax[0].is_disjoint(Interval(5.0, 6.0)));
+  CHECK_FALSE(ax[0].is_disjoint(Interval(1.5, 4.0)));
+
+  // The interior variants against another affine form.
+  CHECK(ax[0].is_interior_subset(ax[1]));
+  CHECK_FALSE(ax[1].is_interior_subset(ax[0]));
+  CHECK(ax[0].is_strict_interior_subset(ax[1]));
+  CHECK_FALSE(ax[1].is_strict_interior_subset(ax[1]));
+
+  // set_empty() is the in-place counterpart of the empty() factory.
+  AffineT x(Interval(1.0, 2.0));
+  REQUIRE_FALSE(x.is_empty());
+  x.set_empty();
+  CHECK(x.is_empty());
+  CHECK(x.itv().is_empty());
+}
+
+
+TEST_CASE("Self-assignment leaves an affine form untouched")
+{
+  // AffineMain::operator=(const AffineMain&) returns early when both sides
+  // are the same object: without that guard it would release its own
+  // coefficient storage before reading it back.
+  AffineTVarVector ax(2);
+  ax[0] = Interval(1.0, 2.0);
+
+  AffineT x = ax[0];
+  AffineT& alias = x;   // hides the self-assignment from -Wself-assign-overloaded
+  alias = x;
+
+  CHECK(x.itv() == Interval(1.0, 2.0));
+  CHECK(x.noise_count() == 2);
+  CHECK(x.noise(0) == 0.5);
+  CHECK(x.noise(1) == 0.0);
+  CHECK(x.mid() == 1.5);
+}
+
+
+TEST_CASE("Half-infinite assignments saturate the stored bound")
+{
+  // A half-infinite affine form keeps its finite bound in _elt._err, which
+  // cannot hold a value beyond the largest double. An interval whose finite
+  // bound is already at (or beyond) that limit is therefore saturated.
+  const double dbl_max = std::numeric_limits<double>::max();
+
+  AffineT upper;
+  upper = Interval(dbl_max, oo);
+  CHECK(upper.is_unbounded());
+  CHECK(upper.itv() == Interval(dbl_max, oo));
+
+  AffineT lower;
+  lower = Interval(-oo, -dbl_max);
+  CHECK(lower.is_unbounded());
+  CHECK(lower.itv() == Interval(-oo, -dbl_max));
+
+  // The ordinary case keeps the bound as it stands.
+  AffineT ordinary;
+  ordinary = Interval(3.0, oo);
+  CHECK(ordinary.itv() == Interval(3.0, oo));
+}
+
+
+TEST_CASE("inflate on a non-active or infinitely inflated form falls back on the interval")
+{
+  // An inactive affine form has no coefficient representation to widen, so
+  // inflate() goes through the interval enclosure instead.
+  AffineT unbounded;                       // [-oo,oo]
+  REQUIRE_FALSE(unbounded.is_active());
+  unbounded.inflate(2.0);
+  CHECK(unbounded.itv() == Interval(-oo, oo));
+
+  AffineT half;
+  half = Interval(1.0, oo);
+  half.inflate(3.0);
+  CHECK(half.itv() == Interval(-2.0, oo));
+
+  AffineT empty_form = AffineT::empty();
+  empty_form.inflate(1.0);
+  CHECK(empty_form.is_empty());
+
+  // An infinite radius destroys every coefficient of an active form, which
+  // therefore collapses onto [-oo,oo].
+  AffineTVarVector ax(1);
+  ax[0] = Interval(1.0, 2.0);
+  AffineT active = ax[0];
+  REQUIRE(active.is_active());
+  active.inflate(oo);
+  CHECK(active.itv() == Interval(-oo, oo));
+
+  // A zero radius is a no-op on every status.
+  AffineT untouched = ax[0];
+  untouched.inflate(0.0);
+  CHECK(untouched.itv() == Interval(1.0, 2.0));
+}
+
+
+TEST_CASE("compact rejects a meaningless tolerance and absorbs sub-epsilon remainders")
+{
+  AffineTVarVector ax(1);
+  ax[0] = Interval(1.0, 2.0);
+
+  // A negative or non-finite threshold has no compacting semantics: the
+  // form must come out of it bit-for-bit unchanged.
+  for (const double tol : { -1.0,
+                            -std::numeric_limits<double>::infinity(),
+                            std::numeric_limits<double>::quiet_NaN() })
+  {
+    CAPTURE(tol);
+    AffineT x = ax[0];
+    x.compact(tol);
+    CHECK(x.itv() == Interval(1.0, 2.0));
+    CHECK(x.noise(0) == 0.5);
+    CHECK(x.err() == 0.0);
+  }
+
+  // A coefficient below the threshold moves into the remainder. Here the
+  // whole remainder stays under AF_EC (2^-55), the scale below which the
+  // representation rounds it to zero rather than keeping it as a coefficient.
+  AffineTVarVector tiny(1);
+  tiny[0] = Interval(0.0, 1.e-18);
+  AffineT y = tiny[0];
+  REQUIRE(y.is_active());
+  REQUIRE(y.noise(0) != 0.0);
+
+  const Interval before = y.itv();
+  y.compact(1.e-6);
+  CHECK(y.noise(0) == 0.0);
+  CHECK(y.itv().is_superset(before));
+  CHECK(y.itv().diam() <= 4.0*before.diam() + 1.e-30);
+}
+
+
+TEST_CASE("AF_fAF2 square collapses a sub-epsilon centre and saturates on overflow")
+{
+  // The quadratic remainder of a narrow form centred on zero is far below
+  // AF_EC, so the centre it is added to rounds back to exactly zero and the
+  // whole magnitude is carried by the remainder term.
+  AffineTVarVector narrow(1);
+  narrow[0] = Interval(-1.e-9, 1.e-9);
+  const AffineT small_square = sqr(narrow[0]);
+  CHECK(small_square.itv().is_superset(sqr(Interval(-1.e-9, 1.e-9))));
+  CHECK(small_square.mid() == 0.0);
+
+  // Squaring a form whose coefficients are near the square root of the
+  // largest double overflows the quadratic term; the result then has to fall
+  // back on [-oo,oo] rather than keep a non-finite coefficient.
+  AffineTVarVector huge(1);
+  huge[0] = Interval(-1.e200, 1.e200);
+  const AffineT big_square = sqr(huge[0]);
+  CHECK(big_square.is_unbounded());
+  CHECK(big_square.itv().is_superset(Interval(0.0, oo)));
+}
+
+
+TEST_CASE("init_from_list rejects a list that is not of one or two values")
+{
+  // An affine form is defined by a point or by a pair of bounds; any other
+  // list length is a caller error and is reported through the assertion
+  // layer, exactly as Interval::init_from_list does. A FAST_RELEASE build
+  // compiles that layer out, which is the one configuration where nothing
+  // is raised -- the guard below mirrors the one in codac2_assert.h.
+#if !(defined(FAST_RELEASE) && defined(NDEBUG))
+  AffineT x(Interval(1.0, 3.0));
+  CHECK_THROWS_AS(x.init_from_list({1.0, 2.0, 3.0}), std::invalid_argument);
+
+  AffineT empty_list(Interval(0.0, 1.0));
+  CHECK_THROWS_AS(empty_list.init_from_list({}), std::invalid_argument);
+#endif
+
+  // The two accepted lengths keep working, whatever the build.
+  AffineT single(Interval(0.0, 1.0));
+  single.init_from_list({4.0});
+  CHECK(single.itv() == Interval(4.0));
+
+  AffineT pair(Interval(0.0, 1.0));
+  pair.init_from_list({1.0, 3.0});
+  CHECK(pair.itv() == Interval(1.0, 3.0));
+}
+
+
+TEST_CASE("An affine variable saturates a half-infinite component at construction")
+{
+  // AffineVarMainVector builds each component through the noise-symbol
+  // constructor rather than through operator=(const Interval&), so it has
+  // its own copy of the status dispatch -- including the saturation of a
+  // finite bound that already sits at the largest double.
+  const double dbl_max = std::numeric_limits<double>::max();
+
+  AffineTVarVector ax(IntervalVector({
+    Interval(dbl_max, oo),
+    Interval(-oo, -dbl_max),
+    Interval(3.0, oo),
+    Interval(-oo, 3.0),
+    Interval(-oo, oo),
+    Interval::empty()
+  }));
+
+  CHECK(ax[0].itv() == Interval(dbl_max, oo));
+  CHECK(ax[1].itv() == Interval(-oo, -dbl_max));
+  CHECK(ax[2].itv() == Interval(3.0, oo));
+  CHECK(ax[3].itv() == Interval(-oo, 3.0));
+  CHECK(ax[4].itv() == Interval(-oo, oo));
+  CHECK(ax[5].is_empty());
+
+  for(Index i = 0; i < ax.size(); ++i)
+  {
+    CAPTURE(i);
+    CHECK_FALSE(ax[i].is_active());
+  }
+}
+
+
+TEST_CASE("Adding an empty interval empties the affine form")
+{
+  // operator+=(const Interval&) dispatches on the interval before touching
+  // any coefficient: an empty operand empties the result whatever the form
+  // it is added to.
+  AffineTVarVector ax(1);
+  ax[0] = Interval(1.0, 2.0);
+
+  AffineT active = ax[0];
+  active += Interval::empty();
+  CHECK(active.is_empty());
+
+  CHECK((ax[0] + Interval::empty()).is_empty());
+  CHECK((ax[0] - Interval::empty()).is_empty());
+
+  AffineT unbounded;
+  unbounded += Interval::empty();
+  CHECK(unbounded.is_empty());
+}

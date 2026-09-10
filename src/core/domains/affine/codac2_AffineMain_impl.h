@@ -86,7 +86,7 @@ inline AffineMain<T>& AffineMain<T>::init_from_list(const std::list<double>& l)
 
 	else
 	{
-		assert_release("'Affine' can only be defined by one or two 'double' values.");
+		assert_release_unreachable("'Affine' can only be defined by one or two 'double' values.");
 	}
 
 	return *this;

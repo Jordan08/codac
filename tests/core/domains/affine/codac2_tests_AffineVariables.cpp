@@ -459,3 +459,59 @@ TEST_CASE("AffineVarMain init() and init(Interval) place the radius on this vari
 }
 
 
+
+
+TEST_CASE("AffineVarMainVector resizing to zero empties the container",
+          "[AffineTVarVector][resize]")
+{
+    // Both resizing routines take a dedicated early exit at n2 == 0: with no
+    // component left there is no noise symbol to hand out, so they drop
+    // straight to Eigen's resize instead of walking the loop below it.
+    AffineTVarVector reset(IntervalVector({{1.0, 2.0}, {3.0, 4.0}}));
+    reset.resize(0);
+    CHECK(reset.size() == 0);
+
+    AffineTVarVector preserved(IntervalVector({{1.0, 2.0}, {3.0, 4.0}}));
+    preserved.conservativeResize(0);
+    CHECK(preserved.size() == 0);
+
+    // Growing back from zero re-creates a full set of sequential symbols.
+    reset.resize(2);
+    REQUIRE(reset.size() == 2);
+    for (Index i = 0; i < reset.size(); ++i)
+    {
+        CAPTURE(i);
+        CHECK(reset[i].noise_index() == i);
+        CHECK(reset[i].itv() == Interval());
+    }
+
+    // Resizing to the size already held leaves every component untouched.
+    AffineTVarVector unchanged(IntervalVector({{1.0, 2.0}, {3.0, 4.0}}));
+    unchanged.conservativeResize(2);
+    CHECK(unchanged[0].itv() == Interval(1.0, 2.0));
+    CHECK(unchanged[1].itv() == Interval(3.0, 4.0));
+    unchanged.resize(2);
+    CHECK(unchanged[0].itv() == Interval(1.0, 2.0));
+    CHECK(unchanged[1].itv() == Interval(3.0, 4.0));
+}
+
+
+TEST_CASE("Self-assignment leaves an affine variable untouched",
+          "[AffineTVar][assignment]")
+{
+    AffineTVarVector v(IntervalVector({{1.0, 2.0}, {3.0, 4.0}}));
+
+    // Assigning a variable to itself must not go through the
+    // "reassign from the interval enclosure" path, which would be a no-op
+    // here but reads the storage it is about to overwrite. The assignment is
+    // written through a reference so that it is not syntactically a
+    // self-assignment, which -Wself-assign-overloaded would reject.
+    AffineVarMain<Model>& first = v[0];
+    first = v[0];
+
+    CHECK(v[0].itv() == Interval(1.0, 2.0));
+    CHECK(v[0].noise_index() == 0);
+    CHECK(v[0].noise(0) == 0.5);
+    CHECK(v[0].noise(1) == 0.0);
+    CHECK(v[0].err() == 0.0);
+}

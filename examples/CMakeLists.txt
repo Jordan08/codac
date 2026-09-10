@@ -106,6 +106,13 @@ if(BUILD_TESTS AND TEST_EXAMPLES)
       ${EXAMPLE_NAME}
       SYSTEM PUBLIC
 
+        # First, so that a header is opened at src/... rather than through
+        # its symbolic link in build/include: the path a translation unit used
+        # is the path gcov records, and the two spellings would split every
+        # header into two entries in the coverage report. See
+        # codac_publish_include_dirs() in the top-level CMakeLists.txt.
+        ${CODAC_SOURCE_INCLUDE_DIRS}
+
         ${CMAKE_BINARY_DIR}/src      # the generated "codac" umbrella header
         ${CMAKE_BINARY_DIR}/include  # codac-core.h, codac-graphics.h and the rest
     )

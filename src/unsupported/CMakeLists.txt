@@ -18,13 +18,17 @@
   #endif()
 
   add_library(${PROJECT_NAME}-unsupported ${CODAC_UNSUPPORTED_SRC})
-  target_include_directories(${PROJECT_NAME}-unsupported PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/3rd/ipe
-    ${CMAKE_CURRENT_SOURCE_DIR}/3rd/vibes
-    ${CMAKE_CURRENT_SOURCE_DIR}/figures
-    ${CMAKE_CURRENT_SOURCE_DIR}/paver
-    ${CMAKE_CURRENT_SOURCE_DIR}/styles
-  )
+
+  # The directory holding the public unsupported headers. The list used to be
+  # a copy of the graphics one (3rd/ipe, figures, paver, styles), none of which
+  # exists here: this module keeps its single header at its own root, so that
+  # is what has to be on the include path -- and what consumers must reach it
+  # through rather than through its link in build/include, see
+  # codac_publish_include_dirs() in the top-level CMakeLists.txt.
+  set(CODAC_UNSUPPORTED_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
+
+  target_include_directories(${PROJECT_NAME}-unsupported PUBLIC ${CODAC_UNSUPPORTED_INCLUDE_DIRS})
+  codac_publish_include_dirs(${CODAC_UNSUPPORTED_INCLUDE_DIRS})
   target_link_libraries(${PROJECT_NAME}-unsupported PUBLIC ${PROJECT_NAME}-core Eigen3::Eigen)
   
 
@@ -45,7 +49,7 @@
   foreach(srcfile ${CODAC_UNSUPPORTED_SRC})
     if(srcfile MATCHES "\\.h$" OR srcfile MATCHES "\\.hpp$")
       list(APPEND CODAC_UNSUPPORTED_HDR ${srcfile})
-      file(COPY ${srcfile} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../../include)
+      codac_link_header_into_build_tree(${srcfile})
     endif()
   endforeach()
 
@@ -58,7 +62,7 @@
     get_filename_component(header_name ${header_path} NAME)
     file(APPEND ${CODAC_UNSUPPORTED_MAIN_HEADER} "#include <${header_name}>\n")
   endforeach()
-  file(COPY ${CODAC_UNSUPPORTED_MAIN_HEADER} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../../include)
+  codac_link_header_into_build_tree(${CODAC_UNSUPPORTED_MAIN_HEADER})
 
 # Install files in system directories
 

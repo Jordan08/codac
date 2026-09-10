@@ -287,38 +287,13 @@ endif()
 #
 # Therefore there is only one physical copy of each header.
 
-set(CODAC_CORE_SOURCE_INCLUDE_DIRS
-
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/core/actions
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/core/contractors
-
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/core/domains
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/core/domains/ellipsoid
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/core/domains/interval
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/core/domains/interval/eigen
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/core/domains/affine
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/core/domains/paving
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/core/domains/zonotope
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/core/domains/tube
-
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/core/functions
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/core/functions/analytic
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/core/functions/set
-
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/core/geometry
-
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/core/matrices
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/core/matrices/eigen/Matrix_addons
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/core/matrices/eigen/MatrixBase_addons
-
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/core/operators
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/core/paver
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/core/peibos
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/core/proj
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/core/separators
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/core/tools
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/core/trajectory
-)
+# CODAC_SOURCE_INCLUDE_DIRS is filled in by the src/*/CMakeLists.txt of every
+# module (core, graphics, unsupported, and capd/sympy when enabled), which are
+# all configured before this directory. Using it rather than a second copy of
+# the same list keeps the tests compiling against exactly the headers the
+# libraries were built from; the copy that used to live here covered core only
+# and had already drifted from it.
+set(CODAC_CORE_SOURCE_INCLUDE_DIRS ${CODAC_SOURCE_INCLUDE_DIRS})
 
 
 set(
@@ -595,19 +570,24 @@ foreach(SRC_TEST ${SRC_TESTS})
   )
 
 
-  # Use the same canonical source headers as codac-core.
+  # Use the same canonical source headers as the libraries, and reach them by
+  # the same path: the source directories come first so that a header is
+  # opened at src/..., not through its symbolic link in build/include. Both
+  # compile identically, but the path used is the path gcov records, and the
+  # two spellings would otherwise split every header into two unrelated
+  # entries in the coverage report (see codac_publish_include_dirs() in the
+  # top-level CMakeLists.txt).
   #
-  # CODAC_HEADERS_DIR is kept as well because it contains generated
-  # umbrella headers such as codac-core.h.
-  # set(CODAC_HEADERS_DIR ${CMAKE_CURRENT_BINARY_DIR}/../include)
+  # CODAC_HEADERS_DIR is kept, after them, because it holds the generated
+  # umbrella headers: codac-core.h, codac-graphics.h and the rest.
 
   target_include_directories(
     ${TEST_NAME}
     SYSTEM PUBLIC
 
-      ${CODAC_HEADERS_DIR}
-
       ${CODAC_CORE_SOURCE_INCLUDE_DIRS}
+
+      ${CODAC_HEADERS_DIR}
   )
 
 

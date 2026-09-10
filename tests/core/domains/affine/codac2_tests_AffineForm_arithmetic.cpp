@@ -14,6 +14,8 @@
 #include "codac2_Affine.h"
 #include "codac2_Approx.h"
 #include <limits>
+#include <string>
+#include <utility>
 #include <vector>
 #include "codac2_Matrix.h"
 #include <iostream>
@@ -2025,6 +2027,435 @@ TEST_CASE("Every linearization encloses the function at each point of the box")
         [](const AffineT& x) { return abs(x); },
         [](const Interval& x) { return abs(x); });
   }
+
+  AffineT::change_mode(AffineT::AF_Lin_Chebyshev);
+}
+
+
+TEST_CASE("Every linearization degrades gracefully on a domain it cannot linearize")
+{
+  using Mode = AffineT::Affine_Mode;
+
+  // Each linearization opens on a guard handing the interval image straight
+  // back: an empty or unbounded domain, an inactive affine form, or a domain
+  // narrower than the rounding of its own midpoint carries no slope to read.
+  // The pointwise suite above only feeds these routines well-formed boxes,
+  // so the guard itself is exercised here, for both modes and every
+  // function, under the same soundness requirement.
+  Interval narrow(0.5);
+  narrow.inflate(std::ldexp(0.5, -52));      // two ulps, well below 2^-49*mag
+
+  Interval narrow_large(3.0);
+  narrow_large.inflate(std::ldexp(3.0, -52));
+
+  const std::vector<Interval> hard_inputs = {
+    Interval::empty(),
+    Interval(-oo, oo),
+    Interval(2.0, oo),
+    Interval(-oo, -2.0),
+    Interval(0.5),                           // singleton: degenerate form
+    narrow,
+    narrow_large
+  };
+
+  for(const Mode mode : { AffineT::AF_Lin_Chebyshev, AffineT::AF_Lin_MinRange })
+  {
+    AffineT::change_mode(mode);
+    CAPTURE(static_cast<int>(mode));
+
+    for(const Interval& input : hard_inputs)
+    {
+      CHECK_POINTWISE_LINEARIZATION("inv", input, Interval(-oo,oo),
+        [](const AffineT& x) { return inv(x); },
+        [](const Interval& x) { return 1.0/x; });
+
+      CHECK_POINTWISE_LINEARIZATION("sqr", input, Interval(-oo,oo),
+        [](const AffineT& x) { return sqr(x); },
+        [](const Interval& x) { return sqr(x); });
+
+      CHECK_POINTWISE_LINEARIZATION("sqrt", input, Interval(0.0,oo),
+        [](const AffineT& x) { return sqrt(x); },
+        [](const Interval& x) { return sqrt(x); });
+
+      CHECK_POINTWISE_LINEARIZATION("exp", input, Interval(-oo,oo),
+        [](const AffineT& x) { return exp(x); },
+        [](const Interval& x) { return exp(x); });
+
+      CHECK_POINTWISE_LINEARIZATION("log", input, Interval(0.0,oo),
+        [](const AffineT& x) { return log(x); },
+        [](const Interval& x) { return log(x); });
+
+      CHECK_POINTWISE_LINEARIZATION("pow(x,3)", input, Interval(-oo,oo),
+        [](const AffineT& x) { return pow(x,3); },
+        [](const Interval& x) { return pow(x,3); });
+
+      CHECK_POINTWISE_LINEARIZATION("pow(x,4)", input, Interval(-oo,oo),
+        [](const AffineT& x) { return pow(x,4); },
+        [](const Interval& x) { return pow(x,4); });
+
+      CHECK_POINTWISE_LINEARIZATION("root(x,3)", input, Interval(-oo,oo),
+        [](const AffineT& x) { return root(x,3); },
+        [](const Interval& x) { return root(x,3); });
+
+      CHECK_POINTWISE_LINEARIZATION("cos", input, Interval(-oo,oo),
+        [](const AffineT& x) { return cos(x); },
+        [](const Interval& x) { return cos(x); });
+
+      CHECK_POINTWISE_LINEARIZATION("sin", input, Interval(-oo,oo),
+        [](const AffineT& x) { return sin(x); },
+        [](const Interval& x) { return sin(x); });
+
+      CHECK_POINTWISE_LINEARIZATION("tan", input, Interval(-oo,oo),
+        [](const AffineT& x) { return tan(x); },
+        [](const Interval& x) { return tan(x); });
+
+      CHECK_POINTWISE_LINEARIZATION("acos", input, Interval(-1.0,1.0),
+        [](const AffineT& x) { return acos(x); },
+        [](const Interval& x) { return acos(x); });
+
+      CHECK_POINTWISE_LINEARIZATION("asin", input, Interval(-1.0,1.0),
+        [](const AffineT& x) { return asin(x); },
+        [](const Interval& x) { return asin(x); });
+
+      CHECK_POINTWISE_LINEARIZATION("atan", input, Interval(-oo,oo),
+        [](const AffineT& x) { return atan(x); },
+        [](const Interval& x) { return atan(x); });
+
+      CHECK_POINTWISE_LINEARIZATION("cosh", input, Interval(-oo,oo),
+        [](const AffineT& x) { return cosh(x); },
+        [](const Interval& x) { return cosh(x); });
+
+      CHECK_POINTWISE_LINEARIZATION("sinh", input, Interval(-oo,oo),
+        [](const AffineT& x) { return sinh(x); },
+        [](const Interval& x) { return sinh(x); });
+
+      CHECK_POINTWISE_LINEARIZATION("tanh", input, Interval(-oo,oo),
+        [](const AffineT& x) { return tanh(x); },
+        [](const Interval& x) { return tanh(x); });
+
+      CHECK_POINTWISE_LINEARIZATION("acosh", input, Interval(1.0,oo),
+        [](const AffineT& x) { return acosh(x); },
+        [](const Interval& x) { return acosh(x); });
+
+      CHECK_POINTWISE_LINEARIZATION("asinh", input, Interval(-oo,oo),
+        [](const AffineT& x) { return asinh(x); },
+        [](const Interval& x) { return asinh(x); });
+
+      CHECK_POINTWISE_LINEARIZATION("atanh", input, Interval(-1.0,1.0),
+        [](const AffineT& x) { return atanh(x); },
+        [](const Interval& x) { return atanh(x); });
+
+      CHECK_POINTWISE_LINEARIZATION("abs", input, Interval(-oo,oo),
+        [](const AffineT& x) { return abs(x); },
+        [](const Interval& x) { return abs(x); });
+    }
+  }
+
+  AffineT::change_mode(AffineT::AF_Lin_Chebyshev);
+}
+
+
+TEST_CASE("MinRange linearizations fall back on a constant band when the slope underflows")
+{
+  // Every MinRange routine reads the slope of smallest magnitude on the
+  // domain. On the domains below that slope rounds down to zero (or to a
+  // non-finite value), which leaves no direction to linearize along: the
+  // affine form must then degenerate into the interval image rather than
+  // build a band around a zero slope it did not verify.
+  AffineT::change_mode(AffineT::AF_Lin_MinRange);
+
+  const std::vector<std::pair<const char*, Interval>> underflowing = {
+    // exp: the image underflows to zero, so the smallest slope does too
+    {"exp",    Interval(-800.0, -750.0)},
+    // sqrt: the domain is wide enough to be linearized, but its
+    // non-negative part -- the only one sqrt is defined on -- is not
+    {"sqrt",   Interval(-1.e-10, 1.e-30)},
+    // atan/asinh: 1+x^2 overflows at the far end of the domain
+    {"atan",   Interval(-1.e200, 1.e200)},
+    {"asinh",  Interval(-1.e200, 1.e200)},
+    // acosh: x^2-1 overflows at the upper bound
+    {"acosh",  Interval(1.0, 1.e200)},
+    // tanh: tanh(x)^2 rounds to 1, so 1-tanh(x)^2 rounds to 0
+    {"tanh",   Interval(-30.0, 30.0)},
+    // root: n*mag(x) overflows, so root(mag)/(n*mag) rounds to 0
+    {"root3",  Interval(1.e307, 1.5e308)}
+  };
+
+  for(const auto& c : underflowing)
+  {
+    const std::string name(c.first);
+    const Interval& input = c.second;
+    CAPTURE(name, input);
+
+    AffineTVarVector variables(IntervalVector({input}));
+    AffineT y;
+    Interval reference;
+
+    if(name == "exp")        { y = exp(variables[0]);   reference = exp(input); }
+    else if(name == "sqrt")  { y = sqrt(variables[0]);  reference = sqrt(input); }
+    else if(name == "atan")  { y = atan(variables[0]);  reference = atan(input); }
+    else if(name == "asinh") { y = asinh(variables[0]); reference = asinh(input); }
+    else if(name == "acosh") { y = acosh(variables[0]); reference = acosh(input); }
+    else if(name == "tanh")  { y = tanh(variables[0]);  reference = tanh(input); }
+    else                     { y = root(variables[0],3); reference = root(input,3); }
+
+    REQUIRE_FALSE(reference.is_empty());
+    REQUIRE_FALSE(y.is_empty());
+    CHECK(y.itv().is_superset(reference));
+
+    // A zero slope means the whole result sits in the constant term: no
+    // noise symbol of the input survives in the affine form.
+    if(y.is_active())
+      CHECK(y.noise(0) == 0.0);
+  }
+
+  AffineT::change_mode(AffineT::AF_Lin_Chebyshev);
+}
+
+
+TEST_CASE("Chebyshev linearizations fall back when the chord slope overflows")
+{
+  AffineT::change_mode(AffineT::AF_Lin_Chebyshev);
+
+  // An affine form is symmetric around a double midpoint, so a domain whose
+  // bounds differ by hundreds of orders of magnitude cannot be represented
+  // without its lower bound rounding down to zero. The reciprocal of the
+  // enclosure is then unbounded and no affine model can be built from it.
+  {
+    const Interval input(1.e-308, 3.e-17);
+    AffineTVarVector variables(IntervalVector({input}));
+    const AffineT y = inv(variables[0]);
+    CAPTURE(input, variables[0].itv(), y.itv());
+    CHECK(y.itv().is_superset(1.0/input));
+    CHECK(y.is_unbounded());
+  }
+
+  // An integer power whose value at a bound overflows: both the even branch
+  // (evaluated at the bounds) and the odd one (evaluated at two interior
+  // sample points) must detect it and hand back the interval image.
+  {
+    const Interval even_input(1.e100, 2.e100);
+    AffineTVarVector variables(IntervalVector({even_input}));
+    const AffineT y = pow(variables[0], 4);
+    CAPTURE(even_input, y.itv());
+    CHECK(y.itv().is_superset(pow(even_input, 4)));
+  }
+  {
+    const Interval odd_input(1.e200, 2.e200);
+    AffineTVarVector variables(IntervalVector({odd_input}));
+    const AffineT y = pow(variables[0], 3);
+    CAPTURE(odd_input, y.itv());
+    CHECK(y.itv().is_superset(pow(odd_input, 3)));
+  }
+
+  // An odd root straddling zero over a domain whose width overflows: the
+  // chord slope rounds to zero and the linearization is abandoned.
+  {
+    const Interval input(-1.e308, 1.e308);
+    AffineTVarVector variables(IntervalVector({input}));
+    const AffineT y = root(variables[0], 3);
+    CAPTURE(input, y.itv());
+    CHECK(y.itv().is_superset(root(input, 3)));
+  }
+}
+
+
+TEST_CASE("Mixed Interval and affine operator overloads")
+{
+  AffineTVarVector ax(1);
+  ax[0] = Interval(2.0, 3.0);
+  const AffineT x = ax[0];
+
+  // operator+(Interval, AffineMain) and operator/(AffineMain, Interval) are
+  // overloads of their own, distinct from the mirrored forms used above.
+  const AffineT sum = Interval(1.0, 2.0) + x;
+  CHECK(sum.itv().is_superset(Interval(3.0, 5.0)));
+  CHECK(sum.itv() == (x + Interval(1.0, 2.0)).itv());
+
+  const AffineT quotient = x / Interval(2.0, 4.0);
+  CHECK(quotient.itv().is_superset(Interval(2.0, 3.0)/Interval(2.0, 4.0)));
+
+  // Symmetric operands, for the record: the affine forms share the same
+  // noise symbol, so the quotient of a variable by itself must contain 1.
+  CHECK((x / Interval(1.0)).itv().is_superset(Interval(2.0, 3.0)));
+}
+
+
+TEST_CASE("Every pow overload accepts its documented argument types")
+{
+  AffineTVarVector ax(1);
+  ax[0] = Interval(2.0, 3.0);
+  const AffineT x = ax[0];
+
+  // pow(Interval, AffineMain) and pow(double, AffineMain): a constant base
+  // raised to an affine exponent.
+  const AffineT interval_base = pow(Interval(2.0, 3.0), x);
+  CHECK(interval_base.itv().is_superset(pow(Interval(2.0, 3.0), Interval(2.0, 3.0))));
+
+  const AffineT scalar_base = pow(2.0, x);
+  CHECK(scalar_base.itv().is_superset(pow(Interval(2.0), Interval(2.0, 3.0))));
+
+  // pow(AffineMain, double): an exponent that happens to be an integer must
+  // go through the integer algorithm, which keeps negative bases valid.
+  AffineTVarVector bx(1);
+  bx[0] = Interval(-3.0, -2.0);
+  CHECK(pow(bx[0], 2.0).itv().is_superset(pow(Interval(-3.0, -2.0), 2)));
+  CHECK(pow(bx[0], 3.0).itv().is_superset(pow(Interval(-3.0, -2.0), 3)));
+
+  // A negative, non-integer exponent is computed as the inverse of the
+  // positive one.
+  CHECK(pow(x, -1.5).itv().is_superset(pow(Interval(2.0, 3.0), Interval(-1.5))));
+  CHECK(pow(x, 1.5).itv().is_superset(pow(Interval(2.0, 3.0), Interval(1.5))));
+
+  // A non-finite exponent has no affine model at all.
+  const double infinite_exponent = std::numeric_limits<double>::infinity();
+  CHECK_NOTHROW(pow(x, infinite_exponent));
+  CHECK(pow(x, infinite_exponent).itv().is_superset(
+          pow(Interval(2.0, 3.0), infinite_exponent)));
+
+  // pow(AffineMain, Interval): an empty or unbounded exponent, and a
+  // degenerate one that is exactly an integer.
+  CHECK(pow(x, Interval::empty()).is_empty());
+  CHECK(pow(x, Interval(-oo, oo)).itv().is_superset(
+          pow(Interval(2.0, 3.0), Interval(-oo, oo))));
+  CHECK(pow(x, Interval(3.0)).itv().is_superset(pow(Interval(2.0, 3.0), 3)));
+  CHECK(pow(x, Interval(1.5, 2.5)).itv().is_superset(
+          pow(Interval(2.0, 3.0), Interval(1.5, 2.5))));
+
+  // A base reaching zero or below cannot use exp(y*log(x)); the interval
+  // implementation defines the result there.
+  AffineTVarVector cx(1);
+  cx[0] = Interval(-1.0, 4.0);
+  CHECK(pow(cx[0], Interval(1.5, 2.5)).itv().is_superset(
+          pow(Interval(-1.0, 4.0), Interval(1.5, 2.5))));
+
+  // An unbounded or inactive base, and the smallest int as exponent, whose
+  // opposite is not representable.
+  AffineT unbounded;
+  CHECK_NOTHROW(pow(unbounded, 3));
+  CHECK(pow(unbounded, 3).itv().is_superset(pow(Interval(-oo, oo), 3)));
+  CHECK_NOTHROW(pow(x, std::numeric_limits<int>::min()));
+  CHECK(pow(x, std::numeric_limits<int>::min()).itv().is_superset(
+          pow(Interval(2.0, 3.0), std::numeric_limits<int>::min())));
+}
+
+
+TEST_CASE("atan2 covers every configuration of its two arguments")
+{
+  // atan2 dispatches on the sign of x, then on the sign of y. Each of those
+  // branches is listed here with the value it must produce.
+  const std::vector<std::pair<Interval,Interval>> cases = {
+    {Interval::empty(),        Interval(1.0, 2.0)},    // empty y
+    {Interval(1.0, 2.0),       Interval::empty()},     // empty x
+    {Interval(0.0),            Interval(0.0)},         // atan2(0,0): undefined
+    {Interval(1.0, 2.0),       Interval(0.0)},         // x=0, y>0:  +pi/2
+    {Interval(-2.0, -1.0),     Interval(0.0)},         // x=0, y<0:  -pi/2
+    {Interval(-1.0, 1.0),      Interval(0.0)},         // x=0, y straddles 0
+    {Interval(1.0, 2.0),       Interval(1.0, 2.0)},    // x>0
+    {Interval(1.0, 2.0),       Interval(-2.0, -1.0)},  // x<0, y>0
+    {Interval(-2.0, -1.0),     Interval(-2.0, -1.0)},  // x<0, y<0
+    {Interval(-1.0, 1.0),      Interval(-2.0, -1.0)},  // x<0, y straddles 0
+    {Interval(1.0, 2.0),       Interval(-1.0, 1.0)}    // x straddles 0
+  };
+
+  for(const auto& input : cases)
+  {
+    const Interval& y_itv = input.first;
+    const Interval& x_itv = input.second;
+    CAPTURE(y_itv, x_itv);
+
+    AffineTVarVector variables(IntervalVector({y_itv, x_itv}));
+    const AffineT result = atan2(variables[0], variables[1]);
+    const Interval reference = atan2(y_itv, x_itv);
+
+    if(reference.is_empty())
+    {
+      CHECK(result.is_empty());
+      continue;
+    }
+
+    REQUIRE_FALSE(result.is_empty());
+    CHECK(result.itv().is_superset(reference));
+  }
+
+  // atan2(0,0) is undefined and must come out empty, unlike atan2(y,0) for
+  // any other y.
+  {
+    AffineTVarVector variables(IntervalVector({Interval(0.0), Interval(0.0)}));
+    CHECK(atan2(variables[0], variables[1]).is_empty());
+  }
+}
+
+
+TEST_CASE("chi keeps the enclosing branch when one branch contains the other")
+{
+  // With a condition straddling zero both branches remain possible. Rather
+  // than dropping the dependency of both, chi returns whichever branch
+  // already encloses the other.
+  AffineTVarVector bx(2);
+  bx[0] = Interval(10.0, 11.0);   // narrow branch
+  bx[1] = Interval(9.0, 12.0);    // wide branch, containing the narrow one
+
+  const Interval straddling(-1.0, 1.0);
+
+  const AffineT wide_wins = chi(straddling, bx[0], bx[1]);
+  CHECK(wide_wins.itv() == bx[1].itv());
+
+  const AffineT wide_first = chi(straddling, bx[1], bx[0]);
+  CHECK(wide_first.itv() == bx[1].itv());
+
+  // Two branches that only overlap keep the hull, as before.
+  AffineTVarVector cx(2);
+  cx[0] = Interval(0.0, 2.0);
+  cx[1] = Interval(1.0, 3.0);
+  CHECK(chi(straddling, cx[0], cx[1]).itv().is_superset(cx[0].itv() | cx[1].itv()));
+}
+
+
+TEST_CASE("Trigonometric linearizations give up beyond the representable period count")
+{
+  // cos and sin locate the points where their derivative equals the chord
+  // slope by enumerating the periods covered by the domain. Beyond a few
+  // billion periods that count no longer fits in an int, so the
+  // linearization has to be abandoned in favour of the interval image.
+  const Interval input(1.e10, 1.e10 + 1.0);
+
+  for(const AffineT::Affine_Mode mode : { AffineT::AF_Lin_Chebyshev, AffineT::AF_Lin_MinRange })
+  {
+    AffineT::change_mode(mode);
+    CAPTURE(static_cast<int>(mode));
+
+    AffineTVarVector variables(IntervalVector({input}));
+
+    const AffineT c = cos(variables[0]);
+    CAPTURE(c.itv());
+    CHECK(c.itv().is_superset(cos(variables[0].itv())));
+    CHECK(c.noise(0) == 0.0);
+
+    const AffineT s = sin(variables[0]);
+    CAPTURE(s.itv());
+    CHECK(s.itv().is_superset(sin(variables[0].itv())));
+    CHECK(s.noise(0) == 0.0);
+  }
+
+  AffineT::change_mode(AffineT::AF_Lin_Chebyshev);
+}
+
+
+TEST_CASE("A MinRange power whose image overflows falls back on the interval")
+{
+  // The MinRange power has its own guard, distinct from the one of the
+  // integer power that dispatches to it: an image reaching infinity leaves
+  // no band to centre the affine form on.
+  AffineT::change_mode(AffineT::AF_Lin_MinRange);
+
+  const Interval input(1.e200, 2.e200);
+  AffineTVarVector variables(IntervalVector({input}));
+
+  const AffineT y = pow(variables[0], 3);
+  CAPTURE(input, y.itv());
+  CHECK(y.itv().is_superset(pow(variables[0].itv(), 3)));
+  CHECK(y.is_unbounded());
 
   AffineT::change_mode(AffineT::AF_Lin_Chebyshev);
 }

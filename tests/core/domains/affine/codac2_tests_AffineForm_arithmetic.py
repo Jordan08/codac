@@ -1334,5 +1334,296 @@ class TestAffineFormArithmetic(unittest.TestCase):
     Affine.change_mode(Affine.Affine_Mode.AF_Lin_Chebyshev)
 
 
+  def test_every_linearization_degrades_gracefully_on_hard_domains(self):
+
+    # Each linearization opens on a guard handing the interval image straight
+    # back: an empty or unbounded domain, an inactive affine form, or a domain
+    # narrower than the rounding of its own midpoint carries no slope to read.
+    # The pointwise suite above only feeds these routines well-formed boxes,
+    # so the guard itself is exercised here, for both modes and every
+    # function, under the same soundness requirement.
+    narrow = Interval(0.5)
+    narrow.inflate(math.ldexp(0.5, -52))       # two ulps, below 2^-49*mag
+
+    narrow_large = Interval(3.0)
+    narrow_large.inflate(math.ldexp(3.0, -52))
+
+    hard_inputs = [
+      Interval.empty(),
+      Interval(-oo, oo),
+      Interval(2.0, oo),
+      Interval(-oo, -2.0),
+      Interval(0.5),                           # singleton: degenerate form
+      narrow,
+      narrow_large
+    ]
+
+    functions = [
+      ("inv",      Interval(-oo,oo),  inv,                   lambda x: 1.0/x),
+      ("sqr",      Interval(-oo,oo),  sqr,                   sqr),
+      ("sqrt",     Interval(0.0,oo),  sqrt,                  sqrt),
+      ("exp",      Interval(-oo,oo),  exp,                   exp),
+      ("log",      Interval(0.0,oo),  log,                   log),
+      ("pow(x,3)", Interval(-oo,oo),  lambda x: pow(x,3),    lambda x: pow(x,3)),
+      ("pow(x,4)", Interval(-oo,oo),  lambda x: pow(x,4),    lambda x: pow(x,4)),
+      ("root(x,3)",Interval(-oo,oo),  lambda x: root(x,3),   lambda x: root(x,3)),
+      ("cos",      Interval(-oo,oo),  cos,                   cos),
+      ("sin",      Interval(-oo,oo),  sin,                   sin),
+      ("tan",      Interval(-oo,oo),  tan,                   tan),
+      ("acos",     Interval(-1.0,1.0),acos,                  acos),
+      ("asin",     Interval(-1.0,1.0),asin,                  asin),
+      ("atan",     Interval(-oo,oo),  atan,                  atan),
+      ("cosh",     Interval(-oo,oo),  cosh,                  cosh),
+      ("sinh",     Interval(-oo,oo),  sinh,                  sinh),
+      ("tanh",     Interval(-oo,oo),  tanh,                  tanh),
+      ("acosh",    Interval(1.0,oo),  acosh,                 acosh),
+      ("asinh",    Interval(-oo,oo),  asinh,                 asinh),
+      ("atanh",    Interval(-1.0,1.0),atanh,                 atanh),
+      ("abs",      Interval(-oo,oo),  abs,                   abs)
+    ]
+
+    for mode in [Affine.Affine_Mode.AF_Lin_Chebyshev, Affine.Affine_Mode.AF_Lin_MinRange]:
+      Affine.change_mode(mode)
+
+      for input in hard_inputs:
+        for name, domain, affine_function, interval_function in functions:
+          self.check_pointwise_linearization(name, input, domain,
+                                             affine_function, interval_function)
+
+    Affine.change_mode(Affine.Affine_Mode.AF_Lin_Chebyshev)
+
+
+  def test_minrange_falls_back_when_the_slope_underflows(self):
+
+    # Every MinRange routine reads the slope of smallest magnitude on the
+    # domain. On the domains below that slope rounds down to zero (or to a
+    # non-finite value), which leaves no direction to linearize along: the
+    # affine form must then degenerate into the interval image rather than
+    # build a band around a zero slope it did not verify.
+    Affine.change_mode(Affine.Affine_Mode.AF_Lin_MinRange)
+
+    cases = [
+      # exp: the image underflows to zero, so the smallest slope does too
+      ("exp",   Interval(-800.0, -750.0),  exp,                 exp),
+      # sqrt: the domain is wide enough to be linearized, but its
+      # non-negative part -- the only one sqrt is defined on -- is not
+      ("sqrt",  Interval(-1.e-10, 1.e-30), sqrt,                sqrt),
+      # atan/asinh: 1+x^2 overflows at the far end of the domain
+      ("atan",  Interval(-1.e200, 1.e200), atan,                atan),
+      ("asinh", Interval(-1.e200, 1.e200), asinh,               asinh),
+      # acosh: x^2-1 overflows at the upper bound
+      ("acosh", Interval(1.0, 1.e200),     acosh,               acosh),
+      # tanh: tanh(x)^2 rounds to 1, so 1-tanh(x)^2 rounds to 0
+      ("tanh",  Interval(-30.0, 30.0),     tanh,                tanh),
+      # root: n*mag(x) overflows, so root(mag)/(n*mag) rounds to 0
+      ("root3", Interval(1.e307, 1.5e308), lambda x: root(x,3), lambda x: root(x,3))
+    ]
+
+    for name, input, affine_function, interval_function in cases:
+      variables = AffineVariables(IntervalVector([input]))
+      y = affine_function(variables[0])
+      reference = interval_function(input)
+
+      self.assertFalse(reference.is_empty(), name)
+      self.assertFalse(y.is_empty(), name)
+      self.assertTrue(y.itv().is_superset(reference), name)
+
+      # A zero slope means the whole result sits in the constant term: no
+      # noise symbol of the input survives in the affine form.
+      if y.is_active():
+        self.assertTrue(y.noise(0) == 0.0, name)
+
+    Affine.change_mode(Affine.Affine_Mode.AF_Lin_Chebyshev)
+
+
+  def test_chebyshev_falls_back_when_the_chord_slope_overflows(self):
+
+    Affine.change_mode(Affine.Affine_Mode.AF_Lin_Chebyshev)
+
+    # An affine form is symmetric around a double midpoint, so a domain whose
+    # bounds differ by hundreds of orders of magnitude cannot be represented
+    # without its lower bound rounding down to zero. The reciprocal of the
+    # enclosure is then unbounded and no affine model can be built from it.
+    input = Interval(1.e-308, 3.e-17)
+    variables = AffineVariables(IntervalVector([input]))
+    y = inv(variables[0])
+    self.assertTrue(y.itv().is_superset(1.0/input))
+    self.assertTrue(y.is_unbounded())
+
+    # An integer power whose value at a bound overflows: both the even branch
+    # (evaluated at the bounds) and the odd one (evaluated at two interior
+    # sample points) must detect it and hand back the interval image.
+    for input, n in [(Interval(1.e100, 2.e100), 4), (Interval(1.e200, 2.e200), 3)]:
+      variables = AffineVariables(IntervalVector([input]))
+      y = pow(variables[0], n)
+      self.assertTrue(y.itv().is_superset(pow(input, n)))
+
+    # An odd root straddling zero over a domain whose width overflows: the
+    # chord slope rounds to zero and the linearization is abandoned.
+    input = Interval(-1.e308, 1.e308)
+    variables = AffineVariables(IntervalVector([input]))
+    y = root(variables[0], 3)
+    self.assertTrue(y.itv().is_superset(root(input, 3)))
+    if y.is_active():
+      self.assertTrue(y.noise(0) == 0.0)
+
+
+  def test_mixed_interval_and_affine_operator_overloads(self):
+
+    ax = AffineVariables(IntervalVector([Interval(2.0, 3.0)]))
+    x = Affine(ax[0])
+
+    # Interval + Affine and Affine / Interval are overloads of their own,
+    # distinct from the mirrored forms used above.
+    total = Interval(1.0, 2.0) + x
+    self.assertTrue(total.itv().is_superset(Interval(3.0, 5.0)))
+    self.assertTrue(total.itv() == (x + Interval(1.0, 2.0)).itv())
+
+    quotient = x / Interval(2.0, 4.0)
+    self.assertTrue(quotient.itv().is_superset(Interval(2.0, 3.0)/Interval(2.0, 4.0)))
+    self.assertTrue((x / Interval(1.0)).itv().is_superset(Interval(2.0, 3.0)))
+
+
+  def test_every_pow_overload_accepts_its_documented_argument_types(self):
+
+    ax = AffineVariables(IntervalVector([Interval(2.0, 3.0)]))
+    x = Affine(ax[0])
+
+    # pow(Interval, Affine) and pow(double, Affine): a constant base raised
+    # to an affine exponent.
+    interval_base = pow(Interval(2.0, 3.0), x)
+    self.assertTrue(interval_base.itv().is_superset(
+      pow(Interval(2.0, 3.0), Interval(2.0, 3.0))))
+
+    scalar_base = pow(2.0, x)
+    self.assertTrue(scalar_base.itv().is_superset(
+      pow(Interval(2.0), Interval(2.0, 3.0))))
+
+    # pow(Affine, float): an exponent that happens to be an integer must go
+    # through the integer algorithm, which keeps negative bases valid.
+    bx = AffineVariables(IntervalVector([Interval(-3.0, -2.0)]))
+    self.assertTrue(pow(bx[0], 2.0).itv().is_superset(pow(Interval(-3.0, -2.0), 2)))
+    self.assertTrue(pow(bx[0], 3.0).itv().is_superset(pow(Interval(-3.0, -2.0), 3)))
+
+    # A negative, non-integer exponent is computed as the inverse of the
+    # positive one.
+    self.assertTrue(pow(x, -1.5).itv().is_superset(
+      pow(Interval(2.0, 3.0), Interval(-1.5))))
+    self.assertTrue(pow(x, 1.5).itv().is_superset(
+      pow(Interval(2.0, 3.0), Interval(1.5))))
+
+    # A non-finite exponent has no affine model at all.
+    self.assertTrue(pow(x, oo).itv().is_superset(pow(Interval(2.0, 3.0), oo)))
+
+    # pow(Affine, Interval): an empty or unbounded exponent, and a degenerate
+    # one that is exactly an integer.
+    self.assertTrue(pow(x, Interval.empty()).is_empty())
+    self.assertTrue(pow(x, Interval(-oo, oo)).itv().is_superset(
+      pow(Interval(2.0, 3.0), Interval(-oo, oo))))
+    self.assertTrue(pow(x, Interval(3.0)).itv().is_superset(pow(Interval(2.0, 3.0), 3)))
+    self.assertTrue(pow(x, Interval(1.5, 2.5)).itv().is_superset(
+      pow(Interval(2.0, 3.0), Interval(1.5, 2.5))))
+
+    # A base reaching zero or below cannot use exp(y*log(x)); the interval
+    # implementation defines the result there.
+    cx = AffineVariables(IntervalVector([Interval(-1.0, 4.0)]))
+    self.assertTrue(pow(cx[0], Interval(1.5, 2.5)).itv().is_superset(
+      pow(Interval(-1.0, 4.0), Interval(1.5, 2.5))))
+
+    # An unbounded base, and the smallest int as exponent, whose opposite is
+    # not representable.
+    unbounded = Affine()
+    self.assertTrue(pow(unbounded, 3).itv().is_superset(pow(Interval(-oo, oo), 3)))
+    int_min = -2147483648
+    self.assertTrue(pow(x, int_min).itv().is_superset(
+      pow(Interval(2.0, 3.0), int_min)))
+
+
+  def test_atan2_covers_every_configuration_of_its_two_arguments(self):
+
+    # atan2 dispatches on the sign of x, then on the sign of y. Each of those
+    # branches is listed here with the value it must produce.
+    cases = [
+      (Interval.empty(),    Interval(1.0, 2.0)),    # empty y
+      (Interval(1.0, 2.0),  Interval.empty()),      # empty x
+      (Interval(0.0),       Interval(0.0)),         # atan2(0,0): undefined
+      (Interval(1.0, 2.0),  Interval(0.0)),         # x=0, y>0:  +pi/2
+      (Interval(-2.0,-1.0), Interval(0.0)),         # x=0, y<0:  -pi/2
+      (Interval(-1.0, 1.0), Interval(0.0)),         # x=0, y straddles 0
+      (Interval(1.0, 2.0),  Interval(1.0, 2.0)),    # x>0
+      (Interval(1.0, 2.0),  Interval(-2.0,-1.0)),   # x<0, y>0
+      (Interval(-2.0,-1.0), Interval(-2.0,-1.0)),   # x<0, y<0
+      (Interval(-1.0, 1.0), Interval(-2.0,-1.0)),   # x<0, y straddles 0
+      (Interval(1.0, 2.0),  Interval(-1.0, 1.0))    # x straddles 0
+    ]
+
+    for y_itv, x_itv in cases:
+      variables = AffineVariables(IntervalVector([y_itv, x_itv]))
+      result = atan2(variables[0], variables[1])
+      reference = atan2(y_itv, x_itv)
+
+      if reference.is_empty():
+        self.assertTrue(result.is_empty(), "%s %s" % (y_itv, x_itv))
+        continue
+
+      self.assertFalse(result.is_empty(), "%s %s" % (y_itv, x_itv))
+      self.assertTrue(result.itv().is_superset(reference), "%s %s" % (y_itv, x_itv))
+
+
+  def test_chi_keeps_the_enclosing_branch_when_one_contains_the_other(self):
+
+    # With a condition straddling zero both branches remain possible. Rather
+    # than dropping the dependency of both, chi returns whichever branch
+    # already encloses the other.
+    bx = AffineVariables(IntervalVector([Interval(10.0, 11.0), Interval(9.0, 12.0)]))
+    straddling = Interval(-1.0, 1.0)
+
+    self.assertTrue(chi(straddling, bx[0], bx[1]).itv() == bx[1].itv())
+    self.assertTrue(chi(straddling, bx[1], bx[0]).itv() == bx[1].itv())
+
+    # Two branches that only overlap keep the hull, as before.
+    cx = AffineVariables(IntervalVector([Interval(0.0, 2.0), Interval(1.0, 3.0)]))
+    self.assertTrue(chi(straddling, cx[0], cx[1]).itv().is_superset(
+      cx[0].itv() | cx[1].itv()))
+
+
+  def test_trigonometric_linearizations_give_up_beyond_representable_periods(self):
+
+    # cos and sin locate the points where their derivative equals the chord
+    # slope by enumerating the periods covered by the domain. Beyond a few
+    # billion periods that count no longer fits in an int, so the
+    # linearization has to be abandoned in favour of the interval image.
+    input = Interval(1.e10, 1.e10 + 1.0)
+
+    for mode in [Affine.Affine_Mode.AF_Lin_Chebyshev, Affine.Affine_Mode.AF_Lin_MinRange]:
+      Affine.change_mode(mode)
+      variables = AffineVariables(IntervalVector([input]))
+
+      c = cos(variables[0])
+      self.assertTrue(c.itv().is_superset(cos(variables[0].itv())))
+      self.assertTrue(c.noise(0) == 0.0)
+
+      s = sin(variables[0])
+      self.assertTrue(s.itv().is_superset(sin(variables[0].itv())))
+      self.assertTrue(s.noise(0) == 0.0)
+
+    Affine.change_mode(Affine.Affine_Mode.AF_Lin_Chebyshev)
+
+
+  def test_a_minrange_power_whose_image_overflows_falls_back_on_the_interval(self):
+
+    # The MinRange power has its own guard, distinct from the one of the
+    # integer power that dispatches to it: an image reaching infinity leaves
+    # no band to centre the affine form on.
+    Affine.change_mode(Affine.Affine_Mode.AF_Lin_MinRange)
+
+    variables = AffineVariables(IntervalVector([Interval(1.e200, 2.e200)]))
+    y = pow(variables[0], 3)
+    self.assertTrue(y.itv().is_superset(pow(variables[0].itv(), 3)))
+    self.assertTrue(y.is_unbounded())
+
+    Affine.change_mode(Affine.Affine_Mode.AF_Lin_Chebyshev)
+
+
 if __name__ ==  '__main__':
   unittest.main()

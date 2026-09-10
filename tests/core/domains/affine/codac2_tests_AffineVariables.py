@@ -236,5 +236,36 @@ class TestAffineVariables(unittest.TestCase):
     self.assertTrue(variables[2].err() == 0.0)
 
 
+  def test_resizing_to_zero_empties_the_container(self):
+
+    # Both resizing routines take a dedicated early exit at n == 0: with no
+    # component left there is no noise symbol to hand out, so they drop
+    # straight to Eigen's resize instead of walking the loop below it.
+    box = IntervalVector([Interval(1.0, 2.0), Interval(3.0, 4.0)])
+
+    reset = AffineVariables(box)
+    reset.resize(0)
+    self.assertTrue(reset.size() == 0)
+
+    preserved = AffineVariables(box)
+    preserved.conservativeResize(0)
+    self.assertTrue(preserved.size() == 0)
+
+    # Growing back from zero re-creates a full set of sequential symbols.
+    reset.resize(2)
+    self.assertTrue(reset.size() == 2)
+    for i in range(reset.size()):
+      self.assertTrue(reset[i].itv() == Interval())
+
+    # Resizing to the size already held leaves every component untouched.
+    unchanged = AffineVariables(box)
+    unchanged.conservativeResize(2)
+    self.assertTrue(unchanged[0].itv() == Interval(1.0, 2.0))
+    self.assertTrue(unchanged[1].itv() == Interval(3.0, 4.0))
+    unchanged.resize(2)
+    self.assertTrue(unchanged[0].itv() == Interval(1.0, 2.0))
+    self.assertTrue(unchanged[1].itv() == Interval(3.0, 4.0))
+
+
 if __name__ ==  '__main__':
   unittest.main()

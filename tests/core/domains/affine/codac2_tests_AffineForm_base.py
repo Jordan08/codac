@@ -690,5 +690,227 @@ class TestAffineFormBase(unittest.TestCase):
     self.check_interval_enclosure(total, Interval(4.0) + itv)
 
 
+  def test_inequality_operators_compare_the_interval_enclosures(self):
+
+    ax = AffineVariables(IntervalVector([Interval(1.0, 2.0), Interval(1.0, 3.0)]))
+
+    # "!=" is the negation of "==", and like it compares the interval
+    # enclosures only: two affine forms with the same enclosure but unrelated
+    # dependencies still compare equal.
+    self.assertTrue(ax[0] != ax[1])
+    self.assertFalse(ax[0] != ax[0])
+
+    self.assertTrue(ax[0] != Interval(1.0, 3.0))
+    self.assertFalse(ax[0] != Interval(1.0, 2.0))
+
+    self.assertTrue(ax[0] != 1.0)
+    self.assertFalse(Affine(Interval(4.0)) != 4.0)
+
+    self.assertTrue(Affine(ax[0]) == Affine(Interval(1.0, 2.0)))
+    self.assertFalse(Affine(ax[0]) != Affine(Interval(1.0, 2.0)))
+
+
+  def test_set_relation_predicates_also_accept_an_interval_argument(self):
+
+    # The predicates taking an Interval are separate overloads from the ones
+    # taking an Affine, each forwarding to the matching Interval method.
+    ax = AffineVariables(IntervalVector([
+      Interval(1.0, 2.0), Interval(0.0, 3.0), Interval(5.0, 6.0)]))
+
+    self.assertTrue(ax[0].is_strict_subset(Interval(0.0, 3.0)))
+    self.assertFalse(ax[0].is_strict_subset(Interval(1.0, 2.0)))
+
+    self.assertTrue(ax[1].is_strict_superset(Interval(1.0, 2.0)))
+    self.assertFalse(ax[1].is_strict_superset(Interval(0.0, 3.0)))
+
+    self.assertTrue(ax[0].intersects(Interval(1.5, 4.0)))
+    self.assertFalse(ax[0].intersects(Interval(5.0, 6.0)))
+
+    self.assertTrue(ax[0].overlaps(Interval(1.5, 4.0)))
+    self.assertFalse(ax[0].overlaps(Interval(2.0, 4.0)))   # touching bounds
+
+    self.assertTrue(ax[0].is_disjoint(Interval(5.0, 6.0)))
+    self.assertFalse(ax[0].is_disjoint(Interval(1.5, 4.0)))
+
+    self.assertTrue(ax[0].is_interior_subset(ax[1]))
+    self.assertFalse(ax[1].is_interior_subset(ax[0]))
+    self.assertTrue(ax[0].is_strict_interior_subset(ax[1]))
+    self.assertFalse(ax[1].is_strict_interior_subset(ax[1]))
+
+    # set_empty() is the in-place counterpart of the empty() factory.
+    x = Affine(Interval(1.0, 2.0))
+    self.assertFalse(x.is_empty())
+    x.set_empty()
+    self.assertTrue(x.is_empty())
+    self.assertTrue(x.itv().is_empty())
+
+
+  def test_half_infinite_assignments_saturate_the_stored_bound(self):
+
+    # A half-infinite affine form keeps its finite bound in the remainder
+    # term, which cannot hold a value beyond the largest double. An interval
+    # whose finite bound is already at that limit is therefore saturated.
+    dbl_max = sys.float_info.max
+
+    upper = Affine()
+    upper.init(Interval(dbl_max, oo))
+    self.assertTrue(upper.is_unbounded())
+    self.assertTrue(upper.itv() == Interval(dbl_max, oo))
+
+    lower = Affine()
+    lower.init(Interval(-oo, -dbl_max))
+    self.assertTrue(lower.is_unbounded())
+    self.assertTrue(lower.itv() == Interval(-oo, -dbl_max))
+
+    ordinary = Affine()
+    ordinary.init(Interval(3.0, oo))
+    self.assertTrue(ordinary.itv() == Interval(3.0, oo))
+
+
+  def test_inflate_on_an_inactive_or_infinitely_inflated_form(self):
+
+    # An inactive affine form has no coefficient representation to widen, so
+    # inflate() goes through the interval enclosure instead.
+    unbounded = Affine()
+    self.assertFalse(unbounded.is_active())
+    unbounded.inflate(2.0)
+    self.assertTrue(unbounded.itv() == Interval(-oo, oo))
+
+    half = Affine()
+    half.init(Interval(1.0, oo))
+    half.inflate(3.0)
+    self.assertTrue(half.itv() == Interval(-2.0, oo))
+
+    empty_form = Affine.empty()
+    empty_form.inflate(1.0)
+    self.assertTrue(empty_form.is_empty())
+
+    # An infinite radius destroys every coefficient of an active form, which
+    # therefore collapses onto [-oo,oo].
+    ax = AffineVariables(IntervalVector([Interval(1.0, 2.0)]))
+    active = Affine(ax[0])
+    self.assertTrue(active.is_active())
+    active.inflate(oo)
+    self.assertTrue(active.itv() == Interval(-oo, oo))
+
+    # A zero radius is a no-op on every status.
+    untouched = Affine(ax[0])
+    untouched.inflate(0.0)
+    self.assertTrue(untouched.itv() == Interval(1.0, 2.0))
+
+
+  def test_compact_rejects_a_meaningless_tolerance(self):
+
+    ax = AffineVariables(IntervalVector([Interval(1.0, 2.0)]))
+
+    # A negative or non-finite threshold has no compacting semantics: the
+    # form must come out of it unchanged.
+    for tol in [-1.0, -float('inf'), float('nan')]:
+      x = Affine(ax[0])
+      x.compact(tol)
+      self.assertTrue(x.itv() == Interval(1.0, 2.0))
+      self.assertTrue(x.noise(0) == 0.5)
+      self.assertTrue(x.err() == 0.0)
+
+    # A coefficient below the threshold moves into the remainder. Here the
+    # whole remainder stays below the scale at which the representation
+    # rounds it to zero rather than keeping it as a coefficient.
+    tiny = AffineVariables(IntervalVector([Interval(0.0, 1.e-18)]))
+    y = Affine(tiny[0])
+    self.assertTrue(y.is_active())
+    self.assertTrue(y.noise(0) != 0.0)
+
+    before = y.itv()
+    y.compact(1.e-6)
+    self.assertTrue(y.noise(0) == 0.0)
+    self.assertTrue(y.itv().is_superset(before))
+
+
+  def test_square_collapses_a_subepsilon_centre_and_saturates_on_overflow(self):
+
+    # The quadratic remainder of a narrow form centred on zero is far below
+    # the representation threshold, so the centre it is added to rounds back
+    # to exactly zero and the whole magnitude is carried by the remainder.
+    narrow = AffineVariables(IntervalVector([Interval(-1.e-9, 1.e-9)]))
+    small_square = sqr(narrow[0])
+    self.assertTrue(small_square.itv().is_superset(sqr(Interval(-1.e-9, 1.e-9))))
+    self.assertTrue(small_square.mid() == 0.0)
+
+    # Squaring a form whose coefficients are near the square root of the
+    # largest double overflows the quadratic term; the result then has to
+    # fall back on [-oo,oo] rather than keep a non-finite coefficient.
+    huge = AffineVariables(IntervalVector([Interval(-1.e200, 1.e200)]))
+    big_square = sqr(huge[0])
+    self.assertTrue(big_square.is_unbounded())
+    self.assertTrue(big_square.itv().is_superset(Interval(0.0, oo)))
+
+
+  def test_init_from_list_rejects_a_list_that_is_not_of_one_or_two_values(self):
+
+    # An affine form is defined by a point or by a pair of bounds; any other
+    # list length is a caller error, reported by the C++ assertion layer as
+    # a std::invalid_argument, which pybind11 surfaces as a ValueError.
+    # A FAST_RELEASE build compiles that layer out and leaves the form
+    # untouched instead; Python cannot see that switch, so both outcomes are
+    # accepted here and only the one that actually happened is checked.
+    for bad_list in ([1.0, 2.0, 3.0], []):
+      x = Affine(Interval(1.0, 3.0))
+      try:
+        x.init_from_list(bad_list)
+      except ValueError:
+        pass
+      else:
+        self.assertTrue(x.itv() == Interval(1.0, 3.0))
+
+    # The two accepted lengths keep working, whatever the build.
+    single = Affine(Interval(0.0, 1.0))
+    single.init_from_list([4.0])
+    self.assertTrue(single.itv() == Interval(4.0))
+
+    pair = Affine(Interval(0.0, 1.0))
+    pair.init_from_list([1.0, 3.0])
+    self.assertTrue(pair.itv() == Interval(1.0, 3.0))
+
+
+  def test_an_affine_variable_saturates_a_half_infinite_component(self):
+
+    # AffineVariables builds each component through the noise-symbol
+    # constructor rather than through an interval assignment, so it has its
+    # own copy of the status dispatch -- including the saturation of a finite
+    # bound that already sits at the largest double.
+    dbl_max = sys.float_info.max
+
+    ax = AffineVariables(IntervalVector([
+      Interval(dbl_max, oo),
+      Interval(-oo, -dbl_max),
+      Interval(3.0, oo),
+      Interval(-oo, 3.0),
+      Interval(-oo, oo),
+      Interval.empty()
+    ]))
+
+    self.assertTrue(ax[0].itv() == Interval(dbl_max, oo))
+    self.assertTrue(ax[1].itv() == Interval(-oo, -dbl_max))
+    self.assertTrue(ax[2].itv() == Interval(3.0, oo))
+    self.assertTrue(ax[3].itv() == Interval(-oo, 3.0))
+    self.assertTrue(ax[4].itv() == Interval(-oo, oo))
+    self.assertTrue(ax[5].is_empty())
+
+    for i in range(ax.size()):
+      self.assertFalse(ax[i].is_active())
+
+
+  def test_adding_an_empty_interval_empties_the_affine_form(self):
+
+    # Addition of an interval dispatches on that interval before touching any
+    # coefficient: an empty operand empties the result whatever the form it
+    # is added to.
+    ax = AffineVariables(IntervalVector([Interval(1.0, 2.0)]))
+
+    self.assertTrue((ax[0] + Interval.empty()).is_empty())
+    self.assertTrue((ax[0] - Interval.empty()).is_empty())
+    self.assertTrue((Affine() + Interval.empty()).is_empty())
+
+
 if __name__ ==  '__main__':
   unittest.main()

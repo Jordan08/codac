@@ -9,6 +9,12 @@
   )
 
   target_include_directories(_unsupported
+    # First, so that a header is opened at src/... rather than through its
+    # symbolic link in build/include: the path a translation unit used is the
+    # path gcov records, and the two spellings would split every header into
+    # two entries in the coverage report. See codac_publish_include_dirs() in
+    # the top-level CMakeLists.txt.
+    PRIVATE ${CODAC_SOURCE_INCLUDE_DIRS}
     PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../../docstring
     PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../../../include 
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../

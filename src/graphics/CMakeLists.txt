@@ -46,13 +46,22 @@
   #endif()
 
   add_library(${PROJECT_NAME}-graphics ${CODAC_GRAPHICS_SRC})
-  target_include_directories(${PROJECT_NAME}-graphics PUBLIC
+
+  # The directories holding the public graphics headers, in their canonical
+  # location under src/graphics. Published so that the tests, the examples and
+  # the Python bindings reach them by this path rather than through their link
+  # in build/include -- see codac_publish_include_dirs() in the top-level
+  # CMakeLists.txt for why that decides what the coverage report is worth.
+  set(CODAC_GRAPHICS_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/3rd/ipe
     ${CMAKE_CURRENT_SOURCE_DIR}/3rd/vibes
     ${CMAKE_CURRENT_SOURCE_DIR}/figures
     ${CMAKE_CURRENT_SOURCE_DIR}/paver # deprecated, to be removed
     ${CMAKE_CURRENT_SOURCE_DIR}/styles
   )
+
+  target_include_directories(${PROJECT_NAME}-graphics PUBLIC ${CODAC_GRAPHICS_INCLUDE_DIRS})
+  codac_publish_include_dirs(${CODAC_GRAPHICS_INCLUDE_DIRS})
   target_link_libraries(${PROJECT_NAME}-graphics PUBLIC ${PROJECT_NAME}-core Ibex::ibex Eigen3::Eigen ${PROJECT_NAME}-core)
   
 
@@ -73,7 +82,7 @@
   foreach(srcfile ${CODAC_GRAPHICS_SRC})
     if(srcfile MATCHES "\\.h$" OR srcfile MATCHES "\\.hpp$")
       list(APPEND CODAC_GRAPHICS_HDR ${srcfile})
-      file(COPY ${srcfile} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../../include)
+      codac_link_header_into_build_tree(${srcfile})
     endif()
   endforeach()
 
@@ -87,7 +96,7 @@
     get_filename_component(header_name ${header_path} NAME)
     file(APPEND ${CODAC_GRAPHICS_MAIN_HEADER} "#include <${header_name}>\n")
   endforeach()
-  file(COPY ${CODAC_GRAPHICS_MAIN_HEADER} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../../include)
+  codac_link_header_into_build_tree(${CODAC_GRAPHICS_MAIN_HEADER})
 
 # Install files in system directories
 

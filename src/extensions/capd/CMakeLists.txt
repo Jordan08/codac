@@ -24,6 +24,16 @@ list(APPEND CODAC_CAPD_SRC
   add_library(${PROJECT_NAME}-capd ${CODAC_CAPD_SRC})
   target_link_libraries(${PROJECT_NAME}-capd PUBLIC ${PROJECT_NAME}-core Ibex::ibex Eigen3::Eigen capd::capd)
 
+  # The directory holding this module's public headers, in its canonical
+  # location under src/. It had none declared at all: its headers were only
+  # reachable through their copy in build/include. Publishing it lets every
+  # consumer open them at their source path instead -- see
+  # codac_publish_include_dirs() in the top-level CMakeLists.txt for why that
+  # decides what the coverage report is worth.
+  set(CODAC_CAPD_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
+  target_include_directories(${PROJECT_NAME}-capd PUBLIC ${CODAC_CAPD_INCLUDE_DIRS})
+  codac_publish_include_dirs(${CODAC_CAPD_INCLUDE_DIRS})
+
 
   ################################################################################
   # For the generation of the PKG file
@@ -42,7 +52,7 @@ list(APPEND CODAC_CAPD_SRC
   foreach(srcfile ${CODAC_CAPD_SRC})
     if(srcfile MATCHES "\\.h$" OR srcfile MATCHES "\\.hpp$")
       list(APPEND CODAC_CAPD_HDR ${srcfile})
-      file(COPY ${srcfile} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../../../include)
+      codac_link_header_into_build_tree(${srcfile})
     endif()
   endforeach()
 
@@ -55,7 +65,7 @@ list(APPEND CODAC_CAPD_SRC
     get_filename_component(header_name ${header_path} NAME)
     file(APPEND ${CODAC_CAPD_MAIN_HEADER} "#include <${header_name}>\n")
   endforeach()
-  file(COPY ${CODAC_CAPD_MAIN_HEADER} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../../../include)
+  codac_link_header_into_build_tree(${CODAC_CAPD_MAIN_HEADER})
 
   # Install files in system directories
 
