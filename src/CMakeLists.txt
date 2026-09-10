@@ -55,6 +55,59 @@
 # Generating codac-config.cmake file
 # ==================================
 
+  # Fonction pour construire CODAC_LIBRARIES et CODAC_INCLUDE_DIRS de maniere centralisee
+  function(codac_build_config_vars)
+    # Bibliothèques de base (toujours incluses)
+    set(CODAC_LIBRARIES
+      \${CODAC_CORE_LIBRARY}
+      \${CODAC_GRAPHICS_LIBRARY}
+      \${CODAC_UNSUPPORTED_LIBRARY}
+      Ibex::ibex
+      Threads::Threads
+      CACHE INTERNAL "Libraries to link against for CODAC"
+    )
+
+    set(CODAC_INCLUDE_DIRS
+      \${CODAC_CORE_INCLUDE_DIR}/../  # Racine des headers (pour <codac>)
+      \${CODAC_CORE_INCLUDE_DIR}/../eigen3/
+      \${CODAC_CORE_INCLUDE_DIR}
+      \${CODAC_GRAPHICS_INCLUDE_DIR}
+      \${CODAC_UNSUPPORTED_INCLUDE_DIR}
+      CACHE INTERNAL "Include directories for CODAC"
+    )
+
+    # Ajouter les dependances optionnelles (CAPD, SymPy)
+    if(WITH_CAPD)
+      list(APPEND CODAC_LIBRARIES
+        \${CODAC_CAPD_LIBRARY}
+        capd::capd
+      )
+      list(APPEND CODAC_INCLUDE_DIRS
+        \${CODAC_CAPD_INCLUDE_DIR}
+      )
+      # CODAC_CAPD_LIBRARY is kept as its own variable too, for any consumer
+      # that prefers to opt into CAPD explicitly rather than pull it in via
+      # the general CODAC_LIBRARIES.
+      set(CODAC_CAPD_LIBRARY \${CODAC_CAPD_LIBRARY} \${CODAC_LIBRARIES} CACHE INTERNAL "CAPD library with all dependencies")
+    endif()
+
+    if(WITH_PYTHON)
+      list(APPEND CODAC_LIBRARIES
+        \${CODAC_SYMPY_LIBRARY}
+      )
+      list(APPEND CODAC_INCLUDE_DIRS
+        \${CODAC_SYMPY_INCLUDE_DIR}
+      )
+      set(CODAC_SYMPY_LIBRARY \${CODAC_SYMPY_LIBRARY} \${CODAC_LIBRARIES} CACHE INTERNAL "SymPy library with all dependencies")
+    endif()
+
+    # Propager les flags d'architecture (FMA, etc.) pour les projets externes (Option 3)
+    set(CODAC_CXX_FLAGS "${CODAC_ARCH_CXX_FLAGS}" CACHE INTERNAL "C++ flags for CODAC")
+  endfunction()
+
+  # Appeler la fonction pour construire les variables centralisees
+  codac_build_config_vars()
+
   set(CODAC_CMAKE_CONFIG_FILE ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake)
 
   file(WRITE ${CODAC_CMAKE_CONFIG_FILE}
@@ -87,11 +140,11 @@
     find_package(Threads REQUIRED)
 
     set(CODAC_VERSION ${PROJECT_VERSION})
-    set(CODAC_LIBRARIES \${CODAC_CORE_LIBRARY} \${CODAC_GRAPHICS_LIBRARY} \${CODAC_UNSUPPORTED_LIBRARY} Ibex::ibex Threads::Threads)
-    set(CODAC_INCLUDE_DIRS \${CODAC_CORE_INCLUDE_DIR}/../ \${CODAC_CORE_INCLUDE_DIR}/../eigen3/ \${CODAC_CORE_INCLUDE_DIR} \${CODAC_GRAPHICS_INCLUDE_DIR} \${CODAC_UNSUPPORTED_INCLUDE_DIR})
+    set(CODAC_LIBRARIES ${CODAC_LIBRARIES})
+    set(CODAC_INCLUDE_DIRS ${CODAC_INCLUDE_DIRS})
 
     set(CODAC_C_FLAGS \"\")
-    set(CODAC_CXX_FLAGS \"${CODAC_ARCH_CXX_FLAGS}\")
+    set(CODAC_CXX_FLAGS \"${CODAC_CXX_FLAGS}\")
   ")
 
   if(WITH_PYTHON)
@@ -104,8 +157,6 @@
               PATH_SUFFIXES include/${PROJECT_NAME}-sympy)
     find_library(CODAC_SYMPY_LIBRARY NAMES ${PROJECT_NAME}-sympy
                  PATH_SUFFIXES lib)
-                 
-    set(CODAC_SYMPY_LIBRARY \${CODAC_SYMPY_LIBRARY} \${CODAC_LIBRARIES})
     ")
 
   endif()
@@ -121,29 +172,9 @@
               PATH_SUFFIXES include/${PROJECT_NAME}-capd)
     find_library(CODAC_CAPD_LIBRARY NAMES ${PROJECT_NAME}-capd
                  PATH_SUFFIXES lib)
-
-    # Fold CAPD into the general CODAC_INCLUDE_DIRS / CODAC_LIBRARIES too, so
-    # that any consumer using the common find_package(CODAC) + \${CODAC_INCLUDE_DIRS}
-    # / \${CODAC_LIBRARIES} pattern gets CAPD for free (headers, the codac-capd
-    # library, and the capd::capd target), without needing to separately
-    # reference CODAC_CAPD_INCLUDE_DIR / CODAC_CAPD_LIBRARY / capd::capd
-    # themselves -- unlike the -mfma and Threads::Threads gaps, this one
-    # doesn't corrupt anything if forgotten (see 10_lie_groups), it just
-    # fails to compile, but it's the same class of oversight.
-    set(CODAC_INCLUDE_DIRS \${CODAC_INCLUDE_DIRS} \${CODAC_CAPD_INCLUDE_DIR})
-    set(CODAC_LIBRARIES \${CODAC_LIBRARIES} \${CODAC_CAPD_LIBRARY} capd::capd)
-
-    # CODAC_CAPD_LIBRARY is kept as its own variable too, for any consumer
-    # that prefers to opt into CAPD explicitly rather than pull it in via
-    # the general CODAC_LIBRARIES.
-    set(CODAC_CAPD_LIBRARY \${CODAC_CAPD_LIBRARY} \${CODAC_LIBRARIES})
     ")
 
   endif()
-
-  file(APPEND ${CODAC_CMAKE_CONFIG_FILE} "
-    set(CODAC_LIBRARIES \${CODAC_LIBRARIES} \${CODAC_GRAPHICS_LIBRARY} \${CODAC_CORE_LIBRARY})
-    ")
 
 
   install(FILES ${CODAC_CMAKE_CONFIG_FILE} DESTINATION ${CMAKE_INSTALL_CMAKE})

@@ -107,14 +107,12 @@ if(BUILD_TESTS AND TEST_EXAMPLES)
       SYSTEM PUBLIC
 
         # First, so that a header is opened at src/... rather than through
-        # its symbolic link in build/include: the path a translation unit used
-        # is the path gcov records, and the two spellings would split every
-        # header into two entries in the coverage report. See
-        # codac_publish_include_dirs() in the top-level CMakeLists.txt.
+        # build/include: the path a translation unit used is the path gcov records,
+        # and the two spellings would split every header into two entries in the
+        # coverage report. See codac_publish_include_dirs() in the top-level CMakeLists.txt.
         ${CODAC_SOURCE_INCLUDE_DIRS}
 
-        ${CMAKE_BINARY_DIR}/src      # the generated "codac" umbrella header
-        ${CMAKE_BINARY_DIR}/include  # codac-core.h, codac-graphics.h and the rest
+        ${CMAKE_BINARY_DIR}/src      # the generated "codac" umbrella header and module headers (codac-core.h, codac-graphics.h, etc.)
     )
 
     target_link_libraries(
@@ -124,6 +122,11 @@ if(BUILD_TESTS AND TEST_EXAMPLES)
         Ibex::ibex
         ${CODAC_EXAMPLE_LIBRARIES}
     )
+
+    # Propager les flags d'architecture (FMA, etc.) vers les exemples (Option 2)
+    if(CODAC_ARCH_CXX_FLAGS)
+      target_compile_options(${EXAMPLE_NAME} PRIVATE ${CODAC_ARCH_CXX_FLAGS})
+    endif()
 
     add_test(
       NAME ${EXAMPLE_NAME}_cpp

@@ -503,46 +503,17 @@
   endfunction()
 
 
-  # build/include is the flat header tree every consumer of this project sees.
-  # Headers are *linked* into it, never copied.
+  # codac_publish_include_dirs records the directories in which a module keeps its public headers, in
+  # their canonical location under src/. Every consumer (the tests, the examples and the Python bindings)
+  # puts CODAC_SOURCE_INCLUDE_DIRS ahead of build/include, so that a header is opened at src/... rather than through
+  # its link. Both compile identically, but the path used is the path gcov records: reached both ways, a header
+  # ends up as two unrelated entries in the coverage report, each showing only what its own callers exercised.
+  # That is what reported src/core/domains/affine/codac2_AffineMain_impl.h at 40% when its real coverage,
+  # the union of the two entries, was over 90%.
   #
-  # Copying makes two physically different files out of one header
-  # (src/graphics/figures/codac2_Figure2D.h and build/include/
-  # codac2_Figure2D.h, say). That second file can bypass #pragma once, it goes
-  # stale as soon as the source is edited without a reconfigure, and -- since
-  # gcov records the path a translation unit actually opened -- it also shows
-  # up in the coverage report as a file of its own, holding whatever fraction
-  # of the header its own callers happened to exercise. A symbolic link keeps
-  # a single physical header and none of that.
-  #
-  # COPY_ON_ERROR: creating a symlink needs no privilege on Linux/macOS, but on
-  # Windows it requires an administrator prompt or Developer Mode. Without it,
-  # file(CREATE_LINK) raises a FATAL_ERROR and aborts configuration on such a
-  # setup; with it, CMake falls back to a copy there and every platform that
-  # does support symlinks keeps the single-file guarantee.
-  function(codac_link_header_into_build_tree header)
-    file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/include)
-    get_filename_component(_header_name ${header} NAME)
-    set(_build_header ${PROJECT_BINARY_DIR}/include/${_header_name})
-
-    # Left alone when it already points where it should. Recreating it would
-    # cost nothing at configure time but would move its timestamp, and every
-    # object file that depends on the header would be rebuilt -- a full
-    # rebuild of the project on each and every cmake run, including the
-    # implicit one make performs when a CMakeLists.txt is touched.
-    if(IS_SYMLINK ${_build_header})
-      file(READ_SYMLINK ${_build_header} _current_target)
-      if(_current_target STREQUAL header)
-        return()
-      endif()
-    endif()
-
-    if(EXISTS ${_build_header} OR IS_SYMLINK ${_build_header})
-      file(REMOVE ${_build_header})
-    endif()
-    file(CREATE_LINK ${header} ${_build_header} SYMBOLIC COPY_ON_ERROR)
-  endfunction()
-
+  # The variable is a cache entry because it is filled in by src/*/CMakeLists.txt and read from tests/,
+  # examples/ and python/, which are separate directory scopes; src/CMakeLists.txt empties it before the
+  # modules append to it, so that a reconfigure does not append to what the previous one left behind.
 
   # Records the directories in which a module keeps its public headers, in
   # their canonical location under src/. Every consumer (the tests, the
