@@ -125,7 +125,7 @@ jobs:
 
     - name: Cache IBEX built from source
       if: matrix.cfg.compiler != 'appleclang'
-      uses: actions/cache@v5
+      uses: actions/cache@v4
       with:
         path: ~/ibex-lib
         key: ibex-2.8.9.20260819-${{ matrix.cfg.os }}-${{ matrix.cfg.compiler }}

@@ -125,24 +125,34 @@ jobs:
           python -m pip install --upgrade gcovr
         fi
 
-    # The instrumentation is requested through -D WITH_COVERAGE=ON rather than
-    # by passing --coverage by hand, so that this job and a developer running
-    # `make coverage` measure the same build with the same tool: the top-level
-    # CMakeLists.txt is the single place where the flags, the gcov executable
-    # matching the compiler and the gcovr filters are decided. The build type
-    # stays Release, so the coverage job compiles exactly what the Release jobs
-    # of the other workflows compile, instrumentation aside.
+    # --coverage is passed through CMAKE_CXX_FLAGS rather than through a build
+    # type of its own, so that the coverage job compiles exactly what the
+    # Release jobs of the other workflows compile, instrumentation aside.
     - name: Configure and build
       env:
         CC: ${{ matrix.cfg.cc }}
         CXX: ${{ matrix.cfg.cxx }}
       run: |
+        COVERAGE_FLAGS=""
+        # pybind11 adds -flto to the modules it builds, and GCC cannot combine
+        # that with gcov instrumentation: the link fails on "undefined reference
+        # to vtable for codac2::Interval", the vtable being emitted nowhere once
+        # both are on. pybind11 documents that it leaves LTO alone as soon as
+        # CMAKE_INTERPROCEDURAL_OPTIMIZATION is set, which is what turns it off
+        # here, and only for the coverage job.
+        IPO_FLAG=""
+        if [ "${{ matrix.cfg.coverage }}" = "true" ]; then
+          COVERAGE_FLAGS="--coverage"
+          IPO_FLAG="-D CMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF"
+        fi
         mkdir build ; cd build
         cmake \
-          -D WITH_COVERAGE=${{ matrix.cfg.coverage && 'ON' || 'OFF' }} \
+          $IPO_FLAG \
           -D CMAKE_BUILD_TYPE=${{ matrix.cfg.build_type }} \
-          -D CMAKE_CXX_FLAGS="-fPIC" \
-          -D CMAKE_C_FLAGS="-fPIC" \
+          -D CMAKE_CXX_FLAGS="-fPIC $COVERAGE_FLAGS" \
+          -D CMAKE_C_FLAGS="-fPIC $COVERAGE_FLAGS" \
+          -D CMAKE_EXE_LINKER_FLAGS="$COVERAGE_FLAGS" \
+          -D CMAKE_SHARED_LINKER_FLAGS="$COVERAGE_FLAGS" \
           -D CMAKE_INSTALL_PREFIX="../codac" \
           -D BUILD_TESTS=ON \
           -D TEST_EXAMPLES=ON \
@@ -219,16 +229,29 @@ jobs:
           grep -nE "runtime error:|ERROR: (Address|Leak)Sanitizer" "$log" | awk 'NR<=20'
         fi
 
-    # coverage-report, not coverage: the suite has already been run by the step
-    # above, and this target only turns the counters it left behind into a
-    # report. The gcovr invocation lives in the top-level CMakeLists.txt, where
-    # `make coverage` reaches the very same one.
     - name: Coverage report
       if: matrix.cfg.coverage
       run: |
         cd build
         gcovr --version
-        cmake --build . --target coverage-report
+        # --exclude shapes the report, but gcovr still reads the coverage data
+        # of everything it finds: --gcov-exclude is what keeps it from parsing
+        # the dependencies FetchContent puts in the build tree. That matters
+        # beyond noise, Eigen being where it first choked -- gcov reports
+        # negative hit counts on heavily inlined -O3 code, and gcovr treats
+        # those as fatal by default. codac's own templated headers can produce
+        # the same artefact, so it is downgraded to a warning rather than
+        # relied upon never happening.
+        gcovr --root .. \
+              --gcov-exclude '.*/_deps/.*' \
+              --gcov-ignore-parse-errors=negative_hits.warn_once_per_file \
+              --exclude '.*/_deps/.*' \
+              --exclude '.*/tests/.*' \
+              --exclude '.*/examples/.*' \
+              --exclude '.*/python/.*' \
+              --print-summary \
+              --html-details coverage.html \
+              --xml coverage.xml
 
     - uses: actions/upload-artifact@v4
       if: matrix.cfg.coverage
