@@ -211,6 +211,59 @@ if(COMPONENT STREQUAL "gaol")
     GAOL_RND_RESTORE();
     return middle;
 ]==])
+
+  # Codac's own change. sqrt() and sqrt_rel() compute the bounds of a square
+  # root with ::sqrt, counting on it to round in the rounding direction in
+  # effect -- upward, or downward for the lower bound of sqrt_rel() -- as IEEE
+  # 754 requires of a square root. The C library of Visual C++ for 32-bit x86
+  # rounds it to nearest whatever the direction, and GAOL's square roots then
+  # missed the exact value: 2433 of the 5000 random square roots of Codac's
+  # tests (tests/core/domains/interval/codac2_tests_Interval_rounding.cpp) did
+  # not enclose it. The result of ::sqrt, which is correctly rounded in some
+  # direction and thus within one float of the exact root, is checked with a
+  # division rounded in the direction wanted, and moved to the next float on
+  # the other side when it is not a bound yet. Where ::sqrt rounds as it should,
+  # the result is unchanged. The next float is reached by adding the smallest
+  # denormal in the rounding direction rather than with nextafter(), which IBEX
+  # found to crash on ARM64 macOS when not rounding to nearest.
+  codac_gaol_replace(_content 1
+[==[
+  // Declaring some prototypes included by the files below.
+  double inv_dn(double);
+  double inv_up(double);
+]==] [==[
+  // Declaring some prototypes included by the files below.
+  double inv_dn(double);
+  double inv_up(double);
+
+  /* Codac: square roots rounded upward and downward, whatever the rounding of
+     ::sqrt (see scripts/CMakeModules/gaol/codac_gaol_patch.cmake). To be called
+     with the rounding direction set upward, respectively downward. */
+  static double codac_sqrt_up(double x)
+  {
+    double s = ::sqrt(x);
+    if (s < x/s) { // x/s rounded upward: s >= x/s proves s >= sqrt(x)
+      s += std::numeric_limits<double>::denorm_min();
+    }
+    return s;
+  }
+
+  static double codac_sqrt_down(double x)
+  {
+    double s = ::sqrt(x);
+    if (s > x/s) { // x/s rounded downward: s <= x/s proves s <= sqrt(x)
+      s -= std::numeric_limits<double>::denorm_min();
+    }
+    return s;
+  }
+]==])
+  codac_gaol_replace(_content 1 "interval(0.0,::sqrt(Ipos.right()))" "interval(0.0,codac_sqrt_up(Ipos.right()))")
+  codac_gaol_replace(_content 1 "Ipos.left_internal()/::sqrt(Ipos.left())" "Ipos.left_internal()/codac_sqrt_up(Ipos.left())")
+  codac_gaol_replace(_content 1 "double r = ::sqrt(Ipos.right());" "double r = codac_sqrt_up(Ipos.right());")
+  codac_gaol_replace(_content 2 "r = ::sqrt(Jpos.right());" "r = codac_sqrt_up(Jpos.right());")
+  codac_gaol_replace(_content 1 "l = ::sqrt(Jpos.left());" "l = codac_sqrt_down(Jpos.left());")
+  codac_gaol_replace(_content 0 "::sqrt(Ipos" "")
+  codac_gaol_replace(_content 0 "::sqrt(Jpos" "")
   codac_gaol_write(${CODAC_GAOL_FILE} "${_content}")
 
   # GAOL's macro opposite(x) is defined in an installed header, and would
