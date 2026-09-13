@@ -348,8 +348,14 @@
   #    optional on ARMv7-A but mandatory on ARMv8-A even in its 32-bit
   #    execution state, and in both cases it is exposed the same way, via
   #    the NEON-VFPv4 FPU extension, activated by
-  #    -mfpu=neon-vfpv4 -mfloat-abi=hard (plus -ffp-contract=fast, since
-  #    C++ does not permit fusing a*b+c into FMA by default). -mfma itself
+  #    -mfpu=neon-vfpv4 -mfloat-abi=hard, with which std::fma uses the
+  #    hardware instruction. -ffp-contract=fast is not added, although
+  #    without it the compiler does not fuse a*b+c into FMA on its own:
+  #    Codac compiles with -ffp-contract=off (codac_gaol_compiler_flags() in
+  #    scripts/CMakeModules/codac_gaol.cmake), so that every operation of
+  #    interval arithmetic is rounded as it is written, and a
+  #    -ffp-contract=fast placed after it on the command line, as
+  #    add_compile_options() places it, would override it. -mfma itself
   #    is not a recognized flag on any 32-bit ARM target, so this is
   #    handled in its own branch below rather than falling through to the
   #    generic GCC/Clang case.
@@ -400,8 +406,8 @@
   elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang" AND CMAKE_SYSTEM_PROCESSOR MATCHES "^armv[7-9]")
       check_cxx_compiler_flag("-mfpu=neon-vfpv4 -mfloat-abi=hard" COMPILER_SUPPORTS_FMA)
       if(COMPILER_SUPPORTS_FMA)
-        add_compile_options(-mfpu=neon-vfpv4 -mfloat-abi=hard -ffp-contract=fast)
-        set(CODAC_ARCH_CXX_FLAGS "-mfpu=neon-vfpv4;-mfloat-abi=hard;-ffp-contract=fast")
+        add_compile_options(-mfpu=neon-vfpv4 -mfloat-abi=hard)
+        set(CODAC_ARCH_CXX_FLAGS "-mfpu=neon-vfpv4;-mfloat-abi=hard")
       endif()
   elseif(WIN32 AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
       # -mfma turns AVX on, and AVX asks for a 32-byte aligned stack, which GCC
