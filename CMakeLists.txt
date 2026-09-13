@@ -371,11 +371,31 @@
   set(CODAC_ARCH_CXX_FLAGS "")
 
   include(CheckCXXCompilerFlag)
+  include(CheckCXXSourceCompiles)
   if(MSVC)
-      check_cxx_compiler_flag("/arch:AVX2" COMPILER_SUPPORTS_FMA)
-      if(COMPILER_SUPPORTS_FMA)
-        add_compile_options(/arch:AVX2)
-        set(CODAC_ARCH_CXX_FLAGS "/arch:AVX2")
+      # Not for 32-bit x86. There, Visual C++ with /arch:AVX or /arch:AVX2
+      # reuses an expression computed with one rounding direction after the
+      # direction has changed, in spite of /fp:strict: a*b or a+b computed with
+      # rounding upward and computed again after fesetround(FE_TONEAREST) came
+      # out rounded upward the second time for about half of 100000 random
+      # operands, with Visual Studio 2022 (17.14) and 2026 (18.9) alike -- and
+      # never on x64, nor without the flag. Interval arithmetic depends on every
+      # operation being rounded in the direction in effect, which matters more
+      # than the speed FMA brings to a few computations: the flag is left out.
+      check_cxx_source_compiles("
+        #if defined(_M_IX86)
+        #error /arch:AVX2 breaks the rounding direction with Visual C++ for 32-bit x86
+        #endif
+        int main() { return 0; }"
+        CODAC_MSVC_TARGET_KEEPS_ROUNDING_WITH_AVX2)
+      if(CODAC_MSVC_TARGET_KEEPS_ROUNDING_WITH_AVX2)
+        check_cxx_compiler_flag("/arch:AVX2" COMPILER_SUPPORTS_FMA)
+        if(COMPILER_SUPPORTS_FMA)
+          add_compile_options(/arch:AVX2)
+          set(CODAC_ARCH_CXX_FLAGS "/arch:AVX2")
+        endif()
+      else()
+        message(STATUS "FMA left disabled: /arch:AVX2 does not keep the rounding direction with Visual C++ for 32-bit x86.")
       endif()
   elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang" AND CMAKE_SYSTEM_PROCESSOR MATCHES "^armv[7-9]")
       check_cxx_compiler_flag("-mfpu=neon-vfpv4 -mfloat-abi=hard" COMPILER_SUPPORTS_FMA)
