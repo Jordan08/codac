@@ -30,19 +30,20 @@
   # pkg-config consumer cannot compile a single translation unit -- this is
   # the same pair that codac-core carries in its $<INSTALL_INTERFACE:...>.
   #
-  # IBEX's own directories are deliberately not among them: "Requires: ibex"
-  # below hands the question to IBEX's ibex.pc, which answers with the prefix
-  # IBEX was actually installed under. The -I\${includedir}/ibex that used to
-  # sit here named a directory under *Codac's* prefix instead, which only ever
-  # exists when the two happen to share one.
+  # GAOL's directories are not among them: where they are depends on whether
+  # GAOL was built with Codac or found elsewhere, and the part on the
+  # dependencies below adds whichever applies. The -I\${includedir}/ibex that
+  # used to sit here, when Codac reached GAOL through IBEX, named a directory
+  # under *Codac's* prefix, which only ever existed when the two happened to
+  # share one.
   set(CODAC_PKG_CONFIG_CFLAGS "-I\${includedir} -I\${includedir}/eigen3")
   set(CODAC_PKG_CONFIG_MODULE_LIBS "")
 
-  # The "Requires:" line, for the same reason: a module that depends on an
-  # outside library appends its pkg-config name here and lets that library's
-  # own .pc answer for its flags. IBEX is always there; CAPD joins it from
-  # src/extensions/capd/CMakeLists.txt when that module is built.
-  set(CODAC_PKG_CONFIG_REQUIRES "ibex")
+  # The "Requires:" line: a module that depends on an outside library appends
+  # its pkg-config name here and lets that library's own .pc answer for its
+  # flags. GAOL installs no .pc file, so the line starts empty; CAPD joins it
+  # from src/extensions/capd/CMakeLists.txt when that module is built.
+  set(CODAC_PKG_CONFIG_REQUIRES "")
 
   add_subdirectory(core)
   add_subdirectory(graphics)
@@ -90,47 +91,38 @@
     string(APPEND CODAC_PKG_CONFIG_CFLAGS " ${CODAC_PKG_CONFIG_ARCH_FLAGS}")
   endif()
 
-  # And the interval-arithmetic flags ibex_init_common() applies to this build,
-  # captured in the top-level CMakeLists.txt. A CMake consumer gets them by
-  # calling ibex_init_common() itself, which is what every example does and
-  # what the manual tells users to do; a pkg-config consumer has no equivalent,
-  # and compiling Codac's headers without -frounding-math silently gives up the
-  # guarantee the whole library rests on.
-  if(CODAC_IBEX_CXX_FLAGS)
-    string(REPLACE ";" " " CODAC_PKG_CONFIG_IBEX_FLAGS "${CODAC_IBEX_CXX_FLAGS}")
-    string(APPEND CODAC_PKG_CONFIG_CFLAGS " ${CODAC_PKG_CONFIG_IBEX_FLAGS}")
+  # And the interval arithmetic flags this build is compiled with,
+  # CODAC_INTERVAL_CXX_FLAGS, set in the top-level CMakeLists.txt. A CMake
+  # consumer gets them through CODAC_CXX_FLAGS, which is what every example
+  # uses and what the manual tells users to use; a pkg-config consumer has no
+  # equivalent, and compiling Codac's headers without -frounding-math silently
+  # gives up the guarantee the whole library rests on.
+  if(CODAC_INTERVAL_CXX_FLAGS)
+    string(REPLACE ";" " " CODAC_PKG_CONFIG_INTERVAL_FLAGS "${CODAC_INTERVAL_CXX_FLAGS}")
+    string(APPEND CODAC_PKG_CONFIG_CFLAGS " ${CODAC_PKG_CONFIG_INTERVAL_FLAGS}")
   endif()
 
-  # The directories of IBEX, collected from its imported targets in the
-  # top-level CMakeLists.txt because the ibex.pc of the prebuilt packages names
-  # the prefix of the machine IBEX was built on. "Requires: ibex" above stays,
-  # and stays right; these are what make the file work in the meantime.
-  foreach(dir ${CODAC_IBEX_INCLUDE_DIRS})
+  # GAOL, when Codac built it: codac_gaol_build() installs it under Codac's own
+  # prefix (see scripts/CMakeModules/codac_gaol.cmake). After the Codac
+  # archives, which depend on it, and gaol before ultim, which it depends on.
+  if(CODAC_GAOL_BUILT_HERE)
+    string(APPEND CODAC_PKG_CONFIG_CFLAGS " -I\${prefix}/${CODAC_INSTALL_INCLUDEDIR_3RD}")
+    string(APPEND CODAC_PKG_CONFIG_LIBS " -L\${prefix}/${CODAC_INSTALL_LIBDIR_3RD} -lgaol -lultim")
+  endif()
+
+  # The directories of a GAOL found on this machine, collected from its imported
+  # targets in the top-level CMakeLists.txt, since GAOL installs no .pc file the
+  # Requires: line above could name.
+  foreach(dir ${CODAC_EXTERNAL_INCLUDE_DIRS})
     string(APPEND CODAC_PKG_CONFIG_CFLAGS " -I${dir}")
   endforeach()
   # Named by their full path, as CMake hands them to the linker on the
   # find_package side, rather than as -L plus -l: there is then no chance of
-  # another directory on the search path answering for libibex first, and
+  # another directory on the search path answering for libgaol first, and
   # nothing to guess about how the file is named on each platform. They come
   # after the Codac archives, which depend on them.
-  foreach(lib ${CODAC_IBEX_LIBRARY_FILES})
+  foreach(lib ${CODAC_EXTERNAL_LIBRARY_FILES})
     string(APPEND CODAC_PKG_CONFIG_LIBS " ${lib}")
-  endforeach()
-  # Their directories as well, which is a separate need: a broken ibex.pc still
-  # contributes "-libex -lgaol -lultim" through Requires:, and those have to
-  # resolve somewhere or the link fails on three libraries that are in fact
-  # already on the command line by full path just above. -L is where the
-  # linker looks for them.
-  set(CODAC_IBEX_LIBRARY_DIRS "")
-  foreach(lib ${CODAC_IBEX_LIBRARY_FILES})
-    get_filename_component(dir "${lib}" DIRECTORY)
-    list(APPEND CODAC_IBEX_LIBRARY_DIRS "${dir}")
-  endforeach()
-  if(CODAC_IBEX_LIBRARY_DIRS)
-    list(REMOVE_DUPLICATES CODAC_IBEX_LIBRARY_DIRS)
-  endif()
-  foreach(dir ${CODAC_IBEX_LIBRARY_DIRS})
-    string(APPEND CODAC_PKG_CONFIG_LIBS " -L${dir}")
   endforeach()
 
   # codac-core links PUBLIC against Threads::Threads, and so must anything that
@@ -188,7 +180,7 @@
   #    not.
   #
   #  - The rest of the usage requirements travel too: include directories,
-  #    Threads, Ibex, CAPD.
+  #    Threads, GAOL, CAPD.
   #
   # What an export set cannot carry are the dependencies this build fetches
   # rather than finds, Eigen and pybind11: they are targets of this project, so
@@ -209,7 +201,7 @@
       Codac::${PROJECT_NAME}-core
       Codac::${PROJECT_NAME}-graphics
       Codac::${PROJECT_NAME}-unsupported
-      Ibex::ibex
+      Codac::gaol
       Threads::Threads
     )
 
@@ -244,14 +236,23 @@
     set(CODAC_LIBRARIES ${libraries} CACHE INTERNAL "Libraries to link against for CODAC")
     set(CODAC_INCLUDE_DIRS ${include_dirs} CACHE INTERNAL "Include directories for CODAC")
 
-    # Propagate the architecture flags (FMA, etc.) to external projects
-    set(CODAC_CXX_FLAGS "${CODAC_ARCH_CXX_FLAGS}" CACHE INTERNAL "C++ flags for CODAC")
+    # Propagate the interval arithmetic flags (-frounding-math, etc.) and the
+    # architecture flags (FMA, etc.) to external projects. In that order, which
+    # is the order this build hands them to the compiler in -- the first through
+    # CMAKE_CXX_FLAGS, the others through add_compile_options() -- and decides
+    # which of two conflicting flags wins.
+    set(cxx_flags ${CODAC_INTERVAL_CXX_FLAGS} ${CODAC_ARCH_CXX_FLAGS})
+    set(CODAC_CXX_FLAGS "${cxx_flags}" CACHE INTERNAL "C++ flags for CODAC")
   endfunction()
 
   # Build the variables written into codac-config.cmake below
   codac_build_config_vars()
 
   set(CODAC_CMAKE_CONFIG_FILE ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake)
+
+  # The definitions of Codac::gaol and Codac::ultim, written by
+  # scripts/CMakeModules/codac_gaol.cmake, which knows where GAOL came from.
+  codac_gaol_config_snippet(CODAC_GAOL_CONFIG_SNIPPET)
 
   # The file is written in three passes: what locates the installed pieces
   # first, then the optional modules, then -- once every dependency the export
@@ -277,7 +278,17 @@
     find_library(CODAC_UNSUPPORTED_LIBRARY NAMES ${PROJECT_NAME}-unsupported
                  PATH_SUFFIXES lib)
 
-    find_package(IBEX REQUIRED)
+${CODAC_GAOL_CONFIG_SNIPPET}
+    # Projects written for a Codac that depended on IBEX call ibex_init_common()
+    # after find_package(CODAC), as the manual used to tell them to, for the
+    # interval arithmetic flags. Those flags now come with CODAC_CXX_FLAGS, and
+    # this ibex_init_common() does nothing: it is only there so that such
+    # projects still configure. A project that finds IBEX itself, before or
+    # after Codac, gets IBEX's own function instead.
+    if(NOT COMMAND ibex_init_common)
+      function(ibex_init_common)
+      endfunction()
+    endif()
 
     # codac-core links PUBLIC against Threads::Threads (see src/core/CMakeLists.txt),
     # e.g. for peibos/threading code -- without it, a downstream target that

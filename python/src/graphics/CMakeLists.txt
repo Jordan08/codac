@@ -33,7 +33,7 @@
   )
 
   target_link_libraries(_graphics
-    PRIVATE ${PROJECT_NAME}-graphics Threads::Threads Ibex::ibex
+    PRIVATE ${PROJECT_NAME}-graphics Threads::Threads Codac::gaol
   )
 
   # Propagate the architecture flags (FMA, etc.) to the Python modules

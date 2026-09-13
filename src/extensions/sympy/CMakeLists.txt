@@ -31,7 +31,7 @@
   set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
   add_library(${PROJECT_NAME}-sympy ${CODAC_SYMPY_SRC})
-  target_link_libraries(${PROJECT_NAME}-sympy PUBLIC ${PROJECT_NAME}-core Ibex::ibex $<BUILD_INTERFACE:Eigen3::Eigen>)
+  target_link_libraries(${PROJECT_NAME}-sympy PUBLIC ${PROJECT_NAME}-core Codac::gaol $<BUILD_INTERFACE:Eigen3::Eigen>)
   # pybind11 is fetched by this build too, so it is a build-tree dependency for
   # the same reason as Eigen -- see src/core/CMakeLists.txt. A PRIVATE link on
   # a static library is still recorded in the interface (as $<LINK_ONLY:...>),

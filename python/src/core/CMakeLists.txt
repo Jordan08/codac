@@ -162,7 +162,7 @@
   )
 
   target_link_libraries(_core
-    PRIVATE ${PROJECT_NAME}-core ${PROJECT_NAME}-sympy Threads::Threads Ibex::ibex
+    PRIVATE ${PROJECT_NAME}-core ${PROJECT_NAME}-sympy Threads::Threads Codac::gaol
   )
 
   # Propagate the architecture flags (FMA, etc.) to the Python modules

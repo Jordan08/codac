@@ -24,7 +24,7 @@
 #
 #   --prefix DIR            where Codac was installed (required)
 #   --build-dir DIR         scratch directory for the two builds (default: ./build_packaging_check)
-#   --cmake-prefix-path P   passed to the consumer's cmake, for IBEX and friends
+#   --cmake-prefix-path P   passed to the consumer's cmake, for dependencies installed elsewhere
 #   --pkg-config-path P     prepended to PKG_CONFIG_PATH
 #   --require-pkgconfig     fail instead of skipping when pkg-config cannot be used
 #   --generator NAME        generator for the consumer's cmake; "" leaves the choice
@@ -210,8 +210,8 @@ elif grep -qiE '"command": *"[^"]*cl\.exe' "$cmake_build/compile_commands.json" 
 elif ! command -v pkg-config >/dev/null 2>&1 ; then
   skip_reason="pkg-config is not installed"
 # "--exists codac" also resolves everything on the Requires: line, so a module
-# named there that no .pc answers for (IBEX, and CAPD when that module is
-# built) is caught right here.
+# named there that no .pc answers for (CAPD when that module is built) is
+# caught right here.
 elif ! pkg-config --exists codac ; then
   skip_reason="pkg-config cannot resolve codac: $(pkg-config --print-errors --exists codac 2>&1 || true)"
 fi
@@ -373,10 +373,9 @@ mkdir -p "$tmp"
 
 # A -I naming a directory that is not there contributes nothing to the
 # compile, so it is set aside rather than compared -- but printed, because it
-# is a defect in whatever wrote it. The ibex.pc shipped in the prebuilt IBEX
-# packages is the reason this exists: its prefix= is the directory IBEX was
-# built in on the release machine rather than the one it was installed under,
-# so "Requires: ibex" drags three such directories in on every platform.
+# is a defect in whatever wrote it. It was written for the ibex.pc of the
+# prebuilt IBEX packages Codac used to depend on, whose prefix= was the
+# directory IBEX had been built in rather than the one it was installed under.
 partition_existing() {
   local keep="$1" gone="$2" line dir
   : > "$keep" ; : > "$gone"
@@ -430,8 +429,8 @@ if [ -s "$tmp/cmake_cflags_missing.txt" ] || [ -s "$tmp/pc_cflags_missing.txt" ]
   [ -s "$tmp/cmake_cflags_missing.txt" ] && sed 's/^/    find_package: /' "$tmp/cmake_cflags_missing.txt"
   [ -s "$tmp/pc_cflags_missing.txt" ]    && sed 's/^/    pkg-config:   /' "$tmp/pc_cflags_missing.txt"
   echo "  Harmless to the compiler, but each is a wrong path in whatever file"
-  echo "  named it. The prebuilt IBEX packages ship an ibex.pc whose prefix= is"
-  echo "  the build machine's directory, which is where these come from."
+  echo "  named it: typically a .pc file whose prefix= is the directory it was"
+  echo "  built in rather than the one it was installed under."
 fi
 
 echo

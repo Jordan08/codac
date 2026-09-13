@@ -181,7 +181,6 @@ list(APPEND SRC_TESTS # listing files without extension
   core/tools/codac2_tests_serialization
   core/tools/codac2_tests_transformations
   core/tools/codac2_tests_trunc
-  core/tools/ibex/codac2_tests_ibex
 
   ../doc/manual/manual/tools/src
 
@@ -254,12 +253,6 @@ if (WITH_CAPD)
   set(CODAC_LIBRARIES ${CODAC_LIBRARIES} ${PROJECT_NAME}-capd capd::capd)
 endif()
 
-# IBEX test
-#if (WITH_IBEX)
-  #find_package(IBEX REQUIRED)
-  #ibex_init_common() # IBEX should have installed this function
-  #message(STATUS "Found IBEX version ${IBEX_VERSION}")
-#endif()
 
 
 
@@ -583,7 +576,6 @@ foreach(SRC_TEST ${SRC_TESTS})
     ${TEST_NAME}
     PUBLIC
 
-      Ibex::ibex
       ${CODAC_LIBRARIES}
 
     PRIVATE

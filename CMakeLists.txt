@@ -21,7 +21,17 @@
     cmake_policy(SET CMP0091 NEW)
   endif()
 
-  project(codac VERSION ${VERSION} LANGUAGES CXX)
+  # C as well as C++: the codac sources are all C++, but mathlib, which GAOL
+  # depends on, is C, and codac_gaol_build() builds it when no GAOL is installed
+  # (see scripts/CMakeModules/codac_gaol.cmake). Enabled here, the C compiler
+  # and its flags are settled -- and cached -- by the first configuration, so
+  # that what is handed to that build is the same at every later one. Enabled
+  # further down by a dependency instead, as happened when only CXX was listed,
+  # the compiler went from the name it was given to its full path between the
+  # first configuration and the second, the build of GAOL took that for a
+  # change and was configured again, and everything in codac that includes an
+  # interval was recompiled.
+  project(codac VERSION ${VERSION} LANGUAGES C CXX)
 
   if(NOT VERSION_ID)
     set(PROJECT_VERSION_FULL ${PROJECT_VERSION})
@@ -94,10 +104,11 @@
   endif()
 
   if(MSVC)
-    # IBEX (and the gaol interval library it bundles) is only distributed
-    # to this project's CI as prebuilt Release binaries (see
-    # .github/workflows/vcmatrix.yml and .github/workflows/windebugmatrix.yml):
-    # gaol.lib is compiled with the Release CRT (/MD). MSVC's linker refuses
+    # The gaol interval library is only ever linked as a Release binary:
+    # codac_gaol_build() (scripts/CMakeModules/codac_gaol.cmake) builds it in
+    # Release whatever the configuration of codac, and a gaol found on the
+    # system comes prebuilt that way too. gaol.lib is thus compiled with the
+    # Release CRT (/MD). MSVC's linker refuses
     # to mix object files built against different CRT variants in the same
     # binary -- linking that Release-CRT gaol.lib together with codac's own
     # object files, which without this override would default to the Debug
@@ -106,8 +117,8 @@
     # fatal error LNK1319.
     #
     # Forcing every configuration onto the Release CRT keeps codac's own
-    # Debug build link-compatible with that prebuilt gaol.lib without
-    # having to rebuild IBEX/gaol from source in Debug ourselves. Release
+    # Debug build link-compatible with that Release gaol.lib without
+    # having to build gaol in Debug as well. Release
     # itself already defaulted to /MD, so in practice this only changes
     # what the Debug configuration uses. Debug builds still get no
     # optimization (/Od), full debug symbols (/Zi) and AddressSanitizer
@@ -235,9 +246,9 @@
         # out-of-bounds access within it, and every translation unit
         # linked together records, via #pragma detect_mismatch, whether it
         # was compiled with that instrumentation on or off. gaol.lib
-        # (bundled inside the prebuilt, non-ASan IBEX package -- see the
+        # (a Release build without ASan -- see the
         # CMAKE_MSVC_RUNTIME_LIBRARY comment above for why it is not
-        # rebuilt from source here) was compiled without ASan, so its
+        # built in Debug here) was compiled without ASan, so its
         # object files carry the instrumentation-off value; without this,
         # codac's own ASan-instrumented Debug object files would carry the
         # opposite value, and MSVC's linker would reject the mix with a
@@ -458,74 +469,74 @@
 
 
 ################################################################################
-# Looking for IBEX
+# Looking for GAOL
 ################################################################################
 
-  find_package(IBEX REQUIRED)
+  # GAOL is the interval arithmetic library codac2::Interval is built upon, and
+  # mathlib (libultim) the library GAOL computes its elementary functions with.
+  # Both used to come from IBEX, which bundles them, and they were all Codac
+  # needed IBEX for: they are now found, or built, by Codac itself. What comes
+  # from IBEX in doing so, and who wrote it, is said at the top of
+  # scripts/CMakeModules/codac_gaol.cmake and of FindGAOL.cmake next to it.
+  include(codac_gaol)
 
-  # ibex_init_common() is what puts -frounding-math and its companions on the
-  # command line -- the flags that stop the compiler from constant-folding in
-  # the wrong rounding mode, without which an interval is no longer a bound.
-  # Consumers need them as much as this build does. The CMake ones call
-  # ibex_init_common() themselves (every examples/*/CMakeLists.txt does), but a
-  # pkg-config consumer has no such hook, so codac.pc has to carry the flags
-  # instead -- see the Cflags line in src/CMakeLists.txt.
-  #
-  # Taking the difference the call makes to CMAKE_CXX_FLAGS, which is where it
-  # puts them, records exactly what IBEX added, without re-deriving its
-  # compiler checks and without picking up any of the flags Codac adds for
-  # itself (warnings, sanitizers, coverage), which have no business in an
-  # installed .pc file.
-  separate_arguments(CODAC_CXX_FLAGS_BEFORE_IBEX NATIVE_COMMAND "${CMAKE_CXX_FLAGS}")
-  ibex_init_common() # IBEX should have installed this function
-  separate_arguments(CODAC_CXX_FLAGS_AFTER_IBEX NATIVE_COMMAND "${CMAKE_CXX_FLAGS}")
+  # The flags floating-point rounding depends on, which ibex_init_common() used
+  # to put on the command line: without -frounding-math and its companions, the
+  # compiler is free to constant-fold in the wrong rounding mode, and an
+  # interval is no longer a bound. Consumers need them as much as this build
+  # does, so they are kept as a list, and handed over through CODAC_CXX_FLAGS in
+  # codac-config.cmake and through the Cflags line of codac.pc (see
+  # src/CMakeLists.txt). Within this build they go where ibex_init_common() put
+  # them, in CMAKE_CXX_FLAGS, so that every target is compiled with them -- the
+  # tests, the examples and the Python bindings included -- and so is a GAOL
+  # built by codac_gaol_build(), which is handed CMAKE_CXX_FLAGS.
+  codac_gaol_compiler_flags(CODAC_INTERVAL_CXX_FLAGS)
+  string(REPLACE ";" " " _codac_interval_cxx_flags "${CODAC_INTERVAL_CXX_FLAGS}")
+  string(APPEND CMAKE_CXX_FLAGS " ${_codac_interval_cxx_flags}")
+  message(STATUS "Interval arithmetic flags: ${CODAC_INTERVAL_CXX_FLAGS}")
 
-  set(CODAC_IBEX_CXX_FLAGS "")
-  foreach(flag ${CODAC_CXX_FLAGS_AFTER_IBEX})
-    if(NOT flag IN_LIST CODAC_CXX_FLAGS_BEFORE_IBEX)
-      list(APPEND CODAC_IBEX_CXX_FLAGS ${flag})
-    endif()
-  endforeach()
+  option(ENABLE_FIND_PACKAGE_GAOL "ENABLE_FIND_PACKAGE_GAOL" ON)
+  if(ENABLE_FIND_PACKAGE_GAOL)
+    find_package(GAOL QUIET) # Use GAOL_DIR and MATHLIB_DIR, or CMAKE_PREFIX_PATH, to specify a custom GAOL installation path...
+  endif()
+  if(GAOL_FOUND)
+    message(STATUS "Found GAOL version ${GAOL_VERSION} in ${GAOL_INCDIR}")
+  else()
+    message(STATUS "Attempt to install GAOL automatically...")
+    codac_gaol_build()
+  endif()
+  codac_gaol_create_targets()
+  # Adds Codac::gaol (and Codac::ultim, which it links)
 
-  message(STATUS "Found IBEX version ${IBEX_VERSION}")
-  message(STATUS "Interval arithmetic flags from IBEX: ${CODAC_IBEX_CXX_FLAGS}")
-
-  # Where IBEX's headers and archives actually are, walked out of the imported
-  # targets ibex-config.cmake defines: Ibex::ibex, and Ibex::gaol and
-  # Ibex::ultim behind it.
+  # Where the headers and archives of a GAOL found on this machine actually are,
+  # walked out of the imported targets Codac::gaol and Codac::ultim. A GAOL built
+  # by codac_gaol_build() is left out: it is installed with Codac, under the same
+  # prefix, and src/CMakeLists.txt names it from there.
   #
   # This is for codac.pc alone. The CMake side has no use for it -- a consumer
-  # of codac-config.cmake reaches IBEX through find_package(IBEX) and the same
-  # targets. But the ibex.pc shipped in the prebuilt IBEX packages this project
-  # uses, on all three platforms, carries the prefix of the machine IBEX was
-  # built on rather than the one it was installed under
-  # (prefix=/home/runner/work/ibex-lib/... in the Debian package, and the
-  # equivalent in the macOS and Windows archives), so every -I and -L it hands
-  # out points nowhere. codac.pc still names ibex on its Requires: line, which
-  # is the right thing to declare and what will carry the answer once IBEX is
-  # fixed; until then it also names these directories itself, and the
-  # duplicates that will result are harmless.
-  #
-  # ibex-config.cmake, unlike ibex.pc, computes its prefix from its own
-  # location, which is why what is collected here is correct.
-  set(CODAC_IBEX_INCLUDE_DIRS "")
-  set(CODAC_IBEX_LIBRARY_FILES "")
-  set(_codac_ibex_queue Ibex::ibex)
-  set(_codac_ibex_seen "")
-  while(_codac_ibex_queue)
-    list(GET _codac_ibex_queue 0 _codac_ibex_target)
-    list(REMOVE_AT _codac_ibex_queue 0)
-    if(_codac_ibex_target IN_LIST _codac_ibex_seen)
+  # of codac-config.cmake gets the same imported targets -- but GAOL installs no
+  # .pc file that codac.pc could name on its Requires: line instead.
+  set(CODAC_EXTERNAL_INCLUDE_DIRS "")
+  set(CODAC_EXTERNAL_LIBRARY_FILES "")
+  set(_codac_ext_queue "")
+  if(NOT CODAC_GAOL_BUILT_HERE)
+    list(APPEND _codac_ext_queue Codac::gaol)
+  endif()
+  set(_codac_ext_seen "")
+  while(_codac_ext_queue)
+    list(GET _codac_ext_queue 0 _codac_ext_target)
+    list(REMOVE_AT _codac_ext_queue 0)
+    if(_codac_ext_target IN_LIST _codac_ext_seen)
       continue()
     endif()
-    list(APPEND _codac_ibex_seen ${_codac_ibex_target})
-    if(NOT TARGET ${_codac_ibex_target})
+    list(APPEND _codac_ext_seen ${_codac_ext_target})
+    if(NOT TARGET ${_codac_ext_target})
       continue()
     endif()
 
-    get_target_property(_codac_ibex_inc ${_codac_ibex_target} INTERFACE_INCLUDE_DIRECTORIES)
-    if(_codac_ibex_inc)
-      list(APPEND CODAC_IBEX_INCLUDE_DIRS ${_codac_ibex_inc})
+    get_target_property(_codac_ext_inc ${_codac_ext_target} INTERFACE_INCLUDE_DIRECTORIES)
+    if(_codac_ext_inc)
+      list(APPEND CODAC_EXTERNAL_INCLUDE_DIRS ${_codac_ext_inc})
     endif()
 
     # An imported archive names its file either outright or per configuration.
@@ -535,34 +546,34 @@
     # properties") -- which is what Debian Bullseye, on CMake 3.18.4, reported.
     # TYPE is whitelisted, so it can be asked first, as can the two INTERFACE_
     # properties read above and below.
-    get_target_property(_codac_ibex_type ${_codac_ibex_target} TYPE)
-    if(NOT _codac_ibex_type STREQUAL "INTERFACE_LIBRARY")
-      get_target_property(_codac_ibex_loc ${_codac_ibex_target} IMPORTED_LOCATION)
-      if(NOT _codac_ibex_loc)
-        get_target_property(_codac_ibex_cfgs ${_codac_ibex_target} IMPORTED_CONFIGURATIONS)
-        if(_codac_ibex_cfgs)
-          list(GET _codac_ibex_cfgs 0 _codac_ibex_cfg)
-          get_target_property(_codac_ibex_loc ${_codac_ibex_target} IMPORTED_LOCATION_${_codac_ibex_cfg})
+    get_target_property(_codac_ext_type ${_codac_ext_target} TYPE)
+    if(NOT _codac_ext_type STREQUAL "INTERFACE_LIBRARY")
+      get_target_property(_codac_ext_loc ${_codac_ext_target} IMPORTED_LOCATION)
+      if(NOT _codac_ext_loc)
+        get_target_property(_codac_ext_cfgs ${_codac_ext_target} IMPORTED_CONFIGURATIONS)
+        if(_codac_ext_cfgs)
+          list(GET _codac_ext_cfgs 0 _codac_ext_cfg)
+          get_target_property(_codac_ext_loc ${_codac_ext_target} IMPORTED_LOCATION_${_codac_ext_cfg})
         endif()
       endif()
-      if(_codac_ibex_loc)
-        list(APPEND CODAC_IBEX_LIBRARY_FILES ${_codac_ibex_loc})
+      if(_codac_ext_loc)
+        list(APPEND CODAC_EXTERNAL_LIBRARY_FILES ${_codac_ext_loc})
       endif()
     endif()
 
-    get_target_property(_codac_ibex_deps ${_codac_ibex_target} INTERFACE_LINK_LIBRARIES)
-    if(_codac_ibex_deps)
-      list(APPEND _codac_ibex_queue ${_codac_ibex_deps})
+    get_target_property(_codac_ext_deps ${_codac_ext_target} INTERFACE_LINK_LIBRARIES)
+    if(_codac_ext_deps)
+      list(APPEND _codac_ext_queue ${_codac_ext_deps})
     endif()
   endwhile()
-  if(CODAC_IBEX_INCLUDE_DIRS)
-    list(REMOVE_DUPLICATES CODAC_IBEX_INCLUDE_DIRS)
+  if(CODAC_EXTERNAL_INCLUDE_DIRS)
+    list(REMOVE_DUPLICATES CODAC_EXTERNAL_INCLUDE_DIRS)
   endif()
-  if(CODAC_IBEX_LIBRARY_FILES)
-    list(REMOVE_DUPLICATES CODAC_IBEX_LIBRARY_FILES)
+  if(CODAC_EXTERNAL_LIBRARY_FILES)
+    list(REMOVE_DUPLICATES CODAC_EXTERNAL_LIBRARY_FILES)
   endif()
-  message(STATUS "IBEX include directories: ${CODAC_IBEX_INCLUDE_DIRS}")
-  message(STATUS "IBEX libraries: ${CODAC_IBEX_LIBRARY_FILES}")
+  message(STATUS "External include directories: ${CODAC_EXTERNAL_INCLUDE_DIRS}")
+  message(STATUS "External libraries: ${CODAC_EXTERNAL_LIBRARY_FILES}")
 
 
 ################################################################################

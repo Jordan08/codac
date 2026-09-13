@@ -16,11 +16,9 @@
   find_package(CODAC REQUIRED)
   message(STATUS "Found Codac version ${CODAC_VERSION}")
 
-  # As in the examples: IBEX contributes the interval-arithmetic flags
-  # (-frounding-math and the rest). codac.pc carries the same set, which is
-  # part of what the parity check compares.
-  ibex_init_common()
-
+  # As in the examples: the interval arithmetic flags (-frounding-math and the
+  # rest) come with CODAC_CXX_FLAGS below. codac.pc carries the same set, which
+  # is part of what the parity check compares.
   add_executable(${PROJECT_NAME} main.cpp)
   target_compile_options(${PROJECT_NAME} PUBLIC ${CODAC_CXX_FLAGS})
   target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${CODAC_INCLUDE_DIRS})

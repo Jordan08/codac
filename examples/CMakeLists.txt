@@ -119,7 +119,6 @@ if(BUILD_TESTS AND TEST_EXAMPLES)
       ${EXAMPLE_NAME}
       PUBLIC
 
-        Ibex::ibex
         ${CODAC_EXAMPLE_LIBRARIES}
     )
 
