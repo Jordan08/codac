@@ -81,9 +81,9 @@ Steps
 
    .. admonition:: The GAOL dependency
 
-     | The intervals of Codac are built upon `GAOL <https://github.com/goualard-f/GAOL>`_, the interval arithmetic library written by `Frédéric Goualard <https://frederic.goualard.net>`_, which computes its elementary functions with the IBM Accurate Portable Mathematical Library (mathlib). You do not have to install them either: CMake first looks for a GAOL installed on your system and, when it finds none, downloads GAOL from `Frédéric Goualard's repository <https://github.com/goualard-f/GAOL>`_ and mathlib from `his site <https://frederic.goualard.net>`_, then builds and installs both along with Codac. Neither comes with a CMake build: Codac provides one, taken from the CMake build of `IBEX <https://github.com/ibex-team/ibex-lib>`_ (which Codac used to require for GAOL alone and no longer depends on), and makes to GAOL a few changes, which Codac depends on or which Visual Studio, MinGW and ARM processors need. They are listed and explained in ``scripts/CMakeModules/gaol/codac_gaol_patch.cmake``.
+     | The intervals of Codac are built upon `GAOL <https://github.com/goualard-f/GAOL>`_, the interval arithmetic library written by `Frédéric Goualard <https://frederic.goualard.net>`_, which computes its elementary functions with the IBM Accurate Portable Mathematical Library (mathlib). You do not have to install them either: CMake first looks for a GAOL installed on your system and, when it finds none, downloads GAOL from `the fork of Jordan Ninin <https://github.com/Jordan08/GAOL>`_, whose CMake build downloads mathlib from `Frédéric Goualard's site <https://frederic.goualard.net>`_, then builds and installs both along with Codac. The fork adds to GAOL a CMake build, taken from the one of `IBEX <https://github.com/ibex-team/ibex-lib>`_ (which Codac used to require for GAOL alone and no longer depends on), the changes Codac depends on or which Visual Studio, MinGW and ARM processors need, and tests of the bounds it computes. Its README lists and explains them.
      | To use a GAOL installed in a custom location, give its installation prefix with ``-DGAOL_DIR=<prefix>`` (and ``-DMATHLIB_DIR=<prefix>`` for mathlib, if it is installed elsewhere), or add that prefix to ``CMAKE_PREFIX_PATH``. To build the GAOL Codac is tested against even where another one is installed, configure Codac with ``-DENABLE_FIND_PACKAGE_GAOL=OFF``.
-     | On a 32-bit x86 processor, Codac, GAOL and mathlib are compiled with ``-msse2 -mfpmath=sse``, except by Visual Studio, which computes in SSE2 already: computed on the x87 FPU, GAOL's bounds and mathlib's results are only right while its precision stays set to 53 bits, which nothing guarantees. A processor with SSE2 is therefore required there. On 32-bit ARM processors, build Codac with GCC rather than Clang: Clang does not honour the rounding direction on these processors, which interval arithmetic depends on, and CMake warns about it.
+     | On a 32-bit x86 processor, Codac, GAOL and mathlib are compiled with ``-msse2 -mfpmath=sse``, except by Visual Studio, which computes in SSE2 already: computed on the x87 FPU, GAOL's bounds and mathlib's results are only right while its precision stays set to 53 bits, which nothing guarantees. A processor with SSE2 is therefore required there. GAOL is not built with the compilers that do not compute its intervals right, and its build stops with a message naming the ones to use instead: Clang for 32-bit ARM processors (use GCC), the compilers that say they do not honour the rounding direction, such as Clang 14 for 64-bit ARM processors, and MinGW-w64 older than version 12 (MinGW-w64 GCC 11 to 13), whose math library is not accurate enough.
 
 2. **Install the Codac library**:
 
@@ -158,7 +158,7 @@ Using MinGW
 
 .. Check https://community.chocolatey.org/packages/codac.
 
-Install `Chocolatey package manager <https://chocolatey.org/install>`_, run `choco install -y cmake make qtcreator` in PowerShell and then download and extract *e.g.* ``codac_standalone_x64_mingw13.zip`` (for MinGW 13) from https://github.com/codac-team/codac/releases/latest, launch Qt Creator and choose Open Project, open ``example\CMakelists.txt``, ensure Desktop is selected and click Configure Project (might be hidden behind notifications at the bottom-right), wait 10 s then click on the big bottom-left green Run button, and finally check that the graphical output appears.
+Install `Chocolatey package manager <https://chocolatey.org/install>`_, run `choco install -y cmake make qtcreator` in PowerShell and then download and extract *e.g.* ``codac_standalone_x64_mingw15.zip`` (for MinGW 15) from https://github.com/codac-team/codac/releases/latest, launch Qt Creator and choose Open Project, open ``example\CMakelists.txt``, ensure Desktop is selected and click Configure Project (might be hidden behind notifications at the bottom-right), wait 10 s then click on the big bottom-left green Run button, and finally check that the graphical output appears.
 
 Note that in order to obtain graphical outputs, you will have to download and run https://github.com/ENSTABretagneRobotics/VIBES/releases/latest/download/VIBes-viewer_x86.exe before running the project.
 
@@ -181,7 +181,7 @@ You will probably need to install these prerequisites (assuming you already inst
   choco install cmake git make
   choco install eigen
   
-Then, install the desired compiler (*e.g.* ``choco install mingw --version=11.2.0.07112021``). 
+Then, install the desired compiler (*e.g.* ``choco install mingw --version=15.2.0``; MinGW-w64 older than version 12, which the MinGW-w64 GCC 11 to 13 packages come with, is not supported). 
 
 Optionally, for Python binding (*e.g.* ``choco install python --version=3.10.4``) and documentation:
 
