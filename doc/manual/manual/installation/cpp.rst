@@ -39,7 +39,7 @@ Linux Installation
 
 ..   .. code-block:: bash
 
-..     sudo apt remove libcodac-dev libibex-dev
+..     sudo apt remove libcodac-dev
 ..     sudo rm -f /etc/apt/sources.list.d/ensta-bretagne.list
 ..     sudo apt update
 
@@ -79,63 +79,40 @@ Steps
      | Codac is built on `Eigen <https://eigen.tuxfamily.org>`_ (version 3.4 or newer), but you do not have to install it: by default the CMake configuration downloads and builds the version Codac is tested against, so nothing has to be added to the command above.
      | To build against an Eigen already installed on your system instead, configure Codac with ``-DENABLE_FIND_PACKAGE_EIGEN3=ON``; CMake then looks for it with ``find_package(Eigen3 3.4.0)``, and ``Eigen3_DIR`` or ``CMAKE_PREFIX_PATH`` can point at a custom installation path. This is what the ``choco install eigen`` of the Windows instructions below provides. Note that the Eigen headers are part of Codac's public interface, so a program using Codac compiles them too: this is why they are installed next to Codac's own headers, and why :ref:`the configuration of a user project <sec-start-cpp-project>` lists them among its include directories.
 
-2. **Install the IBEX dependency**:
-   
-   Codac still uses some features of the `IBEX library <https://ibex-team.github.io/ibex-lib/install-cmake.html>`_ that you have to install first (currently, the only thing Codac uses from IBEX is a wrapper of the `GAOL library <https://github.com/goualard-f/GAOL>`_). The last version of IBEX is maintained on `this unofficial development repository <https://github.com/lebarsfa/ibex-lib/tree/master>`_:
+   .. admonition:: The GAOL dependency
+
+     | The intervals of Codac are built upon `GAOL <https://github.com/goualard-f/GAOL>`_, the interval arithmetic library written by `Frédéric Goualard <https://frederic.goualard.net>`_, which computes its elementary functions with the IBM Accurate Portable Mathematical Library (mathlib). You do not have to install them either: CMake first looks for a GAOL installed on your system and, when it finds none, downloads GAOL from `Frédéric Goualard's repository <https://github.com/goualard-f/GAOL>`_ and mathlib from `his site <https://frederic.goualard.net>`_, then builds and installs both along with Codac. Neither comes with a CMake build: Codac provides one, taken from the CMake build of `IBEX <https://github.com/ibex-team/ibex-lib>`_ (which Codac used to require for GAOL alone and no longer depends on), and makes to GAOL a few changes, which Codac depends on or which Visual Studio, MinGW and ARM processors need. They are listed and explained in ``scripts/CMakeModules/gaol/codac_gaol_patch.cmake``.
+     | To use a GAOL installed in a custom location, give its installation prefix with ``-DGAOL_DIR=<prefix>`` (and ``-DMATHLIB_DIR=<prefix>`` for mathlib, if it is installed elsewhere), or add that prefix to ``CMAKE_PREFIX_PATH``. To build the GAOL Codac is tested against even where another one is installed, configure Codac with ``-DENABLE_FIND_PACKAGE_GAOL=OFF``.
+     | On a 32-bit x86 processor, Codac, GAOL and mathlib are compiled with ``-msse2 -mfpmath=sse``, except by Visual Studio, which computes in SSE2 already: computed on the x87 FPU, GAOL's bounds and mathlib's results are only right while its precision stays set to 53 bits, which nothing guarantees. A processor with SSE2 is therefore required there. On 32-bit ARM processors, build Codac with GCC rather than Clang: Clang does not honour the rounding direction on these processors, which interval arithmetic depends on, and CMake warns about it.
+
+2. **Install the Codac library**:
 
    .. code-block:: bash
 
-      # Requirements to compile IBEX
-      sudo apt-get install -y flex bison
-
-      # Download IBEX sources from GitHub
-      git clone -b master https://github.com/lebarsfa/ibex-lib.git $HOME/ibex-lib
-
-      # Configure IBEX before installation
-      cd $HOME/ibex-lib
-      mkdir build ; cd build
-      cmake -DCMAKE_INSTALL_PREFIX=$HOME/ibex-lib/build_install -DCMAKE_BUILD_TYPE=Release ..
-
-      # Building + installing
-      make
-      make install
-      cd ../..
-
-   For further CMake options, please refer to the IBEX documentation.
-
-   .. warning::
-
-     **GAOL prerequisite:** On some platforms, you might need to install manually `MathLib <https://github.com/lebarsfa/mathlib>`_ and `GAOL <https://github.com/lebarsfa/GAOL>`_ with CMake and `specify where they are <https://ibex-team.github.io/ibex-lib/install-cmake.html#configuration-options>`_ in order to build IBEX successfully and have accurate computations.
-
-3. **Install the Codac library**:
-
-   .. code-block:: bash
-
-      # The codac directory can be placed in your home, same level as IBEX
+      # The codac directory can be placed in your home
       git clone https://github.com/codac-team/codac $HOME/codac
 
       # Configure Codac before installation
       cd $HOME/codac
       mkdir build ; cd build
-      cmake -DCMAKE_INSTALL_PREFIX=$HOME/codac/build_install -DCMAKE_PREFIX_PATH=$HOME/ibex-lib/build_install -DCMAKE_BUILD_TYPE=Release ..
+      cmake -DCMAKE_INSTALL_PREFIX=$HOME/codac/build_install -DCMAKE_BUILD_TYPE=Release ..
 
       # Building + installing
       make
       make install
       cd ../..
 
-4. **Configure your system to find Codac**:
+3. **Configure your system to find Codac**:
 
    In case Codac and its dependencies have been installed locally on your system, you will have to configure your environment variables. This can be done temporarily with:
 
    .. code-block:: bash
 
-      export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$HOME/ibex-lib/build_install
       export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$HOME/codac/build_install
 
    ... or permanently by updating your ``.bashrc`` file by appending the above commands.
 
-5. **Verify the installation** (optional):
+4. **Verify the installation** (optional):
 
    To ensure that the installation has worked properly, the unit tests of the library can be run. For this, you have to configure CMake using the ``-DBUILD_TESTS=ON`` option, before compilation. Then, from the ``$HOME/codac/build`` directory:
 
@@ -143,7 +120,7 @@ Steps
 
       make test
 
-6. **Try an example** (optional):
+5. **Try an example** (optional):
 
    You may want to try Codac by running one of the proposed examples. After the installation, you can run the following commands:
 
@@ -162,7 +139,7 @@ Steps
 
    You should obtain a graphical output corresponding to a curious set inversion.
 
-7. **Start your own project**:
+6. **Start your own project**:
 
    ``examples/01_batman/CMakeLists.txt`` is also the shortest possible template
    for a project of your own. :ref:`sec-start-cpp-project` goes through it line
@@ -181,7 +158,7 @@ Using MinGW
 
 .. Check https://community.chocolatey.org/packages/codac.
 
-Install `Chocolatey package manager <https://chocolatey.org/install>`_, run `choco install -y ibex cmake make qtcreator` in PowerShell and then download and extract *e.g.* ``codac_standalone_x64_mingw13.zip`` (for MinGW 13) from https://github.com/codac-team/codac/releases/latest, launch Qt Creator and choose Open Project, open ``example\CMakelists.txt``, ensure Desktop is selected and click Configure Project (might be hidden behind notifications at the bottom-right), wait 10 s then click on the big bottom-left green Run button, and finally check that the graphical output appears.
+Install `Chocolatey package manager <https://chocolatey.org/install>`_, run `choco install -y cmake make qtcreator` in PowerShell and then download and extract *e.g.* ``codac_standalone_x64_mingw13.zip`` (for MinGW 13) from https://github.com/codac-team/codac/releases/latest, launch Qt Creator and choose Open Project, open ``example\CMakelists.txt``, ensure Desktop is selected and click Configure Project (might be hidden behind notifications at the bottom-right), wait 10 s then click on the big bottom-left green Run button, and finally check that the graphical output appears.
 
 Note that in order to obtain graphical outputs, you will have to download and run https://github.com/ENSTABretagneRobotics/VIBES/releases/latest/download/VIBes-viewer_x86.exe before running the project.
 
@@ -201,7 +178,7 @@ You will probably need to install these prerequisites (assuming you already inst
 
 .. code-block:: bash
 
-  choco install cmake git make patch winflexbison
+  choco install cmake git make
   choco install eigen
   
 Then, install the desired compiler (*e.g.* ``choco install mingw --version=11.2.0.07112021``). 

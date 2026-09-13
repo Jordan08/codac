@@ -23,9 +23,11 @@ directory you extracted the archive into. Its layout is:
    │   ├── codac-core/               <- one directory per module
    │   ├── codac-graphics/
    │   ├── codac-unsupported/
+   │   ├── codac-3rd/                <- GAOL and mathlib, when Codac built them
    │   └── eigen3/                   <- Eigen, part of Codac's public interface
    ├── lib/
-   │   └── libcodac-core.a, libcodac-graphics.a, libcodac-unsupported.a
+   │   ├── libcodac-core.a, libcodac-graphics.a, libcodac-unsupported.a
+   │   └── codac-3rd/                <- libgaol.a and libultim.a, when Codac built them
    └── share/
        ├── codac/cmake/
        │   ├── codac-config.cmake    <- what find_package(CODAC) reads
@@ -76,21 +78,18 @@ and ``CMakeLists.txt`` is:
   set(CMAKE_CXX_STANDARD 20)
   set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-  # Where to look for Codac and for IBEX. Both are needed: codac-config.cmake
-  # itself calls find_package(IBEX). Leave this out if they are installed in a
-  # system directory, and prefer passing it on the command line (see below) to
+  # Where to look for Codac. Leave this out if it is installed in a system
+  # directory, and prefer passing it on the command line (see below) to
   # hard-coding it here.
-  # set(CMAKE_PREFIX_PATH "$ENV{HOME}/codac/build_install;$ENV{HOME}/ibex-lib/build_install")
+  # set(CMAKE_PREFIX_PATH "$ENV{HOME}/codac/build_install")
 
   find_package(CODAC REQUIRED)
   message(STATUS "Found Codac version ${CODAC_VERSION}")
 
-  # Applies the interval-arithmetic compilation flags of IBEX (-frounding-math
-  # and the rest). Without them the rounding modes Codac relies on are not
-  # guaranteed, and the results lose the very property the library is for.
-  ibex_init_common()
-
   add_executable(${PROJECT_NAME} main.cpp)
+  # CODAC_CXX_FLAGS holds the interval arithmetic flags (-frounding-math and
+  # the rest). Without them the rounding modes Codac relies on are not
+  # guaranteed, and the results lose the very property the library is for.
   target_compile_options(${PROJECT_NAME} PUBLIC ${CODAC_CXX_FLAGS})
   target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${CODAC_INCLUDE_DIRS})
   target_link_libraries(${PROJECT_NAME} PUBLIC ${CODAC_LIBRARIES})
@@ -100,29 +99,39 @@ Which paths to give to CMake
 
 ``find_package(CODAC REQUIRED)`` looks for ``codac-config.cmake`` under the
 prefixes listed in ``CMAKE_PREFIX_PATH``, in ``share/codac/cmake/`` — which is
-exactly where Codac installs it. **IBEX has to be reachable the same way**, since
-``codac-config.cmake`` calls ``find_package(IBEX REQUIRED)`` itself. Two prefixes
-are therefore usually needed, and there are three ways to give them:
+exactly where Codac installs it. Nothing else is needed: GAOL, the interval
+arithmetic library Codac is built upon, is either installed along with Codac or
+named in ``codac-config.cmake`` by the path Codac found it at. There are three
+ways to give that prefix:
 
 .. code-block:: bash
 
   # 1. On the configuration command line (recommended: nothing in the sources
   #    then depends on where a given machine happens to keep its libraries)
-  cmake -DCMAKE_PREFIX_PATH="$HOME/codac/build_install;$HOME/ibex-lib/build_install" ..
+  cmake -DCMAKE_PREFIX_PATH="$HOME/codac/build_install" ..
 
   # 2. Through the environment, once and for all, e.g. in your .bashrc
-  export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$HOME/ibex-lib/build_install
   export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$HOME/codac/build_install
 
   # 3. In the CMakeLists.txt itself, as in the commented line above
-  #    (note the ";" separator: CMAKE_PREFIX_PATH is a CMake list, not a PATH)
+  #    (several prefixes are separated by ";": CMAKE_PREFIX_PATH is a CMake
+  #    list, not a PATH)
+
+.. note::
+
+  Projects written for earlier versions of Codac, which depended on IBEX, call
+  ``ibex_init_common()`` after ``find_package(CODAC)``. That call is no longer
+  needed, the flags it applied coming with ``CODAC_CXX_FLAGS``, and can be
+  removed; until it is, ``codac-config.cmake`` provides an ``ibex_init_common()``
+  that does nothing, so that such projects still configure.
 
 .. admonition:: ``CODAC_DIR`` rather than ``CMAKE_PREFIX_PATH``
 
   ``-DCODAC_DIR=$CODAC_PREFIX/share/codac/cmake`` points CMake straight at the
   configuration file, bypassing the prefix search. It is useful to disambiguate
-  between two installed versions, but it says nothing about IBEX, which still has
-  to be found through ``CMAKE_PREFIX_PATH`` or ``IBEX_DIR``.
+  between two installed versions, but it says nothing about CAPD, which
+  ``codac-config.cmake`` looks for when that module was built, and which still
+  has to be found through ``CMAKE_PREFIX_PATH`` or ``CAPD_DIR``.
 
 What ``find_package(CODAC)`` defines
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -144,13 +153,15 @@ What ``find_package(CODAC)`` defines
   * - ``CODAC_LIBRARIES``
     - The libraries to link against. These are *imported targets*
       (``Codac::codac-core``, ``Codac::codac-graphics``,
-      ``Codac::codac-unsupported``, plus ``Ibex::ibex`` and
-      ``Threads::Threads``) rather than library paths, which is what lets CMake
-      work out the link order for itself.
+      ``Codac::codac-unsupported``, plus ``Codac::gaol``, which brings
+      ``Codac::ultim`` along, and ``Threads::Threads``) rather than library
+      paths, which is what lets CMake work out the link order for itself.
 
   * - ``CODAC_CXX_FLAGS``
-    - The architecture flags Codac was compiled with (FMA, and so on). They have
-      to be applied to your own translation units too: Eigen's headers are
+    - The interval arithmetic flags (``-frounding-math`` and the rest) and the
+      architecture flags (FMA, and so on) Codac was compiled with. They have to
+      be applied to your own translation units too: without the former, the
+      rounding modes Codac relies on are not guaranteed; and Eigen's headers are
       compiled by your project, and compiling them under different alignment and
       instruction-set assumptions than the installed archives were built with is
       an ODR/ABI mismatch.
@@ -167,7 +178,7 @@ Building it
 
   cd my_project
   mkdir build ; cd build
-  cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$HOME/codac/build_install;$HOME/ibex-lib/build_install" ..
+  cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$HOME/codac/build_install" ..
   cmake --build .
   ./my_project
 
@@ -191,10 +202,6 @@ to be told where to look:
 
   export PKG_CONFIG_PATH=$CODAC_PREFIX/share/pkgconfig:$PKG_CONFIG_PATH
 
-  # IBEX answers for its own flags through the "Requires: ibex" line of
-  # codac.pc, so its .pc file has to be reachable as well:
-  export PKG_CONFIG_PATH=$HOME/ibex-lib/build_install/share/pkgconfig:$PKG_CONFIG_PATH
-
 Check that it is found, and look at what it answers:
 
 .. code-block:: bash
@@ -214,9 +221,9 @@ Compiling with it
 The language standard and the optimisation level are deliberately **not** part of
 ``codac.pc``: they are your project's business, exactly as ``CMAKE_CXX_STANDARD``
 and ``CMAKE_BUILD_TYPE`` are on the CMake side. Everything else is carried by the
-file — the include directories (Codac's, Eigen's and IBEX's), the architecture
-flags, the Codac and IBEX libraries in a working link order, and the thread
-library where one is needed.
+file — the include directories (Codac's, Eigen's and GAOL's), the interval
+arithmetic and architecture flags, the Codac and GAOL libraries in a working link
+order, and the thread library where one is needed.
 
 The same thing in a ``Makefile``:
 
@@ -230,8 +237,8 @@ The same thing in a ``Makefile``:
 
 .. admonition:: ``-frounding-math``, and why it is in ``codac.pc``
 
-  A CMake consumer gets the interval-arithmetic flags by calling
-  ``ibex_init_common()``. A ``pkg-config`` consumer has no equivalent, so
+  A CMake consumer gets the interval arithmetic flags through
+  ``CODAC_CXX_FLAGS``. A ``pkg-config`` consumer has no such variable, so
   ``codac.pc`` carries those flags in its ``Cflags:`` line itself. This matters:
   compiling Codac's headers without ``-frounding-math`` silently gives up the
   guarantee the whole library rests on, and nothing in the build would report it.

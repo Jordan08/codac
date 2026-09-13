@@ -66,7 +66,7 @@ If you simply want to use the latest Codac release in Python, you can download t
 
    .. code-block:: bash
 
-      sudo apt-get install -y g++ gcc cmake git flex bison
+      sudo apt-get install -y g++ gcc cmake git
 
    - a supported version of Python (>=3.8).
    - `Doxygen <https://www.doxygen.nl>`_. **1.17.0 is the recommended version, and 1.16.1 the minimum.** Avoid 1.18.0: it segfaults while parsing Codac's headers on macOS with an Intel processor, which is why ``.github/workflows/macosmatrix.yml`` pins 1.17.0 on those runners. On Linux systems, recent releases are not available as Debian packages, so we advise to install Doxygen from the sources:
@@ -88,30 +88,7 @@ If you simply want to use the latest Codac release in Python, you can download t
       This is also why the Doxygen version is worth pinning rather than taking whatever is at hand. The names of the generated docstring macros are derived from the text Doxygen produces, so a wording change between two releases renames them, and the binding sources that spell those names out then stop compiling. ``scripts/doxygen/doxygen2docstring.py`` normalizes that text rather than trusting it, which absorbs small differences; staying within the recommended range is what covers the rest.
 
 
-2. **Configure IBEX prior to compiling Codac**:
-   
-   We recall that IBEX sources can be obtained with:
-
-   .. code-block:: bash
-      
-      git clone -b ibex-2.8.9.20260819 https://github.com/lebarsfa/ibex-lib.git $HOME/ibex-lib
-      cd $HOME/ibex-lib
-
-   ``ibex-2.8.9.20260819`` is the version every continuous-integration workflow
-   builds and links against; it is the single place it is written down,
-   ``scripts/dependencies/install_ibex.sh``, that those workflows read. Cloning
-   the default branch instead gives whatever that fork has reached since, which
-   may or may not still match Codac.
-
-   You will need to compile both IBEX and Codac using the ``-fPIC`` options. This can be done with the following CMake configuration:
-
-   .. code-block:: bash
-      
-      mkdir build ; cd build
-      cmake -DCMAKE_CXX_FLAGS="-fPIC" -DCMAKE_C_FLAGS="-fPIC" -DCMAKE_INSTALL_PREFIX=$HOME/ibex-lib/build_install -DCMAKE_BUILD_TYPE=Release ..
-      make ; make install
-
-3. **Compile Codac with Python binding**:
+2. **Compile Codac with Python binding**:
 
    We recall that Codac sources can be obtained with:
    
@@ -121,15 +98,15 @@ If you simply want to use the latest Codac release in Python, you can download t
       cd $HOME/codac
 
 
-   In addition to the ``-fPIC`` options, you will have to configure ``WITH_PYTHON=ON`` and ``PYBIND11_FINDPYTHON=OFF``. Note that CMake will automatically get the `pybind11 <https://pybind11.readthedocs.io>`_ files required for the binding. Also, you will have to configure ``BUILD_TESTS=ON`` if you want to run the unit tests.
+   You will need to compile Codac using the ``-fPIC`` options (a GAOL built by CMake along with Codac is compiled that way on its own; a GAOL installed on your system has to have been as well), and to configure ``WITH_PYTHON=ON`` and ``PYBIND11_FINDPYTHON=OFF``. Note that CMake will automatically get the `pybind11 <https://pybind11.readthedocs.io>`_ files required for the binding. Also, you will have to configure ``BUILD_TESTS=ON`` if you want to run the unit tests.
    
    .. code-block:: bash
       
       mkdir build ; cd build
-      cmake -DCMAKE_CXX_FLAGS="-fPIC" -DCMAKE_C_FLAGS="-fPIC" -DWITH_PYTHON=ON -DPYBIND11_FINDPYTHON=OFF -DBUILD_TESTS=ON -DCMAKE_INSTALL_PREFIX=$HOME/codac/build_install -DCMAKE_PREFIX_PATH="$HOME/ibex-lib/build_install;$HOME/doxygen/build_install" -DCMAKE_BUILD_TYPE=Release ..
+      cmake -DCMAKE_CXX_FLAGS="-fPIC" -DCMAKE_C_FLAGS="-fPIC" -DWITH_PYTHON=ON -DPYBIND11_FINDPYTHON=OFF -DBUILD_TESTS=ON -DCMAKE_INSTALL_PREFIX=$HOME/codac/build_install -DCMAKE_PREFIX_PATH="$HOME/doxygen/build_install" -DCMAKE_BUILD_TYPE=Release ..
       make ; make install
 
-4. **Configure your Python environment**:
+3. **Configure your Python environment**:
 
    Finally, you need to configure your system so that Python can find access to your Codac binding binaries:
 
@@ -148,7 +125,7 @@ If you simply want to use the latest Codac release in Python, you can download t
       
       export PYTHONPATH="${PYTHONPATH}:$HOME/codac/build/python/python_package/"
 
-5. **Verify the installation** (optional):
+4. **Verify the installation** (optional):
 
    To ensure that the installation has worked properly, the unit tests of the library can be run:
 
@@ -156,7 +133,7 @@ If you simply want to use the latest Codac release in Python, you can download t
       
       python -m unittest discover codac.tests
 
-6. **Try an example** (optional):
+5. **Try an example** (optional):
 
    You may want to try Codac in Python by running one of the proposed examples. After the installation, you can run the following commands:
 
