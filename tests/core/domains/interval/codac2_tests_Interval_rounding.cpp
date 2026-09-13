@@ -57,22 +57,32 @@ namespace
   // doubles, hi being that result rounded to nearest. It is computed by the
   // error-free transformations of Knuth (sum) and Dekker (product), which are
   // exact with rounding to nearest, far from overflow and underflow.
+  //
+  // The operands are read back from memory (volatile) once rounding to nearest
+  // is set. Visual C++ for 32-bit x86 with /arch:AVX2, which Codac compiles
+  // with, otherwise reuses a+b or a*b as the interval operation just checked
+  // computed it, with rounding upward, in spite of /fp:strict: about half of
+  // the random sums and products then came out rounded the wrong way.
   struct Exact
   {
     double hi, lo;
   };
 
-  Exact exact_sum(double a, double b)
+  Exact exact_sum(double a0, double b0)
   {
     RoundingToNearest nearest;
+    volatile double va = a0, vb = b0;
+    const double a = va, b = vb;
     const double s = a + b;
     const double bb = s - a;
     return { s, (a - (s - bb)) + (b - bb) };
   }
 
-  Exact exact_product(double a, double b)
+  Exact exact_product(double a0, double b0)
   {
     RoundingToNearest nearest;
+    volatile double va = a0, vb = b0;
+    const double a = va, b = vb;
     const double p = a * b;
     // 2^27+1 splits a double into two halves of at most 27 bits
     const double ta = 134217729. * a;
