@@ -9,6 +9,14 @@
 # with mathlib, the IBM Accurate Portable Mathematical Library (libultim), which
 # Frederic Goualard distributes along with it, under the GNU GPL v2 or later.
 #
+# Codac builds the GAOL of Jordan Ninin's fork, https://github.com/Jordan08/GAOL,
+# which adds to GAOL a CMake build, the fixes Codac depends on (those of the
+# patch IBEX applies to GAOL, and those Visual C++, MinGW and ARM processors
+# need) and tests of its bounds. Fixes of GAOL go into the fork rather than into
+# Codac. The fork's CMake build downloads mathlib from Frederic Goualard's site,
+# and refuses the compilers that do not compute GAOL's intervals right (see its
+# README.md).
+#
 # Codac used to reach both through IBEX, which bundles them. This module does
 # for Codac what IBEX does for itself -- it sets the compilation flags interval
 # arithmetic needs, and builds GAOL when none is installed -- and the top-level
@@ -32,14 +40,11 @@
 #
 #  - codac_gaol_build() is the "not found, install it" branch of
 #    interval_lib_wrapper/gaol/CMakeLists.txt, written by Cyril Bouvier: build
-#    mathlib and GAOL from the sources Frederic Goualard publishes, with a CMake
-#    build added to them and a patch applied to GAOL, and install the result
-#    next to the library it serves, as IBEX does in include/ibex/3rd and
-#    lib/ibex/3rd. The CMake builds and the patch are in the directory gaol/
-#    next to this file, whose files each say where they come from: from IBEX
+#    mathlib and GAOL, and install the result next to the library it serves, as
+#    IBEX does in include/ibex/3rd and lib/ibex/3rd. The CMake build of GAOL and
+#    mathlib it runs is the fork's, which says where it comes from: from IBEX
 #    (Cyril Bouvier, Gilles Chabert), with the portability fixes for Visual
-#    C++, MinGW and ARM of the forks of GAOL and mathlib by Fabrice Le Bars
-#    (https://github.com/lebarsfa/GAOL, https://github.com/lebarsfa/mathlib).
+#    C++, MinGW and ARM of the forks of GAOL and mathlib by Fabrice Le Bars.
 #    The library paths are computed as lib_get_abspath_from_name() of
 #    cmake.utils/IbexUtils.cmake computes them, and the include directory is
 #    created before the build so that the generation step accepts it.
@@ -52,11 +57,11 @@
 # What differs from IBEX
 # ----------------------
 # IBEX extracts GAOL and mathlib from archives kept in its own repository, and
-# builds them as a part of itself (add_subdirectory()). Here they are downloaded
-# -- GAOL from Frederic Goualard's repository, pinned to a commit, and mathlib
-# from his site, checked against the SHA256 of its archive -- and built as
-# projects of their own (ExternalProject), for the reasons given at
-# codac_gaol_build(). The other differences are explained where they occur.
+# builds them as a part of itself (add_subdirectory()). Here GAOL is downloaded
+# from the fork, pinned to a commit, and built as a project of its own
+# (ExternalProject), for the reasons given at codac_gaol_build(); the fork's
+# build downloads mathlib, checked against the SHA256 of its archive. The other
+# differences are explained where they occur.
 
 
 # Where a GAOL built by codac_gaol_build() is installed, under the installation
@@ -65,11 +70,6 @@
 # cannot play that part here, being the name of Codac's umbrella header.
 set(CODAC_INSTALL_INCLUDEDIR_3RD "${CMAKE_INSTALL_INCLUDEDIR}/codac-3rd")
 set(CODAC_INSTALL_LIBDIR_3RD "${CMAKE_INSTALL_LIBDIR}/codac-3rd")
-
-# The CMake builds of mathlib and GAOL, and the script that adds them to the
-# downloaded sources. Taken here, since CMAKE_CURRENT_LIST_DIR is the directory
-# of the caller once in a function.
-set(CODAC_GAOL_FILES_DIR "${CMAKE_CURRENT_LIST_DIR}/gaol")
 
 
 ################################################################################
@@ -130,9 +130,9 @@ function(codac_gaol_compiler_flags outvar)
     # Computed on the x87, GAOL's bounds and mathlib's results are only right
     # while the precision of the x87 is set to 53 bits, and nothing keeps it
     # so: mathlib's Init_Lib() sets it where mathlib has a version for 32-bit x86
-    # (see gaol/mathlib/mathlib_configuration.h.in), but GAOL, initialised right
-    # after, restores the default floating-point environment
-    # (gaol/codac_gaol_patch.cmake), whose precision is 64 bits on Linux and
+    # (see cmake/mathlib/mathlib_configuration.h.in in the fork of GAOL), but
+    # GAOL, initialised right after, restores the default floating-point
+    # environment (gaol::init()), whose precision is 64 bits on Linux and
     # with MinGW. Built for an i686 computing on the x87 (Clang 21 with
     # -mcpu=i686), GAOL returned [1.99975, 1.99975] for exp([1,1]), and the
     # bounds of exp, sin and cos missed the exact value for 4000, 3302 and 3913
@@ -161,7 +161,9 @@ function(codac_gaol_compiler_flags outvar)
     # negations by which GAOL rounds downward with the rounding direction set
     # upward, and no flag or change to GAOL can prevent it. Built by Clang 21 for
     # 32-bit ARM, 4556 of 16000 random products, squares and cubes computed by
-    # GAOL did not enclose their exact value; built by GCC 15, none.
+    # GAOL did not enclose their exact value; built by GCC 15, none. The build
+    # of GAOL by codac_gaol_build() refuses such a compiler (the fork's
+    # CMakeLists.txt); the warning remains for a GAOL found on the system.
     if(COMPILER_SUPPORTS_FROUNDING_MATH)
       set(CMAKE_REQUIRED_FLAGS "-frounding-math")
       check_cxx_source_compiles("int main() { return 0; }" CODAC_COMPILER_HONOURS_ROUNDING_MATH
@@ -185,19 +187,16 @@ endfunction()
 # codac_gaol_build()
 ################################################################################
 #
-# Downloads mathlib and GAOL, builds them in Release and installs them in the
+# Downloads GAOL, builds it and mathlib in Release and installs them in the
 # build tree; then sets GAOL_INCDIR, GAOL_LIB, MATHLIB_INCDIR, MATHLIB_LIB and
 # GAOL_VERSION in the caller's scope, as find_package(GAOL) would have, and
 # CODAC_GAOL_BUILT_HERE to TRUE. Both libraries are also installed with Codac,
 # in CODAC_INSTALL_INCLUDEDIR_3RD and CODAC_INSTALL_LIBDIR_3RD, since the Codac
 # libraries are of no use without them.
 #
-# The sources are Frederic Goualard's: mathlib 2.1.1 from his site, the archive
-# GAOL's README points to, and GAOL from his repository. Neither comes with a
-# CMake build: gaol/codac_gaol_patch.cmake adds one to each at the patch step,
-# and makes to GAOL the changes it lists and explains -- those of the patch
-# IBEX applies to GAOL, which Codac depends on, and those Visual C++, MinGW and
-# 32-bit ARM need.
+# GAOL comes from Jordan Ninin's fork (see the top of this file), whose CMake
+# build downloads mathlib 2.1.1 from Frederic Goualard's site, the archive
+# GAOL's README points to, and builds it along with GAOL.
 #
 # An ExternalProject, as in IBEX's build of GAOL with its autotools, rather than
 # the FetchContent that Eigen and Catch2 are brought in with, which would build
@@ -244,6 +243,12 @@ function(codac_gaol_build)
     # Codac's Python modules link these archives into shared libraries.
     -DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=ON
     -DCMAKE_INSTALL_PREFIX:PATH=${_gaol_install}
+    # The paths above, whatever GNUInstallDirs would choose (lib64 on some
+    # systems)
+    -DCMAKE_INSTALL_LIBDIR:PATH=lib
+    -DCMAKE_INSTALL_INCLUDEDIR:PATH=include
+    # The fork's continuous integration runs its tests
+    -DGAOL_BUILD_TESTS:BOOL=OFF
     -DCMAKE_CXX_FLAGS:STRING=${CMAKE_CXX_FLAGS}
     -DCMAKE_C_FLAGS:STRING=${_c_flags}
   )
@@ -280,21 +285,6 @@ function(codac_gaol_build)
   set(_build_command ${CMAKE_COMMAND} --build <BINARY_DIR> --config Release)
   set(_install_command ${CMAKE_COMMAND} --build <BINARY_DIR> --config Release --target install)
 
-  # The patch step, which adds the CMake build to the sources. The checksum of
-  # the files of gaol/ is part of the command: ExternalProject runs a step again
-  # when its command changes, so that a change in one of these files patches,
-  # configures and builds mathlib and GAOL again.
-  file(GLOB_RECURSE _gaol_files RELATIVE "${CODAC_GAOL_FILES_DIR}" "${CODAC_GAOL_FILES_DIR}/*")
-  list(SORT _gaol_files)
-  set(_gaol_files_sums "")
-  foreach(_file ${_gaol_files})
-    file(SHA256 "${CODAC_GAOL_FILES_DIR}/${_file}" _sum)
-    string(APPEND _gaol_files_sums "${_file} ${_sum}\n")
-  endforeach()
-  string(SHA256 _gaol_files_sum "${_gaol_files_sums}")
-  set(_patch_args -DSOURCE_DIR=<SOURCE_DIR> -DCODAC_GAOL_FILES_SUM=${_gaol_files_sum}
-                  -P "${CODAC_GAOL_FILES_DIR}/codac_gaol_patch.cmake")
-
   # Dates the extracted files from their extraction, so that a new download
   # rebuilds them. CMake 3.24 introduced the option, and warns when it is not
   # given.
@@ -303,47 +293,24 @@ function(codac_gaol_build)
     list(APPEND _download_options DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
   endif()
 
-  # mathlib 2.1.1, as distributed by Frederic Goualard. The archive is a file on
-  # a web site, which nothing else pins: its checksum is checked.
-  ExternalProject_Add(codac_mathlib
-    PREFIX "${_gaol_prefix}/mathlib"
-    URL https://frederic.goualard.net/software/mathlib-2.1.1.tar.gz
-    #URL ${CMAKE_SOURCE_DIR}/3rd/mathlib-2.1.1.tar.gz # If needed to be self-contained...
-    URL_HASH SHA256=f299848aa3e57ebb6248cd3cf54ecc7661a945aeac9e420e71db194965f87281
-    ${_download_options}
-    PATCH_COMMAND ${CMAKE_COMMAND} -DCOMPONENT=mathlib ${_patch_args}
-    LIST_SEPARATOR |
-    CMAKE_CACHE_ARGS ${_args}
-    BUILD_COMMAND ${_build_command}
-    INSTALL_COMMAND ${_install_command}
-    # Named, so that Ninja knows which step produces the file Codac links.
-    BUILD_BYPRODUCTS "${_mathlib_lib}"
-    LOG_DOWNLOAD 1
-    LOG_PATCH 1
-    LOG_CONFIGURE 1
-    LOG_BUILD 1
-    LOG_INSTALL 1
-    LOG_OUTPUT_ON_FAILURE 1
-  )
-
-  # GAOL, from Frederic Goualard's repository, at the head of its master branch
-  # on 2025-12-09 (version 4.2.3). The commit pins the content of the archive
-  # GitHub makes of it, but not the archive itself, whose checksum GitHub does
-  # not guarantee: it is not checked, and the exact replacements of
-  # gaol/codac_gaol_patch.cmake fail should the files they change differ.
+  # GAOL, from Jordan Ninin's fork, at a commit of its master branch (version
+  # 4.2.3 of GAOL). The commit pins the content of the archive GitHub makes of
+  # it, but not the archive itself, whose checksum GitHub does not guarantee: it
+  # is not checked. The fork's CMake build downloads mathlib 2.1.1 from Frederic
+  # Goualard's site, checks its checksum, and builds and installs it along with
+  # GAOL.
   ExternalProject_Add(codac_gaol
     PREFIX "${_gaol_prefix}/gaol"
-    URL https://github.com/goualard-f/GAOL/archive/cd0ee1a75febab97a7f6c18a03e31780a2717f2c.zip
-    #URL ${CMAKE_SOURCE_DIR}/3rd/GAOL-cd0ee1a75febab97a7f6c18a03e31780a2717f2c.zip # If needed to be self-contained...
+    URL https://github.com/Jordan08/GAOL/archive/8e936b6ca9823957e912a8fdc6c268c66ef143c9.zip
+    #URL ${CMAKE_SOURCE_DIR}/3rd/GAOL-8e936b6ca9823957e912a8fdc6c268c66ef143c9.zip # If needed to be self-contained...
     ${_download_options}
-    PATCH_COMMAND ${CMAKE_COMMAND} -DCOMPONENT=gaol ${_patch_args}
     LIST_SEPARATOR |
     CMAKE_CACHE_ARGS ${_args}
     BUILD_COMMAND ${_build_command}
     INSTALL_COMMAND ${_install_command}
-    BUILD_BYPRODUCTS "${_gaol_lib}"
+    # Named, so that Ninja knows which step produces the files Codac links.
+    BUILD_BYPRODUCTS "${_gaol_lib}" "${_mathlib_lib}"
     LOG_DOWNLOAD 1
-    LOG_PATCH 1
     LOG_CONFIGURE 1
     LOG_BUILD 1
     LOG_INSTALL 1
@@ -402,7 +369,7 @@ function(codac_gaol_create_targets)
   # followed by every target linking it: whatever links Codac::gaol waits for
   # the build of GAOL to be over.
   if(CODAC_GAOL_BUILT_HERE)
-    add_dependencies(Codac::ultim codac_mathlib)
+    add_dependencies(Codac::ultim codac_gaol)
     add_dependencies(Codac::gaol codac_gaol)
   endif()
 endfunction()
