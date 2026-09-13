@@ -104,10 +104,6 @@ jobs:
       shell: bash
       if: runner.os=='Windows'
     - run: |
-        wget https://github.com/lebarsfa/ibex-lib/releases/download/ibex-2.8.9.20260819/ibex.2.8.9.20260819.nupkg --no-check-certificate -nv
-        choco install -y -r --no-progress --ignore-dependencies -s . ibex --version=2.8.9.20260819 ${{ matrix.cfg.choco_flags }} --params "'/url:https://github.com/lebarsfa/ibex-lib/releases/download/ibex-2.8.9.20260819/ibex_${{ matrix.cfg.arch }}_${{ matrix.cfg.runtime }}.zip'"
-        del /f /q ibex.2.8.9.20260819.nupkg
-    - run: |
         WITH_PYTHON=${WITH_PYTHON:-ON}
         echo "Configuring with WITH_PYTHON=$WITH_PYTHON"
         mkdir build ; cd build

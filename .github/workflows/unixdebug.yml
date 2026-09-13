@@ -105,19 +105,6 @@ jobs:
         sudo apt-get -y install ${{ matrix.cfg.packages }} cmake catch2 doxygen graphviz dpkg-dev || true
         ${{ matrix.cfg.cxx }} --version
 
-    # The same prebuilt IBEX package as unixmatrix.yml. It is a Release build
-    # made with the distribution's GCC, which is exactly what both compilers of
-    # this matrix link against on Linux: Clang uses libstdc++ here too, so there
-    # is no ABI mismatch to work around, unlike on macOS. A library that is not
-    # itself instrumented is no obstacle to AddressSanitizer either -- it simply
-    # does not check what happens inside IBEX, which is not what this workflow
-    # is looking for.
-    - name: IBEX
-      run: |
-        wget https://github.com/lebarsfa/ibex-lib/releases/download/ibex-2.8.9.20260819/libibex-dev-2.8.9.20260819-0${{ matrix.cfg.runtime }}0_$(dpkg --print-architecture).deb --no-check-certificate -nv
-        sudo dpkg -i libibex-dev-2.8.9.20260819-0${{ matrix.cfg.runtime }}0_$(dpkg --print-architecture).deb
-        rm -f libibex-dev-2.8.9.20260819-0${{ matrix.cfg.runtime }}0_$(dpkg --print-architecture).deb
-
     - name: Python tooling
       run: |
         python -m pip install --upgrade pip wheel setuptools numpy sympy
@@ -281,15 +268,6 @@ jobs:
         sudo apt-get -q update
         sudo apt-get -y install g++ cmake pkg-config dpkg-dev || true
         pkg-config --version
-
-    # The same prebuilt IBEX as the jobs above. Its package puts ibex.pc in
-    # /usr/share/pkgconfig, which is on pkg-config's default search path, so
-    # the "Requires: ibex" of codac.pc resolves without any help.
-    - name: IBEX
-      run: |
-        wget https://github.com/lebarsfa/ibex-lib/releases/download/ibex-2.8.9.20260819/libibex-dev-2.8.9.20260819-0${{ matrix.cfg.runtime }}0_$(dpkg --print-architecture).deb --no-check-certificate -nv
-        sudo dpkg -i libibex-dev-2.8.9.20260819-0${{ matrix.cfg.runtime }}0_$(dpkg --print-architecture).deb
-        rm -f libibex-dev-2.8.9.20260819-0${{ matrix.cfg.runtime }}0_$(dpkg --print-architecture).deb
 
     - name: Build and install Codac
       run: |

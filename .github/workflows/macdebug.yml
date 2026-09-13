@@ -11,13 +11,11 @@
 #
 # Two things make macOS harder than Linux, and shape the matrix below.
 #
-# GCC on macOS links against libstdc++ while AppleClang links against libc++.
-# The prebuilt IBEX this project publishes is built with AppleClang, so a GCC
-# build of codac cannot link it -- the two standard libraries are not
-# ABI-compatible. The GCC jobs therefore build IBEX from source with the same
-# compiler, which is what scripts/dependencies/install_ibex.sh does, and the
-# result is cached between runs since it depends only on the IBEX version and
-# the compiler.
+# GCC on macOS links against libstdc++ while AppleClang links against libc++,
+# so a library built with one of them cannot be linked by the other -- the two
+# standard libraries are not ABI-compatible. GAOL is no obstacle: codac builds
+# it with the compiler of the job (see scripts/CMakeModules/codac_gaol.cmake).
+# Catch2 has to be treated the same way, which the Toolchain step below does.
 #
 # The Python bindings are left out of every job here, sanitized macOS being a
 # configuration the test suite cannot currently run them in: the block of
@@ -55,10 +53,9 @@ jobs:
  macdebug:
     runs-on: ${{ matrix.cfg.os }}
     # A sanitized Debug build is roughly an order of magnitude slower to run
-    # than the Release builds of the other workflows, the examples are run on
-    # top of the test suite, and the GCC jobs build IBEX from source the first
-    # time. Three hours leaves room for that while still turning a hang into a
-    # red job rather than into six hours of runner time.
+    # than the Release builds of the other workflows, and the examples are run
+    # on top of the test suite. Three hours leaves room for that while still
+    # turning a hang into a red job rather than into six hours of runner time.
     timeout-minutes: 180
     defaults:
         run:
@@ -87,8 +84,8 @@ jobs:
     # resolved here rather than pinned, and written to the environment for the
     # later steps.
     # Catch2 is deliberately not installed from Homebrew: the bottle is built
-    # with AppleClang against libc++, so the GCC jobs cannot link it -- the same
-    # standard-library split that makes them rebuild IBEX below, showing up as
+    # with AppleClang against libc++, so the GCC jobs cannot link it -- the
+    # standard-library split described at the top of this file, showing up as
     # undefined std::__1:: symbols at link time. Leaving it out lets
     # tests/CMakeLists.txt fetch Catch2 and build it with the compiler of the
     # job, which is correct for every entry of this matrix.
@@ -122,29 +119,6 @@ jobs:
 
     - name: Compiler version
       run: $CXX --version
-
-    - name: Cache IBEX built from source
-      if: matrix.cfg.compiler != 'appleclang'
-      uses: actions/cache@v4
-      with:
-        path: ~/ibex-lib
-        key: ibex-2.8.9.20260819-${{ matrix.cfg.os }}-${{ matrix.cfg.compiler }}
-
-    # The GCC jobs rebuild IBEX with the compiler that will link it, for the
-    # standard-library reason given at the top of this file. install_ibex.sh
-    # skips the build when the directory is already there, so a cache hit only
-    # re-runs its install step.
-    - name: IBEX
-      run: |
-        if [ "${{ matrix.cfg.compiler }}" != "appleclang" ]; then
-          bash scripts/dependencies/install_ibex.sh
-          echo "CMAKE_PREFIX_PATH=$HOME/ibex-lib/build_install" >> "$GITHUB_ENV"
-        else
-          wget https://github.com/lebarsfa/ibex-lib/releases/download/ibex-2.8.9.20260819/ibex_${{ matrix.cfg.arch }}_${{ matrix.cfg.runtime }}.zip --no-check-certificate -nv
-          unzip -q ibex_${{ matrix.cfg.arch }}_${{ matrix.cfg.runtime }}.zip
-          rm -Rf ibex_${{ matrix.cfg.arch }}_${{ matrix.cfg.runtime }}.zip
-          sudo cp -Rf ibex/* /usr/local/
-        fi
 
     - name: Configure and build
       run: |
@@ -225,9 +199,7 @@ jobs:
  # A job of its own, not a step of the matrix above, because the library there
  # is Debug under AddressSanitizer and an ordinary consumer cannot link such an
  # archive. Only AppleClang appears here: the parity check reads what the
- # install tree says about itself, which does not depend on the compiler, and
- # AppleClang is the one that can use the prebuilt IBEX without building it from
- # source first.
+ # install tree says about itself, which does not depend on the compiler.
  packaging:
     runs-on: ${{ matrix.cfg.os }}
     timeout-minutes: 60
@@ -259,25 +231,11 @@ jobs:
         pkg-config --version
         clang++ --version
 
-    # The prebuilt IBEX, left where it is unpacked rather than copied over
-    # /usr/local as the jobs above do. Homebrew owns that prefix on the Intel
-    # image, and the pkgconf installed in the step before this one puts a
-    # symlink at /usr/local/share/pkgconfig that the copy then fails on:
-    # "cp: /usr/local/share/pkgconfig: Not a directory". Pointing at the
-    # directory instead needs no privileges and leaves the image alone.
-    - name: IBEX
-      run: |
-        wget https://github.com/lebarsfa/ibex-lib/releases/download/ibex-2.8.9.20260819/ibex_${{ matrix.cfg.arch }}_${{ matrix.cfg.runtime }}.zip --no-check-certificate -nv
-        unzip -q ibex_${{ matrix.cfg.arch }}_${{ matrix.cfg.runtime }}.zip
-        rm -Rf ibex_${{ matrix.cfg.arch }}_${{ matrix.cfg.runtime }}.zip
-        echo "IBEX_PREFIX=$PWD/ibex" >> "$GITHUB_ENV"
-
     - name: Build and install Codac
       run: |
         mkdir build ; cd build
         cmake \
           -D CMAKE_BUILD_TYPE=Release \
-          -D CMAKE_PREFIX_PATH="$IBEX_PREFIX" \
           -D CMAKE_INSTALL_PREFIX="$PWD/../codac_install" \
           -D BUILD_TESTS=OFF \
           -D WITH_PYTHON=OFF \
@@ -290,6 +248,4 @@ jobs:
         bash tests/packaging/check_consumer_parity.sh \
           --prefix "$PWD/codac_install" \
           --build-dir "$PWD/build_packaging_check" \
-          --cmake-prefix-path "$IBEX_PREFIX" \
-          --pkg-config-path "$IBEX_PREFIX/share/pkgconfig" \
           --require-pkgconfig
