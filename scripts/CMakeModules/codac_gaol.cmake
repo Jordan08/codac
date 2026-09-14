@@ -250,6 +250,9 @@ function(codac_gaol_build)
     -DCMAKE_INSTALL_INCLUDEDIR:PATH=include
     # The fork's continuous integration runs its tests
     -DGAOL_BUILD_TESTS:BOOL=OFF
+    # The mathlib the fork downloads and builds, never one installed on this
+    # machine: the paths above, and the installation of Codac, count on it
+    -DGAOL_FIND_MATHLIB:BOOL=OFF
     -DCMAKE_CXX_FLAGS:STRING=${CMAKE_CXX_FLAGS}
     -DCMAKE_C_FLAGS:STRING=${_c_flags}
   )
