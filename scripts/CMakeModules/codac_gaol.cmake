@@ -379,9 +379,13 @@ function(codac_gaol_create_targets)
 
   # For Visual C++, GAOL declares its classes and functions
   # __declspec(dllimport), as for a DLL, unless __GAOL_PUBLIC__ is defined
-  # (gaol/gaol_config.h). The GAOL codac_gaol_build() builds is a static
-  # library, which every file including its headers has to be told.
-  if(CODAC_GAOL_BUILT_HERE AND MSVC)
+  # (gaol/gaol_config.h). None of GAOL's builds -- its autotools and meson
+  # builds, and the CMake build of the fork -- defines _COMPILING__GAOL_PUBLIC__,
+  # with which GAOL would export a DLL: the GAOL Visual C++ links is a static
+  # library, whether codac_gaol_build() built it or it was found on the system,
+  # which every file including its headers has to be told. The CMake build of
+  # the fork tells it the same way to the targets linking gaol::gaol.
+  if(MSVC)
     set_target_properties(Codac::gaol PROPERTIES INTERFACE_COMPILE_DEFINITIONS "__GAOL_PUBLIC__=")
   endif()
 
@@ -427,7 +431,7 @@ function(codac_gaol_config_snippet outvar)
 
   # As in codac_gaol_create_targets()
   set(_gaol_definitions "")
-  if(CODAC_GAOL_BUILT_HERE AND MSVC)
+  if(MSVC)
     set(_gaol_definitions "\n                            INTERFACE_COMPILE_DEFINITIONS \"__GAOL_PUBLIC__=\"")
   endif()
 
