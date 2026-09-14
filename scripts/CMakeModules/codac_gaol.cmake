@@ -58,8 +58,8 @@
 # ----------------------
 # IBEX extracts GAOL and mathlib from archives kept in its own repository, and
 # builds them as a part of itself (add_subdirectory()). Here GAOL is downloaded
-# from the fork, pinned to a commit, and built as a project of its own
-# (ExternalProject), for the reasons given at codac_gaol_build(); the fork's
+# from the fork, at the head of its master branch, and built as a project of its
+# own (ExternalProject), for the reasons given at codac_gaol_build(); the fork's
 # build downloads mathlib, checked against the SHA256 of its archive. The other
 # differences are explained where they occur.
 
@@ -206,7 +206,8 @@ endfunction()
 # whatever the configuration of Codac, which is what the MSVC runtime choice of
 # the top-level CMakeLists.txt counts on.
 #
-# The download happens at build time, when the target first needs it.
+# The download happens at build time, when the target first needs it, and so
+# does the update of the sources with the fork's master branch, at each build.
 function(codac_gaol_build)
 
   include(ExternalProject)
@@ -285,25 +286,44 @@ function(codac_gaol_build)
   set(_build_command ${CMAKE_COMMAND} --build <BINARY_DIR> --config Release)
   set(_install_command ${CMAKE_COMMAND} --build <BINARY_DIR> --config Release --target install)
 
-  # Dates the extracted files from their extraction, so that a new download
-  # rebuilds them. CMake 3.24 introduced the option, and warns when it is not
-  # given.
-  set(_download_options "")
-  if(NOT CMAKE_VERSION VERSION_LESS 3.24)
-    list(APPEND _download_options DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
+  # GAOL, from Jordan Ninin's fork, at the head of its master branch (version
+  # 4.2.3 of GAOL), so that the fixes pushed to the fork reach Codac without a
+  # change here. Cloned with Git, the sources are brought up to date with the
+  # branch at each build of Codac (the update step of ExternalProject, which
+  # needs network access), and only what a new commit changes is compiled
+  # again. Without Git, the archive GitHub makes of the branch is downloaded
+  # instead, whose checksum changes with each commit and is not checked, and
+  # only once per build directory: a new commit reaches such a build once
+  # _deps/gaol is deleted from it. The fork's CMake build downloads mathlib
+  # 2.1.1 from Frederic Goualard's site, checks its checksum, and builds and
+  # installs it along with GAOL.
+  find_package(Git QUIET)
+  if(GIT_FOUND)
+    set(_gaol_source
+      GIT_REPOSITORY https://github.com/Jordan08/GAOL.git
+      GIT_TAG master
+      GIT_SHALLOW TRUE
+      # The files as they are in the repository, whatever core.autocrlf says
+      # (true on the Windows runners of GitHub Actions).
+      GIT_CONFIG core.autocrlf=false
+      LOG_UPDATE 1
+    )
+  else()
+    set(_gaol_source
+      URL https://github.com/Jordan08/GAOL/archive/refs/heads/master.zip
+    )
+    # Dates the extracted files from their extraction, so that a new download
+    # rebuilds them. CMake 3.24 introduced the option, and warns when it is not
+    # given.
+    if(NOT CMAKE_VERSION VERSION_LESS 3.24)
+      list(APPEND _gaol_source DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
+    endif()
   endif()
 
-  # GAOL, from Jordan Ninin's fork, at a commit of its master branch (version
-  # 4.2.3 of GAOL). The commit pins the content of the archive GitHub makes of
-  # it, but not the archive itself, whose checksum GitHub does not guarantee: it
-  # is not checked. The fork's CMake build downloads mathlib 2.1.1 from Frederic
-  # Goualard's site, checks its checksum, and builds and installs it along with
-  # GAOL.
   ExternalProject_Add(codac_gaol
     PREFIX "${_gaol_prefix}/gaol"
-    URL https://github.com/Jordan08/GAOL/archive/8e936b6ca9823957e912a8fdc6c268c66ef143c9.zip
-    #URL ${CMAKE_SOURCE_DIR}/3rd/GAOL-8e936b6ca9823957e912a8fdc6c268c66ef143c9.zip # If needed to be self-contained...
-    ${_download_options}
+    ${_gaol_source}
+    #URL ${CMAKE_SOURCE_DIR}/3rd/GAOL-master.zip # If needed to be self-contained...
     LIST_SEPARATOR |
     CMAKE_CACHE_ARGS ${_args}
     BUILD_COMMAND ${_build_command}
