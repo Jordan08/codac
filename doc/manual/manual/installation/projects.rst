@@ -27,7 +27,7 @@ directory you extracted the archive into. Its layout is:
    │   └── eigen3/                   <- Eigen, part of Codac's public interface
    ├── lib/
    │   ├── libcodac-core.a, libcodac-graphics.a, libcodac-unsupported.a
-   │   └── codac-3rd/                <- libgaol.a and libultim.a, when Codac built them
+   │   └── codac-3rd/                <- libgaol.a, libultim.a and GAOL's CMake package, when Codac built them
    └── share/
        ├── codac/cmake/
        │   ├── codac-config.cmake    <- what find_package(CODAC) reads
@@ -100,9 +100,10 @@ Which paths to give to CMake
 ``find_package(CODAC REQUIRED)`` looks for ``codac-config.cmake`` under the
 prefixes listed in ``CMAKE_PREFIX_PATH``, in ``share/codac/cmake/`` — which is
 exactly where Codac installs it. Nothing else is needed: GAOL, the interval
-arithmetic library Codac is built upon, is either installed along with Codac or
-named in ``codac-config.cmake`` by the path Codac found it at. There are three
-ways to give that prefix:
+arithmetic library Codac is built upon, is either installed along with Codac,
+with its CMake package, which ``codac-config.cmake`` finds there, or found by
+``codac-config.cmake`` where Codac found it. There are three ways to give that
+prefix:
 
 .. code-block:: bash
 
@@ -153,12 +154,14 @@ What ``find_package(CODAC)`` defines
   * - ``CODAC_LIBRARIES``
     - The libraries to link against. These are *imported targets*
       (``Codac::codac-core``, ``Codac::codac-graphics``,
-      ``Codac::codac-unsupported``, plus ``Codac::gaol``, which brings
-      ``Codac::ultim`` along, and ``Threads::Threads``) rather than library
-      paths, which is what lets CMake work out the link order for itself.
+      ``Codac::codac-unsupported``, plus ``Codac::gaol``, which brings GAOL,
+      mathlib and the flags GAOL needs along -- through ``gaol::gaol``, of the
+      CMake package of GAOL, when GAOL has one -- and ``Threads::Threads``)
+      rather than library paths, which is what lets CMake work out the link
+      order for itself.
 
   * - ``CODAC_CXX_FLAGS``
-    - The interval arithmetic flags (``-frounding-math`` and the rest) and the
+    - The interval arithmetic flags GAOL needs (``-frounding-math`` and the rest) and the
       architecture flags (FMA, and so on) Codac was compiled with. They have to
       be applied to your own translation units too: without the former, the
       rounding modes Codac relies on are not guaranteed; and Eigen's headers are

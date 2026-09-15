@@ -30,9 +30,9 @@
   # pkg-config consumer cannot compile a single translation unit -- this is
   # the same pair that codac-core carries in its $<INSTALL_INTERFACE:...>.
   #
-  # GAOL's directories are not among them: where they are depends on whether
-  # GAOL was built with Codac or found elsewhere, and the part on the
-  # dependencies below adds whichever applies. The -I\${includedir}/ibex that
+  # GAOL's directories are not among them: where they are depends on where GAOL
+  # was found, or on its being built with Codac, and the part on the
+  # dependencies below adds them as Codac::gaol gives them. The -I\${includedir}/ibex that
   # used to sit here, when Codac reached GAOL through IBEX, named a directory
   # under *Codac's* prefix, which only ever existed when the two happened to
   # share one.
@@ -41,8 +41,11 @@
 
   # The "Requires:" line: a module that depends on an outside library appends
   # its pkg-config name here and lets that library's own .pc answer for its
-  # flags. GAOL installs no .pc file, so the line starts empty; CAPD joins it
-  # from src/extensions/capd/CMakeLists.txt when that module is built.
+  # flags. GAOL is not named there: a GAOL built with Codac installs its gaol.pc
+  # under lib/codac-3rd, where pkg-config does not look, and a GAOL found by its
+  # files has none; its flags and libraries are written below instead, as
+  # Codac::gaol gives them. The line starts empty; CAPD joins it from
+  # src/extensions/capd/CMakeLists.txt when that module is built.
   set(CODAC_PKG_CONFIG_REQUIRES "")
 
   add_subdirectory(core)
@@ -91,38 +94,42 @@
     string(APPEND CODAC_PKG_CONFIG_CFLAGS " ${CODAC_PKG_CONFIG_ARCH_FLAGS}")
   endif()
 
-  # And the interval arithmetic flags this build is compiled with,
+  # Codac's own flags, which this build puts in CMAKE_CXX_FLAGS
+  # (codac_gaol_portability_flags() in scripts/CMakeModules/codac_gaol.cmake),
+  # and the interval arithmetic flags GAOL gives through Codac::gaol,
   # CODAC_INTERVAL_CXX_FLAGS, set in the top-level CMakeLists.txt. A CMake
   # consumer gets them through CODAC_CXX_FLAGS, which is what every example
   # uses and what the manual tells users to use; a pkg-config consumer has no
   # equivalent, and compiling Codac's headers without -frounding-math silently
   # gives up the guarantee the whole library rests on.
-  if(CODAC_INTERVAL_CXX_FLAGS)
-    string(REPLACE ";" " " CODAC_PKG_CONFIG_INTERVAL_FLAGS "${CODAC_INTERVAL_CXX_FLAGS}")
-    string(APPEND CODAC_PKG_CONFIG_CFLAGS " ${CODAC_PKG_CONFIG_INTERVAL_FLAGS}")
-  endif()
-
-  # GAOL, when Codac built it: codac_gaol_build() installs it under Codac's own
-  # prefix (see scripts/CMakeModules/codac_gaol.cmake). After the Codac
-  # archives, which depend on it, and gaol before ultim, which it depends on.
-  if(CODAC_GAOL_BUILT_HERE)
-    string(APPEND CODAC_PKG_CONFIG_CFLAGS " -I\${prefix}/${CODAC_INSTALL_INCLUDEDIR_3RD}")
-    string(APPEND CODAC_PKG_CONFIG_LIBS " -L\${prefix}/${CODAC_INSTALL_LIBDIR_3RD} -lgaol -lultim")
-  endif()
-
-  # The directories of a GAOL found on this machine, collected from its imported
-  # targets in the top-level CMakeLists.txt, since GAOL installs no .pc file the
-  # Requires: line above could name.
-  foreach(dir ${CODAC_EXTERNAL_INCLUDE_DIRS})
-    string(APPEND CODAC_PKG_CONFIG_CFLAGS " -I${dir}")
+  foreach(_codac_flags CODAC_PORTABILITY_CXX_FLAGS CODAC_INTERVAL_CXX_FLAGS)
+    if(${_codac_flags})
+      string(REPLACE ";" " " _codac_pkg_config_flags "${${_codac_flags}}")
+      string(APPEND CODAC_PKG_CONFIG_CFLAGS " ${_codac_pkg_config_flags}")
+    endif()
   endforeach()
-  # Named by their full path, as CMake hands them to the linker on the
-  # find_package side, rather than as -L plus -l: there is then no chance of
-  # another directory on the search path answering for libgaol first, and
-  # nothing to guess about how the file is named on each platform. They come
-  # after the Codac archives, which depend on them.
-  foreach(lib ${CODAC_EXTERNAL_LIBRARY_FILES})
-    string(APPEND CODAC_PKG_CONFIG_LIBS " ${lib}")
+
+  # GAOL's include directories and libraries, as Codac::gaol gives them
+  # (codac_gaol_usage(), in the top-level CMakeLists.txt): where the GAOL found
+  # on this machine is, or, for the GAOL codac_gaol_build() built, where it is
+  # installed with Codac, under ${prefix}. The directories the compiler searches
+  # of its own accord are left out, as CMake leaves them out of its command
+  # lines.
+  foreach(dir ${CODAC_GAOL_INCLUDE_DIRS})
+    if(NOT dir IN_LIST CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES)
+      codac_gaol_pkg_config_path(dir)
+      string(APPEND CODAC_PKG_CONFIG_CFLAGS " -I${dir}")
+    endif()
+  endforeach()
+  # The libraries are named by their full path, as CMake hands them to the
+  # linker on the find_package side, rather than as -L plus -l: there is then no
+  # chance of another directory on the search path answering for libgaol first,
+  # and nothing to guess about how the file is named on each platform. They come
+  # after the Codac archives, which depend on them, and gaol before ultim, which
+  # it depends on.
+  foreach(item ${CODAC_GAOL_LINK_ITEMS})
+    codac_gaol_pkg_config_path(item)
+    string(APPEND CODAC_PKG_CONFIG_LIBS " ${item}")
   endforeach()
 
   # codac-core links PUBLIC against Threads::Threads, and so must anything that
@@ -236,12 +243,14 @@
     set(CODAC_LIBRARIES ${libraries} CACHE INTERNAL "Libraries to link against for CODAC")
     set(CODAC_INCLUDE_DIRS ${include_dirs} CACHE INTERNAL "Include directories for CODAC")
 
-    # Propagate the interval arithmetic flags (-frounding-math, etc.) and the
-    # architecture flags (FMA, etc.) to external projects. In that order, which
-    # is the order this build hands them to the compiler in -- the first through
-    # CMAKE_CXX_FLAGS, the others through add_compile_options() -- and decides
-    # which of two conflicting flags wins.
-    set(cxx_flags ${CODAC_INTERVAL_CXX_FLAGS} ${CODAC_ARCH_CXX_FLAGS})
+    # Propagate Codac's own flags (codac_gaol_portability_flags()), the
+    # architecture flags (FMA, etc.) and the interval arithmetic flags GAOL gives
+    # (-frounding-math, etc.) to external projects. In that order, which is the
+    # order this build hands them to the compiler in -- the first through
+    # CMAKE_CXX_FLAGS, the second through add_compile_options(), the last through
+    # Codac::gaol, whose options come after a target's own -- and decides which
+    # of two conflicting flags wins.
+    set(cxx_flags ${CODAC_PORTABILITY_CXX_FLAGS} ${CODAC_ARCH_CXX_FLAGS} ${CODAC_INTERVAL_CXX_FLAGS})
     set(CODAC_CXX_FLAGS "${cxx_flags}" CACHE INTERNAL "C++ flags for CODAC")
   endfunction()
 
@@ -250,7 +259,7 @@
 
   set(CODAC_CMAKE_CONFIG_FILE ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake)
 
-  # The definitions of Codac::gaol and Codac::ultim, written by
+  # The definition of Codac::gaol, written by
   # scripts/CMakeModules/codac_gaol.cmake, which knows where GAOL came from.
   codac_gaol_config_snippet(CODAC_GAOL_CONFIG_SNIPPET)
 

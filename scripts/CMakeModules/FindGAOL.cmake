@@ -25,9 +25,10 @@
 #   GAOL_INCLUDE_DIRS
 #   GAOL_LIBRARIES     gaol, then ultim, in link order
 #
-# No target is defined here. The top-level CMakeLists.txt makes Codac::gaol
-# and Codac::ultim out of these variables, the same way whether GAOL was found
-# here or built by Codac (see scripts/CMakeModules/codac_gaol.cmake).
+# No target is defined here. codac_gaol_find() (scripts/CMakeModules/codac_gaol.cmake)
+# makes Codac::gaol out of these variables, with the flags of interval
+# arithmetic it determines itself, for a GAOL that has neither a CMake package
+# nor a gaol.pc, which it looks for first.
 #
 # Origin
 # ------

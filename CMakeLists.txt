@@ -351,11 +351,10 @@
   #    -mfpu=neon-vfpv4 -mfloat-abi=hard, with which std::fma uses the
   #    hardware instruction. -ffp-contract=fast is not added, although
   #    without it the compiler does not fuse a*b+c into FMA on its own:
-  #    Codac compiles with -ffp-contract=off (codac_gaol_compiler_flags() in
-  #    scripts/CMakeModules/codac_gaol.cmake), so that every operation of
-  #    interval arithmetic is rounded as it is written, and a
-  #    -ffp-contract=fast placed after it on the command line, as
-  #    add_compile_options() places it, would override it. -mfma itself
+  #    Codac compiles with -ffp-contract=off (one of the flags of interval
+  #    arithmetic GAOL gives, see scripts/CMakeModules/codac_gaol.cmake), so
+  #    that every operation of interval arithmetic is rounded as it is
+  #    written, which a -ffp-contract=fast would contradict. -mfma itself
   #    is not a recognized flag on any 32-bit ARM target, so this is
   #    handled in its own branch below rather than falling through to the
   #    generic GCC/Clang case.
@@ -506,100 +505,36 @@
   # scripts/CMakeModules/codac_gaol.cmake and of FindGAOL.cmake next to it.
   include(codac_gaol)
 
-  # The flags floating-point rounding depends on, which ibex_init_common() used
-  # to put on the command line: without -frounding-math and its companions, the
-  # compiler is free to constant-fold in the wrong rounding mode, and an
-  # interval is no longer a bound. Consumers need them as much as this build
-  # does, so they are kept as a list, and handed over through CODAC_CXX_FLAGS in
-  # codac-config.cmake and through the Cflags line of codac.pc (see
-  # src/CMakeLists.txt). Within this build they go where ibex_init_common() put
-  # them, in CMAKE_CXX_FLAGS, so that every target is compiled with them -- the
-  # tests, the examples and the Python bindings included -- and so is a GAOL
-  # built by codac_gaol_build(), which is handed CMAKE_CXX_FLAGS.
-  codac_gaol_compiler_flags(CODAC_INTERVAL_CXX_FLAGS)
-  string(REPLACE ";" " " _codac_interval_cxx_flags "${CODAC_INTERVAL_CXX_FLAGS}")
-  string(APPEND CMAKE_CXX_FLAGS " ${_codac_interval_cxx_flags}")
-  message(STATUS "Interval arithmetic flags: ${CODAC_INTERVAL_CXX_FLAGS}")
-
+  # GAOL, found or built, as the imported target Codac::gaol: its include
+  # directories, its libraries, and the flags floating-point rounding depends
+  # on, which ibex_init_common() used to put on the command line -- without
+  # -frounding-math and its companions, the compiler is free to constant-fold in
+  # the wrong rounding mode, and an interval is no longer a bound. They are
+  # GAOL's to say: codac_gaol_find() takes them from the CMake package of GAOL
+  # or from its gaol.pc, and determines them itself only for a GAOL found by its
+  # files alone. The Codac libraries link Codac::gaol PUBLIC, so that every
+  # target linking them is compiled with those flags -- the tests, the examples
+  # and the Python bindings included. This comes before Codac's own flags are
+  # added to CMAKE_CXX_FLAGS below: a GAOL built by codac_gaol_build() is handed
+  # CMAKE_CXX_FLAGS as it is given to this build, and chooses its flags itself.
   option(ENABLE_FIND_PACKAGE_GAOL "ENABLE_FIND_PACKAGE_GAOL" ON)
-  if(ENABLE_FIND_PACKAGE_GAOL)
-    find_package(GAOL QUIET) # Use GAOL_DIR and MATHLIB_DIR, or CMAKE_PREFIX_PATH, to specify a custom GAOL installation path...
-  endif()
-  if(GAOL_FOUND)
-    message(STATUS "Found GAOL version ${GAOL_VERSION} in ${GAOL_INCDIR}")
-  else()
-    message(STATUS "Attempt to install GAOL automatically...")
-    codac_gaol_build()
-  endif()
-  codac_gaol_create_targets()
-  # Adds Codac::gaol (and Codac::ultim, which it links)
+  codac_gaol_find()
 
-  # Where the headers and archives of a GAOL found on this machine actually are,
-  # walked out of the imported targets Codac::gaol and Codac::ultim. A GAOL built
-  # by codac_gaol_build() is left out: it is installed with Codac, under the same
-  # prefix, and src/CMakeLists.txt names it from there.
-  #
-  # This is for codac.pc alone. The CMake side has no use for it -- a consumer
-  # of codac-config.cmake gets the same imported targets -- but GAOL installs no
-  # .pc file that codac.pc could name on its Requires: line instead.
-  set(CODAC_EXTERNAL_INCLUDE_DIRS "")
-  set(CODAC_EXTERNAL_LIBRARY_FILES "")
-  set(_codac_ext_queue "")
-  if(NOT CODAC_GAOL_BUILT_HERE)
-    list(APPEND _codac_ext_queue Codac::gaol)
-  endif()
-  set(_codac_ext_seen "")
-  while(_codac_ext_queue)
-    list(GET _codac_ext_queue 0 _codac_ext_target)
-    list(REMOVE_AT _codac_ext_queue 0)
-    if(_codac_ext_target IN_LIST _codac_ext_seen)
-      continue()
-    endif()
-    list(APPEND _codac_ext_seen ${_codac_ext_target})
-    if(NOT TARGET ${_codac_ext_target})
-      continue()
-    endif()
+  # Consumers need those flags as much as this build does. What Codac::gaol
+  # gives is kept as lists, handed over through CODAC_CXX_FLAGS in
+  # codac-config.cmake, and through the Cflags and Libs lines of codac.pc, which
+  # cannot link a target (see src/CMakeLists.txt).
+  codac_gaol_usage(CODAC_GAOL_INCLUDE_DIRS CODAC_INTERVAL_CXX_FLAGS CODAC_GAOL_LINK_ITEMS)
+  message(STATUS "Interval arithmetic flags: ${CODAC_INTERVAL_CXX_FLAGS}")
+  message(STATUS "GAOL include directories: ${CODAC_GAOL_INCLUDE_DIRS}")
+  message(STATUS "GAOL libraries: ${CODAC_GAOL_LINK_ITEMS}")
 
-    get_target_property(_codac_ext_inc ${_codac_ext_target} INTERFACE_INCLUDE_DIRECTORIES)
-    if(_codac_ext_inc)
-      list(APPEND CODAC_EXTERNAL_INCLUDE_DIRS ${_codac_ext_inc})
-    endif()
-
-    # An imported archive names its file either outright or per configuration.
-    # An INTERFACE library has no file at all, and before CMake 3.19 merely
-    # asking one for IMPORTED_LOCATION is a fatal error rather than an empty
-    # answer ("INTERFACE_LIBRARY targets may only have whitelisted
-    # properties") -- which is what Debian Bullseye, on CMake 3.18.4, reported.
-    # TYPE is whitelisted, so it can be asked first, as can the two INTERFACE_
-    # properties read above and below.
-    get_target_property(_codac_ext_type ${_codac_ext_target} TYPE)
-    if(NOT _codac_ext_type STREQUAL "INTERFACE_LIBRARY")
-      get_target_property(_codac_ext_loc ${_codac_ext_target} IMPORTED_LOCATION)
-      if(NOT _codac_ext_loc)
-        get_target_property(_codac_ext_cfgs ${_codac_ext_target} IMPORTED_CONFIGURATIONS)
-        if(_codac_ext_cfgs)
-          list(GET _codac_ext_cfgs 0 _codac_ext_cfg)
-          get_target_property(_codac_ext_loc ${_codac_ext_target} IMPORTED_LOCATION_${_codac_ext_cfg})
-        endif()
-      endif()
-      if(_codac_ext_loc)
-        list(APPEND CODAC_EXTERNAL_LIBRARY_FILES ${_codac_ext_loc})
-      endif()
-    endif()
-
-    get_target_property(_codac_ext_deps ${_codac_ext_target} INTERFACE_LINK_LIBRARIES)
-    if(_codac_ext_deps)
-      list(APPEND _codac_ext_queue ${_codac_ext_deps})
-    endif()
-  endwhile()
-  if(CODAC_EXTERNAL_INCLUDE_DIRS)
-    list(REMOVE_DUPLICATES CODAC_EXTERNAL_INCLUDE_DIRS)
-  endif()
-  if(CODAC_EXTERNAL_LIBRARY_FILES)
-    list(REMOVE_DUPLICATES CODAC_EXTERNAL_LIBRARY_FILES)
-  endif()
-  message(STATUS "External include directories: ${CODAC_EXTERNAL_INCLUDE_DIRS}")
-  message(STATUS "External libraries: ${CODAC_EXTERNAL_LIBRARY_FILES}")
+  # The flags of ibex_init_common() that are not those of interval arithmetic,
+  # where ibex_init_common() put them, in CMAKE_CXX_FLAGS, so that every target
+  # is compiled with them; handed over to consumers with the others.
+  codac_gaol_portability_flags(CODAC_PORTABILITY_CXX_FLAGS)
+  string(REPLACE ";" " " _codac_portability_cxx_flags "${CODAC_PORTABILITY_CXX_FLAGS}")
+  string(APPEND CMAKE_CXX_FLAGS " ${_codac_portability_cxx_flags}")
 
 
 ################################################################################
