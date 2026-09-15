@@ -107,7 +107,10 @@ if [ "$generator_set" -eq 0 ]; then
   esac
 fi
 
-cmake_cmd=(cmake -S "$here" -B "$cmake_build"
+# CMAKE_BUILD_TYPE is for the single-configuration generators; a Visual Studio
+# generator does not read it, and --no-warn-unused-cli keeps CMake from warning
+# about it there.
+cmake_cmd=(cmake -S "$here" -B "$cmake_build" --no-warn-unused-cli
            -D CMAKE_BUILD_TYPE=Release
            -D CMAKE_EXPORT_COMPILE_COMMANDS=ON)
 if [ -n "$generator" ]; then
