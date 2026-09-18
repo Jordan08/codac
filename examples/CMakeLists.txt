@@ -122,6 +122,13 @@ if(BUILD_TESTS AND TEST_EXAMPLES)
         ${CODAC_EXAMPLE_LIBRARIES}
     )
 
+    # The sympy example runs an embedded Python interpreter, which codac-sympy
+    # calls into: it links pybind11::embed, as its own CMakeLists.txt does and as
+    # the sympy unit test does in tests/CMakeLists.txt.
+    if(SRC_EXAMPLE MATCHES "^15_sympy/")
+      target_link_libraries(${EXAMPLE_NAME} PRIVATE pybind11::embed)
+    endif()
+
     add_test(
       NAME ${EXAMPLE_NAME}_cpp
       COMMAND ${EXAMPLE_NAME}
