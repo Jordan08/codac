@@ -122,11 +122,6 @@ if(BUILD_TESTS AND TEST_EXAMPLES)
         ${CODAC_EXAMPLE_LIBRARIES}
     )
 
-    # Propagate the architecture flags (FMA, etc.) to the examples
-    if(CODAC_ARCH_CXX_FLAGS)
-      target_compile_options(${EXAMPLE_NAME} PRIVATE ${CODAC_ARCH_CXX_FLAGS})
-    endif()
-
     add_test(
       NAME ${EXAMPLE_NAME}_cpp
       COMMAND ${EXAMPLE_NAME}

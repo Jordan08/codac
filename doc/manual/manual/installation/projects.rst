@@ -161,11 +161,12 @@ What ``find_package(CODAC)`` defines
       order for itself.
 
   * - ``CODAC_CXX_FLAGS``
-    - The interval arithmetic flags GAOL needs (``-frounding-math`` and the rest) and the
-      architecture flags (FMA, and so on) Codac was compiled with. They have to
-      be applied to your own translation units too: without the former, the
-      rounding modes Codac relies on are not guaranteed; and Eigen's headers are
-      compiled by your project, and compiling them under different alignment and
+    - The flags GAOL gives, with which Codac was compiled: those of interval
+      arithmetic (``-frounding-math`` and the rest), and those of the fused
+      multiply-add instructions (``-mfma``, and so on). They have to be applied
+      to your own translation units too: without the former, the rounding modes
+      Codac relies on are not guaranteed; and Eigen's headers are compiled by
+      your project, and compiling them under different alignment and
       instruction-set assumptions than the installed archives were built with is
       an ODR/ABI mismatch.
 

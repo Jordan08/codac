@@ -583,11 +583,6 @@ foreach(SRC_TEST ${SRC_TESTS})
       Catch2::Catch2WithMain
   )
 
-  # Propagate the architecture flags (FMA, etc.) to the tests
-  if(CODAC_ARCH_CXX_FLAGS)
-    target_compile_options(${TEST_NAME} PRIVATE ${CODAC_ARCH_CXX_FLAGS})
-  endif()
-
 
   # Sympy embedded tests
   if(

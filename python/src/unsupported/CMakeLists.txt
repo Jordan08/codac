@@ -24,11 +24,6 @@
     PRIVATE ${PROJECT_NAME}-unsupported Threads::Threads Codac::gaol
   )
 
-  # Propagate the architecture flags (FMA, etc.) to the Python modules
-  if(CODAC_ARCH_CXX_FLAGS)
-    target_compile_options(_unsupported PRIVATE ${CODAC_ARCH_CXX_FLAGS})
-  endif()
-
   # Copy the generated library in the package folder
   add_custom_command(TARGET _unsupported POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:_unsupported>" "${PYTHON_PACKAGE_DIR}/${PYTHON_PACKAGE_NAME}"

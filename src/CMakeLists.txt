@@ -83,25 +83,17 @@
     set(CODAC_PKG_CONFIG_LIBS "")
   endif()
 
-  # The architecture flags travel with the rest: a consumer that compiles
-  # Eigen's headers under different alignment and instruction-set assumptions
-  # than the prebuilt archives were built with hits the ODR/ABI mismatch
-  # described where CODAC_ARCH_CXX_FLAGS is filled in, in the top-level
-  # CMakeLists.txt. codac-config.cmake hands them over as CODAC_CXX_FLAGS;
-  # Cflags is where a pkg-config file has to put them.
-  if(CODAC_ARCH_CXX_FLAGS)
-    string(REPLACE ";" " " CODAC_PKG_CONFIG_ARCH_FLAGS "${CODAC_ARCH_CXX_FLAGS}")
-    string(APPEND CODAC_PKG_CONFIG_CFLAGS " ${CODAC_PKG_CONFIG_ARCH_FLAGS}")
-  endif()
-
   # Codac's own flags, which this build puts in CMAKE_CXX_FLAGS
   # (codac_gaol_portability_flags() in scripts/CMakeModules/codac_gaol.cmake),
-  # and the interval arithmetic flags GAOL gives through Codac::gaol,
-  # CODAC_INTERVAL_CXX_FLAGS, set in the top-level CMakeLists.txt. A CMake
-  # consumer gets them through CODAC_CXX_FLAGS, which is what every example
-  # uses and what the manual tells users to use; a pkg-config consumer has no
-  # equivalent, and compiling Codac's headers without -frounding-math silently
-  # gives up the guarantee the whole library rests on.
+  # and the flags GAOL gives through Codac::gaol, CODAC_INTERVAL_CXX_FLAGS, set
+  # in the top-level CMakeLists.txt: those of interval arithmetic, and those of
+  # the fused multiply-add instructions GAOL was compiled with (-mfma and the
+  # like). A CMake consumer gets them through CODAC_CXX_FLAGS, which is what
+  # every example uses and what the manual tells users to use; a pkg-config
+  # consumer has no equivalent. Compiling Codac's headers without
+  # -frounding-math silently gives up the guarantee the whole library rests on,
+  # and compiling Eigen's headers under other instruction-set assumptions than
+  # the prebuilt archives were built with is an ODR/ABI mismatch.
   foreach(_codac_flags CODAC_PORTABILITY_CXX_FLAGS CODAC_INTERVAL_CXX_FLAGS)
     if(${_codac_flags})
       string(REPLACE ";" " " _codac_pkg_config_flags "${${_codac_flags}}")
@@ -243,14 +235,13 @@
     set(CODAC_LIBRARIES ${libraries} CACHE INTERNAL "Libraries to link against for CODAC")
     set(CODAC_INCLUDE_DIRS ${include_dirs} CACHE INTERNAL "Include directories for CODAC")
 
-    # Propagate Codac's own flags (codac_gaol_portability_flags()), the
-    # architecture flags (FMA, etc.) and the interval arithmetic flags GAOL gives
-    # (-frounding-math, etc.) to external projects. In that order, which is the
-    # order this build hands them to the compiler in -- the first through
-    # CMAKE_CXX_FLAGS, the second through add_compile_options(), the last through
-    # Codac::gaol, whose options come after a target's own -- and decides which
-    # of two conflicting flags wins.
-    set(cxx_flags ${CODAC_PORTABILITY_CXX_FLAGS} ${CODAC_ARCH_CXX_FLAGS} ${CODAC_INTERVAL_CXX_FLAGS})
+    # Propagate Codac's own flags (codac_gaol_portability_flags()) and the flags
+    # GAOL gives (-frounding-math, -mfma, etc.) to external projects. In that
+    # order, which is the order this build hands them to the compiler in -- the
+    # first through CMAKE_CXX_FLAGS, the second through Codac::gaol, whose
+    # options come after a target's own -- and decides which of two conflicting
+    # flags wins.
+    set(cxx_flags ${CODAC_PORTABILITY_CXX_FLAGS} ${CODAC_INTERVAL_CXX_FLAGS})
     set(CODAC_CXX_FLAGS "${cxx_flags}" CACHE INTERNAL "C++ flags for CODAC")
   endfunction()
 

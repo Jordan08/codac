@@ -165,11 +165,6 @@
     PRIVATE ${PROJECT_NAME}-core ${PROJECT_NAME}-sympy Threads::Threads Codac::gaol
   )
 
-  # Propagate the architecture flags (FMA, etc.) to the Python modules
-  if(CODAC_ARCH_CXX_FLAGS)
-    target_compile_options(_core PRIVATE ${CODAC_ARCH_CXX_FLAGS})
-  endif()
-
   # --------------------------------------------------------------
   # Sanitizer runtime as a shared library (Debug builds only)
   # --------------------------------------------------------------
