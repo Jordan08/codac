@@ -9,24 +9,13 @@
 
 #pragma once
 
-#include <gaol/gaol_interval.h>
+#include <limits>
 #include <numbers>
 #include <cmath>
 
 namespace codac2
 {
-  const double oo = []() {
-
-    // (from IBEX lib, main author: Gilles Chabert)
-    // We use Gaol not in PRESERVE_ROUNDING mode, thus
-    // assuming the rounding mode is always set upward.
-    // Calling this function in the initialization of
-    // the 'oo' constant should be enough as this constant
-    // is initialized before the first Codac function call occurs.
-    gaol::round_upward();
-
-    return std::numeric_limits<double>::infinity();
-  }();
+  const double oo = std::numeric_limits<double>::infinity();
 
   constexpr double PI = std::numbers::pi; // Need C++20
 
