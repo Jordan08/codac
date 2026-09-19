@@ -61,6 +61,12 @@ jobs:
             #- { os: windows-2022         , shell: cmd , arch: x86    , bitness: 32, runtime: vc14          , cmake_params: '-G "Visual Studio 17" -T v140 -A Win32,version=10.0.19041.0 -D CMAKE_SYSTEM_VERSION=10.0.14393.0', cmake_flags: ' /MP4 /wd4267 /wd4244 /wd4305 /wd4996', test_config: 'Release/', choco_flags: '--x86', desc: 'Windows Visual Studio 2015 x86' }
             - { os: windows-2022         , shell: cmd , arch: x64    , bitness: 64, runtime: mingw15       , cmake_params: '-G "MinGW Makefiles"', cmake_flags: '-fPIC', desc: 'Windows MinGW 15.2.0 x64' }
             - { os: windows-2022         , shell: cmd , arch: x86    , bitness: 32, runtime: mingw15       , cmake_params: '-G "MinGW Makefiles"', cmake_flags: '-fPIC', choco_flags: '--x86', desc: 'Windows MinGW 15.2.0 x86' }
+            # No MinGW-w64 GCC 11.2.0 to 14.2.0: the GAOL fork refuses their mingw-w64 (see its CMakeLists.txt).
+            # GCC 11.2.0, 12.2.0 and 13.2.0 come with mingw-w64 before version 12, whose math library is not
+            # accurate enough for the hyperbolic functions GAOL takes from it (acosh() near 1 up to 25 million
+            # floats away, asinh() of large negative numbers NaN): the intervals did not enclose the exact values.
+            # GCC 14.2.0 comes with mingw-w64 12, whose fesetround() runs cpuid at each call: the bounds were
+            # right, but exp(), log(), sin() and cos() of an interval were some 20 times slower in a virtual machine.
             # Problems related to C++20 for MinGW 8 and earlier?
             #- { os: windows-2022         , shell: cmd , arch: x64    , bitness: 64, runtime: mingw8        , cmake_params: '-G "MinGW Makefiles"', cmake_flags: '-fPIC', desc: 'Windows MinGW 8.1.0 x64' }
             #- { os: windows-2022         , shell: cmd , arch: x86    , bitness: 32, runtime: mingw8        , cmake_params: '-G "MinGW Makefiles"', cmake_flags: '-fPIC', choco_flags: '--x86', desc: 'Windows MinGW 8.1.0 x86' }
