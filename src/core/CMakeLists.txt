@@ -276,6 +276,8 @@
     ${CMAKE_CURRENT_SOURCE_DIR}/tools/codac2_trunc.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tools/codac2_trunc.h
     ${CMAKE_CURRENT_SOURCE_DIR}/tools/codac2_TypeInfo.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/tools/ibex/codac2_ibex.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/tools/ibex/codac2_ibex_impl.h
 
     ${CMAKE_CURRENT_SOURCE_DIR}/trajectory/codac2_AnalyticTraj.h
     ${CMAKE_CURRENT_SOURCE_DIR}/trajectory/codac2_SampledTraj.h
@@ -337,6 +339,7 @@
     ${CMAKE_CURRENT_SOURCE_DIR}/proj
     ${CMAKE_CURRENT_SOURCE_DIR}/separators
     ${CMAKE_CURRENT_SOURCE_DIR}/tools
+    ${CMAKE_CURRENT_SOURCE_DIR}/tools/ibex
     ${CMAKE_CURRENT_SOURCE_DIR}/trajectory
     CACHE INTERNAL "Directories holding the public headers of codac-core")
 

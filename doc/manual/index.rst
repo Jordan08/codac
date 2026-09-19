@@ -349,6 +349,7 @@ User manual
 * :ref:`sec-extensions`
    * :ref:`sec-extensions-capd`
    * :ref:`sec-extensions-sympy`
+   * Interface with the IBEX library
 
 * :ref:`sec-examples`
 

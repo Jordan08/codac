@@ -181,6 +181,9 @@ list(APPEND SRC_TESTS # listing files without extension
   core/tools/codac2_tests_serialization
   core/tools/codac2_tests_transformations
   core/tools/codac2_tests_trunc
+  # core/tools/ibex/codac2_tests_ibex is not built: it includes the headers of
+  # IBEX, which Codac no longer depends on (the conversions it tests are only
+  # compiled when a program includes IBEX before them)
 
   ../doc/manual/manual/tools/src
 
@@ -253,6 +256,12 @@ if (WITH_CAPD)
   set(CODAC_LIBRARIES ${CODAC_LIBRARIES} ${PROJECT_NAME}-capd capd::capd)
 endif()
 
+# IBEX test
+#if (WITH_IBEX)
+  #find_package(IBEX REQUIRED)
+  #ibex_init_common() # IBEX should have installed this function
+  #message(STATUS "Found IBEX version ${IBEX_VERSION}")
+#endif()
 
 
 
