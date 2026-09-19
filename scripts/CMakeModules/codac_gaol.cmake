@@ -35,6 +35,11 @@
 #     builds the fork with its CMake build and installs it with its installer,
 #     and find_package(gaol CONFIG) takes the package it installed, as in 1.
 #
+# In 1 to 3, a GAOL older than CODAC_GAOL_MIN_VERSION (see below), or whose
+# version cannot be told, is passed over, with a message saying so, and the next
+# way is tried, down to building the fork. In 4, a GAOL built too old stops the
+# configuration.
+#
 # All four end in Codac::gaol, the imported target the Codac libraries link
 # PUBLIC, and which codac-config.cmake defines again for their users
 # (codac_gaol_config_snippet()).
@@ -89,6 +94,20 @@ set(CODAC_INSTALL_LIBDIR_3RD "${CMAKE_INSTALL_LIBDIR}/codac-3rd")
 
 # Where codac_gaol_build() downloads, builds and installs GAOL in the build tree
 set(CODAC_GAOL_WORK_DIR "${CMAKE_BINARY_DIR}/_deps/gaol")
+
+# The oldest GAOL Codac accepts: version 4.3.2 of the fork, the first one with all
+# the fixes Codac relies on. Among them, the last one: the intersection of disjoint
+# intervals is the canonical empty set [NaN, NaN], where GAOL gave reversed bounds,
+# [3, 2] for [1, 2] & [3, 4], which is_empty() took for empty but the operations
+# computing on the bounds did not ([3, 2] + [0, 1] gave [3, 3]). With an older
+# GAOL, the results of Codac could be wrong without any error. The requirement
+# holds for the GAOL Codac finds or builds (codac_gaol_find()), and for the users
+# of the installed Codac too (codac_gaol_config_snippet()): Codac's interval
+# operations are inline in its headers, so they are compiled against the GAOL of
+# the program that includes them. The CMake package of the fork declares its
+# version compatible with a requested one of the same major version
+# (SameMajorVersion): find_package(gaol 4.3.2) accepts 4.3.2 up to, excluding, 5.
+set(CODAC_GAOL_MIN_VERSION 4.3.2)
 
 
 ################################################################################
@@ -294,7 +313,7 @@ endfunction()
 # handed over as they are when this is called, before Codac adds its own flags
 # to them.
 #
-# GAOL comes from the head of the master branch of the fork (version 4.3.1 of
+# GAOL comes from the head of the master branch of the fork (version 4.3.2 of
 # GAOL), so that the fixes pushed to the fork reach Codac without a change here.
 # Cloned with Git, the sources are brought up to date with the branch at each
 # configuration of Codac, which needs network access (without it, the sources
@@ -486,11 +505,17 @@ function(codac_gaol_find)
     if(_in_work_dir EQUAL 0)
       unset(gaol_DIR CACHE)
     endif()
-    find_package(gaol CONFIG QUIET)
+    # The version is checked by the package's gaolConfigVersion.cmake, before the
+    # package is loaded: an older one defines no target, which would clash with
+    # the gaol::gaol of the GAOL found or built next.
+    find_package(gaol ${CODAC_GAOL_MIN_VERSION} CONFIG QUIET)
     if(gaol_FOUND)
       set(_from package)
       set(_version "${gaol_VERSION}")
       message(STATUS "Found GAOL ${gaol_VERSION}, CMake package in ${gaol_DIR}")
+    elseif(gaol_CONSIDERED_VERSIONS)
+      message(STATUS "Found GAOL ${gaol_CONSIDERED_VERSIONS} (CMake package ${gaol_CONSIDERED_CONFIGS}), "
+                     "older than ${CODAC_GAOL_MIN_VERSION}: not used")
     endif()
 
     # 2. pkg-config (PKG_CONFIG_PATH, or CMAKE_PREFIX_PATH). Not with Visual C++,
@@ -503,7 +528,10 @@ function(codac_gaol_find)
         pkg_check_modules(CODAC_GAOL_PC QUIET IMPORTED_TARGET gaol)
         if(CODAC_GAOL_PC_FOUND)
           check_cxx_compiler_flag(-frounding-math COMPILER_SUPPORTS_FROUNDING_MATH)
-          if(COMPILER_SUPPORTS_FROUNDING_MATH AND NOT "-frounding-math" IN_LIST CODAC_GAOL_PC_CFLAGS_OTHER)
+          if(NOT CODAC_GAOL_PC_VERSION OR CODAC_GAOL_PC_VERSION VERSION_LESS CODAC_GAOL_MIN_VERSION)
+            message(STATUS "Found gaol.pc ${CODAC_GAOL_PC_VERSION} in ${CODAC_GAOL_PC_PREFIX}, "
+                           "older than ${CODAC_GAOL_MIN_VERSION}: not used")
+          elseif(COMPILER_SUPPORTS_FROUNDING_MATH AND NOT "-frounding-math" IN_LIST CODAC_GAOL_PC_CFLAGS_OTHER)
             message(STATUS "Found gaol.pc in ${CODAC_GAOL_PC_PREFIX}, whose Cflags lack -frounding-math: not used")
           else()
             set(_from pkg-config)
@@ -517,7 +545,12 @@ function(codac_gaol_find)
     # 3. The files (GAOL_DIR and MATHLIB_DIR, or CMAKE_PREFIX_PATH)
     if(NOT _from)
       find_package(GAOL MODULE QUIET)
-      if(GAOL_FOUND)
+      # FindGAOL.cmake reads the version in gaol/gaol_configuration.h; a GAOL that
+      # does not state it there is not known to be recent enough, and not used.
+      if(GAOL_FOUND AND (NOT GAOL_VERSION OR GAOL_VERSION VERSION_LESS CODAC_GAOL_MIN_VERSION))
+        message(STATUS "Found GAOL ${GAOL_VERSION} in ${GAOL_INCDIR}, older than ${CODAC_GAOL_MIN_VERSION} "
+                       "or of unknown version: not used")
+      elseif(GAOL_FOUND)
         set(_from files)
         set(_version "${GAOL_VERSION}")
         message(STATUS "Found GAOL ${GAOL_VERSION} in ${GAOL_INCDIR}, without a CMake package or a gaol.pc: "
@@ -530,8 +563,23 @@ function(codac_gaol_find)
   if(NOT _from)
     codac_gaol_build()
     unset(gaol_DIR CACHE)
-    find_package(gaol CONFIG REQUIRED NO_DEFAULT_PATH
+    # The version is checked here too: without network access, codac_gaol_build()
+    # builds the sources it downloaded at an earlier configuration, which may be
+    # those of a version older than CODAC_GAOL_MIN_VERSION. Codac is then not
+    # configured, rather than configured on a GAOL it cannot trust.
+    find_package(gaol ${CODAC_GAOL_MIN_VERSION} CONFIG QUIET NO_DEFAULT_PATH
                  PATHS "${CODAC_GAOL_INSTALL_TREE}/${CODAC_INSTALL_LIBDIR_3RD}/cmake/gaol")
+    if(NOT gaol_FOUND AND gaol_CONSIDERED_VERSIONS)
+      message(FATAL_ERROR "The GAOL built in ${CODAC_GAOL_WORK_DIR} is version ${gaol_CONSIDERED_VERSIONS}, older "
+                          "than ${CODAC_GAOL_MIN_VERSION}, the oldest Codac accepts: its sources could not be "
+                          "brought up to date with the master branch of the fork (see the warning above). "
+                          "Configure Codac again with network access (without Git, after deleting "
+                          "${CODAC_GAOL_WORK_DIR}: the archive of the fork is only downloaded once per build "
+                          "directory).")
+    elseif(NOT gaol_FOUND)
+      message(FATAL_ERROR "The CMake package of the GAOL built in ${CODAC_GAOL_WORK_DIR} was not found under "
+                          "${CODAC_GAOL_INSTALL_TREE}/${CODAC_INSTALL_LIBDIR_3RD}/cmake/gaol.")
+    endif()
     set(_from package)
     set(_built_here TRUE)
     set(_version "${gaol_VERSION}")
@@ -710,16 +758,20 @@ endfunction()
 #    found on this machine where it was found, before the usual search.
 #  - A GAOL found by pkg-config or by its files is named by the paths it was
 #    found at, with the flags it was compiled with.
+#  - find_package(gaol) asks for CODAC_GAOL_MIN_VERSION or later, as when Codac
+#    was built: the consumer compiles Codac's inline interval operations against
+#    the GAOL it finds, and a package search path of the consumer could lead to
+#    an older one.
 function(codac_gaol_config_snippet outvar)
 
   if(CODAC_GAOL_FROM STREQUAL "package")
     if(CODAC_GAOL_BUILT_HERE)
       file(RELATIVE_PATH _to_prefix "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_CMAKE}" "${CMAKE_INSTALL_PREFIX}")
       set(_find "get_filename_component(_codac_prefix \"\${CMAKE_CURRENT_LIST_DIR}/${_to_prefix}\" ABSOLUTE)
-    find_package(gaol CONFIG REQUIRED NO_DEFAULT_PATH
+    find_package(gaol ${CODAC_GAOL_MIN_VERSION} CONFIG REQUIRED NO_DEFAULT_PATH
                  PATHS \"\${_codac_prefix}/${CODAC_INSTALL_LIBDIR_3RD}/cmake/gaol\")")
     else()
-      set(_find "find_package(gaol CONFIG REQUIRED HINTS \"${gaol_DIR}\")")
+      set(_find "find_package(gaol ${CODAC_GAOL_MIN_VERSION} CONFIG REQUIRED HINTS \"${gaol_DIR}\")")
     endif()
     set(_properties "INTERFACE_LINK_LIBRARIES gaol::gaol")
   else()
