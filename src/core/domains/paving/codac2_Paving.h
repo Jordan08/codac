@@ -42,6 +42,11 @@ namespace codac2
       //   : _tree(std::make_shared<PavingNode<P>>(*static_cast<P*>(this), x))
       // { }
 
+      // The tree is not built here but by the constructors of P (PavingOut,
+      // PavingInOut), with init_tree(): each node keeps a reference to the paving
+      // as a P, and while this constructor runs, the P object is not constructed
+      // yet, so that *static_cast<P*>(this) would be undefined behaviour (UBSan's
+      // vptr check reports such a downcast, Domain being polymorphic).
       Paving () { }
       
     public:
