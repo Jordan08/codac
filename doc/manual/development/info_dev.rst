@@ -97,6 +97,15 @@ If you simply want to use the latest Codac release in Python, you can download t
       git clone https://github.com/codac-team/codac $HOME/codac
       cd $HOME/codac
 
+   .. admonition:: Using Codac v2 simultaneously with Codac v1
+
+      In case you want to use the two versions of Codac in the same Python script, you will have to compile the binaries of Codac v2 under a different name in order to avoid ``import`` conflicts. Things are already prepared in the branch ``codac2_renamed``, you can therefore:
+   
+      .. code-block:: bash
+         
+         git checkout codac2_renamed
+
+      Note that you will then have to ``import codac2`` instead of ``import codac`` in your Python scripts.
 
    You will need to configure ``WITH_PYTHON=ON`` and ``PYBIND11_FINDPYTHON=OFF``. Codac is then compiled as position independent code (``-fPIC``) on its own, as is a GAOL built by CMake along with Codac; a GAOL installed on your system has to have been compiled that way as well. Note that CMake will automatically get the `pybind11 <https://pybind11.readthedocs.io>`_ files required for the binding. Also, you will have to configure ``BUILD_TESTS=ON`` if you want to run the unit tests.
    
