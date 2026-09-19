@@ -373,11 +373,16 @@ namespace codac2
 
   inline Interval operator&(const Interval& x, const Interval& y)
   {
-    if(x.is_empty() || y.is_empty() || x.ub() < y.lb())
-      return Interval::empty();
-    
-    else
-      return gaol::operator&(x,y);
+    // GAOL is called without a guard. Codac used to return Interval::empty() itself
+    // when an operand was empty or when x.ub() < y.lb(), because GAOL did not give
+    // the canonical empty set for disjoint intervals: it kept the largest lower bound
+    // and the smallest upper bound, [3, 2] for [1, 2] & [3, 4]. is_empty() took such
+    // an interval for empty, but the operations computing on its bounds did not:
+    // [3, 2] + [0, 1] gave [3, 3]. That guard also missed disjoint intervals in the
+    // other order (y.ub() < x.lb()), and did not protect operator&= at all. Since its
+    // version 4.3.2, the fork of GAOL returns the empty set [NaN, NaN] for every empty
+    // intersection, empty operands included, in operator& and operator&= alike.
+    return gaol::operator&(x,y);
   }
 
   inline Interval operator|(const Interval& x, double y)
@@ -463,6 +468,8 @@ namespace codac2
 
   inline Interval& Interval::operator&=(const Interval& x)
   {
+    // The empty set [NaN, NaN] when the intersection is empty (GAOL 4.3.2 or later of
+    // the fork, see operator&(const Interval&, const Interval&))
     gaol::interval::operator&=(x);
     return *this;
   }
